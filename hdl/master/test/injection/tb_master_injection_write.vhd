@@ -205,36 +205,40 @@ begin
     -- Tests.
     process
     begin
-        -- Simple write transaction.
-        t_AWVALID <= '1';
-        t_AWADDR <= "1011101110111011" & "1011101110111011" & "1011101110111011" & "1011101110111011";
-        t_AWID <= "00001";
-        t_AWLEN <= "00000001";
+        for i in 0 to 5 loop
+            -- Simple write transaction.
+            t_AWVALID <= '1';
+            t_AWADDR <= "1011101110111011" & "1011101110111011" & "1011101110111011" & "1011101110111011";
+            t_AWID <= std_logic_vector(to_unsigned(i+1, c_AXI_ID_WIDTH));
+            t_AWLEN <= "00000001";
 
-        wait until rising_edge(t_ACLK) and t_AWREADY = '1';
-        t_AWVALID <= '0';
+            wait until rising_edge(t_ACLK) and t_AWREADY = '1';
+            t_AWVALID <= '0';
 
-        t_AWADDR <= "0000000000000000" & "0000000000000000" & "0000000000000000" & "0000000000000000";
-        t_AWID <= "00000";
-        t_AWLEN <= "00000000";
+            t_AWADDR <= "0000000000000000" & "0000000000000000" & "0000000000000000" & "0000000000000000";
+            t_AWID <= (others => '0');
+            t_AWLEN <= "00000000";
 
-        -- Flit 1.
-        t_WVALID <= '1';
-        t_WDATA <= "10101010101010101010101010101010"; -- AA
+            -- Flit 1.
+            t_WVALID <= '1';
+            t_WDATA <= "10101010101010101010101010101010"; -- AA
 
-        wait until rising_edge(t_ACLK) and t_WREADY = '1';
+            wait until rising_edge(t_ACLK) and t_WREADY = '1';
 
-        -- Flit 2.
-        t_WVALID <= '1';
-        t_WDATA <= "11011101110111011101110111011101"; -- DD
-        t_WLAST <= '1';
+            -- Flit 2.
+            t_WVALID <= '1';
+            t_WDATA <= "11011101110111011101110111011101"; -- DD
+            t_WLAST <= '1';
 
-        wait until rising_edge(t_ACLK) and t_WREADY = '1';
+            wait until rising_edge(t_ACLK) and t_WREADY = '1';
 
-        -- Reset.
-        t_WDATA <= "00000000000000000000000000000000";
-        t_WVALID <= '0';
-        t_WLAST <= '0';
+            -- Reset.
+            t_WDATA <= (others => '0');
+            t_WVALID <= '0';
+            t_WLAST <= '0';
+        end loop;
+        wait;
     end process;
+
 
 end arch_tb_master_injection_write;
