@@ -82,6 +82,9 @@ begin
             when "100" => if (i_READY_RECEIVE_PACKET = '1' and i_READ_OK_BUFFER = '1') then next_state_w <= "101"; else next_state_w <= "100"; end if;
 
             when "101" => if (i_READ_OK_BUFFER = '1') then next_state_w <= "000"; else next_state_w <= "101"; end if;
+
+            when others => next_state_w <= "000";
+                
         end case;
     end process;
 
