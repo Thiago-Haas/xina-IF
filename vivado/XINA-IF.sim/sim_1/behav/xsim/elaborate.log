@@ -1,7 +1,7 @@
 Vivado Simulator v2023.2
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
-Running: /tools/Xilinx/Vivado/2023.2/bin/unwrapped/lnx64.o/xelab --incr --debug typical --relax --mt 8 -L xil_defaultlib -L secureip --snapshot tb_integration_adder_behav xil_defaultlib.tb_integration_adder -log elaborate.log 
+Running: /tools/Xilinx/Vivado/2023.2/bin/unwrapped/lnx64.o/xelab --incr --debug typical --relax --mt 8 -L xil_defaultlib -L secureip --snapshot tb_master_injection_write_behav xil_defaultlib.tb_master_injection_write -log elaborate.log 
 Using 8 slave threads.
 Starting static elaboration
 Completed static elaboration
@@ -14,6 +14,7 @@ Compiling package ieee.std_logic_1164
 Compiling package ieee.numeric_std
 Compiling package xil_defaultlib.tcc_package
 Compiling package xil_defaultlib.xina_pkg
+Compiling package ieee.std_logic_textio
 Compiling package xil_defaultlib.hamming_pkg
 Compiling package ieee.math_real
 Compiling package synopsys.attributes
@@ -40,43 +41,21 @@ Compiling architecture rtl of entity xil_defaultlib.receive_control_tmr [receive
 Compiling architecture rtl of entity xil_defaultlib.backend_master_reception [\backend_master_reception(p_buff...]
 Compiling architecture rtl of entity xil_defaultlib.backend_master [\backend_master(p_src_x=(others=...]
 Compiling architecture rtl of entity xil_defaultlib.tcc_top_master [tcc_top_master_default]
-Compiling architecture rtl of entity xil_defaultlib.frontend_slave [frontend_slave_default]
-Compiling architecture rtl of entity xil_defaultlib.backend_slave_packetizer_control [backend_slave_packetizer_control...]
-Compiling architecture rtl of entity xil_defaultlib.backend_slave_packetizer_control_tmr [backend_slave_packetizer_control...]
-Compiling architecture rtl of entity xil_defaultlib.mux5 [\mux5(p_data_width=33)\]
-Compiling architecture rtl of entity xil_defaultlib.backend_slave_packetizer_datapath [\backend_slave_packetizer_datapa...]
-Compiling architecture rtl of entity xil_defaultlib.backend_slave_injection [\backend_slave_injection(p_src_x...]
-Compiling architecture rtl of entity xil_defaultlib.backend_slave_depacketizer_control [backend_slave_depacketizer_contr...]
-Compiling architecture rtl of entity xil_defaultlib.backend_slave_depacketizer_control_tmr [backend_slave_depacketizer_contr...]
-Compiling architecture rtl of entity xil_defaultlib.backend_slave_reception [\backend_slave_reception(p_buffe...]
-Compiling architecture rtl of entity xil_defaultlib.backend_slave [\backend_slave(p_src_x="00000000...]
-Compiling architecture rtl of entity xil_defaultlib.tcc_top_slave [\tcc_top_slave(p_src_x="00000000...]
-Compiling architecture rtl of entity xil_defaultlib.adder [adder_default]
-Compiling architecture arch_imp of entity xil_defaultlib.adder_full_v1_0_S00_AXI [\adder_full_v1_0_S00_AXI(c_s_axi...]
-Compiling architecture arch_imp of entity xil_defaultlib.adder_full_v1_0 [\adder_full_v1_0(c_s00_axi_id_wi...]
 Compiling architecture moore of entity xil_defaultlib.flow_in_hs [flow_in_hs_default]
 Compiling architecture rtl of entity xil_defaultlib.flow_in [flow_in_default]
-Compiling architecture ring of entity xil_defaultlib.buffering_fifo [\buffering_fifo(data_width_p=33)...]
-Compiling architecture rtl of entity xil_defaultlib.buffering [\buffering(data_width_p=33)\]
-Compiling architecture moore of entity xil_defaultlib.routing_xy [\routing_xy(y_id_p=0)\]
-Compiling architecture rtl of entity xil_defaultlib.routing [\routing(y_id_p=0)\]
+Compiling architecture ring of entity xil_defaultlib.buffering_fifo [\buffering_fifo(data_width_p=33,...]
+Compiling architecture rtl of entity xil_defaultlib.buffering [\buffering(data_width_p=33,buffe...]
+Compiling architecture moore of entity xil_defaultlib.routing_xy [routing_xy_default]
+Compiling architecture rtl of entity xil_defaultlib.routing [routing_default]
 Compiling architecture rtl of entity xil_defaultlib.switch [\switch(data_width_p=1)\]
-Compiling architecture rtl of entity xil_defaultlib.channel_in [\channel_in(y_id_p=0)\]
-Compiling architecture rtl of entity xil_defaultlib.channel_in [\channel_in(c_ena_p=0,y_id_p=0)\]
+Compiling architecture rtl of entity xil_defaultlib.channel_in [\channel_in(buffer_depth_p=128)\]
 Compiling architecture moore of entity xil_defaultlib.flow_out_hs [flow_out_hs_default]
 Compiling architecture rtl of entity xil_defaultlib.flow_out [flow_out_default]
 Compiling architecture moore of entity xil_defaultlib.arbitration_rr [arbitration_rr_default]
 Compiling architecture rtl of entity xil_defaultlib.arbitration [arbitration_default]
 Compiling architecture rtl of entity xil_defaultlib.switch [\switch(data_width_p=33)\]
 Compiling architecture rtl of entity xil_defaultlib.channel_out [channel_out_default]
-Compiling architecture rtl of entity xil_defaultlib.channel_out [\channel_out(c_ena_p=0)\]
 Compiling architecture rtl of entity xil_defaultlib.crossbar [crossbar_default]
-Compiling architecture rtl of entity xil_defaultlib.router [\router(y_id_p=0,n_ena_p=0,e_ena...]
-Compiling architecture moore of entity xil_defaultlib.routing_xy [\routing_xy(x_id_p=0,y_id_p=0)\]
-Compiling architecture rtl of entity xil_defaultlib.routing [\routing(x_id_p=0,y_id_p=0)\]
-Compiling architecture rtl of entity xil_defaultlib.channel_in [\channel_in(x_id_p=0,y_id_p=0)\]
-Compiling architecture rtl of entity xil_defaultlib.channel_in [\channel_in(c_ena_p=0,x_id_p=0,y...]
-Compiling architecture rtl of entity xil_defaultlib.router [\router(x_id_p=0,y_id_p=0,n_ena_...]
-Compiling architecture rtl of entity xil_defaultlib.xina [\xina(rows_p=1,cols_p=2,flow_mod...]
-Compiling architecture rtl of entity xil_defaultlib.tb_integration_adder
-Built simulation snapshot tb_integration_adder_behav
+Compiling architecture rtl of entity xil_defaultlib.router [router_default]
+Compiling architecture arch_tb_master_injection_write of entity xil_defaultlib.tb_master_injection_write
+Built simulation snapshot tb_master_injection_write_behav

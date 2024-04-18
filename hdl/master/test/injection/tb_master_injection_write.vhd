@@ -5,6 +5,8 @@ use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 use work.tcc_package.all;
 use work.xina_pkg.all;
+use std.textio.all;
+use ieee.std_logic_textio.all;
 
 entity tb_master_injection_write is
 end tb_master_injection_write;
@@ -89,6 +91,7 @@ architecture arch_tb_master_injection_write of tb_master_injection_write is
     signal t_w_out_data_o: std_logic_vector(data_width_c downto 0);
     signal t_w_out_val_o : std_logic;
     signal t_w_out_ack_i : std_logic;
+    
 
 begin
     u_TOP_MASTER: entity work.tcc_top_master
@@ -204,9 +207,13 @@ begin
     ---------------------------------------------------------------------------------------------
     -- Tests.
     process
+    file txt_reader : text open read_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/input_traffic.txt");
+    variable v_iline : line;
+    variable temporary_read_value : std_logic_vector(31 downto 0);
     begin
         for i in 0 to 5 loop
             -- Simple write transaction.
+            
             t_AWVALID <= '1';
             t_AWADDR <= "1011101110111011" & "1011101110111011" & "1011101110111011" & "1011101110111011";
             t_AWID <= std_logic_vector(to_unsigned(i+1, c_AXI_ID_WIDTH));
@@ -221,19 +228,23 @@ begin
 
             -- Flit 1.
             t_WVALID <= '1';
-            t_WDATA <= "10101010101010101010101010101010"; -- AA
+            readline(txt_reader, v_ILINE);
+            read(v_ILINE, temporary_read_value);
+            t_WDATA <= temporary_read_value; -- AA
 
             wait until rising_edge(t_ACLK) and t_WREADY = '1';
 
             -- Flit 2.
             t_WVALID <= '1';
-            t_WDATA <= "11011101110111011101110111011101"; -- DD
+            readline(txt_reader, v_ILINE);
+            read(v_ILINE, temporary_read_value);
+            t_WDATA <= temporary_read_value; -- AA
             t_WLAST <= '1';
 
-            wait until rising_edge(t_ACLK) and t_WREADY = '1';
+           wait until rising_edge(t_ACLK) and t_WREADY = '1';
 
             -- Reset.
-            t_WDATA <= (others => '0');
+            t_WDATA <= (31 downto 0 => '0');
             t_WVALID <= '0';
             t_WLAST <= '0';
         end loop;
