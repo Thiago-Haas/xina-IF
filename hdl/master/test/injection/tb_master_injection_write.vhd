@@ -205,7 +205,7 @@ begin
     end process;
 
     ---------------------------------------------------------------------------------------------
-    -- Tests.
+    -- Write.
     process
     file txt_reader : text open read_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/input_traffic.txt");
     variable v_iline : line;
@@ -216,6 +216,7 @@ begin
             
             t_AWVALID <= '1';
             t_AWADDR <= "1011101110111011" & "1011101110111011" & "1011101110111011" & "1011101110111011";
+            --t_AWADDR <= "0000000000000000" & "0000000000000000" & "0000000000000000" & "0000000000000000";
             t_AWID <= std_logic_vector(to_unsigned(i+1, c_AXI_ID_WIDTH));
             t_AWLEN <= "00000001";
 
@@ -231,17 +232,18 @@ begin
             readline(txt_reader, v_ILINE);
             read(v_ILINE, temporary_read_value);
             t_WDATA <= temporary_read_value; -- AA
+            t_WLAST <= '1';
 
             wait until rising_edge(t_ACLK) and t_WREADY = '1';
 
             -- Flit 2.
-            t_WVALID <= '1';
-            readline(txt_reader, v_ILINE);
-            read(v_ILINE, temporary_read_value);
-            t_WDATA <= temporary_read_value; -- AA
-            t_WLAST <= '1';
+            --t_WVALID <= '1';
+            --readline(txt_reader, v_ILINE);
+            --read(v_ILINE, temporary_read_value);
+            --t_WDATA <= temporary_read_value; -- AA
+            --t_WLAST <= '1';
 
-           wait until rising_edge(t_ACLK) and t_WREADY = '1';
+           --wait until rising_edge(t_ACLK) and t_WREADY = '1';
 
             -- Reset.
             t_WDATA <= (31 downto 0 => '0');
@@ -249,6 +251,22 @@ begin
             t_WLAST <= '0';
         end loop;
         wait;
+    end process;
+    
+    --Register exit
+    process
+    variable v_oline:line;
+    file log_writer : text open write_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/output_traffic.txt");
+    begin
+        --t_l_out_ack_i <= '0';
+        wait until rising_edge(t_ACLK) and t_l_in_ack_o = '1';
+        write(v_oline,t_l_in_data_i);  
+        writeline(log_writer,v_oline);
+        wait until rising_edge(t_ACLK) and t_l_in_ack_o='0';
+        --t_l_out_ack_i <= '1';
+            -- Check if input data is not null or unsigned
+ 
+        --wait until t_l_out_val_o='0';
     end process;
 
 
