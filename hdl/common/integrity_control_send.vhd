@@ -22,7 +22,8 @@ entity integrity_control_send is
 end integrity_control_send;
 
 architecture rtl of integrity_control_send is
-    signal w_CHECKSUM: unsigned(c_AXI_DATA_WIDTH - 1 downto 0) := to_unsigned(0, c_AXI_DATA_WIDTH);
+    
+    signal w_CHECKSUM_r : unsigned(c_AXI_DATA_WIDTH - 1 downto 0) := to_unsigned(0, c_AXI_DATA_WIDTH);
 
 begin
     ---------------------------------------------------------------------------------------------
@@ -30,13 +31,13 @@ begin
     process (all)
     begin
         if (ARESETn = '0') then
-            w_CHECKSUM <= to_unsigned(0, c_AXI_DATA_WIDTH);
+            w_CHECKSUM_r <= to_unsigned(0, c_AXI_DATA_WIDTH);
         elsif (rising_edge(ACLK)) then
             if (i_ADD = '1') then
-                w_CHECKSUM <= w_CHECKSUM + unsigned(i_VALUE_ADD);
+                w_CHECKSUM_r <= w_CHECKSUM_r + unsigned(i_VALUE_ADD);
             end if;
         end if;
     end process;
 
-    o_CHECKSUM <= std_logic_vector(w_CHECKSUM);
+    o_CHECKSUM <= std_logic_vector(w_CHECKSUM_r);
 end rtl;
