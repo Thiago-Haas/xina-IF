@@ -34,10 +34,9 @@ entity backend_master_depacketizer_control is
 end backend_master_depacketizer_control;
 
 architecture rtl of backend_master_depacketizer_control is
-    type t_STATE is (S_H_DEST, S_H_SRC, S_H_INTERFACE,
-                     S_READ_RESPONSE_PAYLOAD, S_WRITE_RESPONSE, S_TRAILER);
-    signal r_STATE: t_STATE;
-    signal r_NEXT_STATE: t_STATE;
+    
+    signal state_w_r    : std_logic_vector(2 downto 0);
+    signal next_state_w : std_logic_vector(2 downto 0);
 
     signal r_PAYLOAD_COUNTER: unsigned(7 downto 0) := to_unsigned(255, 8);
     signal r_SET_PAYLOAD_COUNTER: std_logic := '0';
@@ -49,9 +48,9 @@ begin
     process (all)
     begin
         if (ARESETn = '0') then
-            r_STATE <= S_H_DEST;
+            state_w_r <= "000";
         elsif (rising_edge(ACLK)) then
-            r_STATE <= r_NEXT_STATE;
+            state_w_r <= next_state_w;
         end if;
     end process;
 
@@ -59,78 +58,82 @@ begin
     -- State machine.
     process (all)
     begin
-        case r_STATE is
-            when S_H_DEST => if (i_READ_OK_BUFFER = '1') then r_NEXT_STATE <= S_H_SRC; else r_NEXT_STATE <= S_H_DEST; end if;
+        case state_w_r is
+            when "000" => if (i_READ_OK_BUFFER = '1') then next_state_w <= "001"; else next_state_w <= "000"; end if;
 
-            when S_H_SRC => if (i_READ_OK_BUFFER = '1') then r_NEXT_STATE <= S_H_INTERFACE; else r_NEXT_STATE <= S_H_SRC; end if;
+            when "001" => if (i_READ_OK_BUFFER = '1') then next_state_w <= "010"; else next_state_w <= "001"; end if;
 
-            when S_H_INTERFACE => if (i_READ_OK_BUFFER = '1') then
-                                      if (i_FLIT(1) = '0') then
-                                          -- Write response. Next flit is trailer.
-                                          r_NEXT_STATE <= S_WRITE_RESPONSE;
-                                      else
-                                          -- Read response.
-                                          r_NEXT_STATE <= S_READ_RESPONSE_PAYLOAD;
-                                      end if;
-                                  else
-                                      r_NEXT_STATE <= S_H_INTERFACE;
-                                  end if;
+            when "010" => if (i_READ_OK_BUFFER = '1') then
+                            if (i_FLIT(1) = '0') then
+                              next_state_w <= "100"; -- Write response. Next flit is trailer.
+                            else
+                              next_state_w <= "011"; -- Read response.
+                            end if;
+                          else
+                            next_state_w <= "010";
+                          end if;
 
-            when S_READ_RESPONSE_PAYLOAD => if (r_PAYLOAD_COUNTER = to_unsigned(0, 8) and i_READY_RECEIVE_DATA = '1' and i_READ_OK_BUFFER = '1') then
-                                                r_NEXT_STATE <= S_TRAILER;
-                                            else
-                                                r_NEXT_STATE <= S_READ_RESPONSE_PAYLOAD;
-                                            end if;
+            when "011" => if (r_PAYLOAD_COUNTER = to_unsigned(0, 8) and i_READY_RECEIVE_DATA = '1' and i_READ_OK_BUFFER = '1') then
+                            next_state_w <= "101";
+                          else
+                            next_state_w <= "011";
+                          end if;
 
-            when S_WRITE_RESPONSE => if (i_READY_RECEIVE_PACKET = '1' and i_READ_OK_BUFFER = '1') then r_NEXT_STATE <= S_TRAILER; else r_NEXT_STATE <= S_WRITE_RESPONSE; end if;
+            when "100" => if (i_READY_RECEIVE_PACKET = '1' and i_READ_OK_BUFFER = '1') then next_state_w <= "101"; else next_state_w <= "100"; end if;
 
-            when S_TRAILER => if (i_READ_OK_BUFFER = '1') then r_NEXT_STATE <= S_H_DEST; else r_NEXT_STATE <= S_TRAILER; end if;
+            when "101" => if (i_READ_OK_BUFFER = '1') then next_state_w <= "000"; else next_state_w <= "101"; end if;
+
+            when others => next_state_w <= "000";
+                
         end case;
     end process;
 
     ---------------------------------------------------------------------------------------------
-    -- Payload counter.
+    -- Payload counter. 
+    -- TODO: Apply ECC
     process (all)
     begin
-        if (ARESETn = '0') then
-            r_PAYLOAD_COUNTER <= to_unsigned(255, 8);
-        elsif (rising_edge(ACLK)) then
-            if (r_SET_PAYLOAD_COUNTER = '1') then
-                r_PAYLOAD_COUNTER <= unsigned(i_FLIT(14 downto 7));
-            elsif (r_SUBTRACT_PAYLOAD_COUNTER = '1') then
-                r_PAYLOAD_COUNTER <= r_PAYLOAD_COUNTER - 1;
-            end if;
+      if (ARESETn = '0') then
+        r_PAYLOAD_COUNTER <= to_unsigned(255, 8);
+      elsif (rising_edge(ACLK)) then
+        if (r_SET_PAYLOAD_COUNTER = '1') then
+          r_PAYLOAD_COUNTER <= unsigned(i_FLIT(14 downto 7));
+        elsif (r_SUBTRACT_PAYLOAD_COUNTER = '1') then
+          r_PAYLOAD_COUNTER <= r_PAYLOAD_COUNTER - 1;
         end if;
+      end if;
     end process;
 
     ---------------------------------------------------------------------------------------------
     -- Internal signals.
-    r_SET_PAYLOAD_COUNTER      <= '1' when (r_STATE = S_H_INTERFACE) else '0';
-    r_SUBTRACT_PAYLOAD_COUNTER <= '1' when (r_STATE = S_READ_RESPONSE_PAYLOAD and i_READ_OK_BUFFER = '1' and i_READY_RECEIVE_DATA = '1') else '0';
+    r_SET_PAYLOAD_COUNTER      <= '1' when (state_w_r = "010") else '0';
+    r_SUBTRACT_PAYLOAD_COUNTER <= '1' when (state_w_r = "011" and i_READ_OK_BUFFER = '1' and i_READY_RECEIVE_DATA = '1') else '0';
 
     ---------------------------------------------------------------------------------------------
     -- Output values.
 
-    o_VALID_RECEIVE_DATA <= '1' when (r_STATE = S_WRITE_RESPONSE and i_READ_OK_BUFFER = '1') or
-                                     (r_STATE = S_READ_RESPONSE_PAYLOAD and i_READ_OK_BUFFER = '1')
+    o_VALID_RECEIVE_DATA <= '1' when (state_w_r = "100" and i_READ_OK_BUFFER = '1') or
+                                     (state_w_r = "011" and i_READ_OK_BUFFER = '1')
                                      else '0';
-    o_LAST_RECEIVE_DATA  <= '1' when (r_STATE = S_READ_RESPONSE_PAYLOAD and i_READ_OK_BUFFER = '1' and r_PAYLOAD_COUNTER = to_unsigned(0, 8)) else '0';
 
-    o_READ_BUFFER <= '1' when (r_STATE = S_H_DEST) or
-                              (r_STATE = S_H_SRC) or
-                              (r_STATE = S_H_INTERFACE) or
-                              (r_STATE = S_READ_RESPONSE_PAYLOAD and i_READY_RECEIVE_DATA = '1') or
-                              (r_STATE = S_TRAILER)
+    o_LAST_RECEIVE_DATA  <= '1' when (state_w_r = "011" and i_READ_OK_BUFFER = '1' and r_PAYLOAD_COUNTER = to_unsigned(0, 8)) else '0';
+
+    o_READ_BUFFER <= '1' when (state_w_r = "000") or
+                              (state_w_r = "001") or
+                              (state_w_r = "010") or
+                              (state_w_r = "011" and i_READY_RECEIVE_DATA = '1') or
+                              (state_w_r = "101")
                               else '0';
 
-    o_WRITE_H_INTERFACE_REG <= '1' when (r_STATE = S_H_INTERFACE) else '0';
+    o_WRITE_H_INTERFACE_REG <= '1' when (state_w_r = "010") else '0';
 
-    o_ADD <= '1' when ((r_STATE = S_H_DEST) or
-                       (r_STATE = S_H_SRC) or
-                       (r_STATE = S_H_INTERFACE) or
-                       (r_STATE = S_READ_RESPONSE_PAYLOAD and i_READY_RECEIVE_DATA = '1')) and i_READ_OK_BUFFER = '1' else '0';
+    o_ADD <= '1' when ((state_w_r = "000") or
+                       (state_w_r = "001") or
+                       (state_w_r = "010") or
+                       (state_w_r = "011" and i_READY_RECEIVE_DATA = '1')) and i_READ_OK_BUFFER = '1' else '0';
 
-    o_COMPARE <= '1' when (r_STATE = S_TRAILER and i_READ_OK_BUFFER = '1') else '0';
+    o_COMPARE <= '1' when (state_w_r = "101" and i_READ_OK_BUFFER = '1') else '0';
 
-    o_INTEGRITY_RESETn <= '0' when (r_STATE = S_H_DEST and r_NEXT_STATE = S_H_DEST) else '1';
+    o_INTEGRITY_RESETn <= '0' when (state_w_r = "000" and next_state_w = "000") else '1';
+
 end rtl;
