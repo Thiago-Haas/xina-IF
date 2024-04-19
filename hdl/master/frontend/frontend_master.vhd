@@ -89,6 +89,7 @@ begin
     -- Injection.
 
     -- Registering transaction information.
+    -- TODO: Apply ECC
     registering: process(all)
     begin
         if (rising_edge(ACLK)) then

@@ -27,7 +27,7 @@ end buffer_fifo;
 architecture rtl of buffer_fifo is
 
   type FIFO_TYPE is array (p_BUFFER_DEPTH - 1 downto 0) of std_logic_vector(p_DATA_WIDTH - 1 downto 0);
-  signal w_FIFO    : FIFO_TYPE;
+  signal w_FIFO_r    : FIFO_TYPE;
   signal w_READ_PTR: unsigned(integer(ceil(log2(real(p_BUFFER_DEPTH)))) downto 0) := (others => '0');
 
 begin
@@ -40,10 +40,10 @@ begin
             var_READ_PTR := w_READ_PTR;
 
             if (i_WRITE = '1' and var_READ_PTR /= p_BUFFER_DEPTH) then
-                w_FIFO(0) <= i_DATA;
+                w_FIFO_r(0) <= i_DATA;
 
                 for i in 1 to p_BUFFER_DEPTH - 1 loop
-                    w_FIFO(i) <= w_FIFO(i - 1);
+                    w_FIFO_r(i) <= w_FIFO_r(i - 1);
                 end loop;
 
                 if not (i_READ = '1' and w_READ_PTR /= 0) then
@@ -60,9 +60,9 @@ begin
         if (var_READ_PTR /= p_BUFFER_DEPTH) then o_WRITE_OK <= '1'; else o_WRITE_OK <= '0'; end if;
 
         if (to_integer(var_READ_PTR) = 0) then
-            o_DATA <= w_FIFO(to_integer(var_READ_PTR));
+            o_DATA <= w_FIFO_r(to_integer(var_READ_PTR));
         else
-            o_DATA <= w_FIFO(to_integer(var_READ_PTR - 1));
+            o_DATA <= w_FIFO_r(to_integer(var_READ_PTR - 1));
         end if;
     end process;
 end rtl;
