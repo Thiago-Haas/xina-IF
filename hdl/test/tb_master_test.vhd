@@ -250,6 +250,40 @@ begin
         writeline(log_writer,v_oline);
         wait until rising_edge(t_ACLK) and t_l_in_ack_o='0';
     end process;
+    
+    -- Process 3 Entry 
+    process
+    file txt_reader : text open read_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/input_P3_MASTER_traffic.txt");
+    variable v_iline : line;
+    variable temporary_read_value : std_logic_vector(31 downto 0);
+    begin
+        --for i in 0 to n_packets-1 loop
+            -- Simple write transaction.
+            
+            t_AWVALID <= '1';
+            t_AWADDR <= "1111111111111111" & "1111111111111111" & "1111111111111111" & "1111111111111111";
+            --t_AWID <= std_logic_vector(to_unsigned(i+1, c_AXI_ID_WIDTH));
+            t_AWID <= "00000"; --All transaction will have 0 ID
+            t_AWLEN <= "00000001";
+
+            wait until rising_edge(t_ACLK) and t_AWREADY = '1';
+
+            -- Flit 1.
+            t_WVALID <= '1';
+            readline(txt_reader, v_ILINE);
+            read(v_ILINE, temporary_read_value);
+            t_WDATA <= temporary_read_value; -- AA
+            t_WLAST <= '1';
+
+            wait until rising_edge(t_ACLK) and t_WREADY = '1';
+
+            -- Reset.
+            t_WDATA <= (31 downto 0 => '0');
+            t_WVALID <= '0';
+            t_WLAST <= '0';
+        --end loop;
+        --wait;
+    end process;
 
 
 end arch_tb_master_test;
