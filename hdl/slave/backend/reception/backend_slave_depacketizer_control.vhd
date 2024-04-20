@@ -100,6 +100,8 @@ begin
 
             when "1000" => if (i_HAS_FINISHED_RESPONSE = '1') then next_state_w <= "0000"; else next_state_w <= "1000"; end if;
 
+            when others => next_state_w <= "0000";
+
         end case;
     end process;
 
