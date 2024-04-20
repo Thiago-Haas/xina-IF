@@ -49,6 +49,7 @@ architecture arch_tb_master_test of tb_master_test is
         signal t_RVALID : std_logic := '0';
         signal t_RREADY : std_logic := '0';
         signal t_RDATA  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
+        --signal t_RDATA  : std_logic_vector(c_AXI_DATA_WIDTH downto 0) := (others => '0');
         signal t_RLAST  : std_logic := '0';
         signal t_RID    : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0) := (others => '0');
         signal t_RRESP  : std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0) := (others => '0');
@@ -62,7 +63,9 @@ architecture arch_tb_master_test of tb_master_test is
     signal t_l_in_ack_o  : std_logic;
     signal t_l_out_data_o: std_logic_vector(data_width_c downto 0);
     signal t_l_out_val_o : std_logic;
+    signal t_l_out_val_o_2 : std_logic; --gambiarra remover depois
     signal t_l_out_ack_i : std_logic;
+    signal t_l_out_ack_i_2 : std_logic; --gambiarra remover depois
 
     signal t_n_in_data_i : std_logic_vector(data_width_c downto 0);
     signal t_n_in_val_i  : std_logic;
@@ -153,13 +156,13 @@ begin
             clk_i => t_ACLK,
             rst_i => t_RESET,
 
-            -- local channel interface
+            -- local channel interfaQuick Accessce
             l_in_data_i  => t_l_in_data_i,
             l_in_val_i   => t_l_in_val_i,
             l_in_ack_o   => t_l_in_ack_o,
-            l_out_data_o => t_l_out_data_o,
-            l_out_val_o  => t_l_out_val_o,
-            l_out_ack_i  => t_l_out_ack_i,
+            l_out_data_o => "000000000000000000000000000000000",
+            l_out_val_o  => t_l_out_val_o_2,
+            l_out_ack_i  => t_l_out_ack_i_2,
             -- north channel interface
             n_in_data_i  => t_n_in_data_i,
             n_in_val_i   => t_n_in_val_i,
@@ -255,32 +258,37 @@ begin
     process
     file txt_reader : text open read_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/input_P3_MASTER_traffic.txt");
     variable v_iline : line;
-    variable temporary_read_value : std_logic_vector(31 downto 0);
+    variable temporary_read_value_P3 : std_logic_vector(32 downto 0);
     begin
         --for i in 0 to n_packets-1 loop
             -- Simple write transaction.
-            
-            t_AWVALID <= '1';
-            t_AWADDR <= "1111111111111111" & "1111111111111111" & "1111111111111111" & "1111111111111111";
-            --t_AWID <= std_logic_vector(to_unsigned(i+1, c_AXI_ID_WIDTH));
-            t_AWID <= "00000"; --All transaction will have 0 ID
-            t_AWLEN <= "00000001";
-
-            wait until rising_edge(t_ACLK) and t_AWREADY = '1';
-
-            -- Flit 1.
-            t_WVALID <= '1';
-            readline(txt_reader, v_ILINE);
-            read(v_ILINE, temporary_read_value);
-            t_WDATA <= temporary_read_value; -- AA
-            t_WLAST <= '1';
-
+            t_RREADY <= '1';
+            -- Flit Read.
+            for i in 0 to 4 loop
+                t_l_out_ack_i <= '1';
+                wait until rising_edge(t_ACLK);
+                t_l_out_ack_i <= '0';
+                
+                readline(txt_reader, v_ILINE);
+                read(v_ILINE, temporary_read_value_P3);
+                t_l_out_data_o <= temporary_read_value_P3; -- AA
+                
+                t_l_out_val_o <= '1';
+                wait until rising_edge(t_ACLK);
+                t_l_out_val_o <= '0';
+                
+                
+            end loop;
+            --t_RLAST <= '1';
             wait until rising_edge(t_ACLK) and t_WREADY = '1';
+            --wait until rising_edge(t_ACLK) and t_RVALID = '1' and 
+            --t_l_out_val_o <= '0';
+            --t_l_out_ack_i
 
             -- Reset.
-            t_WDATA <= (31 downto 0 => '0');
-            t_WVALID <= '0';
-            t_WLAST <= '0';
+            t_l_out_data_o <= (32 downto 0 => '0');
+            t_RREADY <= '0';
+            --t_RLAST<= '0';
         --end loop;
         --wait;
     end process;
