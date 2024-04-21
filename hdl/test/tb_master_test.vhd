@@ -265,22 +265,22 @@ begin
             t_RREADY <= '1';
             -- Flit Read.
             for i in 0 to 4 loop
-                t_l_out_ack_i <= '1';
-                wait until rising_edge(t_ACLK);
-                t_l_out_ack_i <= '0';
+                t_l_out_val_o <= '1';
+                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
+                t_l_out_val_o <= '0';
                 
                 readline(txt_reader, v_ILINE);
                 read(v_ILINE, temporary_read_value_P3);
                 t_l_out_data_o <= temporary_read_value_P3; -- AA
                 
-                t_l_out_val_o <= '1';
-                wait until rising_edge(t_ACLK);
-                t_l_out_val_o <= '0';
+                --t_l_out_ack_i <= '1';
+                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
+               -- t_l_out_ack_i <= '0';
                 
                 
             end loop;
             --t_RLAST <= '1';
-            wait until rising_edge(t_ACLK) and t_WREADY = '1';
+            --wait until rising_edge(t_ACLK) and t_WREADY = '1';
             --wait until rising_edge(t_ACLK) and t_RVALID = '1' and 
             --t_l_out_val_o <= '0';
             --t_l_out_ack_i
