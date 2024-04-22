@@ -61,7 +61,7 @@ architecture arch_tb_master_test of tb_master_test is
     signal t_l_in_data_i : std_logic_vector(data_width_c downto 0);
     signal t_l_in_val_i  : std_logic;
     signal t_l_in_ack_o  : std_logic;
-    signal t_l_out_data_o: std_logic_vector(data_width_c downto 0);
+    signal t_l_out_data_o: std_logic_vector(data_width_c downto 0) := (others => '0');
     signal t_l_out_val_o : std_logic;
     signal t_l_out_ack_i : std_logic;
 
@@ -217,6 +217,36 @@ begin
         t_l_in_ack_o <= '0';
     end process;
     
+--    -- Process 3 Entry 
+--    process
+--    file txt_reader : text open read_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/input_P3_MASTER_traffic.txt");
+--    variable v_iline : line;
+--    variable temporary_read_value_P3 : std_logic_vector(32 downto 0);
+--    begin
+--              t_ARVALID <= '1';
+--              t_ARADDR <= "1111111111111111" & "1111111111111111" & "1111111111111111" & "1111111111111111";
+----            --t_AWID <= std_logic_vector(to_unsigned(i+1, c_AXI_ID_WIDTH));
+--              t_ARID <= "00000"; --All transaction will have 0 ID
+--              t_ARLEN <= "00000001";
+--            for i in 0 to 4 loop
+--                t_l_out_val_o <= '1';
+--                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
+                
+--                readline(txt_reader, v_ILINE);
+--                read(v_ILINE, temporary_read_value_P3);
+--                t_l_out_data_o <= temporary_read_value_P3; -- AA
+--                t_l_out_val_o <= '0';
+--                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
+                
+--            end loop;
+
+--            -- Reset.
+--            t_l_out_data_o <= (32 downto 0 => '0');
+--            --t_RREADY <= '0';
+--            --t_RLAST<= '0';
+--        --end loop;
+--        --wait;
+--    end process;
     -- Process 3 Entry 
     process
     file txt_reader : text open read_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/input_P3_MASTER_traffic.txt");
@@ -228,17 +258,50 @@ begin
 --            --t_AWID <= std_logic_vector(to_unsigned(i+1, c_AXI_ID_WIDTH));
               t_ARID <= "00000"; --All transaction will have 0 ID
               t_ARLEN <= "00000001";
-            for i in 0 to 4 loop
+              
+              T_BREADY<='1';
+            --for i in 0 to 4 loop
+                --wait for 250ns;
+                t_l_out_data_o <= "100000000000000000000000000000000"; -- Header
                 t_l_out_val_o <= '1';
-                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
-                
-                readline(txt_reader, v_ILINE);
-                read(v_ILINE, temporary_read_value_P3);
-                t_l_out_data_o <= temporary_read_value_P3; -- AA
+                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';--and t_ARREADY='1';
+                t_l_out_data_o <= "100000000000000000000000000000000"; -- Header
                 t_l_out_val_o <= '0';
                 wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
                 
-            end loop;
+                t_l_out_val_o <= '1';
+                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';--and t_ARREADY='1';
+                t_l_out_data_o <= "000000000000000010000000000000000"; -- Header_src
+                t_l_out_val_o <= '0';
+                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
+                
+                t_l_out_val_o <= '1';
+                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';--and t_ARREADY='1';
+                t_l_out_data_o <= "000000000000000001000000010101011"; -- Header_NI
+                t_l_out_val_o <= '0';
+                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
+                
+                t_l_out_val_o <= '1';
+                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1' and t_ARREADY='1';
+                t_l_out_data_o <= "111111111111111111111111111111111"; -- ADRESS
+                t_l_out_val_o <= '0';
+                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
+                
+                t_l_out_val_o <= '1';
+                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';--and t_ARREADY='1';
+                readline(txt_reader, v_ILINE);
+                read(v_ILINE, temporary_read_value_P3);
+                t_l_out_data_o <=  temporary_read_value_P3 ; -- Payload
+                t_l_out_val_o <= '0';
+                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
+                
+                t_l_out_val_o <= '1';
+                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';--and t_ARREADY='1';
+                t_l_out_data_o <= "100000000000000000000000000000000"; -- Trailer
+                t_l_out_val_o <= '0';
+                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
+                
+            --end loop;
 
             -- Reset.
             t_l_out_data_o <= (32 downto 0 => '0');
@@ -247,21 +310,23 @@ begin
         --end loop;
         --wait;
     end process;
-    
     --Process 4 Exit
     process
     variable v_oline:line;
     file log_writer : text open write_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/output_P4_MASTER_traffic.txt");
     begin
-        t_RREADY<='1';
-        T_BREADY<='1';
+        t_RREADY<='0';
         wait until rising_edge(t_ACLK) and t_RVALID='1'; 
+        t_RREADY <= '1';
+        --T_BREADY<='0';
         if t_RDATA /= "00000000000000000000000000000000" then
             write(v_oline, t_RDATA);
             writeline(log_writer, v_oline);
         end if;
  
         wait until rising_edge(t_ACLK) and t_RVALID='0';
+        t_RREADY <= '0';
+
         --t_RREADY<='0';
         --T_BREADY<='0';
         --t_ARVALID<= '0';
