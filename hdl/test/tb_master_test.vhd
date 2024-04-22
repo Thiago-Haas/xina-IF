@@ -180,9 +180,9 @@ begin
                 t_AWID <= "00000"; --All transaction will have 0 ID
                 t_AWLEN <= "00000001";
             
-                --wait until rising_edge(t_ACLK) and t_AWREADY = '1';
-                wait until rising_edge(t_ACLK) and t_l_in_val_i = '1';
-                t_l_in_ack_o <= '1';
+                wait until rising_edge(t_ACLK) and t_AWREADY = '1';
+                --wait until rising_edge(t_ACLK) and t_l_in_val_i = '1';
+                --t_l_in_ack_o <= '1';
                 -- Flit 1.
                 t_WVALID <= '1';
                 readline(txt_reader, v_ILINE);
@@ -190,9 +190,9 @@ begin
                 t_WDATA <= temporary_read_value; -- AA
                 t_WLAST <= '1';
             
-                wait until rising_edge(t_ACLK) and t_l_in_val_i = '0';
-                --wait until rising_edge(t_ACLK) and t_WREADY = '1';
-                t_l_in_ack_o <= '0';
+                --wait until rising_edge(t_ACLK) and t_l_in_val_i = '0';
+                wait until rising_edge(t_ACLK) and t_WREADY = '1';
+                --t_l_in_ack_o <= '0';
                 -- Reset.
                 t_WDATA <= (31 downto 0 => '0');
                 t_WVALID <= '0';
@@ -205,12 +205,16 @@ begin
     --Process 2 Exit
     process
     variable v_oline:line;
-    file log_writer : text open write_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/output_P1_MASTER_traffic.txt");
+    file log_writer : text open write_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/output_P2_MASTER_traffic.txt");
     begin
-        wait until rising_edge(t_ACLK) and t_l_in_ack_o = '1';
+        --t_l_in_val_i <= '1';   
+        wait until rising_edge(t_ACLK) and t_l_in_val_i = '1';
+        t_l_in_ack_o <= '1';
+        --t_l_in_val_i<='0';
         write(v_oline,t_l_in_data_i);  
         writeline(log_writer,v_oline);
-        wait until rising_edge(t_ACLK) and t_l_in_ack_o='0';
+        wait until rising_edge(t_ACLK) and t_l_in_val_i='0';
+        t_l_in_ack_o <= '0';
     end process;
     
     -- Process 3 Entry 
@@ -251,12 +255,15 @@ begin
     begin
         t_RREADY<='1';
         T_BREADY<='1';
-        wait until rising_edge(t_ACLK) and t_l_out_ack_i='1';  
-        write(v_oline,t_RDATA);  
-        writeline(log_writer,v_oline);  
-        wait until rising_edge(t_ACLK) and t_l_out_ack_i='0';
-        t_RREADY<='0';
-        T_BREADY<='0';
+        wait until rising_edge(t_ACLK) and t_RVALID='1'; 
+        if t_RDATA /= "00000000000000000000000000000000" then
+            write(v_oline, t_RDATA);
+            writeline(log_writer, v_oline);
+        end if;
+ 
+        wait until rising_edge(t_ACLK) and t_RVALID='0';
+        --t_RREADY<='0';
+        --T_BREADY<='0';
         --t_ARVALID<= '0';
         
     end process;
