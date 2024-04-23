@@ -64,6 +64,7 @@ architecture rtl of backend_master_reception is
 
 begin
     -- Registering headers.
+    -- TODO: Apply ECC
     registering: process(all)
     begin
         if (rising_edge(ACLK) and w_WRITE_H_INTERFACE_REG = '1') then
