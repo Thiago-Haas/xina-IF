@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="tb_master_test_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="hamming_pkg" />
+            <top_module name="tb_master_test" />
+            <top_module name="tcc_package" />
+            <top_module name="xina_pkg" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="0.000 ns"></ZoomStartTime>
+      <ZoomEndTime time="7,315.001 ns"></ZoomEndTime>
+      <Cursor1Time time="150.000 ns"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="244"></NameColumnWidth>
+      <ValueColumnWidth column_width="169"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="69" />
+   <wvobject fp_name="divider916" type="divider">
+      <obj_property name="label">P1</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider916" type="divider">
+      <obj_property name="label">P2</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_ACLK">
+      <obj_property name="ElementShortName">t_ACLK</obj_property>
+      <obj_property name="ObjectShortName">t_ACLK</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_RESET">
+      <obj_property name="ElementShortName">t_RESET</obj_property>
+      <obj_property name="ObjectShortName">t_RESET</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider916" type="divider">
+      <obj_property name="label">P3</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_AWVALID">
+      <obj_property name="ElementShortName">t_AWVALID</obj_property>
+      <obj_property name="ObjectShortName">t_AWVALID</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_AWREADY">
+      <obj_property name="ElementShortName">t_AWREADY</obj_property>
+      <obj_property name="ObjectShortName">t_AWREADY</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_l_out_val_o">
+      <obj_property name="ElementShortName">t_l_out_val_o</obj_property>
+      <obj_property name="ObjectShortName">t_l_out_val_o</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_l_out_ack_i">
+      <obj_property name="ElementShortName">t_l_out_ack_i</obj_property>
+      <obj_property name="ObjectShortName">t_l_out_ack_i</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_master_test/t_l_in_data_i">
+      <obj_property name="ElementShortName">t_l_in_data_i[32:0]</obj_property>
+      <obj_property name="ObjectShortName">t_l_in_data_i[32:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider916" type="divider">
+      <obj_property name="label">P4</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_RVALID">
+      <obj_property name="ElementShortName">t_RVALID</obj_property>
+      <obj_property name="ObjectShortName">t_RVALID</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_RREADY">
+      <obj_property name="ElementShortName">t_RREADY</obj_property>
+      <obj_property name="ObjectShortName">t_RREADY</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_master_test/t_RDATA">
+      <obj_property name="ElementShortName">t_RDATA[31:0]</obj_property>
+      <obj_property name="ObjectShortName">t_RDATA[31:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider916" type="divider">
+      <obj_property name="label">Front end</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider916" type="divider">
+      <obj_property name="label">Internal Back-to-front</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider916" type="divider">
+      <obj_property name="label">other</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider916" type="divider">
+      <obj_property name="label">P4</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_RESETn">
+      <obj_property name="ElementShortName">t_RESETn</obj_property>
+      <obj_property name="ObjectShortName">t_RESETn</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_master_test/t_AWID">
+      <obj_property name="ElementShortName">t_AWID[4:0]</obj_property>
+      <obj_property name="ObjectShortName">t_AWID[4:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_master_test/t_AWADDR">
+      <obj_property name="ElementShortName">t_AWADDR[63:0]</obj_property>
+      <obj_property name="ObjectShortName">t_AWADDR[63:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_master_test/t_AWLEN">
+      <obj_property name="ElementShortName">t_AWLEN[7:0]</obj_property>
+      <obj_property name="ObjectShortName">t_AWLEN[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_master_test/t_AWBURST">
+      <obj_property name="ElementShortName">t_AWBURST[1:0]</obj_property>
+      <obj_property name="ObjectShortName">t_AWBURST[1:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_WVALID">
+      <obj_property name="ElementShortName">t_WVALID</obj_property>
+      <obj_property name="ObjectShortName">t_WVALID</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_WREADY">
+      <obj_property name="ElementShortName">t_WREADY</obj_property>
+      <obj_property name="ObjectShortName">t_WREADY</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_master_test/t_WDATA">
+      <obj_property name="ElementShortName">t_WDATA[31:0]</obj_property>
+      <obj_property name="ObjectShortName">t_WDATA[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_WLAST">
+      <obj_property name="ElementShortName">t_WLAST</obj_property>
+      <obj_property name="ObjectShortName">t_WLAST</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_BVALID">
+      <obj_property name="ElementShortName">t_BVALID</obj_property>
+      <obj_property name="ObjectShortName">t_BVALID</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_BREADY">
+      <obj_property name="ElementShortName">t_BREADY</obj_property>
+      <obj_property name="ObjectShortName">t_BREADY</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_master_test/t_BID">
+      <obj_property name="ElementShortName">t_BID[4:0]</obj_property>
+      <obj_property name="ObjectShortName">t_BID[4:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_master_test/t_BRESP">
+      <obj_property name="ElementShortName">t_BRESP[2:0]</obj_property>
+      <obj_property name="ObjectShortName">t_BRESP[2:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_ARVALID">
+      <obj_property name="ElementShortName">t_ARVALID</obj_property>
+      <obj_property name="ObjectShortName">t_ARVALID</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_ARREADY">
+      <obj_property name="ElementShortName">t_ARREADY</obj_property>
+      <obj_property name="ObjectShortName">t_ARREADY</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_master_test/t_ARID">
+      <obj_property name="ElementShortName">t_ARID[4:0]</obj_property>
+      <obj_property name="ObjectShortName">t_ARID[4:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_master_test/t_ARADDR">
+      <obj_property name="ElementShortName">t_ARADDR[63:0]</obj_property>
+      <obj_property name="ObjectShortName">t_ARADDR[63:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_master_test/t_ARLEN">
+      <obj_property name="ElementShortName">t_ARLEN[7:0]</obj_property>
+      <obj_property name="ObjectShortName">t_ARLEN[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_master_test/t_ARBURST">
+      <obj_property name="ElementShortName">t_ARBURST[1:0]</obj_property>
+      <obj_property name="ObjectShortName">t_ARBURST[1:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_RLAST">
+      <obj_property name="ElementShortName">t_RLAST</obj_property>
+      <obj_property name="ObjectShortName">t_RLAST</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_master_test/t_RID">
+      <obj_property name="ElementShortName">t_RID[4:0]</obj_property>
+      <obj_property name="ObjectShortName">t_RID[4:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_master_test/t_RRESP">
+      <obj_property name="ElementShortName">t_RRESP[2:0]</obj_property>
+      <obj_property name="ObjectShortName">t_RRESP[2:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_CORRUPT_PACKET">
+      <obj_property name="ElementShortName">t_CORRUPT_PACKET</obj_property>
+      <obj_property name="ObjectShortName">t_CORRUPT_PACKET</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_l_in_val_i">
+      <obj_property name="ElementShortName">t_l_in_val_i</obj_property>
+      <obj_property name="ObjectShortName">t_l_in_val_i</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_l_in_ack_o">
+      <obj_property name="ElementShortName">t_l_in_ack_o</obj_property>
+      <obj_property name="ObjectShortName">t_l_in_ack_o</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_master_test/t_l_out_data_o">
+      <obj_property name="ElementShortName">t_l_out_data_o[32:0]</obj_property>
+      <obj_property name="ObjectShortName">t_l_out_data_o[32:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_master_test/t_n_in_data_i">
+      <obj_property name="ElementShortName">t_n_in_data_i[32:0]</obj_property>
+      <obj_property name="ObjectShortName">t_n_in_data_i[32:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_n_in_val_i">
+      <obj_property name="ElementShortName">t_n_in_val_i</obj_property>
+      <obj_property name="ObjectShortName">t_n_in_val_i</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_n_in_ack_o">
+      <obj_property name="ElementShortName">t_n_in_ack_o</obj_property>
+      <obj_property name="ObjectShortName">t_n_in_ack_o</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_master_test/t_n_out_data_o">
+      <obj_property name="ElementShortName">t_n_out_data_o[32:0]</obj_property>
+      <obj_property name="ObjectShortName">t_n_out_data_o[32:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_n_out_val_o">
+      <obj_property name="ElementShortName">t_n_out_val_o</obj_property>
+      <obj_property name="ObjectShortName">t_n_out_val_o</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_n_out_ack_i">
+      <obj_property name="ElementShortName">t_n_out_ack_i</obj_property>
+      <obj_property name="ObjectShortName">t_n_out_ack_i</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_master_test/t_e_in_data_i">
+      <obj_property name="ElementShortName">t_e_in_data_i[32:0]</obj_property>
+      <obj_property name="ObjectShortName">t_e_in_data_i[32:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_e_in_val_i">
+      <obj_property name="ElementShortName">t_e_in_val_i</obj_property>
+      <obj_property name="ObjectShortName">t_e_in_val_i</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_e_in_ack_o">
+      <obj_property name="ElementShortName">t_e_in_ack_o</obj_property>
+      <obj_property name="ObjectShortName">t_e_in_ack_o</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_master_test/t_e_out_data_o">
+      <obj_property name="ElementShortName">t_e_out_data_o[32:0]</obj_property>
+      <obj_property name="ObjectShortName">t_e_out_data_o[32:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_e_out_val_o">
+      <obj_property name="ElementShortName">t_e_out_val_o</obj_property>
+      <obj_property name="ObjectShortName">t_e_out_val_o</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_e_out_ack_i">
+      <obj_property name="ElementShortName">t_e_out_ack_i</obj_property>
+      <obj_property name="ObjectShortName">t_e_out_ack_i</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_master_test/t_s_in_data_i">
+      <obj_property name="ElementShortName">t_s_in_data_i[32:0]</obj_property>
+      <obj_property name="ObjectShortName">t_s_in_data_i[32:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_s_in_val_i">
+      <obj_property name="ElementShortName">t_s_in_val_i</obj_property>
+      <obj_property name="ObjectShortName">t_s_in_val_i</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_s_in_ack_o">
+      <obj_property name="ElementShortName">t_s_in_ack_o</obj_property>
+      <obj_property name="ObjectShortName">t_s_in_ack_o</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_master_test/t_s_out_data_o">
+      <obj_property name="ElementShortName">t_s_out_data_o[32:0]</obj_property>
+      <obj_property name="ObjectShortName">t_s_out_data_o[32:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_s_out_val_o">
+      <obj_property name="ElementShortName">t_s_out_val_o</obj_property>
+      <obj_property name="ObjectShortName">t_s_out_val_o</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_s_out_ack_i">
+      <obj_property name="ElementShortName">t_s_out_ack_i</obj_property>
+      <obj_property name="ObjectShortName">t_s_out_ack_i</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_master_test/t_w_in_data_i">
+      <obj_property name="ElementShortName">t_w_in_data_i[32:0]</obj_property>
+      <obj_property name="ObjectShortName">t_w_in_data_i[32:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_w_in_val_i">
+      <obj_property name="ElementShortName">t_w_in_val_i</obj_property>
+      <obj_property name="ObjectShortName">t_w_in_val_i</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_w_in_ack_o">
+      <obj_property name="ElementShortName">t_w_in_ack_o</obj_property>
+      <obj_property name="ObjectShortName">t_w_in_ack_o</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_master_test/t_w_out_data_o">
+      <obj_property name="ElementShortName">t_w_out_data_o[32:0]</obj_property>
+      <obj_property name="ObjectShortName">t_w_out_data_o[32:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_w_out_val_o">
+      <obj_property name="ElementShortName">t_w_out_val_o</obj_property>
+      <obj_property name="ObjectShortName">t_w_out_val_o</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_master_test/t_w_out_ack_i">
+      <obj_property name="ElementShortName">t_w_out_ack_i</obj_property>
+      <obj_property name="ObjectShortName">t_w_out_ack_i</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/tb_master_test/n_packets">
+      <obj_property name="ElementShortName">n_packets</obj_property>
+      <obj_property name="ObjectShortName">n_packets</obj_property>
+   </wvobject>
+</wave_config>
