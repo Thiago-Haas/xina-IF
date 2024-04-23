@@ -65,34 +65,6 @@ architecture arch_tb_master_injection_write of tb_slave_test is
     signal t_l_out_data_o: std_logic_vector(data_width_c downto 0);
     signal t_l_out_val_o : std_logic;
     signal t_l_out_ack_i : std_logic;
-
-    signal t_n_in_data_i : std_logic_vector(data_width_c downto 0);
-    signal t_n_in_val_i  : std_logic;
-    signal t_n_in_ack_o  : std_logic;
-    signal t_n_out_data_o: std_logic_vector(data_width_c downto 0);
-    signal t_n_out_val_o : std_logic;
-    signal t_n_out_ack_i : std_logic;
-
-    signal t_e_in_data_i : std_logic_vector(data_width_c downto 0);
-    signal t_e_in_val_i  : std_logic;
-    signal t_e_in_ack_o  : std_logic;
-    signal t_e_out_data_o: std_logic_vector(data_width_c downto 0);
-    signal t_e_out_val_o : std_logic;
-    signal t_e_out_ack_i : std_logic;
-
-    signal t_s_in_data_i : std_logic_vector(data_width_c downto 0);
-    signal t_s_in_val_i  : std_logic;
-    signal t_s_in_ack_o  : std_logic;
-    signal t_s_out_data_o: std_logic_vector(data_width_c downto 0);
-    signal t_s_out_val_o : std_logic;
-    signal t_s_out_ack_i : std_logic;
-
-    signal t_w_in_data_i : std_logic_vector(data_width_c downto 0);
-    signal t_w_in_val_i  : std_logic;
-    signal t_w_in_ack_o  : std_logic;
-    signal t_w_out_data_o: std_logic_vector(data_width_c downto 0);
-    signal t_w_out_val_o : std_logic;
-    signal t_w_out_ack_i : std_logic;
     
     constant n_packets : integer := 10; --number of messages that will be used on the testebench
 
@@ -153,49 +125,6 @@ architecture arch_tb_master_injection_write of tb_slave_test is
             l_out_val_o  => t_l_out_val_o,
             l_out_ack_i  => t_l_out_ack_i
     );
-    
-
-    u_XINA_ROUTER: entity work.router
-        port map(
-            clk_i => t_ACLK,
-            rst_i => t_RESET,
-
-            -- local channel interface
-            l_in_data_i  => t_l_in_data_i,
-            l_in_val_i   => t_l_in_val_i,
-            l_in_ack_o   => t_l_in_ack_o,
-            l_out_data_o => t_l_out_data_o,
-            l_out_val_o  => t_l_out_val_o,
-            l_out_ack_i  => t_l_out_ack_i,
-            -- north channel interface
-            n_in_data_i  => t_n_in_data_i,
-            n_in_val_i   => t_n_in_val_i,
-            n_in_ack_o   => t_n_in_ack_o,
-            n_out_data_o => t_n_out_data_o,
-            n_out_val_o  => t_n_out_val_o,
-            n_out_ack_i  => t_n_out_ack_i,
-            -- east channel interface
-            e_in_data_i  => t_e_in_data_i,
-            e_in_val_i   => t_e_in_val_i,
-            e_in_ack_o   => t_e_in_ack_o,
-            e_out_data_o => t_e_out_data_o,
-            e_out_val_o  => t_e_out_val_o,
-            e_out_ack_i  => t_e_out_ack_i,
-            -- south channel interface
-            s_in_data_i  => t_s_in_data_i,
-            s_in_val_i   => t_s_in_val_i,
-            s_in_ack_o   => t_s_in_ack_o,
-            s_out_data_o => t_s_out_data_o,
-            s_out_val_o  => t_s_out_val_o,
-            s_out_ack_i  => t_s_out_ack_i,
-            -- west port interface
-            w_in_data_i  => t_w_in_data_i,
-            w_in_val_i   => t_w_in_val_i,
-            w_in_ack_o   => t_w_in_ack_o,
-            w_out_data_o => t_w_out_data_o,
-            w_out_val_o  => t_w_out_val_o,
-            w_out_ack_i  => t_w_out_ack_i
-        );
 
     ---------------------------------------------------------------------------------------------
     -- Clock.
@@ -213,48 +142,140 @@ architecture arch_tb_master_injection_write of tb_slave_test is
     end process;
     
     ---------------------------------------------------------------------------------------------
-    -- Process 1 Entry Simple Write injection process.
-    process
-    file txt_reader : text open read_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/input_traffic.txt");
-    variable v_iline : line;
-    variable temporary_read_value : std_logic_vector(31 downto 0);
-    begin
-        for i in 0 to n_packets-1 loop
-            -- Simple write transaction.
+---- Process 1 Entry Simple Write injection process.
+--    process
+--    file txt_reader : text open read_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/input_P1_MASTER_traffic.txt");
+--    variable v_iline : line;
+--    variable temporary_read_value : std_logic_vector(31 downto 0);
+--    begin
+--    t_AWREADY <= '1';
+--    --t_BREADY <='1';
+--    wait until rising_edge(t_ACLK) and t_AWVALID = '1';
+
+--    t_AWREADY <= '0';
+--    t_WREADY <= '1';
+    
+--    readline(txt_reader, v_ILINE);
+--    read(v_ILINE, temporary_read_value);
+--    t_WDATA <= temporary_read_value; -- AA
+    
+--    wait until rising_edge(t_ACLK) and t_WVALID = '1' and t_WLAST = '1';          
+
+--    t_WREADY <= '0';
+--    t_BVALID <= '1';
+--    t_BRESP  <= "101";
+    
+--    wait until rising_edge(t_ACLK) and t_BREADY = '1';
+--    t_BVALID <= '0';
+--    t_BRESP  <= "000";
+                
             
-            t_AWVALID <= '1';
-            t_AWADDR <= "1011101110111011" & "1011101110111011" & "1011101110111011" & "1011101110111011";
-            t_AWID <= std_logic_vector(to_unsigned(i+1, c_AXI_ID_WIDTH));
-            t_AWLEN <= "00000001";
+     
+--     wait until rising_edge(t_ACLK) and t_AWVALID = '1';
+--     t_WDATA <= (31 downto 0 => '0');
+--     t_WVALID <= '0';
+--     t_WLAST <= '0';
 
-            wait until rising_edge(t_ACLK) and t_AWREADY = '1';
-
-            -- Flit 1.
-            t_WVALID <= '1';
-            readline(txt_reader, v_ILINE);
-            read(v_ILINE, temporary_read_value);
-            t_WDATA <= temporary_read_value; -- AA
-            t_WLAST <= '1';
-
-            wait until rising_edge(t_ACLK) and t_WREADY = '1';
+--    end process;
+    
+--    --Process 2 Exit
+--    process
+--    variable v_oline:line;
+--    file log_writer : text open write_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/output_P2_SLAVE_traffic.txt");
+--    begin
+--        --t_l_in_val_i <= '1';   
+--        wait until rising_edge(t_ACLK) and t_l_in_val_i = '1';
+--        t_l_in_ack_o <= '1';
+--        --t_l_in_val_i<='0';
+--        write(v_oline,t_l_in_data_i);  
+--        writeline(log_writer,v_oline);
+--        wait until rising_edge(t_ACLK) and t_l_in_val_i='0';
+--        t_l_in_ack_o <= '0';
+--    end process;
+    
+    -- Process 3 Entry 
+    process
+    file txt_reader : text open read_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/input_P3_MASTER_traffic.txt");
+    variable v_iline : line;
+    variable temporary_read_value_P3 : std_logic_vector(32 downto 0);
+    begin
+        
+              --t_ARVALID <= '1';
+              --t_ARADDR <= "1111111111111111" & "1111111111111111" & "1111111111111111" & "1111111111111111";
+--            --t_AWID <= std_logic_vector(to_unsigned(i+1, c_AXI_ID_WIDTH));
+              t_ARID <= "00000"; --All transaction will have 0 ID
+              --t_ARLEN <= "00000001";
+              
+              --T_BREADY<='1';
+            --for i in 0 to 4 loop
+                t_l_out_data_o <= "100000000000000000000000000000000"; -- Header
+                t_l_out_val_o <= '1';
+                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
+                t_l_out_data_o <= "100000000000000000000000000000000"; -- Header
+                t_l_out_val_o <= '0';
+                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
+                
+                t_l_out_val_o <= '1';
+                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
+                t_l_out_data_o <= "000000000000000010000000000000000"; -- Header_src
+                t_l_out_val_o <= '0';
+                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
+                
+                t_l_out_val_o <= '1';
+                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
+                t_l_out_data_o <= "000000000000000001000000010101011"; -- Header_NI
+                t_l_out_val_o <= '0';
+                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
+                
+                t_l_out_val_o <= '1';
+                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
+                t_l_out_data_o <= "111111111111111111111111111111111"; -- ADDR
+                t_l_out_val_o <= '0';
+                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
+                
+                t_l_out_val_o <= '1';
+                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
+                readline(txt_reader, v_ILINE);
+                read(v_ILINE, temporary_read_value_P3);
+                t_l_out_data_o <=  temporary_read_value_P3 ; -- Payload
+                t_l_out_val_o <= '0';
+                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
+                
+                t_l_out_val_o <= '1';
+                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';--and t_ARREADY='1';
+                t_l_out_data_o <= "100000000000000000000000000000000"; -- Trailer
+                t_l_out_val_o <= '0';
+                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
+            --end loop;
 
             -- Reset.
-            t_WDATA <= (31 downto 0 => '0');
-            t_WVALID <= '0';
-            t_WLAST <= '0';
-        end loop;
-        wait;
+            t_l_out_data_o <= (32 downto 0 => '0');
+            --t_RREADY <= '0';
+            --t_RLAST<= '0';
+        --end loop;
+        --wait;
     end process;
-    
-    --Process 2 Exit Simple Write injection process.
+    --Process 4 Exit
     process
     variable v_oline:line;
-    file log_writer : text open write_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/output_traffic.txt");
+    file log_writer : text open write_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/output_P4_MASTER_traffic.txt");
     begin
-        wait until rising_edge(t_ACLK) and t_l_in_ack_o = '1';
-        write(v_oline,t_l_in_data_i);  
-        writeline(log_writer,v_oline);
-        wait until rising_edge(t_ACLK) and t_l_in_ack_o='0';
+        t_RREADY<='0';
+        wait until rising_edge(t_ACLK) and t_RVALID='1'; 
+        t_RREADY <= '1';
+        --T_BREADY<='0';
+        if t_RDATA /= "00000000000000000000000000000000" then
+            write(v_oline, t_RDATA);
+            writeline(log_writer, v_oline);
+        end if;
+ 
+        wait until rising_edge(t_ACLK) and t_RVALID='0';
+        t_RREADY <= '0';
+
+        --t_RREADY<='0';
+        --T_BREADY<='0';
+        --t_ARVALID<= '0';
+        
     end process;
 
 
