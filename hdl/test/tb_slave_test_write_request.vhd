@@ -8,10 +8,10 @@ use work.xina_pkg.all;
 use std.textio.all;
 use ieee.std_logic_textio.all;
 
-entity tb_slave_test is
-end tb_slave_test;
+entity tb_slave_test_write_request is
+end tb_slave_test_write_request;
 
-architecture arch_tb_master_injection_write of tb_slave_test is
+architecture arch_tb_master_injection_write of tb_slave_test_write_request is
     -- AMBA-AXI 5 signals.
     signal t_ACLK  : std_logic := '0';
     signal t_RESETn: std_logic := '1';
