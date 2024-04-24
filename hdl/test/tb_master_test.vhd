@@ -139,7 +139,7 @@ begin
     ---------------------------------------------------------------------------------------------
 -- Process 1 Entry Simple Write injection process.
     process
-    file txt_reader : text open read_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/input_P1_MASTER_traffic.txt");
+    file txt_reader : text open read_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/input_PAYLOAD_traffic.txt");
     variable v_iline : line;
     variable temporary_read_value : std_logic_vector(31 downto 0);
     begin
@@ -181,7 +181,7 @@ begin
     
     -- Process 3 Entry 
     process
-    file txt_reader : text open read_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/input_P3_MASTER_traffic.txt");
+    file txt_reader : text open read_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/input_PAYLOAD_traffic.txt");
     variable v_iline : line;
     variable temporary_read_value_P3 : std_logic_vector(32 downto 0);
     begin

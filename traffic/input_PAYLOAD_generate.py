@@ -13,7 +13,7 @@
 #signal data_out_w: std_logic_vector(data_width_p downto 0);
 # Entry parameters
 import random
-SEED = 7572865  # Seed for random number generation
+SEED = 123456789  # Seed for random number generation
 NUM_LINES = 1000  # Number of traffic lines to generate
 
 def generate_traffic(seed, num_lines):
@@ -25,7 +25,7 @@ def generate_traffic(seed, num_lines):
     return traffic_lines
 
 def write_to_file(traffic_lines):
-    with open("input_P3_MASTER_traffic.txt", "w") as f:
+    with open("input_PAYLOAD_traffic.txt", "w") as f:
         for line in traffic_lines:
             #f.write("1"+"00000000000000000000000000000000" + '\n')#header_dest_w
             #f.write("0"+"00000000000000010000000000000000" + '\n')#header_src_w
@@ -37,7 +37,7 @@ def write_to_file(traffic_lines):
 def main():
     traffic_lines = generate_traffic(SEED, NUM_LINES)
     write_to_file(traffic_lines)
-    print(f"Traffic has been generated and written to 'input_P3_MASTER_traffic.txt'.")
+    print(f"Traffic has been generated and written to 'input_PAYLOAD_traffic.txt'.")
 
 if __name__ == "__main__":
     main()
