@@ -65,7 +65,7 @@ architecture arch_tb_master_test of tb_master_test is
     signal t_l_out_val_o : std_logic;
     signal t_l_out_ack_i : std_logic;
     
-    constant n_packets : integer := 10; --number of messages that will be used on the testebench
+    constant n_packets : integer := 262144; --number of messages that will be used on the testebench
 
 begin
     u_TOP_MASTER: entity work.tcc_top_master
@@ -142,26 +142,32 @@ begin
     file txt_reader : text open read_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/input_PAYLOAD_traffic.txt");
     variable v_iline : line;
     variable temporary_read_value : std_logic_vector(31 downto 0);
+    variable packet_count : integer := 0; -- Initialize packet counter
     begin
-                t_AWVALID <= '1';
-                --least significant bits are noc header
-                t_AWADDR <= "1111111011111111" & "1111111111111111" & "0000000000000001" & "0000000000000001";
-                t_AWID <= "00000"; --All transaction will have 0 ID
-                t_AWLEN <= "00000000";
+        while (packet_count < n_packets) loop -- Continue reading until the packet count reaches the limit
+            t_AWVALID <= '1';
+            --least significant bits are noc header
+            t_AWADDR <= "1111111011111111" & "1111111111111111" & "0000000000000001" & "0000000000000001";
+            t_AWID <= "00000"; --All transaction will have 0 ID
+            t_AWLEN <= "00000000";
             
-                wait until rising_edge(t_ACLK) and t_AWREADY = '1';
+            wait until rising_edge(t_ACLK) and t_AWREADY = '1';
 
-                t_WVALID <= '1';
-                readline(txt_reader, v_ILINE);
-                read(v_ILINE, temporary_read_value);
-                t_WDATA <= temporary_read_value; -- AA
-                t_WLAST <= '1';
+            t_WVALID <= '1';
+            readline(txt_reader, v_ILINE);
+            read(v_ILINE, temporary_read_value);
+            t_WDATA <= temporary_read_value; -- AA
+            t_WLAST <= '1';
             
-                wait until rising_edge(t_ACLK) and t_WREADY = '1';
-                -- Reset.
-                t_WDATA <= (31 downto 0 => '0');
-                t_WVALID <= '0';
-                t_WLAST <= '0';
+            wait until rising_edge(t_ACLK) and t_WREADY = '1';
+                
+            packet_count := packet_count + 1;
+            -- Reset.
+            t_WDATA <= (31 downto 0 => '0');
+            t_WVALID <= '0';
+            t_WLAST <= '0';
+         end loop; -- End of loop when packet_count reaches n_packets
+         wait;
     end process;
     
     --Process 2 Exit
@@ -184,47 +190,53 @@ begin
     file txt_reader : text open read_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/input_PAYLOAD_traffic.txt");
     variable v_iline : line;
     variable temporary_read_value_P3 : std_logic_vector(31 downto 0);
+    variable packet_count : integer := 0; -- Initialize packet counter
     begin
+        while (packet_count < n_packets) loop -- Continue reading until the packet count reaches the limit
+
+            T_BREADY<='1';
+            t_ARVALID <= '1';
+            t_l_out_val_o <= '1';
+            t_l_out_data_o <= "100000000000000000000000000000000"; -- Header_dest
+            wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
+            t_l_out_val_o <= '0';
+            wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
             
-              T_BREADY<='1';
-                t_ARVALID <= '1';
-                t_l_out_val_o <= '1';
-                t_l_out_data_o <= "100000000000000000000000000000000"; -- Header_dest
-                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
-                t_l_out_val_o <= '0';
-                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
+            t_l_out_val_o <= '1';
+            t_l_out_data_o <= "000000000000000010000000000000000"; -- Header_src
+            wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
                 
-                t_l_out_val_o <= '1';
-                t_l_out_data_o <= "000000000000000010000000000000000"; -- Header_src
-                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
+            t_l_out_val_o <= '0';
+            wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
                 
-                t_l_out_val_o <= '0';
-                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
-                
-                t_l_out_val_o <= '1';
-                t_l_out_data_o <= "000000000000000001000000000101011"; -- Header_NI
-                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
-                t_l_out_val_o <= '0';
-                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';             
-                
-                t_l_out_val_o <= '1';
-                readline(txt_reader, v_ILINE);
-                read(v_ILINE, temporary_read_value_P3);
-                t_l_out_data_o <= '0' & temporary_read_value_P3; -- Payload
-                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
+            t_l_out_val_o <= '1';
+            t_l_out_data_o <= "000000000000000001000000000101011"; -- Header_NI
+            wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
+            t_l_out_val_o <= '0';
+            wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';             
+            
+            t_l_out_val_o <= '1';
+            readline(txt_reader, v_ILINE);
+            read(v_ILINE, temporary_read_value_P3);
+            t_l_out_data_o <= '0' & temporary_read_value_P3; -- Payload
+            wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
 
-                t_l_out_val_o <= '0';
-                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
-                
-                t_l_out_val_o <= '1';
-                t_l_out_data_o <= "100000000000000000000000000000000"; -- Trailer
-                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';--and t_ARREADY='1';
-     
-                t_l_out_val_o <= '0';
-                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
-
+            t_l_out_val_o <= '0';
+            wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
+            
+            t_l_out_val_o <= '1';
+            t_l_out_data_o <= "100000000000000000000000000000000"; -- Trailer
+            wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';--and t_ARREADY='1';
+ 
+            t_l_out_val_o <= '0';
+            wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
+            packet_count := packet_count + 1;
+             
             t_l_out_data_o <= (32 downto 0 => '0');
+            end loop; -- End of loop when packet_count reaches n_packets
+            wait;
     end process;
+    
     --Process 4 Exit
     process
     variable v_oline:line;
