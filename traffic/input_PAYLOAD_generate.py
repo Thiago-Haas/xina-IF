@@ -31,7 +31,7 @@ def write_to_file(traffic_lines):
             #f.write("0"+"00000000000000010000000000000000" + '\n')#header_src_w
             #f.write("0"+"000000000000"+"00001"+"00000001"+"01"+"010"+"1"+"1" + '\n')#header_interface_w "0" "000000000000" & id_w & len_w & burst_w & status_w & opc_w & type_w;
             #f.write("0"+ "1111111111111111" + "1111111111111111" + '\n')
-            f.write("0" + line + '\n')#paload
+            f.write(line + '\n')#paload
             #f.write("1"+"00000000000000000000000000000000" + '\n')#trailer_w
 
 def main():
