@@ -183,7 +183,7 @@ begin
     process
     file txt_reader : text open read_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/input_PAYLOAD_traffic.txt");
     variable v_iline : line;
-    variable temporary_read_value_P3 : std_logic_vector(32 downto 0);
+    variable temporary_read_value_P3 : std_logic_vector(31 downto 0);
     begin
             
               T_BREADY<='1';
@@ -205,19 +205,12 @@ begin
                 t_l_out_data_o <= "000000000000000001000000000101011"; -- Header_NI
                 wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
                 t_l_out_val_o <= '0';
-                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
-                
---                t_l_out_val_o <= '1';
---                t_l_out_data_o <= "011111111101111111111111111111111"; -- ADDR
---                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
-
-                --t_l_out_val_o <= '0';
-                --wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
+                wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';             
                 
                 t_l_out_val_o <= '1';
                 readline(txt_reader, v_ILINE);
                 read(v_ILINE, temporary_read_value_P3);
-                t_l_out_data_o <=  temporary_read_value_P3 ; -- Payload
+                t_l_out_data_o <= '0' & temporary_read_value_P3; -- Payload
                 wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
 
                 t_l_out_val_o <= '0';
@@ -240,13 +233,8 @@ begin
         t_RREADY<='1';
         wait until rising_edge(t_ACLK) and t_RVALID='1'; 
         t_RREADY <= '0';
-        --T_BREADY<='0';
-        --if t_RDATA /= "00000000000000000000000000000000" then
-        --while t_RLAST <='1';
-            write(v_oline, t_RDATA);
-            writeline(log_writer, v_oline);
-        --end if;
- 
+        write(v_oline, t_RDATA);
+        writeline(log_writer, v_oline);
         wait until rising_edge(t_ACLK) and t_RVALID='0';
         t_RREADY <= '0';
         
