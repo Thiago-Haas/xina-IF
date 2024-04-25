@@ -14,7 +14,7 @@
 # Entry parameters
 import random
 SEED = 123456789  # Seed for random number generation
-NUM_LINES = 1000  # Number of traffic lines to generate
+NUM_LINES = 262144  # Number of traffic lines to generate
 
 def generate_traffic(seed, num_lines):
     random.seed(seed)
