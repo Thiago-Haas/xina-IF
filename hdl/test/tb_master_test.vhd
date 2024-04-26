@@ -66,6 +66,7 @@ architecture arch_tb_master_test of tb_master_test is
     signal t_l_out_ack_i : std_logic;
     
     constant n_packets : integer := 262144; --number of messages that will be used on the testebench
+    signal counter : std_logic_vector(31 downto 0) := (others => '0'); -- clock cycle counter
 
 begin
     u_TOP_MASTER: entity work.tcc_top_master
@@ -134,6 +135,14 @@ begin
     process(t_RESETn)
     begin
         t_RESET <= not t_RESETn;
+    end process;
+
+    --Clock cycle counter
+    process(t_ACLK)
+    begin
+    if rising_edge(t_ACLK) then
+        counter <= std_logic_vector(unsigned(counter) + 1); -- Convert to unsigned, increment, and convert back to std_logic_vector
+    end if;
     end process;
     
     ---------------------------------------------------------------------------------------------
