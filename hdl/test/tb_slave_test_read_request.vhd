@@ -139,12 +139,13 @@ architecture arch_tb_master_injection_write of tb_slave_test_read_request is
         t_RESET <= not t_RESETn;
     end process;
     
-    --Process 2 Exit
+    --Response NoC
     process
     variable v_oline:line;
     file log_writer : text open write_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/output_P2_SLAVE_traffic.txt");
     begin
         t_l_in_ack_o <= '0';  
+        --t_RREADY<='1';
         wait until rising_edge(t_ACLK) and t_l_in_val_i = '1';
         t_l_in_ack_o <= '1';
         write(v_oline,t_l_in_data_i);  
@@ -153,7 +154,7 @@ architecture arch_tb_master_injection_write of tb_slave_test_read_request is
         t_l_in_ack_o <= '0';
     end process;
 
-    -- Process 3 Entry 
+    --Read Payload AXI
     process
     begin           
         t_l_out_val_o <= '1';
@@ -220,7 +221,7 @@ architecture arch_tb_master_injection_write of tb_slave_test_read_request is
 --        wait;
 --    end process;
     
-    --Process 4 Exit
+    --Read Payload
     process
     file txt_reader : text open read_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/input_PAYLOAD_traffic.txt");
     variable v_iline : line;
@@ -235,7 +236,7 @@ architecture arch_tb_master_injection_write of tb_slave_test_read_request is
         readline(txt_reader, v_ILINE);
         read(v_ILINE, temporary_read_value);
         t_RDATA  <=temporary_read_value;
-        t_BVALID <= '1';
+        --t_BVALID <= '1';
         t_RRESP  <= "101";
         t_RLAST  <= '1';
         
@@ -243,7 +244,6 @@ architecture arch_tb_master_injection_write of tb_slave_test_read_request is
         t_RVALID <= '0';
         t_RLAST  <= '0';
         t_RRESP  <= "000";
-        --wait until rising_edge(t_ACLK) and t_RREADY = '0';
     end process;
 
 
