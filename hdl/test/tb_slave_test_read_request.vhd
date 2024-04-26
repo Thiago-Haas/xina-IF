@@ -154,7 +154,7 @@ architecture arch_tb_master_injection_write of tb_slave_test_read_request is
         t_l_in_ack_o <= '0';
     end process;
 
-    --Read Payload AXI
+    -- Read Payload AXI
     process
     begin           
         t_l_out_val_o <= '1';
@@ -168,9 +168,9 @@ architecture arch_tb_master_injection_write of tb_slave_test_read_request is
         wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
         t_l_out_val_o <= '0';
         wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
-                
+ 
         t_l_out_val_o <= '1';
-        t_l_out_data_o <= "000000000000000001000000000100010"; -- Header_NI 
+        t_l_out_data_o <= "000000000000000001000000000100010"; -- Header_NI 000000000000000001000000000100010
         wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
         t_l_out_val_o <= '0';
         wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
@@ -238,6 +238,17 @@ architecture arch_tb_master_injection_write of tb_slave_test_read_request is
         t_RDATA  <=temporary_read_value;
         --t_BVALID <= '1';
         t_RRESP  <= "101";
+        t_RLAST  <= '0';
+        
+        wait until rising_edge(t_ACLK) and t_ARVALID = '1'; 
+        
+        t_RVALID <= '1';
+        readline(txt_reader, v_ILINE);
+        read(v_ILINE, temporary_read_value);
+        t_RDATA  <=temporary_read_value;
+        --t_BVALID <= '1';
+        t_RRESP  <= "101";
+        
         t_RLAST  <= '1';
         
         wait until rising_edge(t_ACLK) and t_RREADY = '1';
