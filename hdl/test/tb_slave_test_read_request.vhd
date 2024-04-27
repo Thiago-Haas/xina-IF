@@ -97,7 +97,7 @@ architecture arch_tb_master_injection_write of tb_slave_test_read_request is
 
             -- Read request signals.
             ARVALID => t_ARVALID,
-            ARREADY => t_RREADY,
+            ARREADY => t_ARREADY,
             ARID    => t_ARID,
             ARADDR  => t_ARADDR,
             ARLEN   => t_ARLEN,
@@ -238,18 +238,18 @@ architecture arch_tb_master_injection_write of tb_slave_test_read_request is
         t_RDATA  <=temporary_read_value;
         --t_BVALID <= '1';
         t_RRESP  <= "101";
-        t_RLAST  <= '0';
-        
-        wait until rising_edge(t_ACLK) and t_ARVALID = '1'; 
-        
-        t_RVALID <= '1';
-        readline(txt_reader, v_ILINE);
-        read(v_ILINE, temporary_read_value);
-        t_RDATA  <=temporary_read_value;
-        --t_BVALID <= '1';
-        t_RRESP  <= "101";
-        
         t_RLAST  <= '1';
+        
+--        wait until rising_edge(t_ACLK) and t_ARVALID = '1'; 
+        
+--        t_RVALID <= '1';
+--        readline(txt_reader, v_ILINE);
+--        read(v_ILINE, temporary_read_value);
+--        t_RDATA  <=temporary_read_value;
+--        --t_BVALID <= '1';
+--        t_RRESP  <= "101";
+        
+--        t_RLAST  <= '1';
         
         wait until rising_edge(t_ACLK) and t_RREADY = '1';
         t_RVALID <= '0';
