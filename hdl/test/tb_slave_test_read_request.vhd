@@ -65,6 +65,9 @@ architecture arch_tb_master_injection_write of tb_slave_test_read_request is
     signal t_l_out_data_o: std_logic_vector(data_width_c downto 0);
     signal t_l_out_val_o : std_logic;
     signal t_l_out_ack_i : std_logic;
+    signal counter : std_logic_vector(31 downto 0) := (others => '0'); -- clock cycle counter
+    
+    constant n_packets : integer := 262144; --number of messages that will be used on the testebench 262144 equals 1MB
 
 
    begin    
@@ -139,7 +142,15 @@ architecture arch_tb_master_injection_write of tb_slave_test_read_request is
         t_RESET <= not t_RESETn;
     end process;
     
-    --Response NoC
+        --Clock cycle counter
+    process(t_ACLK)
+    begin
+    if rising_edge(t_ACLK) then
+        counter <= std_logic_vector(unsigned(counter) + 1); -- Convert to unsigned, increment, and convert back to std_logic_vector
+    end if;
+    end process;
+    
+    --Response NoC P2
     process
     variable v_oline:line;
     file log_writer : text open write_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/output_P2_SLAVE_traffic.txt");
@@ -154,107 +165,94 @@ architecture arch_tb_master_injection_write of tb_slave_test_read_request is
         t_l_in_ack_o <= '0';
     end process;
 
-    -- Read Payload AXI
-    process
-    begin           
-        t_l_out_val_o <= '1';
-        t_l_out_data_o <= "100000000000000000000000000000000"; -- Header_dest
-        wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
-        t_l_out_val_o <= '0';
-        wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
-                
-        t_l_out_val_o <= '1';
-        t_l_out_data_o <= "000000000000000010000000000000000"; -- Header_src
-        wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
-        t_l_out_val_o <= '0';
-        wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
- 
-        t_l_out_val_o <= '1';
-        t_l_out_data_o <= "000000000000000001000000000100010"; -- Header_NI 000000000000000001000000000100010
-        wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
-        t_l_out_val_o <= '0';
-        wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
-                
-        t_l_out_val_o <= '1';
-        t_l_out_data_o <= "011011101110111011101110111011101"; -- ADRRESS
-        wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
-        t_l_out_val_o <= '0';
-        wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
-                
-        t_l_out_val_o <= '1';
-        t_l_out_data_o <= "100000000000000000000000000000000"; -- Trailer
-        wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
-        t_l_out_val_o <= '0';
-        wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
-
-        t_l_out_data_o <= (32 downto 0 => '0');
-    end process;
-    
---        -- Tests.
---    process
---    begin
---        -- Receiving read transaction.
---        t_ARREADY <= '1';
---        wait until rising_edge(t_ACLK) and t_ARVALID = '1';
-
---        t_ARREADY <= '0';
-
---        -- Sending read data (2 flits).
---        t_RVALID <= '1';
---        t_RDATA  <= "10101010101010101010101010101010"; -- AAA
---        t_RRESP  <= "101";
---        t_RLAST  <= '0';
-
---        wait until rising_edge(t_ACLK) and t_RREADY = '1';
-
---        t_RVALID <= '1';
---        t_RDATA  <= "11011101110111011101110111011101"; -- DDD
---        t_RRESP  <= "101";
---        t_RLAST  <= '1';
-
---        -- Ending transaction.
---        wait until rising_edge(t_ACLK) and t_RREADY = '1';
-
---        t_RVALID <= '0';
---        t_RLAST  <= '0';
---        t_RRESP  <= "000";
---        wait;
---    end process;
-    
-    --Read Payload
+    -- Read Payload AXI P3
     process
     file txt_reader : text open read_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/input_PAYLOAD_traffic.txt");
     variable v_iline : line;
     variable temporary_read_value : std_logic_vector(31 downto 0);
+    variable packet_count : integer := 0; -- Initialize packet counter
+    begin       
+        while (packet_count < n_packets) loop -- Continue reading until the packet count reaches the limit
+    
+            t_l_out_val_o <= '1';
+            t_l_out_data_o <= "100000000000000000000000000000000"; -- Header_dest
+            wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
+            t_l_out_val_o <= '0';
+            wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
+                    
+            t_l_out_val_o <= '1';
+            t_l_out_data_o <= "000000000000000010000000000000000"; -- Header_src
+            wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
+            t_l_out_val_o <= '0';
+            wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
+ 
+            t_l_out_val_o <= '1';
+            t_l_out_data_o <= "000000000000000001000000000100010"; -- Header_NI 
+            wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
+            t_l_out_val_o <= '0';
+            wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
+                  
+            t_l_out_val_o <= '1';
+            readline(txt_reader, v_ILINE);
+            read(v_ILINE, temporary_read_value);
+            t_l_out_data_o <= '0' & temporary_read_value; --ADRRESS/Payload
+            wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
+            t_l_out_val_o <= '0';
+            wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
+                    
+            t_l_out_val_o <= '1';
+            t_l_out_data_o <= "100000000000000000000000000000000"; -- Trailer
+            wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
+            t_l_out_val_o <= '0';
+            wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
+
+            t_l_out_data_o <= (32 downto 0 => '0');
+            packet_count := packet_count + 1;  
+        end loop;
+        wait;
+    end process;
+    
+    --Read Payload 
+    process
+    file txt_reader : text open read_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/input_PAYLOAD_traffic.txt");
+    variable v_iline : line;
+    variable temporary_read_value : std_logic_vector(31 downto 0);
+    variable packet_count : integer := 0; -- Initialize packet counter
     begin
-        t_ARREADY <= '1';
-        wait until rising_edge(t_ACLK) and t_ARVALID = '1'; 
+        while (packet_count < n_packets) loop -- Continue reading until the packet count reaches the limit
+    
+            t_ARREADY <= '1';
+            wait until rising_edge(t_ACLK) and t_ARVALID = '1'; 
+            
+            t_ARREADY <= '0';
+            
+            t_RVALID <= '1';
+            readline(txt_reader, v_ILINE);
+            read(v_ILINE, temporary_read_value);
+            t_RDATA  <=temporary_read_value;
+            t_RRESP  <= "101";
+            t_RLAST  <= '1';
+            
+            wait until rising_edge(t_ACLK) and t_RREADY = '1';
+            t_RVALID <= '0';
+            t_RLAST  <= '0';
+            t_RRESP  <= "000";
+            
+            packet_count := packet_count + 1;  
+        end loop;
+        wait;
+    end process;
+    
+    --Process 4 Exit
+    process
+    variable v_oline:line;
+    file log_writer : text open write_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/output_P4_SLAVE_traffic.txt");
+    begin
+        wait until rising_edge(t_ACLK) and t_RVALID='1'; 
+        write(v_oline, t_RDATA);
+        writeline(log_writer, v_oline);
+        wait until rising_edge(t_ACLK) and t_RVALID='0';
         
-        t_ARREADY <= '0';
-        
-        t_RVALID <= '1';
-        readline(txt_reader, v_ILINE);
-        read(v_ILINE, temporary_read_value);
-        t_RDATA  <=temporary_read_value;
-        --t_BVALID <= '1';
-        t_RRESP  <= "101";
-        t_RLAST  <= '1';
-        
---        wait until rising_edge(t_ACLK) and t_ARVALID = '1'; 
-        
---        t_RVALID <= '1';
---        readline(txt_reader, v_ILINE);
---        read(v_ILINE, temporary_read_value);
---        t_RDATA  <=temporary_read_value;
---        --t_BVALID <= '1';
---        t_RRESP  <= "101";
-        
---        t_RLAST  <= '1';
-        
-        wait until rising_edge(t_ACLK) and t_RREADY = '1';
-        t_RVALID <= '0';
-        t_RLAST  <= '0';
-        t_RRESP  <= "000";
     end process;
 
 
