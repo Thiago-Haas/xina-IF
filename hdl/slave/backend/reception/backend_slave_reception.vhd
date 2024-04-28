@@ -57,9 +57,9 @@ architecture rtl of backend_slave_reception is
     signal w_WRITE_H_INTERFACE_REG: std_logic;
     signal w_WRITE_H_ADDRESS_REG  : std_logic;
 
-    signal w_H_SRC: std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-    signal w_H_INTERFACE: std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-    signal w_H_ADDRESS: std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+    signal w_H_SRC_r : std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+    signal w_H_INTERFACE_r : std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+    signal w_H_ADDRESS_r : std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
 
     -- Checksum.
     signal w_ADD: std_logic;
@@ -77,15 +77,15 @@ begin
     registering: process(all)
     begin
         if (rising_edge(ACLK)) then
-            if (w_WRITE_H_SRC_REG)       then w_H_SRC <= w_FLIT; end if;
-            if (w_WRITE_H_INTERFACE_REG) then w_H_INTERFACE <= w_FLIT; end if;
-            if (w_WRITE_H_ADDRESS_REG)   then w_H_ADDRESS   <= w_FLIT; end if;
+            if (w_WRITE_H_SRC_REG)       then w_H_SRC_r       <= w_FLIT; end if;
+            if (w_WRITE_H_INTERFACE_REG) then w_H_INTERFACE_r <= w_FLIT; end if;
+            if (w_WRITE_H_ADDRESS_REG)   then w_H_ADDRESS_r   <= w_FLIT; end if;
         end if;
     end process registering;
 
-    o_H_SRC_RECEIVE       <= w_H_SRC;
-    o_H_INTERFACE_RECEIVE <= w_H_INTERFACE;
-    o_ADDRESS_RECEIVE     <= w_H_ADDRESS(c_FLIT_WIDTH - 2 downto 0);
+    o_H_SRC_RECEIVE       <= w_H_SRC_r;
+    o_H_INTERFACE_RECEIVE <= w_H_INTERFACE_r;
+    o_ADDRESS_RECEIVE     <= w_H_ADDRESS_r(c_FLIT_WIDTH - 2 downto 0);
     o_DATA_RECEIVE        <= w_FLIT(31 downto 0);
 
     u_DEPACKETIZER_CONTROL:
@@ -108,7 +108,7 @@ begin
                 o_READ_BUFFER => w_READ_BUFFER,
                 i_READ_OK_BUFFER => w_READ_OK_BUFFER,
 
-                i_H_INTERFACE => w_H_INTERFACE,
+                i_H_INTERFACE => w_H_INTERFACE_r,
 
                 o_WRITE_H_SRC_REG       => w_WRITE_H_SRC_REG,
                 o_WRITE_H_INTERFACE_REG => w_WRITE_H_INTERFACE_REG,
@@ -137,7 +137,7 @@ begin
                 o_READ_BUFFER => w_READ_BUFFER,
                 i_READ_OK_BUFFER => w_READ_OK_BUFFER,
 
-                i_H_INTERFACE => w_H_INTERFACE,
+                i_H_INTERFACE => w_H_INTERFACE_r,
 
                 o_WRITE_H_SRC_REG => w_WRITE_H_SRC_REG,
                 o_WRITE_H_INTERFACE_REG => w_WRITE_H_INTERFACE_REG,

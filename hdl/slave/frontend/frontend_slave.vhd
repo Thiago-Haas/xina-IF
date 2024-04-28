@@ -81,6 +81,7 @@ end frontend_slave;
 
 architecture rtl of frontend_slave is
     signal w_VALID_SEND_DATA: std_logic;
+    signal w_STATUS_SEND_r : std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
 
 begin
     ---------------------------------------------------------------------------------------------
@@ -93,14 +94,16 @@ begin
             if (w_VALID_SEND_DATA = '1') then
                 if (BVALID = '1') then
                     -- Registering write signals.
-                    o_STATUS_SEND <= BRESP;
+                    w_STATUS_SEND_r <= BRESP;
                 elsif (RVALID = '1') then
                     -- Registering read signals.
-                    o_STATUS_SEND <= RRESP;
+                    w_STATUS_SEND_r <= RRESP;
                 end if;
             end if;
         end if;
     end process registering;
+
+    o_STATUS_SEND <= w_STATUS_SEND_r;
 
     -- Control information.
     w_VALID_SEND_DATA   <= '1' when (BVALID = '1' or RVALID = '1') else '0';
