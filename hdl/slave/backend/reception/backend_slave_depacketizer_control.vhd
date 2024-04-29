@@ -92,7 +92,7 @@ begin
                              next_state_w <= "0101";
                            end if;
 
-            when "0101" => if (i_READY_RECEIVE_PACKET = '1') then next_state_w <= "0111"; else next_state_w <= "0110"; end if;
+            when "0110" => if (i_READY_RECEIVE_PACKET = '1') then next_state_w <= "0111"; else next_state_w <= "0110"; end if;
 
             when "0111" => if (i_READ_OK_BUFFER = '1') then next_state_w <= "1000"; else next_state_w <= "0111"; end if;
 
