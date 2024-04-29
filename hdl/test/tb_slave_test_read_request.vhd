@@ -229,7 +229,7 @@ architecture arch_tb_master_injection_write of tb_slave_test_read_request is
             t_RVALID <= '1';
             readline(txt_reader, v_ILINE);
             read(v_ILINE, temporary_read_value);
-            t_RDATA  <=temporary_read_value;
+            t_RDATA  <= temporary_read_value;
             t_RRESP  <= "101";
             t_RLAST  <= '1';
             
@@ -248,10 +248,10 @@ architecture arch_tb_master_injection_write of tb_slave_test_read_request is
     variable v_oline:line;
     file log_writer : text open write_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/output_P4_SLAVE_traffic.txt");
     begin
-        wait until rising_edge(t_ACLK) and t_RVALID='1'; 
-        write(v_oline, t_RDATA);
+        wait until rising_edge(t_ACLK) and t_ARVALID='1'; 
+        write(v_oline, t_ARADDR);
         writeline(log_writer, v_oline);
-        wait until rising_edge(t_ACLK) and t_RVALID='0';
+        wait until rising_edge(t_ACLK) and t_ARVALID='0';
         
     end process;
 
