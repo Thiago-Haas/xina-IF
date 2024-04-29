@@ -150,22 +150,8 @@ architecture arch_tb_master_injection_write of tb_slave_test_read_request is
     end if;
     end process;
     
-    --Response NoC P2
-    process
-    variable v_oline:line;
-    file log_writer : text open write_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/output_P2_SLAVE_traffic.txt");
-    begin
-        t_l_in_ack_o <= '0';  
-        --t_RREADY<='1';
-        wait until rising_edge(t_ACLK) and t_l_in_val_i = '1';
-        t_l_in_ack_o <= '1';
-        write(v_oline,t_l_in_data_i);  
-        writeline(log_writer,v_oline);
-        wait until rising_edge(t_ACLK) and t_l_in_val_i='0';
-        t_l_in_ack_o <= '0';
-    end process;
 
-    -- Read Payload AXI P3
+    -- Read Payload AXI P1
     process
     file txt_reader : text open read_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/input_PAYLOAD_traffic.txt");
     variable v_iline : line;
@@ -211,8 +197,20 @@ architecture arch_tb_master_injection_write of tb_slave_test_read_request is
         end loop;
         wait;
     end process;
+   
+       --Process 2 Exit
+    process
+    variable v_oline:line;
+    file log_writer : text open write_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/output_P2_SLAVE_traffic.txt");
+    begin
+        wait until rising_edge(t_ACLK) and t_ARVALID='1'; 
+        write(v_oline, t_ARADDR);
+        writeline(log_writer, v_oline);
+        wait until  t_ARVALID='0';
+        
+    end process;
     
-    --Read Payload 
+    --Read Payload P3
     process
     file txt_reader : text open read_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/input_PAYLOAD_traffic.txt");
     variable v_iline : line;
@@ -243,17 +241,21 @@ architecture arch_tb_master_injection_write of tb_slave_test_read_request is
         wait;
     end process;
     
-    --Process 4 Exit
+    --Response NoC P4
     process
     variable v_oline:line;
     file log_writer : text open write_mode is ("/home/haas/Documents/Github/XINA-IF/traffic/output_P4_SLAVE_traffic.txt");
     begin
-        wait until rising_edge(t_ACLK) and t_ARVALID='1'; 
-        write(v_oline, t_ARADDR);
-        writeline(log_writer, v_oline);
-        wait until rising_edge(t_ACLK) and t_ARVALID='0';
-        
+        t_l_in_ack_o <= '0';  
+        --t_RREADY<='1';
+        wait until rising_edge(t_ACLK) and t_l_in_val_i = '1';
+        t_l_in_ack_o <= '1';
+        write(v_oline,t_l_in_data_i);  
+        writeline(log_writer,v_oline);
+        wait until rising_edge(t_ACLK) and t_l_in_val_i='0';
+        t_l_in_ack_o <= '0';
     end process;
+
 
 
 end arch_tb_master_injection_write;
