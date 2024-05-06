@@ -161,7 +161,7 @@ architecture arch_tb_master_injection_write of tb_slave_test_read_request is
         while (packet_count < n_packets) loop -- Continue reading until the packet count reaches the limit
     
             t_l_out_val_o <= '1';
-            t_l_out_data_o <= "100000000000000000000000000000000"; -- Header_dest
+            t_l_out_data_o <= "100000000000000010000000000000001"; -- Header_dest
             wait until rising_edge(t_ACLK) and t_l_out_ack_i = '1';
             t_l_out_val_o <= '0';
             wait until rising_edge(t_ACLK) and t_l_out_ack_i = '0';
@@ -207,7 +207,6 @@ architecture arch_tb_master_injection_write of tb_slave_test_read_request is
         write(v_oline, t_ARADDR);
         writeline(log_writer, v_oline);
         wait until  t_ARVALID='0';
-        
     end process;
     
     --Read Payload P3
