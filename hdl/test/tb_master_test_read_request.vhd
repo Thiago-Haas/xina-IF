@@ -153,7 +153,7 @@ begin
     variable temporary_read_value : std_logic_vector(31 downto 0);
     variable packet_count : integer := 0; -- Initialize packet counter
     begin
-        while (packet_count < n_packets) loop -- Continue reading until the packet count reaches the limit
+        while not endfile(txt_reader) loop -- Continue reading until the packet count reaches the limit
             -- Simple read transaction.   
             t_ARVALID <= '1';
             readline(txt_reader, v_ILINE);
@@ -163,7 +163,6 @@ begin
             t_ARLEN <= "00000000";
             
             wait until rising_edge(t_ACLK) and t_ARREADY = '1';
-            --t_ARVALID <= '0';
 
             t_ARADDR <= "0000000000000000" & "0000000000000000" & "0000000000000000" & "0000000000000000";
             t_ARID <= "00000";
@@ -193,7 +192,7 @@ begin
     variable temporary_read_value_P3 : std_logic_vector(31 downto 0);
     variable packet_count : integer := 0; -- Initialize packet counter
     begin
-        while (packet_count < n_packets) loop -- Continue reading until the packet count reaches the limit
+        while not endfile(txt_reader) loop -- Continue reading until the packet count reaches the limit
 
             T_BREADY<='1';
             --t_ARVALID <= '1';
