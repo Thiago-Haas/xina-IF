@@ -1,2 +1,0 @@
-INFO: [VRFC 10-163] Analyzing VHDL file "/home/haas/Documents/Github/XINA-IF/hdl/master/test/injection/tb_master_injection_write.vhd" into library xil_defaultlib
-INFO: [VRFC 10-3107] analyzing entity 'tb_master_injection_write'
