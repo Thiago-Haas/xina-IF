@@ -61,7 +61,7 @@ begin
 
     ---------------------------------------------------------------------------------------------
     -- Output values (NoC).
-    --l_in_val_i <= '1' when (state_w_r = "00" and i_READ_OK_BUFFER = '1') else '0';
-    l_in_val_i <= '1' when (state_w_r = "00" or state_w_r = "10") else '0';
+    l_in_val_i <= '1' when (state_w_r = "00" and i_READ_OK_BUFFER = '1') else '0';
+    --l_in_val_i <= '1' when (state_w_r = "00" or state_w_r = "10") else '0';
 
 end rtl;
