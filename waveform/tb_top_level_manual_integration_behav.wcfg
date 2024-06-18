@@ -1,0 +1,957 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="tb_top_level_manual_integration_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="glbl" />
+            <top_module name="hamming_pkg" />
+            <top_module name="tb_top_level_manual_integration" />
+            <top_module name="tcc_package" />
+            <top_module name="xina_pkg" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="0.000000 us"></ZoomStartTime>
+      <ZoomEndTime time="63.100001 us"></ZoomEndTime>
+      <Cursor1Time time="13.435740 us"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="221"></NameColumnWidth>
+      <ValueColumnWidth column_width="173"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="19" />
+   <wvobject type="logic" fp_name="/tb_top_level_manual_integration/tb_ACLK">
+      <obj_property name="ElementShortName">tb_ACLK</obj_property>
+      <obj_property name="ObjectShortName">tb_ACLK</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top_level_manual_integration/tb_RESET">
+      <obj_property name="ElementShortName">tb_RESET</obj_property>
+      <obj_property name="ObjectShortName">tb_RESET</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top_level_manual_integration/tb_RESETn">
+      <obj_property name="ElementShortName">tb_RESETn</obj_property>
+      <obj_property name="ObjectShortName">tb_RESETn</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top_level_manual_integration/tb_ARESETn">
+      <obj_property name="ElementShortName">tb_ARESETn</obj_property>
+      <obj_property name="ObjectShortName">tb_ARESETn</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider2182" type="divider">
+      <obj_property name="label">State 2</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/AWREADY">
+      <obj_property name="ElementShortName">AWREADY</obj_property>
+      <obj_property name="ObjectShortName">AWREADY</obj_property>
+      <obj_property name="CustomSignalColor">#0000FF</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider2182" type="divider">
+      <obj_property name="label">State 3</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/WREADY">
+      <obj_property name="ElementShortName">WREADY</obj_property>
+      <obj_property name="ObjectShortName">WREADY</obj_property>
+      <obj_property name="CustomSignalColor">#0000FF</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider2182" type="divider">
+      <obj_property name="label">State 4</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/BVALID">
+      <obj_property name="ElementShortName">BVALID</obj_property>
+      <obj_property name="ObjectShortName">BVALID</obj_property>
+      <obj_property name="CustomSignalColor">#0000FF</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider2182" type="divider">
+      <obj_property name="label">State 5</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/ARREADY">
+      <obj_property name="ElementShortName">ARREADY</obj_property>
+      <obj_property name="ObjectShortName">ARREADY</obj_property>
+      <obj_property name="CustomSignalColor">#0000FF</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/RVALID">
+      <obj_property name="ElementShortName">RVALID</obj_property>
+      <obj_property name="ObjectShortName">RVALID</obj_property>
+      <obj_property name="CustomSignalColor">#0000FF</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/RLAST">
+      <obj_property name="ElementShortName">RLAST</obj_property>
+      <obj_property name="ObjectShortName">RLAST</obj_property>
+      <obj_property name="CustomSignalColor">#0000FF</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="group" fp_name="group505">
+      <obj_property name="label">Traffic generator</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/ACLK">
+         <obj_property name="ElementShortName">ACLK</obj_property>
+         <obj_property name="ObjectShortName">ACLK</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/RESET">
+         <obj_property name="ElementShortName">RESET</obj_property>
+         <obj_property name="ObjectShortName">RESET</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/RESETn">
+         <obj_property name="ElementShortName">RESETn</obj_property>
+         <obj_property name="ObjectShortName">RESETn</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/ARESETn">
+         <obj_property name="ElementShortName">ARESETn</obj_property>
+         <obj_property name="ObjectShortName">ARESETn</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/AWVALID">
+         <obj_property name="ElementShortName">AWVALID</obj_property>
+         <obj_property name="ObjectShortName">AWVALID</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/AWREADY">
+         <obj_property name="ElementShortName">AWREADY</obj_property>
+         <obj_property name="ObjectShortName">AWREADY</obj_property>
+         <obj_property name="CustomSignalColor">#0000FF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/AWID">
+         <obj_property name="ElementShortName">AWID[4:0]</obj_property>
+         <obj_property name="ObjectShortName">AWID[4:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/AWADDR">
+         <obj_property name="ElementShortName">AWADDR[63:0]</obj_property>
+         <obj_property name="ObjectShortName">AWADDR[63:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/AWLEN">
+         <obj_property name="ElementShortName">AWLEN[7:0]</obj_property>
+         <obj_property name="ObjectShortName">AWLEN[7:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/AWBURST">
+         <obj_property name="ElementShortName">AWBURST[1:0]</obj_property>
+         <obj_property name="ObjectShortName">AWBURST[1:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/WVALID">
+         <obj_property name="ElementShortName">WVALID</obj_property>
+         <obj_property name="ObjectShortName">WVALID</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/WREADY">
+         <obj_property name="ElementShortName">WREADY</obj_property>
+         <obj_property name="ObjectShortName">WREADY</obj_property>
+         <obj_property name="CustomSignalColor">#0000FF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/WDATA">
+         <obj_property name="ElementShortName">WDATA[31:0]</obj_property>
+         <obj_property name="ObjectShortName">WDATA[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/WLAST">
+         <obj_property name="ElementShortName">WLAST</obj_property>
+         <obj_property name="ObjectShortName">WLAST</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/BVALID">
+         <obj_property name="ElementShortName">BVALID</obj_property>
+         <obj_property name="ObjectShortName">BVALID</obj_property>
+         <obj_property name="CustomSignalColor">#0000FF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/BREADY">
+         <obj_property name="ElementShortName">BREADY</obj_property>
+         <obj_property name="ObjectShortName">BREADY</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/BID">
+         <obj_property name="ElementShortName">BID[4:0]</obj_property>
+         <obj_property name="ObjectShortName">BID[4:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/BRESP">
+         <obj_property name="ElementShortName">BRESP[2:0]</obj_property>
+         <obj_property name="ObjectShortName">BRESP[2:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/ARVALID">
+         <obj_property name="ElementShortName">ARVALID</obj_property>
+         <obj_property name="ObjectShortName">ARVALID</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/ARREADY">
+         <obj_property name="ElementShortName">ARREADY</obj_property>
+         <obj_property name="ObjectShortName">ARREADY</obj_property>
+         <obj_property name="CustomSignalColor">#0000FF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/ARID">
+         <obj_property name="ElementShortName">ARID[4:0]</obj_property>
+         <obj_property name="ObjectShortName">ARID[4:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/ARADDR">
+         <obj_property name="ElementShortName">ARADDR[63:0]</obj_property>
+         <obj_property name="ObjectShortName">ARADDR[63:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/ARLEN">
+         <obj_property name="ElementShortName">ARLEN[7:0]</obj_property>
+         <obj_property name="ObjectShortName">ARLEN[7:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/ARBURST">
+         <obj_property name="ElementShortName">ARBURST[1:0]</obj_property>
+         <obj_property name="ObjectShortName">ARBURST[1:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/RVALID">
+         <obj_property name="ElementShortName">RVALID</obj_property>
+         <obj_property name="ObjectShortName">RVALID</obj_property>
+         <obj_property name="CustomSignalColor">#0000FF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/RREADY">
+         <obj_property name="ElementShortName">RREADY</obj_property>
+         <obj_property name="ObjectShortName">RREADY</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/RDATA">
+         <obj_property name="ElementShortName">RDATA[31:0]</obj_property>
+         <obj_property name="ObjectShortName">RDATA[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/RLAST">
+         <obj_property name="ElementShortName">RLAST</obj_property>
+         <obj_property name="ObjectShortName">RLAST</obj_property>
+         <obj_property name="CustomSignalColor">#0000FF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/RID">
+         <obj_property name="ElementShortName">RID[4:0]</obj_property>
+         <obj_property name="ObjectShortName">RID[4:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/RRESP">
+         <obj_property name="ElementShortName">RRESP[2:0]</obj_property>
+         <obj_property name="ObjectShortName">RRESP[2:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/CORRUPT_PACKET">
+         <obj_property name="ElementShortName">CORRUPT_PACKET</obj_property>
+         <obj_property name="ObjectShortName">CORRUPT_PACKET</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/w_ACLK">
+         <obj_property name="ElementShortName">w_ACLK</obj_property>
+         <obj_property name="ObjectShortName">w_ACLK</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/w_RESETn">
+         <obj_property name="ElementShortName">w_RESETn</obj_property>
+         <obj_property name="ObjectShortName">w_RESETn</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/w_AWVALID">
+         <obj_property name="ElementShortName">w_AWVALID</obj_property>
+         <obj_property name="ObjectShortName">w_AWVALID</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/w_AWID">
+         <obj_property name="ElementShortName">w_AWID[4:0]</obj_property>
+         <obj_property name="ObjectShortName">w_AWID[4:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/w_AWADDR">
+         <obj_property name="ElementShortName">w_AWADDR[63:0]</obj_property>
+         <obj_property name="ObjectShortName">w_AWADDR[63:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/w_AWLEN">
+         <obj_property name="ElementShortName">w_AWLEN[7:0]</obj_property>
+         <obj_property name="ObjectShortName">w_AWLEN[7:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/w_AWBURST">
+         <obj_property name="ElementShortName">w_AWBURST[1:0]</obj_property>
+         <obj_property name="ObjectShortName">w_AWBURST[1:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/w_WVALID">
+         <obj_property name="ElementShortName">w_WVALID</obj_property>
+         <obj_property name="ObjectShortName">w_WVALID</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/w_WDATA">
+         <obj_property name="ElementShortName">w_WDATA[31:0]</obj_property>
+         <obj_property name="ObjectShortName">w_WDATA[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/w_WLAST">
+         <obj_property name="ElementShortName">w_WLAST</obj_property>
+         <obj_property name="ObjectShortName">w_WLAST</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/w_BREADY">
+         <obj_property name="ElementShortName">w_BREADY</obj_property>
+         <obj_property name="ObjectShortName">w_BREADY</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/w_ARVALID">
+         <obj_property name="ElementShortName">w_ARVALID</obj_property>
+         <obj_property name="ObjectShortName">w_ARVALID</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/w_ARID">
+         <obj_property name="ElementShortName">w_ARID[4:0]</obj_property>
+         <obj_property name="ObjectShortName">w_ARID[4:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/w_ARADDR">
+         <obj_property name="ElementShortName">w_ARADDR[63:0]</obj_property>
+         <obj_property name="ObjectShortName">w_ARADDR[63:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/w_ARLEN">
+         <obj_property name="ElementShortName">w_ARLEN[7:0]</obj_property>
+         <obj_property name="ObjectShortName">w_ARLEN[7:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/w_ARBURST">
+         <obj_property name="ElementShortName">w_ARBURST[1:0]</obj_property>
+         <obj_property name="ObjectShortName">w_ARBURST[1:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/w_RVALID">
+         <obj_property name="ElementShortName">w_RVALID</obj_property>
+         <obj_property name="ObjectShortName">w_RVALID</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/w_RREADY">
+         <obj_property name="ElementShortName">w_RREADY</obj_property>
+         <obj_property name="ObjectShortName">w_RREADY</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/current_state">
+         <obj_property name="ElementShortName">current_state</obj_property>
+         <obj_property name="ObjectShortName">current_state</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/next_state">
+         <obj_property name="ElementShortName">next_state</obj_property>
+         <obj_property name="ObjectShortName">next_state</obj_property>
+      </wvobject>
+      <wvobject type="other" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_traffic_generator_for_manual_integration/state_w">
+         <obj_property name="ElementShortName">state_w</obj_property>
+         <obj_property name="ObjectShortName">state_w</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject type="group" fp_name="group635">
+      <obj_property name="label">Top master</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/ACLK">
+         <obj_property name="ElementShortName">ACLK</obj_property>
+         <obj_property name="ObjectShortName">ACLK</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/ARESETn">
+         <obj_property name="ElementShortName">ARESETn</obj_property>
+         <obj_property name="ObjectShortName">ARESETn</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/AWVALID">
+         <obj_property name="ElementShortName">AWVALID</obj_property>
+         <obj_property name="ObjectShortName">AWVALID</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/AWREADY">
+         <obj_property name="ElementShortName">AWREADY</obj_property>
+         <obj_property name="ObjectShortName">AWREADY</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/AWID">
+         <obj_property name="ElementShortName">AWID[4:0]</obj_property>
+         <obj_property name="ObjectShortName">AWID[4:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/AWADDR">
+         <obj_property name="ElementShortName">AWADDR[63:0]</obj_property>
+         <obj_property name="ObjectShortName">AWADDR[63:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/AWLEN">
+         <obj_property name="ElementShortName">AWLEN[7:0]</obj_property>
+         <obj_property name="ObjectShortName">AWLEN[7:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/AWBURST">
+         <obj_property name="ElementShortName">AWBURST[1:0]</obj_property>
+         <obj_property name="ObjectShortName">AWBURST[1:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/WVALID">
+         <obj_property name="ElementShortName">WVALID</obj_property>
+         <obj_property name="ObjectShortName">WVALID</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/WREADY">
+         <obj_property name="ElementShortName">WREADY</obj_property>
+         <obj_property name="ObjectShortName">WREADY</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/WDATA">
+         <obj_property name="ElementShortName">WDATA[31:0]</obj_property>
+         <obj_property name="ObjectShortName">WDATA[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/WLAST">
+         <obj_property name="ElementShortName">WLAST</obj_property>
+         <obj_property name="ObjectShortName">WLAST</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/BVALID">
+         <obj_property name="ElementShortName">BVALID</obj_property>
+         <obj_property name="ObjectShortName">BVALID</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/BREADY">
+         <obj_property name="ElementShortName">BREADY</obj_property>
+         <obj_property name="ObjectShortName">BREADY</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/BID">
+         <obj_property name="ElementShortName">BID[4:0]</obj_property>
+         <obj_property name="ObjectShortName">BID[4:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/BRESP">
+         <obj_property name="ElementShortName">BRESP[2:0]</obj_property>
+         <obj_property name="ObjectShortName">BRESP[2:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/ARVALID">
+         <obj_property name="ElementShortName">ARVALID</obj_property>
+         <obj_property name="ObjectShortName">ARVALID</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/ARREADY">
+         <obj_property name="ElementShortName">ARREADY</obj_property>
+         <obj_property name="ObjectShortName">ARREADY</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/ARID">
+         <obj_property name="ElementShortName">ARID[4:0]</obj_property>
+         <obj_property name="ObjectShortName">ARID[4:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/ARADDR">
+         <obj_property name="ElementShortName">ARADDR[63:0]</obj_property>
+         <obj_property name="ObjectShortName">ARADDR[63:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/ARLEN">
+         <obj_property name="ElementShortName">ARLEN[7:0]</obj_property>
+         <obj_property name="ObjectShortName">ARLEN[7:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/ARBURST">
+         <obj_property name="ElementShortName">ARBURST[1:0]</obj_property>
+         <obj_property name="ObjectShortName">ARBURST[1:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/RVALID">
+         <obj_property name="ElementShortName">RVALID</obj_property>
+         <obj_property name="ObjectShortName">RVALID</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/RREADY">
+         <obj_property name="ElementShortName">RREADY</obj_property>
+         <obj_property name="ObjectShortName">RREADY</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/RDATA">
+         <obj_property name="ElementShortName">RDATA[31:0]</obj_property>
+         <obj_property name="ObjectShortName">RDATA[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/RLAST">
+         <obj_property name="ElementShortName">RLAST</obj_property>
+         <obj_property name="ObjectShortName">RLAST</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/RID">
+         <obj_property name="ElementShortName">RID[4:0]</obj_property>
+         <obj_property name="ObjectShortName">RID[4:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/RRESP">
+         <obj_property name="ElementShortName">RRESP[2:0]</obj_property>
+         <obj_property name="ObjectShortName">RRESP[2:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/CORRUPT_PACKET">
+         <obj_property name="ElementShortName">CORRUPT_PACKET</obj_property>
+         <obj_property name="ObjectShortName">CORRUPT_PACKET</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/l_in_data_i">
+         <obj_property name="ElementShortName">l_in_data_i[32:0]</obj_property>
+         <obj_property name="ObjectShortName">l_in_data_i[32:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/l_in_val_i">
+         <obj_property name="ElementShortName">l_in_val_i</obj_property>
+         <obj_property name="ObjectShortName">l_in_val_i</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/l_in_ack_o">
+         <obj_property name="ElementShortName">l_in_ack_o</obj_property>
+         <obj_property name="ObjectShortName">l_in_ack_o</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/l_out_data_o">
+         <obj_property name="ElementShortName">l_out_data_o[32:0]</obj_property>
+         <obj_property name="ObjectShortName">l_out_data_o[32:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/l_out_val_o">
+         <obj_property name="ElementShortName">l_out_val_o</obj_property>
+         <obj_property name="ObjectShortName">l_out_val_o</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/l_out_ack_i">
+         <obj_property name="ElementShortName">l_out_ack_i</obj_property>
+         <obj_property name="ObjectShortName">l_out_ack_i</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/w_START_SEND_PACKET">
+         <obj_property name="ElementShortName">w_START_SEND_PACKET</obj_property>
+         <obj_property name="ObjectShortName">w_START_SEND_PACKET</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/w_VALID_SEND_DATA">
+         <obj_property name="ElementShortName">w_VALID_SEND_DATA</obj_property>
+         <obj_property name="ObjectShortName">w_VALID_SEND_DATA</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/w_LAST_SEND_DATA">
+         <obj_property name="ElementShortName">w_LAST_SEND_DATA</obj_property>
+         <obj_property name="ObjectShortName">w_LAST_SEND_DATA</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/w_READY_SEND_PACKET">
+         <obj_property name="ElementShortName">w_READY_SEND_PACKET</obj_property>
+         <obj_property name="ObjectShortName">w_READY_SEND_PACKET</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/w_READY_SEND_DATA">
+         <obj_property name="ElementShortName">w_READY_SEND_DATA</obj_property>
+         <obj_property name="ObjectShortName">w_READY_SEND_DATA</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/w_ADDR">
+         <obj_property name="ElementShortName">w_ADDR[63:0]</obj_property>
+         <obj_property name="ObjectShortName">w_ADDR[63:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/w_BURST">
+         <obj_property name="ElementShortName">w_BURST[1:0]</obj_property>
+         <obj_property name="ObjectShortName">w_BURST[1:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/w_LENGTH">
+         <obj_property name="ElementShortName">w_LENGTH[7:0]</obj_property>
+         <obj_property name="ObjectShortName">w_LENGTH[7:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/w_DATA_SEND">
+         <obj_property name="ElementShortName">w_DATA_SEND[31:0]</obj_property>
+         <obj_property name="ObjectShortName">w_DATA_SEND[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/w_OPC_SEND">
+         <obj_property name="ElementShortName">w_OPC_SEND</obj_property>
+         <obj_property name="ObjectShortName">w_OPC_SEND</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/w_ID">
+         <obj_property name="ElementShortName">w_ID[4:0]</obj_property>
+         <obj_property name="ObjectShortName">w_ID[4:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/w_READY_RECEIVE_PACKET">
+         <obj_property name="ElementShortName">w_READY_RECEIVE_PACKET</obj_property>
+         <obj_property name="ObjectShortName">w_READY_RECEIVE_PACKET</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/w_READY_RECEIVE_DATA">
+         <obj_property name="ElementShortName">w_READY_RECEIVE_DATA</obj_property>
+         <obj_property name="ObjectShortName">w_READY_RECEIVE_DATA</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/w_VALID_RECEIVE_DATA">
+         <obj_property name="ElementShortName">w_VALID_RECEIVE_DATA</obj_property>
+         <obj_property name="ObjectShortName">w_VALID_RECEIVE_DATA</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/w_LAST_RECEIVE_DATA">
+         <obj_property name="ElementShortName">w_LAST_RECEIVE_DATA</obj_property>
+         <obj_property name="ObjectShortName">w_LAST_RECEIVE_DATA</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/w_ID_RECEIVE">
+         <obj_property name="ElementShortName">w_ID_RECEIVE[4:0]</obj_property>
+         <obj_property name="ObjectShortName">w_ID_RECEIVE[4:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/w_STATUS_RECEIVE">
+         <obj_property name="ElementShortName">w_STATUS_RECEIVE[2:0]</obj_property>
+         <obj_property name="ObjectShortName">w_STATUS_RECEIVE[2:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/w_OPC_RECEIVE">
+         <obj_property name="ElementShortName">w_OPC_RECEIVE</obj_property>
+         <obj_property name="ObjectShortName">w_OPC_RECEIVE</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/w_DATA_RECEIVE">
+         <obj_property name="ElementShortName">w_DATA_RECEIVE[31:0]</obj_property>
+         <obj_property name="ObjectShortName">w_DATA_RECEIVE[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/w_CORRUPT_RECEIVE">
+         <obj_property name="ElementShortName">w_CORRUPT_RECEIVE</obj_property>
+         <obj_property name="ObjectShortName">w_CORRUPT_RECEIVE</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/p_SRC_X">
+         <obj_property name="ElementShortName">p_SRC_X[15:0]</obj_property>
+         <obj_property name="ObjectShortName">p_SRC_X[15:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/p_SRC_Y">
+         <obj_property name="ElementShortName">p_SRC_Y[15:0]</obj_property>
+         <obj_property name="ObjectShortName">p_SRC_Y[15:0]</obj_property>
+      </wvobject>
+      <wvobject type="other" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/p_BUFFER_DEPTH">
+         <obj_property name="ElementShortName">p_BUFFER_DEPTH</obj_property>
+         <obj_property name="ObjectShortName">p_BUFFER_DEPTH</obj_property>
+      </wvobject>
+      <wvobject type="other" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/p_USE_TMR_PACKETIZER">
+         <obj_property name="ElementShortName">p_USE_TMR_PACKETIZER</obj_property>
+         <obj_property name="ObjectShortName">p_USE_TMR_PACKETIZER</obj_property>
+      </wvobject>
+      <wvobject type="other" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/p_USE_TMR_FLOW">
+         <obj_property name="ElementShortName">p_USE_TMR_FLOW</obj_property>
+         <obj_property name="ObjectShortName">p_USE_TMR_FLOW</obj_property>
+      </wvobject>
+      <wvobject type="other" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/p_USE_TMR_INTEGRITY">
+         <obj_property name="ElementShortName">p_USE_TMR_INTEGRITY</obj_property>
+         <obj_property name="ObjectShortName">p_USE_TMR_INTEGRITY</obj_property>
+      </wvobject>
+      <wvobject type="other" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/p_USE_HAMMING">
+         <obj_property name="ElementShortName">p_USE_HAMMING</obj_property>
+         <obj_property name="ObjectShortName">p_USE_HAMMING</obj_property>
+      </wvobject>
+      <wvobject type="other" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_MASTER/p_USE_INTEGRITY">
+         <obj_property name="ElementShortName">p_USE_INTEGRITY</obj_property>
+         <obj_property name="ObjectShortName">p_USE_INTEGRITY</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject type="group" fp_name="group568">
+      <obj_property name="label">Top slave</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/ACLK">
+         <obj_property name="ElementShortName">ACLK</obj_property>
+         <obj_property name="ObjectShortName">ACLK</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/ARESETn">
+         <obj_property name="ElementShortName">ARESETn</obj_property>
+         <obj_property name="ObjectShortName">ARESETn</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/AWVALID">
+         <obj_property name="ElementShortName">AWVALID</obj_property>
+         <obj_property name="ObjectShortName">AWVALID</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/AWREADY">
+         <obj_property name="ElementShortName">AWREADY</obj_property>
+         <obj_property name="ObjectShortName">AWREADY</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/AWID">
+         <obj_property name="ElementShortName">AWID[4:0]</obj_property>
+         <obj_property name="ObjectShortName">AWID[4:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/AWADDR">
+         <obj_property name="ElementShortName">AWADDR[63:0]</obj_property>
+         <obj_property name="ObjectShortName">AWADDR[63:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/AWLEN">
+         <obj_property name="ElementShortName">AWLEN[7:0]</obj_property>
+         <obj_property name="ObjectShortName">AWLEN[7:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/AWSIZE">
+         <obj_property name="ElementShortName">AWSIZE[2:0]</obj_property>
+         <obj_property name="ObjectShortName">AWSIZE[2:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/AWBURST">
+         <obj_property name="ElementShortName">AWBURST[1:0]</obj_property>
+         <obj_property name="ObjectShortName">AWBURST[1:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/WVALID">
+         <obj_property name="ElementShortName">WVALID</obj_property>
+         <obj_property name="ObjectShortName">WVALID</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/WREADY">
+         <obj_property name="ElementShortName">WREADY</obj_property>
+         <obj_property name="ObjectShortName">WREADY</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/WDATA">
+         <obj_property name="ElementShortName">WDATA[31:0]</obj_property>
+         <obj_property name="ObjectShortName">WDATA[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/WLAST">
+         <obj_property name="ElementShortName">WLAST</obj_property>
+         <obj_property name="ObjectShortName">WLAST</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/BVALID">
+         <obj_property name="ElementShortName">BVALID</obj_property>
+         <obj_property name="ObjectShortName">BVALID</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/BREADY">
+         <obj_property name="ElementShortName">BREADY</obj_property>
+         <obj_property name="ObjectShortName">BREADY</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/BID">
+         <obj_property name="ElementShortName">BID[4:0]</obj_property>
+         <obj_property name="ObjectShortName">BID[4:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/BRESP">
+         <obj_property name="ElementShortName">BRESP[2:0]</obj_property>
+         <obj_property name="ObjectShortName">BRESP[2:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/ARVALID">
+         <obj_property name="ElementShortName">ARVALID</obj_property>
+         <obj_property name="ObjectShortName">ARVALID</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/ARREADY">
+         <obj_property name="ElementShortName">ARREADY</obj_property>
+         <obj_property name="ObjectShortName">ARREADY</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/ARID">
+         <obj_property name="ElementShortName">ARID[4:0]</obj_property>
+         <obj_property name="ObjectShortName">ARID[4:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/ARADDR">
+         <obj_property name="ElementShortName">ARADDR[63:0]</obj_property>
+         <obj_property name="ObjectShortName">ARADDR[63:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/ARLEN">
+         <obj_property name="ElementShortName">ARLEN[7:0]</obj_property>
+         <obj_property name="ObjectShortName">ARLEN[7:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/ARSIZE">
+         <obj_property name="ElementShortName">ARSIZE[2:0]</obj_property>
+         <obj_property name="ObjectShortName">ARSIZE[2:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/ARBURST">
+         <obj_property name="ElementShortName">ARBURST[1:0]</obj_property>
+         <obj_property name="ObjectShortName">ARBURST[1:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/RVALID">
+         <obj_property name="ElementShortName">RVALID</obj_property>
+         <obj_property name="ObjectShortName">RVALID</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/RREADY">
+         <obj_property name="ElementShortName">RREADY</obj_property>
+         <obj_property name="ObjectShortName">RREADY</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/RDATA">
+         <obj_property name="ElementShortName">RDATA[31:0]</obj_property>
+         <obj_property name="ObjectShortName">RDATA[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/RLAST">
+         <obj_property name="ElementShortName">RLAST</obj_property>
+         <obj_property name="ObjectShortName">RLAST</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/RID">
+         <obj_property name="ElementShortName">RID[4:0]</obj_property>
+         <obj_property name="ObjectShortName">RID[4:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/RRESP">
+         <obj_property name="ElementShortName">RRESP[2:0]</obj_property>
+         <obj_property name="ObjectShortName">RRESP[2:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/CORRUPT_PACKET">
+         <obj_property name="ElementShortName">CORRUPT_PACKET</obj_property>
+         <obj_property name="ObjectShortName">CORRUPT_PACKET</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/l_in_data_i">
+         <obj_property name="ElementShortName">l_in_data_i[32:0]</obj_property>
+         <obj_property name="ObjectShortName">l_in_data_i[32:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/l_in_val_i">
+         <obj_property name="ElementShortName">l_in_val_i</obj_property>
+         <obj_property name="ObjectShortName">l_in_val_i</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/l_in_ack_o">
+         <obj_property name="ElementShortName">l_in_ack_o</obj_property>
+         <obj_property name="ObjectShortName">l_in_ack_o</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/l_out_data_o">
+         <obj_property name="ElementShortName">l_out_data_o[32:0]</obj_property>
+         <obj_property name="ObjectShortName">l_out_data_o[32:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/l_out_val_o">
+         <obj_property name="ElementShortName">l_out_val_o</obj_property>
+         <obj_property name="ObjectShortName">l_out_val_o</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/l_out_ack_i">
+         <obj_property name="ElementShortName">l_out_ack_i</obj_property>
+         <obj_property name="ObjectShortName">l_out_ack_i</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/w_VALID_SEND_DATA">
+         <obj_property name="ElementShortName">w_VALID_SEND_DATA</obj_property>
+         <obj_property name="ObjectShortName">w_VALID_SEND_DATA</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/w_LAST_SEND_DATA">
+         <obj_property name="ElementShortName">w_LAST_SEND_DATA</obj_property>
+         <obj_property name="ObjectShortName">w_LAST_SEND_DATA</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/w_READY_SEND_DATA">
+         <obj_property name="ElementShortName">w_READY_SEND_DATA</obj_property>
+         <obj_property name="ObjectShortName">w_READY_SEND_DATA</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/w_DATA_SEND">
+         <obj_property name="ElementShortName">w_DATA_SEND[31:0]</obj_property>
+         <obj_property name="ObjectShortName">w_DATA_SEND[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/w_STATUS_SEND">
+         <obj_property name="ElementShortName">w_STATUS_SEND[2:0]</obj_property>
+         <obj_property name="ObjectShortName">w_STATUS_SEND[2:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/w_READY_RECEIVE_PACKET">
+         <obj_property name="ElementShortName">w_READY_RECEIVE_PACKET</obj_property>
+         <obj_property name="ObjectShortName">w_READY_RECEIVE_PACKET</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/w_READY_RECEIVE_DATA">
+         <obj_property name="ElementShortName">w_READY_RECEIVE_DATA</obj_property>
+         <obj_property name="ObjectShortName">w_READY_RECEIVE_DATA</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/w_VALID_RECEIVE_PACKET">
+         <obj_property name="ElementShortName">w_VALID_RECEIVE_PACKET</obj_property>
+         <obj_property name="ObjectShortName">w_VALID_RECEIVE_PACKET</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/w_VALID_RECEIVE_DATA">
+         <obj_property name="ElementShortName">w_VALID_RECEIVE_DATA</obj_property>
+         <obj_property name="ObjectShortName">w_VALID_RECEIVE_DATA</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/w_LAST_RECEIVE_DATA">
+         <obj_property name="ElementShortName">w_LAST_RECEIVE_DATA</obj_property>
+         <obj_property name="ObjectShortName">w_LAST_RECEIVE_DATA</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/w_ID_RECEIVE">
+         <obj_property name="ElementShortName">w_ID_RECEIVE[4:0]</obj_property>
+         <obj_property name="ObjectShortName">w_ID_RECEIVE[4:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/w_LEN_RECEIVE">
+         <obj_property name="ElementShortName">w_LEN_RECEIVE[7:0]</obj_property>
+         <obj_property name="ObjectShortName">w_LEN_RECEIVE[7:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/w_BURST_RECEIVE">
+         <obj_property name="ElementShortName">w_BURST_RECEIVE[1:0]</obj_property>
+         <obj_property name="ObjectShortName">w_BURST_RECEIVE[1:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/w_OPC_RECEIVE">
+         <obj_property name="ElementShortName">w_OPC_RECEIVE</obj_property>
+         <obj_property name="ObjectShortName">w_OPC_RECEIVE</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/w_ADDRESS_RECEIVE">
+         <obj_property name="ElementShortName">w_ADDRESS_RECEIVE[31:0]</obj_property>
+         <obj_property name="ObjectShortName">w_ADDRESS_RECEIVE[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/w_DATA_RECEIVE">
+         <obj_property name="ElementShortName">w_DATA_RECEIVE[31:0]</obj_property>
+         <obj_property name="ObjectShortName">w_DATA_RECEIVE[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/w_CORRUPT_RECEIVE">
+         <obj_property name="ElementShortName">w_CORRUPT_RECEIVE</obj_property>
+         <obj_property name="ObjectShortName">w_CORRUPT_RECEIVE</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/p_SRC_X">
+         <obj_property name="ElementShortName">p_SRC_X[15:0]</obj_property>
+         <obj_property name="ObjectShortName">p_SRC_X[15:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/p_SRC_Y">
+         <obj_property name="ElementShortName">p_SRC_Y[15:0]</obj_property>
+         <obj_property name="ObjectShortName">p_SRC_Y[15:0]</obj_property>
+      </wvobject>
+      <wvobject type="other" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/p_BUFFER_DEPTH">
+         <obj_property name="ElementShortName">p_BUFFER_DEPTH</obj_property>
+         <obj_property name="ObjectShortName">p_BUFFER_DEPTH</obj_property>
+      </wvobject>
+      <wvobject type="other" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/p_USE_TMR_PACKETIZER">
+         <obj_property name="ElementShortName">p_USE_TMR_PACKETIZER</obj_property>
+         <obj_property name="ObjectShortName">p_USE_TMR_PACKETIZER</obj_property>
+      </wvobject>
+      <wvobject type="other" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/p_USE_TMR_FLOW">
+         <obj_property name="ElementShortName">p_USE_TMR_FLOW</obj_property>
+         <obj_property name="ObjectShortName">p_USE_TMR_FLOW</obj_property>
+      </wvobject>
+      <wvobject type="other" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/p_USE_TMR_INTEGRITY">
+         <obj_property name="ElementShortName">p_USE_TMR_INTEGRITY</obj_property>
+         <obj_property name="ObjectShortName">p_USE_TMR_INTEGRITY</obj_property>
+      </wvobject>
+      <wvobject type="other" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/p_USE_HAMMING">
+         <obj_property name="ElementShortName">p_USE_HAMMING</obj_property>
+         <obj_property name="ObjectShortName">p_USE_HAMMING</obj_property>
+      </wvobject>
+      <wvobject type="other" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_TOP_SLAVE/p_USE_INTEGRITY">
+         <obj_property name="ElementShortName">p_USE_INTEGRITY</obj_property>
+         <obj_property name="ObjectShortName">p_USE_INTEGRITY</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject type="group" fp_name="group664">
+      <obj_property name="label">Top XINA</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/clk_i">
+         <obj_property name="ElementShortName">clk_i</obj_property>
+         <obj_property name="ObjectShortName">clk_i</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/rst_i">
+         <obj_property name="ElementShortName">rst_i</obj_property>
+         <obj_property name="ObjectShortName">rst_i</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/l_in_data_i">
+         <obj_property name="ElementShortName">l_in_data_i[1:0,0:0][32:0]</obj_property>
+         <obj_property name="ObjectShortName">l_in_data_i[1:0,0:0][32:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/l_in_val_i">
+         <obj_property name="ElementShortName">l_in_val_i[1:0,0:0]</obj_property>
+         <obj_property name="ObjectShortName">l_in_val_i[1:0,0:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/l_in_ack_o">
+         <obj_property name="ElementShortName">l_in_ack_o[1:0,0:0]</obj_property>
+         <obj_property name="ObjectShortName">l_in_ack_o[1:0,0:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/l_out_data_o">
+         <obj_property name="ElementShortName">l_out_data_o[1:0,0:0][32:0]</obj_property>
+         <obj_property name="ObjectShortName">l_out_data_o[1:0,0:0][32:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/l_out_val_o">
+         <obj_property name="ElementShortName">l_out_val_o[1:0,0:0]</obj_property>
+         <obj_property name="ObjectShortName">l_out_val_o[1:0,0:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/l_out_ack_i">
+         <obj_property name="ElementShortName">l_out_ack_i[1:0,0:0]</obj_property>
+         <obj_property name="ObjectShortName">l_out_ack_i[1:0,0:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/x_in_data_w">
+         <obj_property name="ElementShortName">x_in_data_w[2:0,0:0][32:0]</obj_property>
+         <obj_property name="ObjectShortName">x_in_data_w[2:0,0:0][32:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/x_in_val_w">
+         <obj_property name="ElementShortName">x_in_val_w[2:0,0:0]</obj_property>
+         <obj_property name="ObjectShortName">x_in_val_w[2:0,0:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/x_in_ack_w">
+         <obj_property name="ElementShortName">x_in_ack_w[2:0,0:0]</obj_property>
+         <obj_property name="ObjectShortName">x_in_ack_w[2:0,0:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/x_out_data_w">
+         <obj_property name="ElementShortName">x_out_data_w[2:0,0:0][32:0]</obj_property>
+         <obj_property name="ObjectShortName">x_out_data_w[2:0,0:0][32:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/x_out_val_w">
+         <obj_property name="ElementShortName">x_out_val_w[2:0,0:0]</obj_property>
+         <obj_property name="ObjectShortName">x_out_val_w[2:0,0:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/x_out_ack_w">
+         <obj_property name="ElementShortName">x_out_ack_w[2:0,0:0]</obj_property>
+         <obj_property name="ObjectShortName">x_out_ack_w[2:0,0:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/y_in_data_w">
+         <obj_property name="ElementShortName">y_in_data_w[1:0,1:0][32:0]</obj_property>
+         <obj_property name="ObjectShortName">y_in_data_w[1:0,1:0][32:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/y_in_val_w">
+         <obj_property name="ElementShortName">y_in_val_w[1:0,1:0]</obj_property>
+         <obj_property name="ObjectShortName">y_in_val_w[1:0,1:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/y_in_ack_w">
+         <obj_property name="ElementShortName">y_in_ack_w[1:0,1:0]</obj_property>
+         <obj_property name="ObjectShortName">y_in_ack_w[1:0,1:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/y_out_data_w">
+         <obj_property name="ElementShortName">y_out_data_w[1:0,1:0][32:0]</obj_property>
+         <obj_property name="ObjectShortName">y_out_data_w[1:0,1:0][32:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/y_out_val_w">
+         <obj_property name="ElementShortName">y_out_val_w[1:0,1:0]</obj_property>
+         <obj_property name="ObjectShortName">y_out_val_w[1:0,1:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/y_out_ack_w">
+         <obj_property name="ElementShortName">y_out_ack_w[1:0,1:0]</obj_property>
+         <obj_property name="ObjectShortName">y_out_ack_w[1:0,1:0]</obj_property>
+      </wvobject>
+      <wvobject type="other" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/rows_p">
+         <obj_property name="ElementShortName">rows_p</obj_property>
+         <obj_property name="ObjectShortName">rows_p</obj_property>
+      </wvobject>
+      <wvobject type="other" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/cols_p">
+         <obj_property name="ElementShortName">cols_p</obj_property>
+         <obj_property name="ObjectShortName">cols_p</obj_property>
+      </wvobject>
+      <wvobject type="other" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/flow_mode_p">
+         <obj_property name="ElementShortName">flow_mode_p</obj_property>
+         <obj_property name="ObjectShortName">flow_mode_p</obj_property>
+      </wvobject>
+      <wvobject type="other" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/routing_mode_p">
+         <obj_property name="ElementShortName">routing_mode_p</obj_property>
+         <obj_property name="ObjectShortName">routing_mode_p</obj_property>
+      </wvobject>
+      <wvobject type="other" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/arbitration_mode_p">
+         <obj_property name="ElementShortName">arbitration_mode_p</obj_property>
+         <obj_property name="ObjectShortName">arbitration_mode_p</obj_property>
+      </wvobject>
+      <wvobject type="other" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/buffer_mode_p">
+         <obj_property name="ElementShortName">buffer_mode_p</obj_property>
+         <obj_property name="ObjectShortName">buffer_mode_p</obj_property>
+      </wvobject>
+      <wvobject type="other" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/buffer_depth_p">
+         <obj_property name="ElementShortName">buffer_depth_p</obj_property>
+         <obj_property name="ObjectShortName">buffer_depth_p</obj_property>
+      </wvobject>
+      <wvobject type="other" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_XINA_NETWORK/data_width_p">
+         <obj_property name="ElementShortName">data_width_p</obj_property>
+         <obj_property name="ObjectShortName">data_width_p</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject type="group" fp_name="group571">
+      <obj_property name="label">Adder</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_ADDER/adder_full_v1_0_S00_AXI_inst/adder_inst/i_A">
+         <obj_property name="ElementShortName">i_A[31:0]</obj_property>
+         <obj_property name="ObjectShortName">i_A[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top_level_manual_integration/u_top_level_manual_integration/u_manual_integration_ccsds/u_ADDER/adder_full_v1_0_S00_AXI_inst/adder_inst/o_ADD">
+         <obj_property name="ElementShortName">o_ADD[31:0]</obj_property>
+         <obj_property name="ObjectShortName">o_ADD[31:0]</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      </wvobject>
+   </wvobject>
+</wave_config>
