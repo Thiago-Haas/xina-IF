@@ -59,7 +59,7 @@ begin
 
     ---------------------------------------------------------------------------------------------
     -- Output values (NoC).
-    --l_out_ack_i <= '1' when (state_w_r = "10") else '0';
-    l_out_ack_i <= '1' when (state_w_r = "01" or state_w_r = "10") else '0';
+    l_out_ack_i <= '1' when (state_w_r = "10") else '0';
+    --l_out_ack_i <= '1' when (state_w_r = "01" or state_w_r = "10") else '0';
 
 end rtl;
