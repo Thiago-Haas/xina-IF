@@ -14,7 +14,7 @@ entity manual_integration_v1_0_S00_AXI is
         -- Width of S_AXI data bus
         C_S_AXI_DATA_WIDTH    : integer    := 32;
         -- Width of S_AXI address bus
-        C_S_AXI_ADDR_WIDTH    : integer    := 6;
+        C_S_AXI_ADDR_WIDTH    : integer    := 64;
         -- Width of optional user defined signal in write address channel
         C_S_AXI_AWUSER_WIDTH    : integer    := 0;
         -- Width of optional user defined signal in read address channel
@@ -227,11 +227,11 @@ architecture arch_imp of manual_integration_v1_0_S00_AXI is
     signal mem_byte_index : integer;
     type BYTE_RAM_TYPE is array (0 to 15) of std_logic_vector(7 downto 0);
 
-    -- signal w_adder_out : std_logic_vector(31 downto 0);
-    -- component adder is
-    -- port ( i_A   : in std_logic_vector(31 downto 0);
-    --        o_ADD : out std_logic_vector(31 downto 0));
-    -- end component;
+     signal w_adder_out : std_logic_vector(31 downto 0);
+     component adder is
+     port ( i_A   : in std_logic_vector(31 downto 0);
+            o_ADD : out std_logic_vector(31 downto 0));
+     end component;
 
 begin
     -- I/O Connections assignments
@@ -545,10 +545,10 @@ begin
       end if;
     end process;
 
-    -- Add user logic here
-    -- adder_inst : adder
-    -- port map ( i_A  => mem_data_out(0),
-    --           o_ADD => w_adder_out);
-    -- User logic ends
+     Add user logic here
+     adder_inst : adder
+     port map ( i_A  => mem_data_out(0),
+               o_ADD => w_adder_out);
+     User logic ends
 
 end arch_imp;
