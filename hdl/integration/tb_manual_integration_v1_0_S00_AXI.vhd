@@ -186,7 +186,7 @@ begin
     wait for 20 ns;
 
     -- Write transaction
-    S_AXI_AWADDR  <= "001100"; -- Address to write (6-bit binary)
+    S_AXI_AWADDR  <= x"0000000040000000"; -- Address to write (6-bit binary)
     S_AXI_AWVALID <= '1';
     S_AXI_WDATA   <= x"12345678"; -- Data to write
     S_AXI_WVALID  <= '1';
@@ -203,7 +203,7 @@ begin
     S_AXI_BREADY <= '0';
 
     -- Read transaction
-    S_AXI_ARADDR  <= "001100"; -- Address to read (6-bit binary)
+    S_AXI_ARADDR  <= x"0000000040000000"; -- Address to read (6-bit binary)
     S_AXI_ARVALID <= '1';
     wait until S_AXI_ARREADY = '1';
     S_AXI_ARVALID <= '0';
