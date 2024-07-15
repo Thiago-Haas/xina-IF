@@ -11,7 +11,7 @@ architecture tb of tb_manual_integration_v1_0_S00_AXI is
         generic (
             C_S_AXI_ID_WIDTH    : integer    := 1;
             C_S_AXI_DATA_WIDTH  : integer    := 32;
-            C_S_AXI_ADDR_WIDTH  : integer    := 6;
+            C_S_AXI_ADDR_WIDTH  : integer    := 64;
             C_S_AXI_AWUSER_WIDTH: integer    := 0;
             C_S_AXI_ARUSER_WIDTH: integer    := 0;
             C_S_AXI_WUSER_WIDTH : integer    := 0;
@@ -71,38 +71,38 @@ architecture tb of tb_manual_integration_v1_0_S00_AXI is
     -- Signals for the AXI4 interface
     signal S_AXI_ACLK    : std_logic := '0';
     signal S_AXI_ARESETN : std_logic := '1';
-    signal S_AXI_AWID    : std_logic_vector(0 downto 0);
-    signal S_AXI_AWADDR  : std_logic_vector(5 downto 0); -- Correct width
-    signal S_AXI_AWLEN   : std_logic_vector(7 downto 0);
-    signal S_AXI_AWSIZE  : std_logic_vector(2 downto 0);
-    signal S_AXI_AWBURST : std_logic_vector(1 downto 0);
-    signal S_AXI_AWLOCK  : std_logic;
-    signal S_AXI_AWCACHE : std_logic_vector(3 downto 0);
-    signal S_AXI_AWPROT  : std_logic_vector(2 downto 0);
-    signal S_AXI_AWQOS   : std_logic_vector(3 downto 0);
-    signal S_AXI_AWREGION: std_logic_vector(3 downto 0);
-    signal S_AXI_AWVALID : std_logic;
+    signal S_AXI_AWID    : std_logic_vector(0 downto 0) := "0";
+    signal S_AXI_AWADDR  : std_logic_vector(63 downto 0) := "0000000000000000000000000000000000000000000000000000000000000000";
+    signal S_AXI_AWLEN   : std_logic_vector(7 downto 0) := "00000000";
+    signal S_AXI_AWSIZE  : std_logic_vector(2 downto 0) := "000";
+    signal S_AXI_AWBURST : std_logic_vector(1 downto 0) := "00";
+    signal S_AXI_AWLOCK  : std_logic := '0';
+    signal S_AXI_AWCACHE : std_logic_vector(3 downto 0) := "0000";
+    signal S_AXI_AWPROT  : std_logic_vector(2 downto 0) := "000";
+    signal S_AXI_AWQOS   : std_logic_vector(3 downto 0) := "0000";
+    signal S_AXI_AWREGION: std_logic_vector(3 downto 0) := "0000";
+    signal S_AXI_AWVALID : std_logic := '0';
     signal S_AXI_AWREADY : std_logic;
-    signal S_AXI_WDATA   : std_logic_vector(31 downto 0);
-    signal S_AXI_WSTRB   : std_logic_vector(3 downto 0) := (others => '1');
-    signal S_AXI_WLAST   : std_logic;
-    signal S_AXI_WVALID  : std_logic;
+    signal S_AXI_WDATA   : std_logic_vector(31 downto 0) := x"00000000";
+    signal S_AXI_WSTRB   : std_logic_vector(3 downto 0) := "1111";
+    signal S_AXI_WLAST   : std_logic := '0';
+    signal S_AXI_WVALID  : std_logic := '0';
     signal S_AXI_WREADY  : std_logic;
     signal S_AXI_BID     : std_logic_vector(0 downto 0);
     signal S_AXI_BRESP   : std_logic_vector(1 downto 0);
     signal S_AXI_BVALID  : std_logic;
     signal S_AXI_BREADY  : std_logic := '0';
-    signal S_AXI_ARID    : std_logic_vector(0 downto 0);
-    signal S_AXI_ARADDR  : std_logic_vector(5 downto 0); -- Correct width
-    signal S_AXI_ARLEN   : std_logic_vector(7 downto 0);
-    signal S_AXI_ARSIZE  : std_logic_vector(2 downto 0);
-    signal S_AXI_ARBURST : std_logic_vector(1 downto 0);
-    signal S_AXI_ARLOCK  : std_logic;
-    signal S_AXI_ARCACHE : std_logic_vector(3 downto 0);
-    signal S_AXI_ARPROT  : std_logic_vector(2 downto 0);
-    signal S_AXI_ARQOS   : std_logic_vector(3 downto 0);
-    signal S_AXI_ARREGION: std_logic_vector(3 downto 0);
-    signal S_AXI_ARVALID : std_logic;
+    signal S_AXI_ARID    : std_logic_vector(0 downto 0) := "0";
+    signal S_AXI_ARADDR  : std_logic_vector(63 downto 0) := "0000000000000000000000000000000000000000000000000000000000000000";
+    signal S_AXI_ARLEN   : std_logic_vector(7 downto 0) := "00000000";
+    signal S_AXI_ARSIZE  : std_logic_vector(2 downto 0) := "000";
+    signal S_AXI_ARBURST : std_logic_vector(1 downto 0) := "00";
+    signal S_AXI_ARLOCK  : std_logic := '0';
+    signal S_AXI_ARCACHE : std_logic_vector(3 downto 0) := "0000";
+    signal S_AXI_ARPROT  : std_logic_vector(2 downto 0) := "000";
+    signal S_AXI_ARQOS   : std_logic_vector(3 downto 0) := "0000";
+    signal S_AXI_ARREGION: std_logic_vector(3 downto 0) := "0000";
+    signal S_AXI_ARVALID : std_logic := '0';
     signal S_AXI_ARREADY : std_logic;
     signal S_AXI_RID     : std_logic_vector(0 downto 0);
     signal S_AXI_RDATA   : std_logic_vector(31 downto 0);
@@ -175,7 +175,7 @@ begin
         S_AXI_ACLK <= '1';
         wait for CLK_PERIOD/2;
     end process;
-
+    
 -- Stimulus process
 stim_proc: process
 begin
@@ -217,6 +217,5 @@ begin
     -- Stop simulation
     wait;
 end process;
-
 
 end tb;
