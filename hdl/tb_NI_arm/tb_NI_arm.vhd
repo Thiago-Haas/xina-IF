@@ -84,7 +84,7 @@ architecture tb of tb_NI_arm is
     -- Signals for the AXI4 interface
     signal S_AXI_ACLK    : std_logic := '0'; -- AXI clock signal
     signal S_AXI_ARESETN : std_logic := '1'; -- AXI reset signal, active low
-    signal S_AXI_AWID    : std_logic_vector(0 downto 0) := "0"; -- Write address ID
+    signal S_AXI_AWID    : std_logic_vector(4 downto 0) := "00000"; -- Write address ID
     signal S_AXI_AWADDR  : std_logic_vector(63 downto 0) := "0000000000000000000000000000000000000000000000000000000000000000"; -- Write address
     signal S_AXI_AWLEN   : std_logic_vector(7 downto 0) := "00000000"; -- Burst length (number of data transfers)
     signal S_AXI_AWSIZE  : std_logic_vector(2 downto 0) := "000"; -- Burst size (number of bytes per transfer)
@@ -101,11 +101,11 @@ architecture tb of tb_NI_arm is
     signal S_AXI_WLAST   : std_logic := '0'; -- Write last (indicates the last data transfer in a burst)
     signal S_AXI_WVALID  : std_logic := '0'; -- Write valid
     signal S_AXI_WREADY  : std_logic; -- Write ready
-    signal S_AXI_BID     : std_logic_vector(0 downto 0); -- Write response ID
+    signal S_AXI_BID     : std_logic_vector(4 downto 0); -- Write response ID
     signal S_AXI_BRESP   : std_logic_vector(1 downto 0); -- Write response (OKAY, EXOKAY, SLVERR, DECERR)
     signal S_AXI_BVALID  : std_logic; -- Write response valid
     signal S_AXI_BREADY  : std_logic := '0'; -- Write response ready
-    signal S_AXI_ARID    : std_logic_vector(0 downto 0) := "0"; -- Read address ID
+    signal S_AXI_ARID    : std_logic_vector(4 downto 0) := "00000"; -- Read address ID
     signal S_AXI_ARADDR  : std_logic_vector(63 downto 0) := "0000000000000000000000000000000000000000000000000000000000000000"; -- Read address
     signal S_AXI_ARLEN   : std_logic_vector(7 downto 0) := "00000000"; -- Burst length (number of data transfers)
     signal S_AXI_ARSIZE  : std_logic_vector(2 downto 0) := "000"; -- Burst size (number of bytes per transfer)
@@ -117,7 +117,7 @@ architecture tb of tb_NI_arm is
     signal S_AXI_ARREGION: std_logic_vector(3 downto 0) := "0000"; -- Region identifier
     signal S_AXI_ARVALID : std_logic := '0'; -- Read address valid
     signal S_AXI_ARREADY : std_logic; -- Read address ready
-    signal S_AXI_RID     : std_logic_vector(0 downto 0); -- Read ID
+    signal S_AXI_RID     : std_logic_vector(4 downto 0); -- Read ID
     signal S_AXI_RDATA   : std_logic_vector(31 downto 0); -- Read data
     signal S_AXI_RRESP   : std_logic_vector(1 downto 0); -- Read response (OKAY, EXOKAY, SLVERR, DECERR)
     signal S_AXI_RLAST   : std_logic; -- Read last (indicates the last data transfer in a burst)
