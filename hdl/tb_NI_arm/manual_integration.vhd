@@ -12,6 +12,7 @@ entity manual_integration is
        c_AXI_ID_WIDTH  : natural := 5;
        c_AXI_RESP_WIDTH: natural := 3;
        c_AXI_ADDR_WIDTH: natural := 64
+       
     );
     port(
         -- AMBA-AXI 5 signals.

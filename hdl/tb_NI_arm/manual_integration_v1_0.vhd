@@ -4,14 +4,14 @@ use ieee.numeric_std.all;
 
 entity manual_integration_v1_0 is
     generic (
-        C_S00_AXI_ID_WIDTH     : integer;
-        C_S00_AXI_DATA_WIDTH   : integer;
-        C_S00_AXI_ADDR_WIDTH   : integer;
-        C_S00_AXI_AWUSER_WIDTH : integer;
-        C_S00_AXI_ARUSER_WIDTH : integer;
-        C_S00_AXI_WUSER_WIDTH  : integer;
-        C_S00_AXI_RUSER_WIDTH  : integer;
-        C_S00_AXI_BUSER_WIDTH  : integer
+        C_S00_AXI_ID_WIDTH     : integer := 5;
+        C_S00_AXI_DATA_WIDTH   : integer := 32;
+        C_S00_AXI_ADDR_WIDTH   : integer := 64;
+        C_S00_AXI_AWUSER_WIDTH : integer := 0;
+        C_S00_AXI_ARUSER_WIDTH : integer := 0;
+        C_S00_AXI_WUSER_WIDTH  : integer := 0;
+        C_S00_AXI_RUSER_WIDTH  : integer := 0;
+        C_S00_AXI_BUSER_WIDTH  : integer := 0
     );
     port (
         -- Ports of Axi Slave Bus Interface S00_AXI
@@ -236,7 +236,7 @@ manual_integration_v1_0_S00_AXI_inst : manual_integration_v1_0_S00_AXI
     generic map (
       c_AXI_DATA_WIDTH => C_S00_AXI_DATA_WIDTH,
       c_AXI_ID_WIDTH   => C_S00_AXI_ID_WIDTH,
-      c_AXI_RESP_WIDTH => 2,
+      c_AXI_RESP_WIDTH => 3,
       c_AXI_ADDR_WIDTH => C_S00_AXI_ADDR_WIDTH
     )
     port map (

@@ -11,7 +11,7 @@ architecture tb of tb_NI_arm is
     -- Component declaration for the Unit Under Test (UUT)
     component manual_integration_v1_0 is
         generic (
-		  C_S_AXI_ID_WIDTH	: integer	:= 1;
+		  C_S_AXI_ID_WIDTH	: integer	:= 5;
 		  C_S_AXI_DATA_WIDTH	: integer	:= 32;
 		  C_S_AXI_ADDR_WIDTH	: integer	:= 64;
 		  C_S_AXI_AWUSER_WIDTH	: integer	:= 0;
