@@ -187,56 +187,79 @@ begin
         wait for CLK_PERIOD/2;
     end process;
     
--- Stimulus process
-stim_proc: process
-begin
-    -- Reset the system
-    S_AXI_ARESETN <= '0';
-    wait for 20 ns;
-    S_AXI_ARESETN <= '1';
-    wait for 20 ns;
+    -- Stimulus process
+    stim_proc: process
+    begin
+        -- Reset the system
+        S_AXI_ARESETN <= '0';
+        wait for 20 ns;
+        S_AXI_ARESETN <= '1';
+        wait for 20 ns;
+        
+        -- Write Address handshake
+        S_AXI_AWADDR  <= "000000";
+        S_AXI_AWVALID <= '1';
+        wait until rising_edge(S_AXI_ACLK) and S_AXI_AWREADY = '1';
+        S_AXI_AWVALID <= '0';
+        
+        -- Data transfer handshake
+        S_AXI_WDATA   <= x"12345678"; -- Data to write
+        S_AXI_WVALID  <= '1';
+        S_AXI_WLAST   <= '1';
+        wait until rising_edge(S_AXI_ACLK) and S_AXI_WREADY = '1';
+        S_AXI_WVALID  <= '0';
+        S_AXI_WLAST   <= '0';
+        
+        -- Write response handshake
+        S_AXI_BREADY <= '1';
+        wait until rising_edge(S_AXI_ACLK) and S_AXI_BVALID = '1';
+        S_AXI_BREADY <= '0';
+        
+        wait for 100 ns;
+        -- Read address handshake 
+        S_AXI_ARADDR <= "000000";
+        S_AXI_ARVALID <= '1';
+        wait until rising_edge(S_AXI_ACLK) and S_AXI_ARREADY = '1';
+        S_AXI_ARVALID <= '0';
+        
+        -- Read data handshake
+        S_AXI_RREADY <= '1';
+        wait until rising_edge(S_AXI_ACLK) and S_AXI_RVALID = '1';
+        assert S_AXI_RDATA = x"12345678" report "Wrong read data!" severity error;
+        S_AXI_RREADY <= '0';
+        
 
-    -- Write transaction
-    S_AXI_AWADDR  <= "000000"; -- 6-bit address
-    S_AXI_AWVALID <= '1';
-    S_AXI_WDATA   <= x"12345678"; 
-    S_AXI_WSTRB   <= "1111"; -- Byte enables
-    S_AXI_WLAST   <= '1';
-    
-    -- Wait for address ready
-    wait until S_AXI_AWREADY = '1';
-    S_AXI_AWVALID <= '0';
+--        -- Write transaction
+--        S_AXI_AWADDR  <= "000000"; -- Address to write
+--        S_AXI_AWVALID <= '1';
+--        S_AXI_WDATA   <= x"12345678"; -- Data to write
+--        S_AXI_WVALID  <= '1';
+--        S_AXI_WLAST   <= '1';
+--        wait until S_AXI_AWREADY = '1';
+--        S_AXI_AWVALID <= '0';
+--        wait until S_AXI_WREADY = '1';
+--        S_AXI_WVALID  <= '0';
 
-    -- Insert a small delay before asserting WVALID
-    wait for 10 ns;
+--        -- Check write response
+--        wait until S_AXI_BVALID = '1';
+--        S_AXI_BREADY <= '1';
+--        wait for 10 ns;
+--        S_AXI_BREADY <= '0';
 
-    S_AXI_WVALID  <= '1';
-    wait until S_AXI_WREADY = '1';
-    S_AXI_WVALID  <= '0';
+--        -- Read transaction
+--        S_AXI_ARADDR  <= "000000"; -- Address to read
+--        S_AXI_ARVALID <= '1';
+--        wait until S_AXI_ARREADY = '1';
+--        S_AXI_ARVALID <= '0';
 
-    -- Check write response
-    wait until S_AXI_BVALID = '1';
-    S_AXI_BREADY <= '1';
-    wait until S_AXI_BVALID = '0'; -- Ensure the slave deasserts BVALID before proceeding
-    S_AXI_BREADY <= '0';
+--        -- Check read data
+--        wait until S_AXI_RVALID = '1';
+--        S_AXI_RREADY <= '1';
+--        wait for 10 ns;
+--        S_AXI_RREADY <= '0';
 
-    -- Read transaction
-    S_AXI_ARADDR  <= "000000"; -- 6-bit address
-    S_AXI_ARVALID <= '1';
-    wait until S_AXI_ARREADY = '1';
-    S_AXI_ARVALID <= '0';
-
-    -- Check read data
-    wait until S_AXI_RVALID = '1';
-    S_AXI_RREADY <= '1';
-    wait for 10 ns;
-    S_AXI_RREADY <= '0';
-
-    -- Stop simulation
-    wait;
-end process;
-
-
-
+        -- Stop simulation
+        wait;
+    end process;
 
 end tb;
