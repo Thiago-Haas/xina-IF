@@ -227,36 +227,6 @@ begin
         wait until rising_edge(S_AXI_ACLK) and S_AXI_RVALID = '1';
         assert S_AXI_RDATA = x"12345678" report "Wrong read data!" severity error;
         S_AXI_RREADY <= '0';
-        
-
---        -- Write transaction
---        S_AXI_AWADDR  <= "000000"; -- Address to write
---        S_AXI_AWVALID <= '1';
---        S_AXI_WDATA   <= x"12345678"; -- Data to write
---        S_AXI_WVALID  <= '1';
---        S_AXI_WLAST   <= '1';
---        wait until S_AXI_AWREADY = '1';
---        S_AXI_AWVALID <= '0';
---        wait until S_AXI_WREADY = '1';
---        S_AXI_WVALID  <= '0';
-
---        -- Check write response
---        wait until S_AXI_BVALID = '1';
---        S_AXI_BREADY <= '1';
---        wait for 10 ns;
---        S_AXI_BREADY <= '0';
-
---        -- Read transaction
---        S_AXI_ARADDR  <= "000000"; -- Address to read
---        S_AXI_ARVALID <= '1';
---        wait until S_AXI_ARREADY = '1';
---        S_AXI_ARVALID <= '0';
-
---        -- Check read data
---        wait until S_AXI_RVALID = '1';
---        S_AXI_RREADY <= '1';
---        wait for 10 ns;
---        S_AXI_RREADY <= '0';
 
         -- Stop simulation
         wait;
