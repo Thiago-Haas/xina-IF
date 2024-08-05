@@ -545,10 +545,10 @@ begin
       end if;
     end process;
 
-     Add user logic here
+     --Add user logic here
      adder_inst : adder
      port map ( i_A  => mem_data_out(0),
                o_ADD => w_adder_out);
-     User logic ends
+     --User logic ends
 
 end arch_imp;
