@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity manual_integration_v1_0_S00_AXI is
+entity adder_v1_0_S00_AXI is
     generic (
         -- Users to add parameters here
 
@@ -163,9 +163,9 @@ entity manual_integration_v1_0_S00_AXI is
     -- accept the read data and response information.
         S_AXI_RREADY    : in std_logic
     );
-end manual_integration_v1_0_S00_AXI;
+end adder_v1_0_S00_AXI;
 
-architecture arch_imp of manual_integration_v1_0_S00_AXI is
+architecture arch_imp of adder_v1_0_S00_AXI is
 
     -- AXI4FULL signals
     signal axi_awaddr    : std_logic_vector(C_S_AXI_ADDR_WIDTH-1 downto 0);
