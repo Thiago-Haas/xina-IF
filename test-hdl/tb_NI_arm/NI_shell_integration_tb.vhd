@@ -72,77 +72,77 @@ component NI_shell_integration is
     );
 end component;
 
-component adder_v1_0_S00_AXI is
-        generic (
-		  C_S_AXI_ID_WIDTH	: integer	:= 5;
-		  C_S_AXI_DATA_WIDTH	: integer	:= 32;
-		  C_S_AXI_ADDR_WIDTH	: integer	:= 64;
-		  C_S_AXI_AWUSER_WIDTH	: integer	:= 0;
-		  C_S_AXI_ARUSER_WIDTH	: integer	:= 0;
-		  C_S_AXI_WUSER_WIDTH	: integer	:= 0;
-		  C_S_AXI_RUSER_WIDTH	: integer	:= 0;
-		  C_S_AXI_BUSER_WIDTH	: integer	:= 0
-        );
-        port (
-            -- Global signals
-            S_AXI_ACLK    : in std_logic; -- AXI clock signal
-            S_AXI_ARESETN : in std_logic; -- AXI reset signal, active low
+--component adder_v1_0_S00_AXI is
+--        generic (
+--		  C_S_AXI_ID_WIDTH	: integer	:= 5;
+--		  C_S_AXI_DATA_WIDTH	: integer	:= 32;
+--		  C_S_AXI_ADDR_WIDTH	: integer	:= 64;
+--		  C_S_AXI_AWUSER_WIDTH	: integer	:= 0;
+--		  C_S_AXI_ARUSER_WIDTH	: integer	:= 0;
+--		  C_S_AXI_WUSER_WIDTH	: integer	:= 0;
+--		  C_S_AXI_RUSER_WIDTH	: integer	:= 0;
+--		  C_S_AXI_BUSER_WIDTH	: integer	:= 0
+--        );
+--        port (
+--            -- Global signals
+--            S_AXI_ACLK    : in std_logic; -- AXI clock signal
+--            S_AXI_ARESETN : in std_logic; -- AXI reset signal, active low
             
-            -- Write address channel signals
-            S_AXI_AWID    : in std_logic_vector(C_S_AXI_ID_WIDTH-1 downto 0); -- Write address ID
-            S_AXI_AWADDR  : in std_logic_vector(C_S_AXI_ADDR_WIDTH-1 downto 0); -- Write address
-            S_AXI_AWLEN   : in std_logic_vector(7 downto 0); -- Burst length (number of data transfers)
-            S_AXI_AWSIZE  : in std_logic_vector(2 downto 0); -- Burst size (number of bytes per transfer)
-            S_AXI_AWBURST : in std_logic_vector(1 downto 0); -- Burst type
-            S_AXI_AWLOCK  : in std_logic; -- Lock type (for atomic operations)
-            S_AXI_AWCACHE : in std_logic_vector(3 downto 0); -- Cache type
-            S_AXI_AWPROT  : in std_logic_vector(2 downto 0); -- Protection type
-            S_AXI_AWQOS   : in std_logic_vector(3 downto 0); -- Quality of Service
-            S_AXI_AWREGION: in std_logic_vector(3 downto 0); -- Region identifier
-            S_AXI_AWUSER  : in std_logic_vector(C_S_AXI_AWUSER_WIDTH-1 downto 0) := (others => '0'); -- User-defined signal
-            S_AXI_AWVALID : in std_logic; -- Write address valid
-            S_AXI_AWREADY : out std_logic; -- Write address ready
+--            -- Write address channel signals
+--            S_AXI_AWID    : in std_logic_vector(C_S_AXI_ID_WIDTH-1 downto 0); -- Write address ID
+--            S_AXI_AWADDR  : in std_logic_vector(C_S_AXI_ADDR_WIDTH-1 downto 0); -- Write address
+--            S_AXI_AWLEN   : in std_logic_vector(7 downto 0); -- Burst length (number of data transfers)
+--            S_AXI_AWSIZE  : in std_logic_vector(2 downto 0); -- Burst size (number of bytes per transfer)
+--            S_AXI_AWBURST : in std_logic_vector(1 downto 0); -- Burst type
+--            S_AXI_AWLOCK  : in std_logic; -- Lock type (for atomic operations)
+--            S_AXI_AWCACHE : in std_logic_vector(3 downto 0); -- Cache type
+--            S_AXI_AWPROT  : in std_logic_vector(2 downto 0); -- Protection type
+--            S_AXI_AWQOS   : in std_logic_vector(3 downto 0); -- Quality of Service
+--            S_AXI_AWREGION: in std_logic_vector(3 downto 0); -- Region identifier
+--            S_AXI_AWUSER  : in std_logic_vector(C_S_AXI_AWUSER_WIDTH-1 downto 0) := (others => '0'); -- User-defined signal
+--            S_AXI_AWVALID : in std_logic; -- Write address valid
+--            S_AXI_AWREADY : out std_logic; -- Write address ready
             
-            -- Write data channel signals
-            S_AXI_WDATA   : in std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0); -- Write data
-            S_AXI_WSTRB   : in std_logic_vector((C_S_AXI_DATA_WIDTH/8)-1 downto 0); -- Write strobe (byte enables)
-            S_AXI_WLAST   : in std_logic; -- Write last (indicates the last data transfer in a burst)
-            S_AXI_WUSER   : in std_logic_vector(C_S_AXI_WUSER_WIDTH-1 downto 0) := (others => '0'); -- User-defined signal
-            S_AXI_WVALID  : in std_logic; -- Write valid
-            S_AXI_WREADY  : out std_logic; -- Write ready
+--            -- Write data channel signals
+--            S_AXI_WDATA   : in std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0); -- Write data
+--            S_AXI_WSTRB   : in std_logic_vector((C_S_AXI_DATA_WIDTH/8)-1 downto 0); -- Write strobe (byte enables)
+--            S_AXI_WLAST   : in std_logic; -- Write last (indicates the last data transfer in a burst)
+--            S_AXI_WUSER   : in std_logic_vector(C_S_AXI_WUSER_WIDTH-1 downto 0) := (others => '0'); -- User-defined signal
+--            S_AXI_WVALID  : in std_logic; -- Write valid
+--            S_AXI_WREADY  : out std_logic; -- Write ready
             
-            -- Write response channel signals
-            S_AXI_BID     : out std_logic_vector(C_S_AXI_ID_WIDTH-1 downto 0); -- Write response ID
-            S_AXI_BRESP   : out std_logic_vector(1 downto 0); -- Write response (OKAY, EXOKAY, SLVERR, DECERR)
-            S_AXI_BUSER   : out std_logic_vector(C_S_AXI_BUSER_WIDTH-1 downto 0) := (others => '0'); -- User-defined signal
-            S_AXI_BVALID  : out std_logic; -- Write response valid
-            S_AXI_BREADY  : in std_logic; -- Write response ready
+--            -- Write response channel signals
+--            S_AXI_BID     : out std_logic_vector(C_S_AXI_ID_WIDTH-1 downto 0); -- Write response ID
+--            S_AXI_BRESP   : out std_logic_vector(1 downto 0); -- Write response (OKAY, EXOKAY, SLVERR, DECERR)
+--            S_AXI_BUSER   : out std_logic_vector(C_S_AXI_BUSER_WIDTH-1 downto 0) := (others => '0'); -- User-defined signal
+--            S_AXI_BVALID  : out std_logic; -- Write response valid
+--            S_AXI_BREADY  : in std_logic; -- Write response ready
             
-            -- Read address channel signals
-            S_AXI_ARID    : in std_logic_vector(C_S_AXI_ID_WIDTH-1 downto 0); -- Read address ID
-            S_AXI_ARADDR  : in std_logic_vector(C_S_AXI_ADDR_WIDTH-1 downto 0); -- Read address
-            S_AXI_ARLEN   : in std_logic_vector(7 downto 0); -- Burst length (number of data transfers)
-            S_AXI_ARSIZE  : in std_logic_vector(2 downto 0); -- Burst size (number of bytes per transfer)
-            S_AXI_ARBURST : in std_logic_vector(1 downto 0); -- Burst type
-            S_AXI_ARLOCK  : in std_logic; -- Lock type (for atomic operations)
-            S_AXI_ARCACHE : in std_logic_vector(3 downto 0); -- Cache type
-            S_AXI_ARPROT  : in std_logic_vector(2 downto 0); -- Protection type
-            S_AXI_ARQOS   : in std_logic_vector(3 downto 0); -- Quality of Service
-            S_AXI_ARREGION: in std_logic_vector(3 downto 0); -- Region identifier
-            S_AXI_ARUSER  : in std_logic_vector(C_S_AXI_ARUSER_WIDTH-1 downto 0) := (others => '0'); -- User-defined signal
-            S_AXI_ARVALID : in std_logic; -- Read address valid
-            S_AXI_ARREADY : out std_logic; -- Read address ready
+--            -- Read address channel signals
+--            S_AXI_ARID    : in std_logic_vector(C_S_AXI_ID_WIDTH-1 downto 0); -- Read address ID
+--            S_AXI_ARADDR  : in std_logic_vector(C_S_AXI_ADDR_WIDTH-1 downto 0); -- Read address
+--            S_AXI_ARLEN   : in std_logic_vector(7 downto 0); -- Burst length (number of data transfers)
+--            S_AXI_ARSIZE  : in std_logic_vector(2 downto 0); -- Burst size (number of bytes per transfer)
+--            S_AXI_ARBURST : in std_logic_vector(1 downto 0); -- Burst type
+--            S_AXI_ARLOCK  : in std_logic; -- Lock type (for atomic operations)
+--            S_AXI_ARCACHE : in std_logic_vector(3 downto 0); -- Cache type
+--            S_AXI_ARPROT  : in std_logic_vector(2 downto 0); -- Protection type
+--            S_AXI_ARQOS   : in std_logic_vector(3 downto 0); -- Quality of Service
+--            S_AXI_ARREGION: in std_logic_vector(3 downto 0); -- Region identifier
+--            S_AXI_ARUSER  : in std_logic_vector(C_S_AXI_ARUSER_WIDTH-1 downto 0) := (others => '0'); -- User-defined signal
+--            S_AXI_ARVALID : in std_logic; -- Read address valid
+--            S_AXI_ARREADY : out std_logic; -- Read address ready
             
-            -- Read data channel signals
-            S_AXI_RID     : out std_logic_vector(C_S_AXI_ID_WIDTH-1 downto 0); -- Read ID
-            S_AXI_RDATA   : out std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0); -- Read data
-            S_AXI_RRESP   : out std_logic_vector(1 downto 0); -- Read response (OKAY, EXOKAY, SLVERR, DECERR)
-            S_AXI_RLAST   : out std_logic; -- Read last (indicates the last data transfer in a burst)
-            S_AXI_RUSER   : out std_logic_vector(C_S_AXI_RUSER_WIDTH-1 downto 0) := (others => '0'); -- User-defined signal
-            S_AXI_RVALID  : out std_logic; -- Read valid
-            S_AXI_RREADY  : in std_logic  -- Read ready
-        );
-    end component;
+--            -- Read data channel signals
+--            S_AXI_RID     : out std_logic_vector(C_S_AXI_ID_WIDTH-1 downto 0); -- Read ID
+--            S_AXI_RDATA   : out std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0); -- Read data
+--            S_AXI_RRESP   : out std_logic_vector(1 downto 0); -- Read response (OKAY, EXOKAY, SLVERR, DECERR)
+--            S_AXI_RLAST   : out std_logic; -- Read last (indicates the last data transfer in a burst)
+--            S_AXI_RUSER   : out std_logic_vector(C_S_AXI_RUSER_WIDTH-1 downto 0) := (others => '0'); -- User-defined signal
+--            S_AXI_RVALID  : out std_logic; -- Read valid
+--            S_AXI_RREADY  : in std_logic  -- Read ready
+--        );
+--    end component;
     --Shared signals
     signal S_AXI_ACLK    : std_logic := '0'; -- AXI clock signal
     -- Clock period definitions
@@ -287,55 +287,55 @@ begin
         );
         
         -- Instantiate the Unit Under Test (UUT)
-    uut2: adder_v1_0_S00_AXI
-        port map (
-            S_AXI_ACLK    => S_AXI_ACLK,
-            S_AXI_ARESETN => S_AXI_ARESETN_2,
-            S_AXI_AWID    => S_AXI_AWID_2,
-            S_AXI_AWADDR  => S_AXI_AWADDR_2,
-            S_AXI_AWLEN   => S_AXI_AWLEN_2,
-            S_AXI_AWSIZE  => S_AXI_AWSIZE_2,
-            S_AXI_AWBURST => S_AXI_AWBURST_2,
-            S_AXI_AWLOCK  => S_AXI_AWLOCK_2,
-            S_AXI_AWCACHE => S_AXI_AWCACHE_2,
-            S_AXI_AWPROT  => S_AXI_AWPROT_2,
-            S_AXI_AWQOS   => S_AXI_AWQOS_2,
-            S_AXI_AWREGION=> S_AXI_AWREGION_2,
-            S_AXI_AWUSER  => open,  -- Width is zero
-            S_AXI_AWVALID => S_AXI_AWVALID_2,
-            S_AXI_AWREADY => S_AXI_AWREADY_2,
-            S_AXI_WDATA   => S_AXI_WDATA_2,
-            S_AXI_WSTRB   => S_AXI_WSTRB_2,
-            S_AXI_WLAST   => S_AXI_WLAST_2,
-            S_AXI_WUSER   => open,  -- Width is zero
-            S_AXI_WVALID  => S_AXI_WVALID_2,
-            S_AXI_WREADY  => S_AXI_WREADY_2,
-            S_AXI_BID     => S_AXI_BID_2,
-            S_AXI_BRESP   => S_AXI_BRESP_2,
-            S_AXI_BUSER   => open,  -- Width is zero
-            S_AXI_BVALID  => S_AXI_BVALID_2,
-            S_AXI_BREADY  => S_AXI_BREADY_2,
-            S_AXI_ARID    => S_AXI_ARID_2,
-            S_AXI_ARADDR  => S_AXI_ARADDR_2,
-            S_AXI_ARLEN   => S_AXI_ARLEN_2,
-            S_AXI_ARSIZE  => S_AXI_ARSIZE_2,
-            S_AXI_ARBURST => S_AXI_ARBURST_2,
-            S_AXI_ARLOCK  => S_AXI_ARLOCK_2,
-            S_AXI_ARCACHE => S_AXI_ARCACHE_2,
-            S_AXI_ARPROT  => S_AXI_ARPROT_2,
-            S_AXI_ARQOS   => S_AXI_ARQOS_2,
-            S_AXI_ARREGION=> S_AXI_ARREGION_2,
-            S_AXI_ARUSER  => open,  -- Width is zero
-            S_AXI_ARVALID => S_AXI_ARVALID_2,
-            S_AXI_ARREADY => S_AXI_ARREADY_2,
-            S_AXI_RID     => S_AXI_RID_2,
-            S_AXI_RDATA   => S_AXI_RDATA_2,
-            S_AXI_RRESP   => S_AXI_RRESP_2,
-            S_AXI_RLAST   => S_AXI_RLAST_2,
-            S_AXI_RUSER   => open,  -- Width is zero
-            S_AXI_RVALID  => S_AXI_RVALID_2,
-            S_AXI_RREADY  => S_AXI_RREADY_2
-        );
+--    uut2: adder_v1_0_S00_AXI
+--        port map (
+--            S_AXI_ACLK    => S_AXI_ACLK,
+--            S_AXI_ARESETN => S_AXI_ARESETN_2,
+--            S_AXI_AWID    => S_AXI_AWID_2,
+--            S_AXI_AWADDR  => S_AXI_AWADDR_2,
+--            S_AXI_AWLEN   => S_AXI_AWLEN_2,
+--            S_AXI_AWSIZE  => S_AXI_AWSIZE_2,
+--            S_AXI_AWBURST => S_AXI_AWBURST_2,
+--            S_AXI_AWLOCK  => S_AXI_AWLOCK_2,
+--            S_AXI_AWCACHE => S_AXI_AWCACHE_2,
+--            S_AXI_AWPROT  => S_AXI_AWPROT_2,
+--            S_AXI_AWQOS   => S_AXI_AWQOS_2,
+--            S_AXI_AWREGION=> S_AXI_AWREGION_2,
+--            S_AXI_AWUSER  => open,  -- Width is zero
+--            S_AXI_AWVALID => S_AXI_AWVALID_2,
+--            S_AXI_AWREADY => S_AXI_AWREADY_2,
+--            S_AXI_WDATA   => S_AXI_WDATA_2,
+--            S_AXI_WSTRB   => S_AXI_WSTRB_2,
+--            S_AXI_WLAST   => S_AXI_WLAST_2,
+--            S_AXI_WUSER   => open,  -- Width is zero
+--            S_AXI_WVALID  => S_AXI_WVALID_2,
+--            S_AXI_WREADY  => S_AXI_WREADY_2,
+--            S_AXI_BID     => S_AXI_BID_2,
+--            S_AXI_BRESP   => S_AXI_BRESP_2,
+--            S_AXI_BUSER   => open,  -- Width is zero
+--            S_AXI_BVALID  => S_AXI_BVALID_2,
+--            S_AXI_BREADY  => S_AXI_BREADY_2,
+--            S_AXI_ARID    => S_AXI_ARID_2,
+--            S_AXI_ARADDR  => S_AXI_ARADDR_2,
+--            S_AXI_ARLEN   => S_AXI_ARLEN_2,
+--            S_AXI_ARSIZE  => S_AXI_ARSIZE_2,
+--            S_AXI_ARBURST => S_AXI_ARBURST_2,
+--            S_AXI_ARLOCK  => S_AXI_ARLOCK_2,
+--            S_AXI_ARCACHE => S_AXI_ARCACHE_2,
+--            S_AXI_ARPROT  => S_AXI_ARPROT_2,
+--            S_AXI_ARQOS   => S_AXI_ARQOS_2,
+--            S_AXI_ARREGION=> S_AXI_ARREGION_2,
+--            S_AXI_ARUSER  => open,  -- Width is zero
+--            S_AXI_ARVALID => S_AXI_ARVALID_2,
+--            S_AXI_ARREADY => S_AXI_ARREADY_2,
+--            S_AXI_RID     => S_AXI_RID_2,
+--            S_AXI_RDATA   => S_AXI_RDATA_2,
+--            S_AXI_RRESP   => S_AXI_RRESP_2,
+--            S_AXI_RLAST   => S_AXI_RLAST_2,
+--            S_AXI_RUSER   => open,  -- Width is zero
+--            S_AXI_RVALID  => S_AXI_RVALID_2,
+--            S_AXI_RREADY  => S_AXI_RREADY_2
+--        );
         
     -- Clock process definitions
     clk_process :process
@@ -392,47 +392,47 @@ begin
     end process;
     
     -- Stimulus process AXI-ADDER
-    stim_proc_2: process
-    begin
-        -- Reset the system
-        S_AXI_ARESETN_2 <= '0';
-        wait for 20 ns;
-        S_AXI_ARESETN_2 <= '1';
-        wait for 20 ns;
+--    stim_proc_2: process
+--    begin
+--        -- Reset the system
+--        S_AXI_ARESETN_2 <= '0';
+--        wait for 20 ns;
+--        S_AXI_ARESETN_2 <= '1';
+--        wait for 20 ns;
         
-        -- Write Address handshake
-        S_AXI_AWADDR_2  <= x"0000000040000000";
-        S_AXI_AWVALID_2 <= '1';
-        wait until rising_edge(S_AXI_ACLK) and S_AXI_AWREADY_2 = '1';
-        S_AXI_AWVALID_2 <= '0';
+--        -- Write Address handshake
+--        S_AXI_AWADDR_2  <= x"0000000040000000";
+--        S_AXI_AWVALID_2 <= '1';
+--        wait until rising_edge(S_AXI_ACLK) and S_AXI_AWREADY_2 = '1';
+--        S_AXI_AWVALID_2 <= '0';
         
-        -- Data transfer handshake
-        S_AXI_WDATA_2   <= x"12345678"; -- Data to write
-        S_AXI_WVALID_2  <= '1';
-        S_AXI_WLAST_2   <= '1';
-        wait until rising_edge(S_AXI_ACLK) and S_AXI_WREADY_2 = '1';
-        S_AXI_WVALID_2  <= '0';
-        S_AXI_WLAST_2   <= '0';
+--        -- Data transfer handshake
+--        S_AXI_WDATA_2   <= x"12345678"; -- Data to write
+--        S_AXI_WVALID_2  <= '1';
+--        S_AXI_WLAST_2   <= '1';
+--        wait until rising_edge(S_AXI_ACLK) and S_AXI_WREADY_2 = '1';
+--        S_AXI_WVALID_2  <= '0';
+--        S_AXI_WLAST_2   <= '0';
         
-        -- Write response handshake
-        S_AXI_BREADY_2 <= '1';
-        wait until rising_edge(S_AXI_ACLK) and S_AXI_BVALID_2 = '1';
-        S_AXI_BREADY_2 <= '0';
+--        -- Write response handshake
+--        S_AXI_BREADY_2 <= '1';
+--        wait until rising_edge(S_AXI_ACLK) and S_AXI_BVALID_2 = '1';
+--        S_AXI_BREADY_2 <= '0';
         
-        wait for 100 ns;
-        -- Read address handshake 
-        S_AXI_ARADDR_2 <= x"0000000040000000";
-        S_AXI_ARVALID_2 <= '1';
-        wait until rising_edge(S_AXI_ACLK) and S_AXI_ARREADY_2 = '1';
-        S_AXI_ARVALID_2 <= '0';
+--        wait for 100 ns;
+--        -- Read address handshake 
+--        S_AXI_ARADDR_2 <= x"0000000040000000";
+--        S_AXI_ARVALID_2 <= '1';
+--        wait until rising_edge(S_AXI_ACLK) and S_AXI_ARREADY_2 = '1';
+--        S_AXI_ARVALID_2 <= '0';
         
-        -- Read data handshake
-        S_AXI_RREADY_2 <= '1';
-        wait until rising_edge(S_AXI_ACLK) and S_AXI_RVALID_2 = '1';
-        assert S_AXI_RDATA_2 = x"12345678" report "Wrong read data!" severity error;
-        S_AXI_RREADY_2 <= '0';
+--        -- Read data handshake
+--        S_AXI_RREADY_2 <= '1';
+--        wait until rising_edge(S_AXI_ACLK) and S_AXI_RVALID_2 = '1';
+--        assert S_AXI_RDATA_2 = x"12345678" report "Wrong read data!" severity error;
+--        S_AXI_RREADY_2 <= '0';
 
-        -- Stop simulation
-        wait;
-    end process;
+--        -- Stop simulation
+--        wait;
+--    end process;
 end Behavioral;
