@@ -95,7 +95,7 @@ entity adder_v1_0_S00_AXI is
         S_AXI_BID    : out std_logic_vector(C_S_AXI_ID_WIDTH-1 downto 0);
         -- Write response. This signal indicates the status
     -- of the write transaction.
-        S_AXI_BRESP    : out std_logic_vector(1 downto 0);
+        S_AXI_BRESP    : out std_logic_vector(2 downto 0);
         -- Optional User-defined signal in the write response channel.
         S_AXI_BUSER    : out std_logic_vector(C_S_AXI_BUSER_WIDTH-1 downto 0);
         -- Write response valid. This signal indicates that the
@@ -150,7 +150,7 @@ entity adder_v1_0_S00_AXI is
         S_AXI_RDATA    : out std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
         -- Read response. This signal indicates the status of
     -- the read transfer.
-        S_AXI_RRESP    : out std_logic_vector(1 downto 0);
+        S_AXI_RRESP    : out std_logic_vector(2 downto 0);
         -- Read last. This signal indicates the last transfer
     -- in a read burst.
         S_AXI_RLAST    : out std_logic;
