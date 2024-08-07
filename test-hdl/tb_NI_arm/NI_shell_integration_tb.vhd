@@ -261,7 +261,7 @@ begin
         wait for 20 ns;
         
         -- Write Address handshake
-        S_AXI_AWADDR  <= x"0000000040000000";
+        S_AXI_AWADDR  <= x"0000000000010000";
         S_AXI_AWVALID <= '1';
         wait until rising_edge(S_AXI_ACLK) and S_AXI_AWREADY = '1';
         S_AXI_AWVALID <= '0';
@@ -281,7 +281,7 @@ begin
         
         wait for 100 ns;
         -- Read address handshake 
-        S_AXI_ARADDR <= x"0000000040000000";
+        S_AXI_ARADDR <= x"0000000000010000";
         S_AXI_ARVALID <= '1';
         wait until rising_edge(S_AXI_ACLK) and S_AXI_ARREADY = '1';
         S_AXI_ARVALID <= '0';
