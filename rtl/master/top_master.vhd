@@ -6,7 +6,7 @@ use IEEE.numeric_std.all;
 use work.xina_ni_ft_pkg.all;
 use work.xina_ft_pkg.all;
 
-entity tcc_top_master is
+entity top_master is
     generic(
         p_SRC_X: std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0) := (others => '0');
         p_SRC_Y: std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0) := (others => '0');
@@ -71,9 +71,9 @@ entity tcc_top_master is
         l_out_val_o : in std_logic;
         l_out_ack_i : out std_logic
     );
-end tcc_top_master;
+end top_master;
 
-architecture rtl of tcc_top_master is
+architecture rtl of top_master is
     -- Injection.
     signal w_START_SEND_PACKET: std_logic;
     signal w_VALID_SEND_DATA  : std_logic;

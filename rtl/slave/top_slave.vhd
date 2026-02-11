@@ -5,7 +5,7 @@ use IEEE.std_logic_1164.all;
 use work.xina_ni_ft_pkg.all;
 use work.xina_ft_pkg.all;
 
-entity tcc_top_slave is
+entity top_slave is
     generic(
         p_SRC_X: std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0) := (others => '0');
         p_SRC_Y: std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0) := (others => '0');
@@ -72,9 +72,9 @@ entity tcc_top_slave is
         l_out_val_o : in std_logic;
         l_out_ack_i : out std_logic
     );
-end tcc_top_slave;
+end top_slave;
 
-architecture rtl of tcc_top_slave is
+architecture rtl of top_slave is
     -- Injection.
     signal w_VALID_SEND_DATA  : std_logic;
     signal w_LAST_SEND_DATA   : std_logic;
