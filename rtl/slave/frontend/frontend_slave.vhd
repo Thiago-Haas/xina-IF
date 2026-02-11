@@ -3,7 +3,7 @@ library work;
 
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
-use work.tcc_package.all;
+use work.xina_ni_ft_pkg.all;
 
 entity frontend_slave is
     port(

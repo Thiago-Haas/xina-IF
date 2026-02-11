@@ -2,8 +2,8 @@ library IEEE;
 library work;
 
 use IEEE.std_logic_1164.all;
-use work.tcc_package.all;
-use work.xina_pkg.all;
+use work.xina_ni_ft_pkg.all;
+use work.xina_ft_pkg.all;
 
 entity backend_slave_injection is
     generic(
