@@ -5,7 +5,7 @@ use IEEE.std_logic_1164.all;
 use work.xina_ni_ft_pkg.all;
 use work.xina_ft_pkg.all;
 
-entity backend_slave_packetizer_control_tmr is
+entity backend_subordinate_packetizer_control_tmr is
     port(
         -- AMBA AXI 5 signals.
         ACLK   : in std_logic;
@@ -30,9 +30,9 @@ entity backend_slave_packetizer_control_tmr is
         o_ADD: out std_logic;
         o_INTEGRITY_RESETn: out std_logic
     );
-end backend_slave_packetizer_control_tmr;
+end backend_subordinate_packetizer_control_tmr;
 
-architecture rtl of backend_slave_packetizer_control_tmr is
+architecture rtl of backend_subordinate_packetizer_control_tmr is
     type t_BIT_VECTOR is array (2 downto 0) of std_logic;
     type t_BIT_VECTOR_FLIT_SELECTOR is array (2 downto 0) of std_logic_vector(2 downto 0);
 
@@ -47,7 +47,7 @@ architecture rtl of backend_slave_packetizer_control_tmr is
 begin
     TMR:
     for i in 2 downto 0 generate
-        u_PACKETIZER_CONTROL: entity work.backend_slave_packetizer_control
+        u_PACKETIZER_CONTROL: entity work.backend_subordinate_packetizer_control
             port map(
                 ACLK    => ACLK,
                 ARESETn => ARESETn,

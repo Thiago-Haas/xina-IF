@@ -5,7 +5,7 @@ use IEEE.std_logic_1164.all;
 use work.xina_ni_ft_pkg.all;
 use work.xina_ft_pkg.all;
 
-entity backend_slave is
+entity backend_subordinate is
     generic(
         p_SRC_X: std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0);
         p_SRC_Y: std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0);
@@ -56,9 +56,9 @@ entity backend_slave is
         l_out_val_o : in std_logic;
         l_out_ack_i : out std_logic
     );
-end backend_slave;
+end backend_subordinate;
 
-architecture rtl of backend_slave is
+architecture rtl of backend_subordinate is
     signal w_H_SRC_RECEIVE: std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
     signal w_H_INTERFACE_RECEIVE: std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
 
@@ -66,7 +66,7 @@ architecture rtl of backend_slave is
     signal w_HAS_FINISHED_RESPONSE: std_logic;
 
 begin
-    u_INJECTION: entity work.backend_slave_injection
+    u_INJECTION: entity work.backend_subordinate_injection
         generic map(
             p_SRC_X => p_SRC_X,
             p_SRC_Y => p_SRC_Y,
@@ -100,7 +100,7 @@ begin
             l_in_ack_o  => l_in_ack_o
         );
 
-    u_RECEPTION: entity work.backend_slave_reception
+    u_RECEPTION: entity work.backend_subordinate_reception
         generic map(
             p_BUFFER_DEPTH       => p_BUFFER_DEPTH,
             p_USE_TMR_PACKETIZER => p_USE_TMR_PACKETIZER,

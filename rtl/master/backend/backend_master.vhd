@@ -5,7 +5,7 @@ use IEEE.std_logic_1164.all;
 use work.xina_ni_ft_pkg.all;
 use work.xina_ft_pkg.all;
 
-entity backend_master is
+entity backend_manager is
     generic(
         p_SRC_X: std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0);
         p_SRC_Y: std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0);
@@ -59,11 +59,11 @@ entity backend_master is
         l_out_val_o : in std_logic;
         l_out_ack_i : out std_logic
     );
-end backend_master;
+end backend_manager;
 
-architecture rtl of backend_master is
+architecture rtl of backend_manager is
 begin
-    u_INJECTION: entity work.backend_master_injection
+    u_INJECTION: entity work.backend_manager_injection
         generic map(
             p_SRC_X => p_SRC_X,
             p_SRC_Y => p_SRC_Y,
@@ -98,7 +98,7 @@ begin
             l_in_ack_o  => l_in_ack_o
         );
 
-    u_RECEPTION: entity work.backend_master_reception
+    u_RECEPTION: entity work.backend_manager_reception
         generic map(
             p_BUFFER_DEPTH       => p_BUFFER_DEPTH,
             p_USE_TMR_PACKETIZER => p_USE_TMR_PACKETIZER,

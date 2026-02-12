@@ -5,7 +5,7 @@ use IEEE.std_logic_1164.all;
 use work.xina_ni_ft_pkg.all;
 use work.xina_ft_pkg.all;
 
-entity backend_slave_reception is
+entity backend_subordinate_reception is
     generic(
         p_BUFFER_DEPTH      : positive;
         p_USE_TMR_PACKETIZER: boolean;
@@ -44,9 +44,9 @@ entity backend_slave_reception is
         l_out_val_o : in std_logic;
         l_out_ack_i : out std_logic
     );
-end backend_slave_reception;
+end backend_subordinate_reception;
 
-architecture rtl of backend_slave_reception is
+architecture rtl of backend_subordinate_reception is
     signal w_ARESET: std_logic;
 
     -- Depacketizer.
@@ -90,7 +90,7 @@ begin
 
     u_DEPACKETIZER_CONTROL:
     if (p_USE_TMR_PACKETIZER) generate
-        u_DEPACKETIZER_CONTROL_TMR: entity work.backend_slave_depacketizer_control_tmr
+        u_DEPACKETIZER_CONTROL_TMR: entity work.backend_subordinate_depacketizer_control_tmr
             port map(
                 ACLK => ACLK,
                 ARESETn => ARESETn,
@@ -119,7 +119,7 @@ begin
                 o_INTEGRITY_RESETn => w_INTEGRITY_RESETn
             );
     else generate
-        u_DEPACKETIZER_CONTROL_NORMAL: entity work.backend_slave_depacketizer_control
+        u_DEPACKETIZER_CONTROL_NORMAL: entity work.backend_subordinate_depacketizer_control
             port map(
                 ACLK => ACLK,
                 ARESETn => ARESETn,

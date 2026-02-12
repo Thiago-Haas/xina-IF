@@ -5,7 +5,7 @@ use IEEE.std_logic_1164.all;
 use work.xina_ni_ft_pkg.all;
 use work.xina_ft_pkg.all;
 
-entity backend_master_packetizer_control is
+entity backend_manager_packetizer_control is
     port(
         -- AMBA AXI 5 signals.
         ACLK   : in std_logic;
@@ -29,9 +29,9 @@ entity backend_master_packetizer_control is
         o_ADD: out std_logic;
         o_INTEGRITY_RESETn: out std_logic
     );
-end backend_master_packetizer_control;
+end backend_manager_packetizer_control;
 
-architecture rtl of backend_master_packetizer_control is
+architecture rtl of backend_manager_packetizer_control is
     
     signal state_w_r    : std_logic_vector(2 downto 0);
     signal next_state_w : std_logic_vector(2 downto 0);

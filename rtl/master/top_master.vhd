@@ -6,7 +6,7 @@ use IEEE.numeric_std.all;
 use work.xina_ni_ft_pkg.all;
 use work.xina_ft_pkg.all;
 
-entity top_master is
+entity top_manager is
     generic(
         p_SRC_X: std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0) := (others => '0');
         p_SRC_Y: std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0) := (others => '0');
@@ -71,9 +71,9 @@ entity top_master is
         l_out_val_o : in std_logic;
         l_out_ack_i : out std_logic
     );
-end top_master;
+end top_manager;
 
-architecture rtl of top_master is
+architecture rtl of top_manager is
     -- Injection.
     signal w_START_SEND_PACKET: std_logic;
     signal w_VALID_SEND_DATA  : std_logic;
@@ -104,7 +104,7 @@ architecture rtl of top_master is
     signal w_CORRUPT_RECEIVE: std_logic;
 
 begin
-    u_FRONTEND: entity work.frontend_master
+    u_FRONTEND: entity work.frontend_manager
         port map(
             -- AMBA AXI 5 signals.
             ACLK => ACLK,
@@ -179,7 +179,7 @@ begin
             o_READY_RECEIVE_DATA   => w_READY_RECEIVE_DATA
         );
 
-    u_BACKEND: entity work.backend_master
+    u_BACKEND: entity work.backend_manager
         generic map(
             p_SRC_X => p_SRC_X,
             p_SRC_Y => p_SRC_Y,

@@ -4,7 +4,7 @@ library work;
 use IEEE.std_logic_1164.all;
 use work.xina_ni_ft_pkg.all;
 
-entity frontend_master is
+entity frontend_manager is
     port(
         -- AMBA AXI 5 signals.
         ACLK: in std_logic;
@@ -78,9 +78,9 @@ entity frontend_master is
         o_READY_RECEIVE_PACKET: out std_logic;
         o_READY_RECEIVE_DATA  : out std_logic
     );
-end frontend_master;
+end frontend_manager;
 
-architecture rtl of frontend_master is
+architecture rtl of frontend_manager is
     -- Injection.
     signal w_OPC_SEND: std_logic;
 

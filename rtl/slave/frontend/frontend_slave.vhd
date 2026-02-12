@@ -5,7 +5,7 @@ use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 use work.xina_ni_ft_pkg.all;
 
-entity frontend_slave is
+entity frontend_subordinate is
     port(
         -- AMBA AXI 5 signals.
         ACLK: in std_logic;
@@ -77,9 +77,9 @@ entity frontend_slave is
         o_READY_RECEIVE_PACKET: out std_logic;
         o_READY_RECEIVE_DATA  : out std_logic
     );
-end frontend_slave;
+end frontend_subordinate;
 
-architecture rtl of frontend_slave is
+architecture rtl of frontend_subordinate is
     signal w_VALID_SEND_DATA: std_logic;
     signal w_STATUS_SEND_r : std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
 

@@ -5,7 +5,7 @@ use IEEE.std_logic_1164.all;
 use work.xina_ni_ft_pkg.all;
 use work.xina_ft_pkg.all;
 
-entity top_slave is
+entity top_subordinate is
     generic(
         p_SRC_X: std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0) := (others => '0');
         p_SRC_Y: std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0) := (others => '0');
@@ -72,9 +72,9 @@ entity top_slave is
         l_out_val_o : in std_logic;
         l_out_ack_i : out std_logic
     );
-end top_slave;
+end top_subordinate;
 
-architecture rtl of top_slave is
+architecture rtl of top_subordinate is
     -- Injection.
     signal w_VALID_SEND_DATA  : std_logic;
     signal w_LAST_SEND_DATA   : std_logic;
@@ -101,7 +101,7 @@ architecture rtl of top_slave is
     signal w_CORRUPT_RECEIVE: std_logic;
 
 begin
-    u_FRONTEND: entity work.frontend_slave
+    u_FRONTEND: entity work.frontend_subordinate
         port map(
             -- AMBA AXI 5 signals.
             ACLK => ACLK,
@@ -174,7 +174,7 @@ begin
             i_CORRUPT_RECEIVE => w_CORRUPT_RECEIVE
         );
 
-    u_BACKEND: entity work.backend_slave
+    u_BACKEND: entity work.backend_subordinate
         generic map(
             p_SRC_X => p_SRC_X,
             p_SRC_Y => p_SRC_Y,

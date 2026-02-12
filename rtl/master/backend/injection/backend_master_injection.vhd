@@ -5,7 +5,7 @@ use IEEE.std_logic_1164.all;
 use work.xina_ni_ft_pkg.all;
 use work.xina_ft_pkg.all;
 
-entity backend_master_injection is
+entity backend_manager_injection is
     generic(
         p_SRC_X: std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0);
         p_SRC_Y: std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0);
@@ -43,9 +43,9 @@ entity backend_master_injection is
         l_in_val_i : out std_logic;
         l_in_ack_o : in std_logic
     );
-end backend_master_injection;
+end backend_manager_injection;
 
-architecture rtl of backend_master_injection is
+architecture rtl of backend_manager_injection is
     signal w_ARESET: std_logic;
 
     -- Routing table.
@@ -69,7 +69,7 @@ architecture rtl of backend_master_injection is
     signal w_READ_OK_BUFFER : std_logic;
 
 begin
-    u_ROUTING_TABLE: entity work.backend_master_routing_table
+    u_ROUTING_TABLE: entity work.backend_manager_routing_table
         port map(
             ACLK    => ACLK,
             ARESETn => ARESETn,
@@ -83,7 +83,7 @@ begin
 
     u_PACKETIZER_CONTROL:
     if (p_USE_TMR_PACKETIZER) generate
-        u_PACKETIZER_CONTROL_TMR: entity work.backend_master_packetizer_control_tmr
+        u_PACKETIZER_CONTROL_TMR: entity work.backend_manager_packetizer_control_tmr
             port map(
                 ACLK    => ACLK,
                 ARESETn => ARESETn,
@@ -104,7 +104,7 @@ begin
                 o_INTEGRITY_RESETn => w_INTEGRITY_RESETn
             );
     else generate
-        u_PACKETIZER_CONTROL_NORMAL: entity work.backend_master_packetizer_control
+        u_PACKETIZER_CONTROL_NORMAL: entity work.backend_manager_packetizer_control
             port map(
                 ACLK    => ACLK,
                 ARESETn => ARESETn,
@@ -126,7 +126,7 @@ begin
             );
     end generate;
 
-    u_PACKETIZER_DATAPATH: entity work.backend_master_packetizer_datapath
+    u_PACKETIZER_DATAPATH: entity work.backend_manager_packetizer_datapath
         generic map(
             p_SRC_X => p_SRC_X,
             p_SRC_Y => p_SRC_Y

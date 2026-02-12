@@ -5,7 +5,7 @@ use IEEE.std_logic_1164.all;
 use work.xina_ni_ft_pkg.all;
 use work.xina_ft_pkg.all;
 
-entity backend_master_packetizer_datapath is
+entity backend_manager_packetizer_datapath is
     generic(
         p_SRC_X: std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0);
         p_SRC_Y: std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0)
@@ -31,9 +31,9 @@ entity backend_master_packetizer_datapath is
 
         o_FLIT: out std_logic_vector(c_FLIT_WIDTH - 1 downto 0)
     );
-end backend_master_packetizer_datapath;
+end backend_manager_packetizer_datapath;
 
-architecture rtl of backend_master_packetizer_datapath is
+architecture rtl of backend_manager_packetizer_datapath is
     signal w_FLIT_H_DEST: std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
     signal w_FLIT_H_SRC : std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
     signal w_FLIT_H_INTERFACE: std_logic_vector(c_FLIT_WIDTH - 1 downto 0);

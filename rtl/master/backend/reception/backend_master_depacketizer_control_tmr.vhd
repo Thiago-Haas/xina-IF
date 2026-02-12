@@ -6,7 +6,7 @@ use IEEE.numeric_std.all;
 use work.xina_ni_ft_pkg.all;
 use work.xina_ft_pkg.all;
 
-entity backend_master_depacketizer_control_tmr is
+entity backend_manager_depacketizer_control_tmr is
     port(
         -- AMBA AXI 5 signals.
         ACLK   : in std_logic;
@@ -31,9 +31,9 @@ entity backend_master_depacketizer_control_tmr is
         o_COMPARE: out std_logic;
         o_INTEGRITY_RESETn: out std_logic
     );
-end backend_master_depacketizer_control_tmr;
+end backend_manager_depacketizer_control_tmr;
 
-architecture rtl of backend_master_depacketizer_control_tmr is
+architecture rtl of backend_manager_depacketizer_control_tmr is
     type t_BIT_VECTOR is array (2 downto 0) of std_logic;
 
     signal w_VALID_RECEIVE_DATA: t_BIT_VECTOR;
@@ -48,7 +48,7 @@ architecture rtl of backend_master_depacketizer_control_tmr is
 begin
     TMR:
     for i in 2 downto 0 generate
-        u_DEPACKETIZER_CONTROL: entity work.backend_master_depacketizer_control
+        u_DEPACKETIZER_CONTROL: entity work.backend_manager_depacketizer_control
             port map(
                 ACLK => ACLK,
                 ARESETn => ARESETn,
