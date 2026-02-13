@@ -2,6 +2,10 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 
+-- LFSR block:
+-- - Seed loaded on reset
+-- - On update enable, computes next_lfsr( i_data_in )  (OPTION B)
+
 entity lfsr is
   generic(
     p_WIDTH : positive := 32
@@ -12,6 +16,7 @@ entity lfsr is
 
     i_seed      : in  std_logic_vector(p_WIDTH - 1 downto 0);
     i_update_en : in  std_logic;
+    i_data_in   : in  std_logic_vector(p_WIDTH - 1 downto 0);
 
     o_value     : out std_logic_vector(p_WIDTH - 1 downto 0)
   );
@@ -40,7 +45,7 @@ begin
         r_lfsr <= i_seed;
       else
         if i_update_en = '1' then
-          r_lfsr <= next_lfsr(r_lfsr);
+          r_lfsr <= next_lfsr(i_data_in);
         end if;
       end if;
     end if;

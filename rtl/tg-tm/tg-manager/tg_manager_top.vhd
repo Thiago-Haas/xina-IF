@@ -13,7 +13,7 @@ entity tg_manager_top is
     ARESETn : in std_logic;
 
     INPUT_ADDRESS  : in std_logic_vector(63 downto 0);
-    STARTING_VALUE : in std_logic_vector(31 downto 0);
+    STARTING_VALUE : in std_logic_vector(31 downto 0); -- LFSR seed (zero-extended)
 
     -- Write request channel.
     AWID   : out std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
@@ -56,16 +56,12 @@ end tg_manager_top;
 architecture rtl of tg_manager_top is
 
   -- Controller -> enables
-  signal w_load_wdata    : std_logic;
-  signal w_capture_rdata : std_logic;
-  signal w_update_lfsr   : std_logic;
+  signal w_load_wdata  : std_logic;
+  signal w_update_lfsr : std_logic;
 
   -- LFSR signals
   signal w_lfsr_value : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
   signal w_lfsr_seed  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
-
-  -- Optional captured RDATA
-  signal w_rdata_captured : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
 begin
 
@@ -91,11 +87,11 @@ begin
       ARVALID => ARVALID,
       RREADY  => RREADY,
 
-      o_load_wdata    => w_load_wdata,
-      o_capture_rdata => w_capture_rdata,
-      o_update_lfsr   => w_update_lfsr
+      o_load_wdata  => w_load_wdata,
+      o_update_lfsr => w_update_lfsr
     );
 
+  -- LFSR uses the read data directly as input for next_lfsr( RDATA ) on r_done
   u_LFSR: entity work.lfsr
     generic map(
       p_WIDTH => c_AXI_DATA_WIDTH
@@ -105,6 +101,7 @@ begin
       ARESETn     => ARESETn,
       i_seed      => w_lfsr_seed,
       i_update_en => w_update_lfsr,
+      i_data_in   => RDATA,
       o_value     => w_lfsr_value
     );
 
@@ -115,11 +112,8 @@ begin
 
       INPUT_ADDRESS => INPUT_ADDRESS,
 
-      i_lfsr_value   => w_lfsr_value,
-      i_load_wdata   => w_load_wdata,
-
-      i_rdata_in      => RDATA,
-      i_capture_rdata => w_capture_rdata,
+      i_lfsr_value => w_lfsr_value,
+      i_load_wdata => w_load_wdata,
 
       AWID    => AWID,
       AWADDR  => AWADDR,
@@ -132,9 +126,7 @@ begin
       ARID    => ARID,
       ARADDR  => ARADDR,
       ARLEN   => ARLEN,
-      ARBURST => ARBURST,
-
-      o_rdata_captured => w_rdata_captured
+      ARBURST => ARBURST
     );
 
 end rtl;

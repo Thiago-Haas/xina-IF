@@ -1,6 +1,9 @@
 library IEEE;
 use IEEE.std_logic_1164.all;
 
+-- Controller-only: 5-state FSM (AW -> W -> B -> AR -> R) with stall self-loops.
+-- Generates AXI VALID/READY strobes and enables for datapath/LFSR.
+
 entity tg_manager_controller is
   port(
     ACLK    : in  std_logic;
@@ -22,9 +25,8 @@ entity tg_manager_controller is
     RREADY  : out std_logic;
 
     -- Enables to datapath/LFSR
-    o_load_wdata     : out std_logic; -- pulse when moving AW->W
-    o_capture_rdata  : out std_logic; -- pulse on read completion
-    o_update_lfsr    : out std_logic  -- pulse on read completion (same as capture)
+    o_load_wdata  : out std_logic; -- pulse when AW handshake happens (prepare WDATA)
+    o_update_lfsr : out std_logic  -- pulse when R handshake + RLAST happens
   );
 end entity;
 
@@ -34,6 +36,7 @@ architecture rtl of tg_manager_controller is
 
   signal awvalid_i, wvalid_i, bready_i, arvalid_i, rready_i : std_logic;
 
+  -- Handshakes
   signal aw_hs  : std_logic;
   signal w_hs   : std_logic;
   signal b_hs   : std_logic;
@@ -42,7 +45,7 @@ architecture rtl of tg_manager_controller is
   signal r_done : std_logic;
 begin
 
-  -- Control outputs from state
+  -- Outputs from state
   awvalid_i <= '1' when (r_state = s0_AW) else '0';
   wvalid_i  <= '1' when (r_state = s1_W)  else '0';
   bready_i  <= '1' when (r_state = s2_B)  else '0';
@@ -55,7 +58,7 @@ begin
   ARVALID <= arvalid_i;
   RREADY  <= rready_i;
 
-  -- Handshakes
+  -- Handshake equations (manager is AXI master)
   aw_hs  <= awvalid_i and AWREADY;
   w_hs   <= wvalid_i  and WREADY;
   b_hs   <= BVALID    and bready_i;
@@ -63,12 +66,11 @@ begin
   r_hs   <= RVALID    and rready_i;
   r_done <= r_hs and RLAST;
 
-  -- Enables (pulses)
-  o_load_wdata    <= aw_hs;    -- load payload when AW accepted
-  o_capture_rdata <= r_done;   -- capture on final read beat
-  o_update_lfsr   <= r_done;   -- advance LFSR on final read beat
+  -- Enables
+  o_load_wdata  <= aw_hs;
+  o_update_lfsr <= r_done;
 
-  -- FSM transitions (exactly like the figure)
+  -- FSM transitions (exactly like your figure)
   process(ACLK)
   begin
     if rising_edge(ACLK) then
