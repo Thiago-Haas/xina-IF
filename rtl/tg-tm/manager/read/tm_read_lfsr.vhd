@@ -2,7 +2,11 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 
-entity lfsr is
+-- Local LFSR used by tm_read_*.
+-- Notes:
+-- - Loads i_seed on reset (ARESETn='0').
+-- - Advances when i_update_en='1' using next_lfsr(i_data_in).
+entity tm_read_lfsr is
   generic(
     p_WIDTH : positive := 32
   );
@@ -18,7 +22,7 @@ entity lfsr is
   );
 end entity;
 
-architecture rtl of lfsr is
+architecture rtl of tm_read_lfsr is
   signal r_lfsr : std_logic_vector(p_WIDTH - 1 downto 0) := (others => '0');
 
   function next_lfsr(x : std_logic_vector) return std_logic_vector is
@@ -30,7 +34,6 @@ architecture rtl of lfsr is
     v  := v(v'high-1 downto 0) & fb;
     return v;
   end function;
-
 begin
   o_value <= r_lfsr;
 
@@ -38,15 +41,12 @@ begin
   begin
     if rising_edge(ACLK) then
       if ARESETn = '0' then
-        -- Seed load
         r_lfsr <= i_seed;
       else
         if i_update_en = '1' then
-          -- Option B: advance based on captured read data
           r_lfsr <= next_lfsr(i_data_in);
         end if;
       end if;
     end if;
   end process;
-
 end rtl;
