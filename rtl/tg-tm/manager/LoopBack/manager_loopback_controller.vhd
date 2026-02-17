@@ -5,8 +5,10 @@ use IEEE.numeric_std.all;
 use work.xina_ft_pkg.all;
 use work.xina_ni_ft_pkg.all;
 
--- Single outstanding packet:
--- RX full request -> TX response.
+-- Controller hierarchy:
+--   rx_request_ctrl  : receives request packet and emits dp_store_* strobes
+--   tx_response_ctrl : sends response packet using tx_sel to select datapath words
+--   (this wrapper)   : single-outstanding orchestration + latching of rx->tx parameters
 entity manager_loopback_controller is
   port(
     ACLK    : in  std_logic;
@@ -42,215 +44,140 @@ entity manager_loopback_controller is
     dp_req_is_read  : in std_logic;
     dp_req_len      : in unsigned(7 downto 0);
 
-    -- hold info (currently not used for gating, but available)
+    -- hold info (available)
     dp_hold_len   : in unsigned(7 downto 0);
     dp_hold_valid : in std_logic
   );
 end entity;
 
 architecture rtl of manager_loopback_controller is
-  type t_state is (
-    s_idle,
-    s_rx_hdr0, s_rx_hdr1, s_rx_hdr2,
-    s_rx_addr,
-    s_rx_payload,
-    s_rx_checksum,
-    s_tx_hdr0, s_tx_hdr1, s_tx_hdr2,
-    s_tx_payload,
-    s_tx_checksum
-  );
+  -- mode: 0 = receiving request, 1 = transmitting response
+  signal mode_tx : std_logic := '0';
 
-  signal st : t_state := s_idle;
+  -- RX side
+  signal rx_ack   : std_logic;
+  signal rx_fire_i: std_logic;
+  signal rx_done  : std_logic;
 
-  signal widx : unsigned(15 downto 0) := (others => '0');
-  signal ridx : unsigned(15 downto 0) := (others => '0');
-  signal payload_left : unsigned(15 downto 0) := (others => '0');
+  signal rx_dp_store_hdr0   : std_logic;
+  signal rx_dp_store_hdr1   : std_logic;
+  signal rx_dp_store_hdr2   : std_logic;
+  signal rx_dp_store_addr   : std_logic;
+  signal rx_dp_store_pld    : std_logic;
+  signal rx_dp_set_meta     : std_logic;
+  signal rx_dp_commit_write : std_logic;
+  signal rx_widx            : unsigned(15 downto 0);
 
-  signal r_is_read_resp : std_logic := '0';
+  signal rx_is_read_resp    : std_logic;
+  signal rx_payload_words   : unsigned(15 downto 0);
 
-  signal r_dp_store_hdr0   : std_logic := '0';
-  signal r_dp_store_hdr1   : std_logic := '0';
-  signal r_dp_store_hdr2   : std_logic := '0';
-  signal r_dp_store_addr   : std_logic := '0';
-  signal r_dp_store_pld    : std_logic := '0';
-  signal r_dp_set_meta     : std_logic := '0';
-  signal r_dp_commit_write : std_logic := '0';
+  -- Latched info for TX
+  signal r_is_read_resp  : std_logic := '0';
+  signal r_payload_words : unsigned(15 downto 0) := (others => '0');
 
-  function u16(x : unsigned(7 downto 0)) return unsigned is
-    variable v : unsigned(15 downto 0);
-  begin
-    v := (others => '0');
-    v(7 downto 0) := x;
-    return v;
-  end function;
-
-  signal rx_hs : std_logic;
-  signal tx_hs : std_logic;
-
+  -- TX side
+  signal tx_done  : std_logic;
+  signal tx_val   : std_logic;
+  signal tx_sel_i : unsigned(2 downto 0);
+  signal tx_ridx  : unsigned(15 downto 0);
+  signal tx_start : std_logic := '0';
 begin
-  dp_store_hdr0   <= r_dp_store_hdr0;
-  dp_store_hdr1   <= r_dp_store_hdr1;
-  dp_store_hdr2   <= r_dp_store_hdr2;
-  dp_store_addr   <= r_dp_store_addr;
-  dp_store_pld    <= r_dp_store_pld;
-  dp_set_meta     <= r_dp_set_meta;
-  dp_commit_write <= r_dp_commit_write;
+  -- datapath strobes from RX block
+  dp_store_hdr0   <= rx_dp_store_hdr0;
+  dp_store_hdr1   <= rx_dp_store_hdr1;
+  dp_store_hdr2   <= rx_dp_store_hdr2;
+  dp_store_addr   <= rx_dp_store_addr;
+  dp_store_pld    <= rx_dp_store_pld;
+  dp_set_meta     <= rx_dp_set_meta;
+  dp_commit_write <= rx_dp_commit_write;
 
-  dp_pld_widx <= widx;
-  dp_pld_ridx <= ridx;
+  dp_pld_widx <= rx_widx;
+  dp_pld_ridx <= tx_ridx;
 
-  -- combinational handshake qualifiers
-  rx_hs   <= lin_val and lin_ack;
-  tx_hs   <= lout_val and lout_ack;
-  rx_fire <= rx_hs;
+  -- outputs
+  lin_ack  <= rx_ack;
+  lout_val <= tx_val;
+  tx_sel   <= tx_sel_i;
+  rx_fire  <= rx_fire_i;
 
-  -- combinational outputs based on state
-  process(all)
-  begin
-    lin_ack  <= '0';
-    lout_val <= '0';
-    tx_sel   <= (others => '0');
+  -- NOTE: lin_data is captured by the TOP when rx_fire pulses; controller doesn't need lin_data directly.
 
-    case st is
-      when s_idle =>
-        lin_ack <= '1';
+  u_RX: entity work.rx_request_ctrl
+    port map(
+      ACLK    => ACLK,
+      ARESETn => ARESETn,
+      i_enable => not mode_tx,
 
-      when s_rx_hdr0 | s_rx_hdr1 | s_rx_hdr2 | s_rx_addr | s_rx_payload | s_rx_checksum =>
-        lin_ack <= '1';
+      lin_val  => lin_val,
+      lin_ack  => rx_ack,
 
-      when s_tx_hdr0 =>
-        lout_val <= '1'; tx_sel <= "000"; -- hdr0
-      when s_tx_hdr1 =>
-        lout_val <= '1'; tx_sel <= "001"; -- hdr1
-      when s_tx_hdr2 =>
-        lout_val <= '1'; tx_sel <= "010"; -- hdr2
-      when s_tx_payload =>
-        lout_val <= '1'; tx_sel <= "011"; -- payload
-      when s_tx_checksum =>
-        lout_val <= '1'; tx_sel <= "100"; -- checksum
-    end case;
-  end process;
+      o_rx_fire => rx_fire_i,
 
-  -- sequential state / strobes
+      o_dp_store_hdr0   => rx_dp_store_hdr0,
+      o_dp_store_hdr1   => rx_dp_store_hdr1,
+      o_dp_store_hdr2   => rx_dp_store_hdr2,
+      o_dp_store_addr   => rx_dp_store_addr,
+      o_dp_store_pld    => rx_dp_store_pld,
+      o_dp_set_meta     => rx_dp_set_meta,
+      o_dp_commit_write => rx_dp_commit_write,
+
+      o_dp_pld_widx => rx_widx,
+
+      i_dp_req_is_write => dp_req_is_write,
+      i_dp_req_is_read  => dp_req_is_read,
+      i_dp_req_len      => dp_req_len,
+
+      o_is_read_resp  => rx_is_read_resp,
+      o_payload_words => rx_payload_words,
+
+      o_done => rx_done
+    );
+
+  u_TX: entity work.tx_response_ctrl
+    port map(
+      ACLK    => ACLK,
+      ARESETn => ARESETn,
+      i_enable => mode_tx,
+      i_start  => tx_start,
+
+      lout_ack => lout_ack,
+      lout_val => tx_val,
+      tx_sel   => tx_sel_i,
+
+      o_dp_pld_ridx => tx_ridx,
+
+      i_is_read_resp  => r_is_read_resp,
+      i_payload_words => r_payload_words,
+
+      o_done => tx_done
+    );
+
   process(ACLK)
   begin
     if rising_edge(ACLK) then
       if ARESETn = '0' then
-        st <= s_idle;
-        widx <= (others => '0');
-        ridx <= (others => '0');
-        payload_left <= (others => '0');
+        mode_tx <= '0';
         r_is_read_resp <= '0';
-
-        r_dp_store_hdr0 <= '0';
-        r_dp_store_hdr1 <= '0';
-        r_dp_store_hdr2 <= '0';
-        r_dp_store_addr <= '0';
-        r_dp_store_pld  <= '0';
-        r_dp_set_meta   <= '0';
-        r_dp_commit_write <= '0';
+        r_payload_words <= (others => '0');
+        tx_start <= '0';
       else
-        -- default pulses low
-        r_dp_store_hdr0 <= '0';
-        r_dp_store_hdr1 <= '0';
-        r_dp_store_hdr2 <= '0';
-        r_dp_store_addr <= '0';
-        r_dp_store_pld  <= '0';
-        r_dp_set_meta   <= '0';
-        r_dp_commit_write <= '0';
+        tx_start <= '0';
 
-        case st is
-          when s_idle =>
-            if lin_val = '1' then
-              st <= s_rx_hdr0;
-            end if;
+        if mode_tx = '0' then
+          if rx_done = '1' then
+            r_is_read_resp  <= rx_is_read_resp;
+            r_payload_words <= rx_payload_words;
 
-          when s_rx_hdr0 =>
-            if rx_hs='1' then
-              r_dp_store_hdr0 <= '1';
-              st <= s_rx_hdr1;
-            end if;
-
-          when s_rx_hdr1 =>
-            if rx_hs='1' then
-              r_dp_store_hdr1 <= '1';
-              st <= s_rx_hdr2;
-            end if;
-
-          when s_rx_hdr2 =>
-            if rx_hs='1' then
-              r_dp_store_hdr2 <= '1';
-              r_dp_set_meta   <= '1'; -- decode OP/TYPE/LEN from THIS word
-              st <= s_rx_addr;
-            end if;
-
-          when s_rx_addr =>
-            if rx_hs='1' then
-              r_dp_store_addr <= '1';
-              if dp_req_is_write='1' then
-                widx <= (others => '0');
-                payload_left <= u16(dp_req_len) + 1; -- LEN+1 payload words
-                st <= s_rx_payload;
-              else
-                -- read request has no payload
-                st <= s_rx_checksum;
-              end if;
-            end if;
-
-          when s_rx_payload =>
-            if rx_hs='1' then
-              r_dp_store_pld <= '1';
-              widx <= widx + 1;
-              if payload_left = 1 then
-                r_dp_commit_write <= '1'; -- commit hold len/valid
-                st <= s_rx_checksum;
-              end if;
-              payload_left <= payload_left - 1;
-            end if;
-
-          when s_rx_checksum =>
-            if rx_hs='1' then
-              -- checksum ignored
-              r_is_read_resp <= dp_req_is_read;
-              ridx <= (others => '0');
-              if dp_req_is_read='1' then
-                payload_left <= u16(dp_req_len) + 1; -- response payload length
-              else
-                payload_left <= (others => '0');
-              end if;
-              st <= s_tx_hdr0;
-            end if;
-
-          when s_tx_hdr0 =>
-            if tx_hs='1' then st <= s_tx_hdr1; end if;
-
-          when s_tx_hdr1 =>
-            if tx_hs='1' then st <= s_tx_hdr2; end if;
-
-          when s_tx_hdr2 =>
-            if tx_hs='1' then
-              if r_is_read_resp='1' then
-                st <= s_tx_payload;
-              else
-                st <= s_tx_checksum;
-              end if;
-            end if;
-
-          when s_tx_payload =>
-            if tx_hs='1' then
-              ridx <= ridx + 1;
-              if payload_left = 1 then
-                st <= s_tx_checksum;
-              end if;
-              payload_left <= payload_left - 1;
-            end if;
-
-          when s_tx_checksum =>
-            if tx_hs='1' then
-              st <= s_idle;
-            end if;
-        end case;
+            mode_tx <= '1';
+            tx_start <= '1';
+          end if;
+        else
+          if tx_done = '1' then
+            mode_tx <= '0';
+          end if;
+        end if;
       end if;
     end if;
   end process;
+
 end rtl;

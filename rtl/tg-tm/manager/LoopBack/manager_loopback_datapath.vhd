@@ -7,14 +7,9 @@ use IEEE.numeric_std.all;
 use work.xina_ft_pkg.all;
 use work.xina_ni_ft_pkg.all;
 
--- Variant C datapath:
---   req_capture_block: owns hdr regs + meta decode
---   tg_response_block: owns hold meta regs + writes to payload memory + write-resp hdr2
---   tm_response_block: builds read-resp hdr2 + payload output
---   lfsr_hold: payload storage (32-bit words)
 entity manager_loopback_datapath is
   generic(
-    p_MAX_PAYLOAD_WORDS : natural := 256
+    p_MAX_PAYLOAD_WORDS : natural := 256  -- kept for compatibility (unused by reg-hold)
   );
   port(
     ACLK    : in  std_logic;
@@ -47,6 +42,7 @@ entity manager_loopback_datapath is
 end entity;
 
 architecture rtl of manager_loopback_datapath is
+  -- hdr2 bit positions (ASSUMED; adjust if needed)
   constant c_TYPE_BIT   : integer := 0;
   constant c_OP_BIT     : integer := 1;
   constant c_STATUS_LSB : integer := 2;
@@ -54,12 +50,12 @@ architecture rtl of manager_loopback_datapath is
   constant c_LENGTH_LSB : integer := 6;
   constant c_LENGTH_MSB : integer := 13;
 
-  signal r_hdr0 : std_logic_vector(31 downto 0);
-  signal r_hdr1 : std_logic_vector(31 downto 0);
-  signal r_hdr2 : std_logic_vector(31 downto 0);
-  signal r_op   : std_logic;
-  signal r_type : std_logic;
-  signal r_len  : unsigned(7 downto 0);
+  signal req_hdr0 : std_logic_vector(31 downto 0);
+  signal req_hdr1 : std_logic_vector(31 downto 0);
+  signal req_hdr2 : std_logic_vector(31 downto 0);
+  signal req_op   : std_logic;
+  signal req_type : std_logic;
+  signal req_len  : unsigned(7 downto 0);
 
   signal hold_wr_en   : std_logic;
   signal hold_wr_addr : unsigned(15 downto 0);
@@ -73,16 +69,14 @@ architecture rtl of manager_loopback_datapath is
   signal rd_resp_hdr2 : std_logic_vector(31 downto 0);
   signal resp_hdr2    : std_logic_vector(31 downto 0);
 
-  signal tm_payload : std_logic_vector(31 downto 0);
-
   signal resp_hdr0 : std_logic_vector(31 downto 0);
   signal resp_hdr1 : std_logic_vector(31 downto 0);
 
-  signal last_payload : std_logic_vector(31 downto 0);
+  signal tm_payload : std_logic_vector(31 downto 0);
 begin
-  o_req_is_write <= '1' when (r_type='0' and r_op='1') else '0';
-  o_req_is_read  <= '1' when (r_type='0' and r_op='0') else '0';
-  o_req_len      <= r_len;
+  o_req_is_write <= '1' when (req_type='0' and req_op='1') else '0';
+  o_req_is_read  <= '1' when (req_type='0' and req_op='0') else '0';
+  o_req_len      <= req_len;
 
   o_hold_len   <= hold_len;
   o_hold_valid <= hold_valid;
@@ -97,20 +91,18 @@ begin
     port map(
       ACLK    => ACLK,
       ARESETn => ARESETn,
-
       i_rx_word    => i_rx_word,
       i_store_hdr0 => i_store_hdr0,
       i_store_hdr1 => i_store_hdr1,
       i_store_hdr2 => i_store_hdr2,
       i_store_addr => i_store_addr,
       i_set_meta   => i_set_meta,
-
-      o_hdr0 => r_hdr0,
-      o_hdr1 => r_hdr1,
-      o_hdr2 => r_hdr2,
-      o_op   => r_op,
-      o_type => r_type,
-      o_len  => r_len
+      o_hdr0 => req_hdr0,
+      o_hdr1 => req_hdr1,
+      o_hdr2 => req_hdr2,
+      o_op   => req_op,
+      o_type => req_type,
+      o_len  => req_len
     );
 
   u_TG: entity work.tg_response_block
@@ -125,24 +117,17 @@ begin
     port map(
       ACLK    => ACLK,
       ARESETn => ARESETn,
-
-      i_store_pld => i_store_pld,
-      i_pld_widx  => i_pld_widx,
-      i_rx_word   => i_rx_word,
-
+      i_store_pld    => i_store_pld,
+      i_rx_word      => i_rx_word,
       i_commit_write => i_commit_write,
-      i_req_len      => r_len,
-      i_req_hdr2     => r_hdr2,
-
+      i_req_len      => req_len,
+      i_req_hdr2     => req_hdr2,
       o_hold_wr_en   => hold_wr_en,
       o_hold_wr_addr => hold_wr_addr,
       o_hold_wr_data => hold_wr_data,
-
-      o_hold_len   => hold_len,
-      o_hold_valid => hold_valid,
-
-      o_wr_resp_hdr2 => wr_resp_hdr2,
-      o_last_payload => last_payload
+      o_hold_len     => hold_len,
+      o_hold_valid   => hold_valid,
+      o_wr_resp_hdr2 => wr_resp_hdr2
     );
 
   u_HOLD: entity work.lfsr_hold
@@ -169,30 +154,37 @@ begin
       p_LENGTH_MSB => c_LENGTH_MSB
     )
     port map(
-      i_req_hdr2 => r_hdr2,
-      i_req_len  => r_len,
+      ACLK    => ACLK,
+      ARESETn => ARESETn,
+      i_req_hdr2 => req_hdr2,
+      i_req_len  => req_len,
       i_hold_valid   => hold_valid,
       i_hold_rd_data => hold_rd_data,
+      i_tx_sel       => i_tx_sel,
       o_rd_resp_hdr2 => rd_resp_hdr2,
       o_payload_word => tm_payload
     );
 
-  resp_hdr0 <= r_hdr1;
-  resp_hdr1 <= r_hdr0;
+  -- response swap
+  resp_hdr0 <= req_hdr1;
+  resp_hdr1 <= req_hdr0;
 
-  resp_hdr2 <= rd_resp_hdr2 when r_op = '0' else wr_resp_hdr2;
+  -- hdr2 selection based on OP
+  resp_hdr2 <= rd_resp_hdr2 when req_op='0' else wr_resp_hdr2;
 
+  -- tx mux
   process(all)
   begin
-    o_tx_word <= (others => '0');
+    o_tx_word <= (others=>'0');
     o_tx_ctrl <= '0';
+
     case i_tx_sel is
-      when "000" => o_tx_word <= resp_hdr0; o_tx_ctrl <= '1';
-      when "001" => o_tx_word <= resp_hdr1; o_tx_ctrl <= '0';
-      when "010" => o_tx_word <= resp_hdr2; o_tx_ctrl <= '0';
-      when "011" => o_tx_word <= tm_payload; o_tx_ctrl <= '0';
-      when "100" => o_tx_word <= (others => '0'); o_tx_ctrl <= '1';
-      when others => o_tx_word <= (others => '0'); o_tx_ctrl <= '0';
+      when "000" => o_tx_word <= resp_hdr0;     o_tx_ctrl <= '1'; -- hdr0
+      when "001" => o_tx_word <= resp_hdr1;     o_tx_ctrl <= '0'; -- hdr1
+      when "010" => o_tx_word <= resp_hdr2;     o_tx_ctrl <= '0'; -- hdr2
+      when "011" => o_tx_word <= tm_payload;    o_tx_ctrl <= '0'; -- payload
+      when "100" => o_tx_word <= (others=>'0'); o_tx_ctrl <= '1'; -- checksum
+      when others => o_tx_word <= (others=>'0'); o_tx_ctrl <= '0';
     end case;
   end process;
 

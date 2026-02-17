@@ -2,6 +2,10 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 
+-- TM-side response block:
+--  * Builds READ response hdr2 (TYPE=1, OP=0, STATUS=00, LENGTH=req_len)
+--  * Latches payload when controller selects payload beat (real state)
+--  * Gates payload output by hold_valid
 entity tm_response_block is
   generic(
     p_TYPE_BIT   : integer := 0;
@@ -12,11 +16,17 @@ entity tm_response_block is
     p_LENGTH_MSB : integer := 13
   );
   port(
+    ACLK    : in  std_logic;
+    ARESETn : in  std_logic;
+
     i_req_hdr2 : in std_logic_vector(31 downto 0);
     i_req_len  : in unsigned(7 downto 0);
 
     i_hold_valid   : in std_logic;
     i_hold_rd_data : in std_logic_vector(31 downto 0);
+
+    -- from controller via datapath (so this block latches payload at the right time)
+    i_tx_sel : in unsigned(2 downto 0);
 
     o_rd_resp_hdr2 : out std_logic_vector(31 downto 0);
     o_payload_word : out std_logic_vector(31 downto 0)
@@ -38,9 +48,10 @@ architecture rtl of tm_response_block is
     return r;
   end function;
 
-  signal w_hdr2 : std_logic_vector(31 downto 0);
+  signal r_payload_q : std_logic_vector(31 downto 0) := (others => '0');
+  signal w_hdr2      : std_logic_vector(31 downto 0);
 begin
-  -- READ response: TYPE=1, OP=0, STATUS=00, LENGTH=req_len
+  -- READ response hdr2: TYPE=1, OP=0, STATUS=00, LENGTH=req_len
   w_hdr2 <= set_slice(
               set_slice(
                 set_bit(set_bit(i_req_hdr2, p_TYPE_BIT, '1'), p_OP_BIT, '0'),
@@ -48,6 +59,20 @@ begin
               p_LENGTH_LSB, p_LENGTH_MSB, std_logic_vector(i_req_len));
   o_rd_resp_hdr2 <= w_hdr2;
 
-  -- gate payload if no stored data yet
-  o_payload_word <= i_hold_rd_data when i_hold_valid = '1' else (others => '0');
+  -- latch payload only when tx_sel indicates payload beat
+  process(ACLK)
+  begin
+    if rising_edge(ACLK) then
+      if ARESETn = '0' then
+        r_payload_q <= (others => '0');
+      else
+        if (i_hold_valid = '1') and (i_tx_sel = "011") then
+          r_payload_q <= i_hold_rd_data;
+        end if;
+      end if;
+    end if;
+  end process;
+
+  o_payload_word <= r_payload_q when i_hold_valid = '1' else (others => '0');
+
 end rtl;
