@@ -6,14 +6,14 @@ use IEEE.numeric_std.all;
 use work.xina_ni_ft_pkg.all;
 use work.xina_ft_pkg.all;
 
--- Read-phase datapath:
+-- Read-phase datapath (minimal compare):
 --  * One register BEFORE the LFSR (r_lfsr_in)
 --  * One register AFTER  the LFSR (r_expected)  => expected RDATA
---  * Feedback uses the SAME expected value (r_expected) to update r_lfsr_in
---  * Comparator is encapsulated in tm_read_compare
+--  * Feedback uses expected value (r_expected) to update r_lfsr_in
+--  * Comparator is encapsulated in tm_read_compare and outputs ONLY a sticky mismatch flag
 --
 -- Initialization (mirrors TG):
---  r_lfsr_in starts from generic p_INIT_VALUE, with its lower 32 bits overwritten by STARTING_SEED.
+--  r_lfsr_in starts from p_INIT_VALUE, with its lower 32 bits overwritten by STARTING_SEED.
 --  r_expected is precomputed as next_lfsr(r_lfsr_in) so it is ready when the first R beat arrives.
 entity tm_read_datapath is
   generic(
@@ -42,10 +42,8 @@ entity tm_read_datapath is
     ARLEN   : out std_logic_vector(7 downto 0);
     ARBURST : out std_logic_vector(1 downto 0);
 
-    -- comparator outputs
-    o_match_sticky : out std_logic; -- '1' if all beats matched since last init, else '0'
-    o_last_match   : out std_logic; -- match result for the most recent accepted beat
-    o_mismatch_cnt : out unsigned(15 downto 0);
+    -- minimal comparator output
+    o_mismatch : out std_logic;
 
     -- debug (post-LFSR reg = expected value)
     o_expected_value : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0)
@@ -114,7 +112,7 @@ begin
       o_next  => w_lfsr_next
     );
 
-  -- Encapsulated comparison / scoreboard
+  -- Encapsulated minimal comparison (single sticky mismatch register)
   u_CMP: entity work.tm_read_compare
     generic map(
       p_WIDTH => c_AXI_DATA_WIDTH
@@ -123,16 +121,13 @@ begin
       ACLK    => ACLK,
       ARESETn => ARESETn,
 
-      -- Clear stats on init; check on each accepted R beat
       i_init_pulse  => w_do_init,
       i_check_pulse => w_do_step,
 
       i_expected => r_expected,
       i_rdata    => RDATA,
 
-      o_match_sticky => o_match_sticky,
-      o_last_match   => o_last_match,
-      o_mismatch_cnt => o_mismatch_cnt
+      o_mismatch => o_mismatch
     );
 
   process(ACLK)

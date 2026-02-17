@@ -6,8 +6,7 @@ use IEEE.numeric_std.all;
 use work.xina_ni_ft_pkg.all;
 use work.xina_ft_pkg.all;
 
--- Top for the read phase (AR/R).
--- Mirrors tg_write_top: controller + datapath + LFSR core.
+-- Top for the read phase (AR/R) with minimal comparator output.
 entity tm_read_top is
   generic(
     p_INIT_VALUE : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0')
@@ -41,10 +40,8 @@ entity tm_read_top is
     RID    : in  std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0) := (others => '0');
     RRESP  : in  std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0) := (others => '0');
 
-    -- comparator outputs
-    o_match_sticky : out std_logic;
-    o_last_match   : out std_logic;
-    o_mismatch_cnt : out unsigned(15 downto 0);
+    -- minimal compare output
+    o_mismatch : out std_logic;
 
     -- debug
     o_expected_value : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0)
@@ -96,10 +93,7 @@ begin
       ARLEN   => ARLEN,
       ARBURST => ARBURST,
 
-      o_match_sticky   => o_match_sticky,
-      o_last_match     => o_last_match,
-      o_mismatch_cnt   => o_mismatch_cnt,
-
+      o_mismatch       => o_mismatch,
       o_expected_value => o_expected_value
     );
 
