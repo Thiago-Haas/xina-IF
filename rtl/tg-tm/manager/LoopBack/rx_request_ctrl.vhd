@@ -8,6 +8,15 @@ use work.xina_ni_ft_pkg.all;
 -- RX-side controller: receives a full request packet (hdr0,hdr1,hdr2,addr,[payload],checksum)
 -- and generates 1-cycle datapath strobes to capture words.
 -- Generates a 1-cycle o_done pulse once the checksum word is accepted.
+--
+-- NOTE ABOUT lin_val/lin_ack:
+-- Some NI implementations do not guarantee that the first flit (hdr0) will be held
+-- stable until lin_ack goes high. If lin_ack is deasserted while waiting for the first
+-- flit, hdr0 can be missed and the FSM desynchronizes (symptom: only hdr0 appears then
+-- the transaction stalls).
+--
+-- To make the loopback robust, this controller advertises readiness (lin_ack='1')
+-- whenever enabled, and it handshakes hdr0 directly in the first state.
 entity rx_request_ctrl is
   port(
     ACLK    : in  std_logic;
@@ -33,7 +42,7 @@ entity rx_request_ctrl is
 
     o_dp_pld_widx : out unsigned(15 downto 0);
 
-    -- decoded from datapath (valid after hdr2 accepted + 1 cycle)
+    -- decoded from datapath
     i_dp_req_is_write : in std_logic;
     i_dp_req_is_read  : in std_logic;
     i_dp_req_len      : in unsigned(7 downto 0);
@@ -47,8 +56,8 @@ entity rx_request_ctrl is
 end entity;
 
 architecture rtl of rx_request_ctrl is
-  type t_state is (s_idle, s_hdr0, s_hdr1, s_hdr2, s_addr, s_payload, s_checksum);
-  signal st : t_state := s_idle;
+  type t_state is (s_hdr0, s_hdr1, s_hdr2, s_addr, s_payload, s_checksum);
+  signal st : t_state := s_hdr0;
 
   signal widx         : unsigned(15 downto 0) := (others => '0');
   signal payload_left : unsigned(15 downto 0) := (others => '0');
@@ -72,8 +81,8 @@ architecture rtl of rx_request_ctrl is
     return v;
   end function;
 begin
-  -- Ack only when we are ready to accept AND store the flit (avoid losing hdr0)
-  ack_i  <= '1' when (i_enable = '1' and st /= s_idle) else '0';
+  -- Always ready while enabled.
+  ack_i   <= '1' when (i_enable = '1') else '0';
   lin_ack <= ack_i;
 
   rx_hs     <= lin_val and ack_i;
@@ -97,7 +106,7 @@ begin
   begin
     if rising_edge(ACLK) then
       if ARESETn = '0' then
-        st <= s_idle;
+        st <= s_hdr0;
         widx <= (others => '0');
         payload_left <= (others => '0');
         r_is_read_resp <= '0';
@@ -113,39 +122,34 @@ begin
         r_done <= '0';
 
         if i_enable = '0' then
-          st <= s_idle;
+          st <= s_hdr0;
           widx <= (others => '0');
           payload_left <= (others => '0');
         else
           case st is
-            when s_idle =>
-              if lin_val = '1' then
-                st <= s_hdr0;
-              end if;
-
             when s_hdr0 =>
-              if rx_hs='1' then
+              if rx_hs = '1' then
                 p_hdr0 <= '1';
                 st <= s_hdr1;
               end if;
 
             when s_hdr1 =>
-              if rx_hs='1' then
+              if rx_hs = '1' then
                 p_hdr1 <= '1';
                 st <= s_hdr2;
               end if;
 
             when s_hdr2 =>
-              if rx_hs='1' then
+              if rx_hs = '1' then
                 p_hdr2    <= '1';
                 p_setmeta <= '1';
                 st <= s_addr;
               end if;
 
             when s_addr =>
-              if rx_hs='1' then
+              if rx_hs = '1' then
                 p_addr <= '1';
-                if i_dp_req_is_write='1' then
+                if i_dp_req_is_write = '1' then
                   widx <= (others => '0');
                   payload_left <= u16(i_dp_req_len) + 1; -- LEN+1 payload words
                   st <= s_payload;
@@ -155,7 +159,7 @@ begin
               end if;
 
             when s_payload =>
-              if rx_hs='1' then
+              if rx_hs = '1' then
                 p_pld <= '1';
                 widx <= widx + 1;
                 if payload_left = 1 then
@@ -166,16 +170,16 @@ begin
               end if;
 
             when s_checksum =>
-              if rx_hs='1' then
+              if rx_hs = '1' then
                 r_is_read_resp <= i_dp_req_is_read;
-                if i_dp_req_is_read='1' then
+                if i_dp_req_is_read = '1' then
                   r_payload_words <= u16(i_dp_req_len) + 1;
                 else
                   r_payload_words <= (others => '0');
                 end if;
 
                 r_done <= '1';
-                st <= s_idle;
+                st <= s_hdr0;
               end if;
           end case;
         end if;
