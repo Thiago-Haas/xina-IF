@@ -105,15 +105,16 @@ begin
       end if;
     end loop;
 
+    -- deassert start write
+    i_start_write <= '0';
+
     -- small gap
     for k in 0 to 9 loop
       wait until rising_edge(ACLK);
     end loop;
 
-    -- start read (one-cycle pulse)
+    -- start read (hold high until done)
     i_start_read <= '1';
-    wait until rising_edge(ACLK);
-    i_start_read <= '0';
 
     -- wait read to complete (with timeout)
     v_cnt := 0;
@@ -133,6 +134,9 @@ begin
         assert false report "TIMEOUT waiting for o_done_read" severity failure;
       end if;
     end loop;
+
+    -- deassert start read
+    i_start_read <= '0';
 
     -- final check
     assert o_mismatch = '0'
