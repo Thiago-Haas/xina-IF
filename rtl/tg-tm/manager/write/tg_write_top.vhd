@@ -47,7 +47,7 @@ entity tg_write_top is
 
     -- Write response channel
     BID    : in  std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0) := (others => '0');
-    BRESP  : in  std_logic_vector(1 downto 0) := (others => '0');
+    BRESP  : out std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0) := (others => '0');
     BVALID : in  std_logic;
     BREADY : out std_logic;
 
