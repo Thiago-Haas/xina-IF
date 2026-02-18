@@ -34,6 +34,14 @@ architecture rtl of tg_write_controller is
   type t_state is (s_idle, s_aw, s_w, s_b);
   signal r_state : t_state := s_idle;
 
+  -- NOTE:
+  -- Some NI/loopback configurations may assert BVALID very quickly (even as a
+  -- single-cycle pulse). If BREADY is only asserted in s_b, that pulse can be
+  -- missed and the TG will stall.
+  -- To make the TG robust, we keep BREADY asserted for the whole transaction
+  -- (AW/W/B) and latch any observed B handshake until W completes.
+  signal r_bhs_seen : std_logic := '0';
+
   signal awvalid_i, wvalid_i, bready_i : std_logic;
   signal aw_hs, w_hs, b_hs : std_logic;
 
@@ -43,7 +51,8 @@ architecture rtl of tg_write_controller is
 begin
   awvalid_i <= '1' when (r_state = s_aw) else '0';
   wvalid_i  <= '1' when (r_state = s_w)  else '0';
-  bready_i  <= '1' when (r_state = s_b)  else '0';
+  -- Keep BREADY high during the whole active transaction (not only in s_b)
+  bready_i  <= '0' when (r_state = s_idle) else '1';
 
   AWVALID <= awvalid_i;
   WVALID  <= wvalid_i;
@@ -66,29 +75,50 @@ begin
 
       if ARESETn = '0' then
         r_state <= s_idle;
+        r_bhs_seen <= '0';
       else
         case r_state is
           when s_idle =>
             if i_start = '1' then
               start_pulse <= '1';
               r_state <= s_aw;
+              r_bhs_seen <= '0';
             end if;
 
           when s_aw =>
+            -- Defensive: latch any early B handshake (shouldn't happen, but harmless)
+            if b_hs = '1' then
+              r_bhs_seen <= '1';
+            end if;
             if aw_hs = '1' then
               r_state <= s_w;
             end if;
 
           when s_w =>
+            -- If the NI produces a short BVALID pulse while we're still in s_w,
+            -- we must not miss it.
+            if b_hs = '1' then
+              r_bhs_seen <= '1';
+            end if;
             if w_hs = '1' then
               wbeat_pulse <= '1';
-              r_state <= s_b;
+
+              -- If we already observed the B handshake (or it happens in the
+              -- same cycle as W), we can complete immediately.
+              if (r_bhs_seen = '1') or (b_hs = '1') then
+                done_pulse <= '1';
+                r_state <= s_idle;
+                r_bhs_seen <= '0';
+              else
+                r_state <= s_b;
+              end if;
             end if;
 
           when s_b =>
             if b_hs = '1' then
               done_pulse <= '1';
               r_state <= s_idle;
+              r_bhs_seen <= '0';
             end if;
         end case;
       end if;
