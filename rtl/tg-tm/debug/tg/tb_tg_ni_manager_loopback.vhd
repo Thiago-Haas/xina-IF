@@ -169,6 +169,7 @@ begin
     variable resp_hdr2 : std_logic_vector(31 downto 0);
 
     variable payload_words : natural;
+    variable req_payload_words : natural;
 
     variable resp_idx : natural;
     variable plw : std_logic_vector(31 downto 0);
@@ -279,6 +280,15 @@ if c_DIAG_DUMP_PKTS then
     dump_flit("REQ", natural(k), req(k));
   end loop;
   dbg("---- END   REQUEST PACKET DUMP ----");
+
+-- Infer whether the REQUEST carries payload (WRITE request has payload flits, READ request doesn't)
+-- Minimal request flits = 5 (hdr0,hdr1,hdr2,addr,checksum). Any extra before checksum are payload.
+req_payload_words := 0;
+if req_len > 5 then
+  req_payload_words := req_len - 5;
+end if;
+dbg("REQ inferred payload_words=" & integer'image(integer(req_payload_words)));
+
 end if;
 
       -- basic decode (need at least hdr0,hdr1,hdr2)
@@ -310,24 +320,24 @@ end if;
       resp_hdr1 := req_hdr0;
 
       resp_hdr2 := req_hdr2;
-      resp_hdr2 := set_bit(resp_hdr2, c_TYPE_BIT, '1');
-      resp_hdr2 := set_slice(resp_hdr2, c_STATUS_LSB, c_STATUS_MSB, "00");
+resp_hdr2 := set_bit(resp_hdr2, c_TYPE_BIT, '1');
+resp_hdr2 := set_slice(resp_hdr2, c_STATUS_LSB, c_STATUS_MSB, "00");
 
-      if (req_type = '0') and (req_op = '1') then
-        -- WRITE response: OP=1, LENGTH=0, NO PAYLOAD
-        resp_hdr2 := set_bit(resp_hdr2, c_OP_BIT, '1');
-        resp_hdr2 := set_slice(resp_hdr2, c_LENGTH_LSB, c_LENGTH_MSB, x"00");
-        payload_words := 0;
-      elsif (req_type = '0') and (req_op = '0') then
-        -- READ response: include payload[0..LEN] (LEN+1 words)
-        resp_hdr2 := set_bit(resp_hdr2, c_OP_BIT, '0');
-        resp_hdr2 := set_slice(resp_hdr2, c_LENGTH_LSB, c_LENGTH_MSB, std_logic_vector(req_len_field));
-        payload_words := to_integer(req_len_field) + 1;
-      else
-        -- fallback: treat as write-like
-        resp_hdr2 := set_slice(resp_hdr2, c_LENGTH_LSB, c_LENGTH_MSB, x"00");
-        payload_words := 0;
-      end if;
+-- Decide response payload length WITHOUT trusting OP bit positions:
+-- If the request carried payload flits => it's a WRITE request => WRITE response has NO payload.
+-- Otherwise => it's a READ request => READ response has LEN+1 payload words.
+if (req_type = '0') then
+  if req_payload_words > 0 then
+    -- WRITE response
+    payload_words := 0;
+  else
+    -- READ response
+    payload_words := to_integer(req_len_field) + 1;
+  end if;
+else
+  -- If it's not a request, default to no payload
+  payload_words := 0;
+end if;
 
       ---------------------------------------------------------------------
       -- Send response packet
@@ -352,17 +362,16 @@ resp_idx := resp_idx + 1;
 send_resp_flit(mk_flit('0', resp_hdr2), resp_idx);
 resp_idx := resp_idx + 1;
 
--- payload (READ responses only): LEN field encodes "LEN", meaning LEN+1 payload words
-if req_op = '0' then
+-- payload (only when payload_words > 0): send that many words
+if payload_words > 0 then
   -- We don't have real memory here; return a deterministic word so the NI can complete.
   -- If there was at least one extra captured flit after addr, echo it; else return 0.
   plw := (others => '0');
   if req_len > 5 then
-    -- req(4) is often the first data-like word observed in these tests
     plw := req(4)(31 downto 0);
   end if;
 
-  for p in 0 to integer(to_integer(req_len_field)) loop
+  for p in 0 to integer(payload_words)-1 loop
     send_resp_flit(mk_flit('0', plw), resp_idx);
     resp_idx := resp_idx + 1;
   end loop;
