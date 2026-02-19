@@ -45,7 +45,9 @@ architecture tb of tb_tg_ni_manager_loopback_dbg is
   signal lout_val  : std_logic := '0';
   signal lout_ack  : std_logic;
 
-  -- DUT debug exports (TG + AXI + NI)
+  -- ------------------------------------------------------------------
+  -- Debug signals exported by tg_ni_write_only_top_dbg
+  -- ------------------------------------------------------------------
   signal dbg_axi_awid    : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
   signal dbg_axi_awaddr  : std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
   signal dbg_axi_awlen   : std_logic_vector(7 downto 0);
@@ -82,9 +84,8 @@ architecture tb of tb_tg_ni_manager_loopback_dbg is
   signal dbg_dp_wdata_reg    : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
   signal dbg_tg_lfsr_value   : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
-  signal dbg_corrupt_packet  : std_logic;
 
-  signal cur_iter : integer := -1;
+  signal dbg_corrupt_packet  : std_logic;
 
   -- hdr2 bit positions (match manager_loopback_datapath defaults)
   constant c_TYPE_BIT   : integer := 0;
@@ -132,35 +133,26 @@ begin
   return r;
 end function;
 
--- Safely extract a 32-bit word from an arbitrary-width vector, little-endian word order.
--- word_index=0 returns bits [31:0], word_index=1 returns bits [63:32], etc.
-function get_word32(v : std_logic_vector; word_index : natural) return std_logic_vector is
-  variable r : std_logic_vector(31 downto 0) := (others => '0');
-  variable base : integer := integer(word_index) * 32;
-  variable bit_i : integer;
-begin
-  for b in 0 to 31 loop
-    bit_i := base + b;
-    if (bit_i >= v'low) and (bit_i <= v'high) then
-      r(b) := v(bit_i);
+  -- Format arbitrary std_logic_vector as hex by printing the lower 32 bits (and upper 32 if present).
+  function hex_lo32(v : std_logic_vector) return string is
+    variable lo : std_logic_vector(31 downto 0) := (others => '0');
+  begin
+    if v'length >= 32 then
+      lo := v(31 downto 0);
     else
-      r(b) := '0';
+      lo(v'length-1 downto 0) := v;
     end if;
-  end loop;
-  return r;
-end function;
+    return hex32(lo);
+  end function;
 
-function tg_state_str(s : std_logic_vector(1 downto 0)) return string is
-begin
-  case s is
-    when "00" => return "IDLE";
-    when "01" => return "AW";
-    when "10" => return "W";
-    when "11" => return "B";
-    when others => return "??";
-  end case;
-end function;
-
+  function hex_hi32(v : std_logic_vector) return string is
+    variable hi : std_logic_vector(31 downto 0) := (others => '0');
+  begin
+    if v'length > 32 then
+      hi := v(v'length-1 downto 32);
+    end if;
+    return hex32(hi);
+  end function;
 
 procedure dbg(constant msg : in string) is
 begin
@@ -219,6 +211,7 @@ begin
       l_out_val_i  => lout_val,
       l_out_ack_o  => lout_ack,
 
+      -- Debug exports
       o_dbg_axi_awid    => dbg_axi_awid,
       o_dbg_axi_awaddr  => dbg_axi_awaddr,
       o_dbg_axi_awlen   => dbg_axi_awlen,
@@ -255,8 +248,94 @@ begin
       o_dbg_dp_wdata_reg    => dbg_dp_wdata_reg,
 
       o_dbg_tg_lfsr_value   => dbg_tg_lfsr_value,
+
       o_dbg_corrupt_packet  => dbg_corrupt_packet
     );
+
+
+  ---------------------------------------------------------------------------
+  -- AXI/TG/NI monitor (prints state changes, handshakes, and a periodic snapshot)
+  ---------------------------------------------------------------------------
+  monitor: process
+    variable prev_state : std_logic_vector(1 downto 0) := (others => 'X');
+    variable stall_cnt  : natural := 0;
+  begin
+    wait until ARESETn = '1';
+    wait until rising_edge(ACLK);
+
+    while sim_done = '0' loop
+      wait until rising_edge(ACLK);
+
+      -- State transitions
+      if dbg_tg_state /= prev_state then
+        dbg("TG STATE " & std_logic'image(prev_state(1)) & std_logic'image(prev_state(0)) &
+            " -> " & std_logic'image(dbg_tg_state(1)) & std_logic'image(dbg_tg_state(0)) &
+            " | AWV/AWR=" & std_logic'image(dbg_axi_awvalid) & "/" & std_logic'image(dbg_axi_awready) &
+            " WV/WR=" & std_logic'image(dbg_axi_wvalid) & "/" & std_logic'image(dbg_axi_wready) &
+            " BV/BR=" & std_logic'image(dbg_axi_bvalid) & "/" & std_logic'image(dbg_axi_bready) &
+            " corrupt=" & std_logic'image(dbg_corrupt_packet));
+        prev_state := dbg_tg_state;
+      end if;
+
+      -- Handshake event prints (AW/W/B)
+      if dbg_tg_aw_hs = '1' then
+        dbg("AXI AW_HS: awid=" & integer'image(to_integer(unsigned(dbg_axi_awid))) &
+            " awaddr_hi=0x" & hex_hi32(dbg_axi_awaddr) &
+            " awaddr_lo=0x" & hex_lo32(dbg_axi_awaddr) &
+            " awlen=" & integer'image(to_integer(unsigned(dbg_axi_awlen))) &
+            " awburst=" & integer'image(to_integer(unsigned(dbg_axi_awburst))));
+      end if;
+
+      if dbg_tg_w_hs = '1' then
+        dbg("AXI W_HS: wlast=" & std_logic'image(dbg_axi_wlast) &
+            " wdata_hi=0x" & hex_hi32(dbg_axi_wdata) &
+            " wdata_lo=0x" & hex_lo32(dbg_axi_wdata) &
+            " | seeded=" & std_logic'image(dbg_dp_seeded) &
+            " do_init/do_step=" & std_logic'image(dbg_dp_do_init) & "/" & std_logic'image(dbg_dp_do_step) &
+            " lfsr_in_lo=0x" & hex_lo32(dbg_dp_lfsr_input) &
+            " lfsr_next_lo=0x" & hex_lo32(dbg_dp_lfsr_next));
+      end if;
+
+      if dbg_tg_b_hs = '1' then
+        dbg("AXI B_HS: bid=" & integer'image(to_integer(unsigned(dbg_axi_bid))) &
+            " bresp=" & integer'image(to_integer(unsigned(dbg_axi_bresp))) &
+            " bhs_seen=" & std_logic'image(dbg_tg_bhs_seen) &
+            " corrupt=" & std_logic'image(dbg_corrupt_packet));
+      end if;
+
+      -- Detect NoC activity
+      if lin_val = '1' then
+        stall_cnt := 0;
+      elsif lout_val = '1' then
+        stall_cnt := 0;
+      else
+        stall_cnt := stall_cnt + 1;
+      end if;
+
+      if stall_cnt = 2000 then
+        dbg("---- STALL SNAPSHOT ----");
+        dbg("TG state=" & std_logic'image(dbg_tg_state(1)) & std_logic'image(dbg_tg_state(0)) &
+            " AWV/AWR=" & std_logic'image(dbg_axi_awvalid) & "/" & std_logic'image(dbg_axi_awready) &
+            " WV/WR=" & std_logic'image(dbg_axi_wvalid) & "/" & std_logic'image(dbg_axi_wready) &
+            " BV/BR=" & std_logic'image(dbg_axi_bvalid) & "/" & std_logic'image(dbg_axi_bready));
+        dbg("AW: id=" & integer'image(to_integer(unsigned(dbg_axi_awid))) &
+            " addr_hi=0x" & hex_hi32(dbg_axi_awaddr) & " addr_lo=0x" & hex_lo32(dbg_axi_awaddr) &
+            " len=" & integer'image(to_integer(unsigned(dbg_axi_awlen))) &
+            " burst=" & integer'image(to_integer(unsigned(dbg_axi_awburst))));
+        dbg("W : last=" & std_logic'image(dbg_axi_wlast) &
+            " data_hi=0x" & hex_hi32(dbg_axi_wdata) & " data_lo=0x" & hex_lo32(dbg_axi_wdata));
+        dbg("B : valid=" & std_logic'image(dbg_axi_bvalid) &
+            " resp=" & integer'image(to_integer(unsigned(dbg_axi_bresp))) &
+            " id=" & integer'image(to_integer(unsigned(dbg_axi_bid))));
+        dbg("NoC: lin_val=" & std_logic'image(lin_val) & " lin_ack=" & std_logic'image(lin_ack) &
+            " | lout_val=" & std_logic'image(lout_val) & " lout_ack=" & std_logic'image(lout_ack));
+        dbg("DP : seeded=" & std_logic'image(dbg_dp_seeded) &
+            " lfsr_in_reg_lo=0x" & hex_lo32(dbg_dp_lfsr_in_reg) &
+            " wdata_reg_lo=0x" & hex_lo32(dbg_dp_wdata_reg));
+      end if;
+    end loop;
+    wait;
+  end process;
 
   ---------------------------------------------------------------------------
   -- NoC loopback emulator
@@ -425,8 +504,11 @@ end if;
       ---------------------------------------------------------------------
       -- Build response (swap hdr0/hdr1, force TYPE=1, STATUS=00)
       ---------------------------------------------------------------------
-      resp_hdr0 := req_hdr1;
-      resp_hdr1 := req_hdr0;
+      resp_hdr0 := req_hdr0;
+      resp_hdr1 := req_hdr1;
+
+      dbg("RESP build: hdr0=0x" & hex32(resp_hdr0) &
+          " hdr1=0x" & hex32(resp_hdr1));
 
       resp_hdr2 := req_hdr2;
 resp_hdr2 := set_bit(resp_hdr2, c_TYPE_BIT, '1');
@@ -439,6 +521,8 @@ if (req_type = '0') then
   if req_payload_words > 0 then
     -- WRITE response
     payload_words := 0;
+    resp_hdr2 := set_slice(resp_hdr2, c_LENGTH_LSB, c_LENGTH_MSB,
+                         std_logic_vector(to_unsigned(0, c_LENGTH_MSB-c_LENGTH_LSB+1)));
   else
     -- READ response
     payload_words := to_integer(req_len_field) + 1;
@@ -522,7 +606,6 @@ resp_idx := resp_idx + 1;
     wait until rising_edge(ACLK);
 
     for it in 0 to integer(c_NUM_ITERS)-1 loop
-      cur_iter <= it;
       dbg("=== ITER " & integer'image(it) & " START: addr=0x" & hex32(input_address(31 downto 0)) & " seed=0x" & hex32(starting_seed) & " ===");
       -- pulse start (1 cycle)
       tg_start <= '1';
@@ -555,123 +638,4 @@ resp_idx := resp_idx + 1;
     assert false report "End of simulation" severity failure;
   end process;
 
-
-
-  ---------------------------------------------------------------------------
-  -- Monitor: dump TG FSM transitions and AXI progress in a TB-friendly way
-  ---------------------------------------------------------------------------
-  monitor: process
-    variable last_state : std_logic_vector(1 downto 0) := "00";
-    variable last_aw_hs : std_logic := '0';
-    variable last_w_hs  : std_logic := '0';
-    variable last_b_hs  : std_logic := '0';
-    variable last_start_p : std_logic := '0';
-    variable stall_cycles : natural := 0;
-    variable progress : boolean;
-  begin
-    wait until rising_edge(ACLK);
-
-    while sim_done = '0' loop
-      progress := false;
-
-      if ARESETn = '0' then
-        last_state := dbg_tg_state;
-        last_aw_hs := '0';
-        last_w_hs  := '0';
-        last_b_hs  := '0';
-        last_start_p := '0';
-        stall_cycles := 0;
-      else
-        -- Transaction start pulse
-        if (dbg_tg_txn_start_pulse = '1') and (last_start_p = '0') then
-          dbg("AXI TXN_START iter=" & integer'image(cur_iter) &
-              " addr[31:0]=0x" & hex32(get_word32(INPUT_ADDRESS, 0)) &
-              " addr[63:32]=0x" & hex32(get_word32(INPUT_ADDRESS, 1)) &
-              " seed=0x" & hex32(STARTING_SEED));
-          progress := true;
-        end if;
-        last_start_p := dbg_tg_txn_start_pulse;
-
-        -- FSM transitions
-        if dbg_tg_state /= last_state then
-          dbg("TG FSM " & tg_state_str(last_state) & " -> " & tg_state_str(dbg_tg_state) &
-              " | AWV/AWR=" & std_logic'image(dbg_axi_awvalid) & "/" & std_logic'image(dbg_axi_awready) &
-              " WV/WR=" & std_logic'image(dbg_axi_wvalid) & "/" & std_logic'image(dbg_axi_wready) &
-              " BV/BR=" & std_logic'image(dbg_axi_bvalid) & "/" & std_logic'image(dbg_axi_bready) &
-              " bhs_seen=" & std_logic'image(dbg_tg_bhs_seen) &
-              " corrupt=" & std_logic'image(dbg_corrupt_packet));
-          last_state := dbg_tg_state;
-          progress := true;
-        end if;
-
-        -- AW handshake (edge detect)
-        if (dbg_tg_aw_hs = '1') and (last_aw_hs = '0') then
-          dbg("AXI AW_HS iter=" & integer'image(cur_iter) &
-              " awid=" & integer'image(to_integer(unsigned(dbg_axi_awid))) &
-              " awaddr[31:0]=0x" & hex32(get_word32(dbg_axi_awaddr, 0)) &
-              " awaddr[63:32]=0x" & hex32(get_word32(dbg_axi_awaddr, 1)) &
-              " awlen=" & integer'image(to_integer(unsigned(dbg_axi_awlen))) &
-              " awburst=" & integer'image(to_integer(unsigned(dbg_axi_awburst))));
-          progress := true;
-        end if;
-        last_aw_hs := dbg_tg_aw_hs;
-
-        -- W handshake (edge detect)
-        if (dbg_tg_w_hs = '1') and (last_w_hs = '0') then
-          dbg("AXI W_HS  iter=" & integer'image(cur_iter) &
-              " wlast=" & std_logic'image(dbg_axi_wlast) &
-              " wdata[31:0]=0x" & hex32(get_word32(dbg_axi_wdata, 0)) &
-              " wdata[63:32]=0x" & hex32(get_word32(dbg_axi_wdata, 1)) &
-              " | dp_seeded=" & std_logic'image(dbg_dp_seeded) &
-              " do_init/do_step=" & std_logic'image(dbg_dp_do_init) & "/" & std_logic'image(dbg_dp_do_step) &
-              " lfsr_in[31:0]=0x" & hex32(get_word32(dbg_dp_lfsr_in_reg, 0)) &
-              " lfsr_next[31:0]=0x" & hex32(get_word32(dbg_dp_lfsr_next, 0)));
-          progress := true;
-        end if;
-        last_w_hs := dbg_tg_w_hs;
-
-        -- B handshake (edge detect)
-        if (dbg_tg_b_hs = '1') and (last_b_hs = '0') then
-          dbg("AXI B_HS  iter=" & integer'image(cur_iter) &
-              " bid=" & integer'image(to_integer(unsigned(dbg_axi_bid))) &
-              " bresp[31:0]=0x" & hex32(get_word32(dbg_axi_bresp, 0)) &
-              " corrupt=" & std_logic'image(dbg_corrupt_packet));
-          progress := true;
-        end if;
-        last_b_hs := dbg_tg_b_hs;
-
-        -- Stall detector
-        if progress then
-          stall_cycles := 0;
-        else
-          stall_cycles := stall_cycles + 1;
-          if (stall_cycles = 2000) or (stall_cycles = 10000) then
-            dbg("---- STALL SNAPSHOT (cycles=" & integer'image(integer(stall_cycles)) & ") ----");
-            dbg("TG state=" & tg_state_str(dbg_tg_state) &
-                " | AWV/AWR=" & std_logic'image(dbg_axi_awvalid) & "/" & std_logic'image(dbg_axi_awready) &
-                " WV/WR=" & std_logic'image(dbg_axi_wvalid) & "/" & std_logic'image(dbg_axi_wready) &
-                " BV/BR=" & std_logic'image(dbg_axi_bvalid) & "/" & std_logic'image(dbg_axi_bready) &
-                " bhs_seen=" & std_logic'image(dbg_tg_bhs_seen));
-            dbg("AW: id=" & integer'image(to_integer(unsigned(dbg_axi_awid))) &
-                " addr_lo=0x" & hex32(get_word32(dbg_axi_awaddr,0)) &
-                " len=" & integer'image(to_integer(unsigned(dbg_axi_awlen))) &
-                " burst=" & integer'image(to_integer(unsigned(dbg_axi_awburst))));
-            dbg("W : last=" & std_logic'image(dbg_axi_wlast) &
-                " data_lo=0x" & hex32(get_word32(dbg_axi_wdata,0)) &
-                " dp_seeded=" & std_logic'image(dbg_dp_seeded) &
-                " lfsr_in_lo=0x" & hex32(get_word32(dbg_dp_lfsr_in_reg,0)));
-            dbg("NoC: lin_val=" & std_logic'image(lin_val) &
-                " lin_ack=" & std_logic'image(lin_ack) &
-                " lout_val=" & std_logic'image(lout_val) &
-                " lout_ack=" & std_logic'image(lout_ack));
-            dbg("NI corrupt_packet=" & std_logic'image(dbg_corrupt_packet));
-          end if;
-        end if;
-      end if;
-
-      wait until rising_edge(ACLK);
-    end loop;
-
-    wait;
-  end process;
 end architecture;
