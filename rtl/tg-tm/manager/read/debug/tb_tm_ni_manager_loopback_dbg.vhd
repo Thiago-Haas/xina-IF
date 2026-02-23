@@ -2,6 +2,9 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 
+-- VHDL-2008 simulation control
+use std.env.all;
+
 use work.xina_ft_pkg.all;
 use work.xina_ni_ft_pkg.all;
 
@@ -22,6 +25,8 @@ end entity;
 architecture tb of tb_tm_ni_manager_loopback_dbg is
   constant c_CLK_PERIOD : time := 10 ns;
   constant c_TIMEOUT_CYCLES : natural := 50000;
+  constant c_NUM_ITERS      : natural := 20;
+  constant c_GAP_CYCLES     : natural := 2;
 
   signal ACLK    : std_logic := '0';
   signal ARESETn : std_logic := '0';
@@ -416,28 +421,43 @@ begin
     ARESETn <= '1';
     wait until rising_edge(ACLK);
 
-    dbg("=== ITER 0 START: addr=0x" & hex32(input_address(31 downto 0)) &
-        " seed=0x" & hex32(starting_seed) & " ===");
+    for it in 0 to integer(c_NUM_ITERS)-1 loop
+      dbg("=== ITER " & integer'image(it) & " START: addr=0x" & hex32(input_address(31 downto 0)) &
+          " seed=0x" & hex32(starting_seed) & " ===");
 
-    tm_start <= '1';
-    wait until rising_edge(ACLK);
-    tm_start <= '0';
-
-    -- wait done
-    cyc := 0;
-    while tm_done /= '1' loop
+      -- start pulse
+      tm_start <= '1';
       wait until rising_edge(ACLK);
-      cyc := cyc + 1;
-      if cyc = c_TIMEOUT_CYCLES then
-        assert false report "TIMEOUT waiting tm_done" severity failure;
-      end if;
-    end loop;
+      tm_start <= '0';
 
-    dbg("=== DONE (tm_done seen), mismatch=" & std_logic'image(dbg_dp_mismatch) & " ===");
+      -- wait done
+      cyc := 0;
+      while tm_done /= '1' loop
+        wait until rising_edge(ACLK);
+        cyc := cyc + 1;
+        if cyc = c_TIMEOUT_CYCLES then
+          assert false report "TIMEOUT waiting tm_done at iter=" & integer'image(it) severity failure;
+        end if;
+      end loop;
+
+      dbg("=== ITER " & integer'image(it) & " DONE (tm_done seen), mismatch=" &
+          std_logic'image(dbg_dp_mismatch) & " ===");
+
+      -- small gap between transactions
+      for g in 0 to integer(c_GAP_CYCLES)-1 loop
+        wait until rising_edge(ACLK);
+      end loop;
+
+      -- vary address/seed
+      input_address <= std_logic_vector(unsigned(input_address) + 16);
+      starting_seed <= std_logic_vector(unsigned(starting_seed) + 1);
+    end loop;
 
     sim_done <= '1';
     wait for 50 ns;
-    assert false report "End of simulation" severity failure;
-  end process;
+    report "End of simulation" severity note;
+    stop;
+    wait;
+end process;
 
 end architecture;
