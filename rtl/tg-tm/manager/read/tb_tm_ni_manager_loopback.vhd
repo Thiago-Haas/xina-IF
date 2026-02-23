@@ -283,6 +283,11 @@ begin
       ---------------------------------------------------------------------
       resp_idx := 0;
 
+      -- small gap to let TM/NI assert RREADY before we start feeding the response
+      for i in 0 to 3 loop
+        wait until rising_edge(ACLK);
+      end loop;
+
       send_resp_flit(mk_flit('1', resp_hdr0));
       resp_idx := resp_idx + 1;
 
