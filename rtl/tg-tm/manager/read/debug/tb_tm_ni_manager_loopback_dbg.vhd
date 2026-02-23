@@ -158,7 +158,7 @@ begin
   ACLK <= not ACLK after c_CLK_PERIOD/2;
 
   -- DUT
-  u_dut: entity work.tm_ni_read_only_top_dbg_fixhs
+  u_dut: entity work.tm_ni_read_only_top_dbg
     port map(
       ACLK    => ACLK,
       ARESETn => ARESETn,
