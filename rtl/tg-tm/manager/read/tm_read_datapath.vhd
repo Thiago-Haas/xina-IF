@@ -121,7 +121,8 @@ begin
       ACLK    => ACLK,
       ARESETn => ARESETn,
 
-      i_init_pulse  => w_do_init,
+      -- Clear mismatch every transaction start (even when not reseeding)
+      i_init_pulse  => i_txn_start_pulse,
       i_check_pulse => w_do_step,
 
       i_expected => r_expected,

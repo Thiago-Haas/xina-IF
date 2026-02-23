@@ -76,6 +76,7 @@ architecture rtl of tm_read_top_dbg is
   signal w_read_done       : std_logic;
   signal w_txn_start_pulse : std_logic;
   signal w_rbeat_pulse     : std_logic;
+  signal w_r_hs_comb       : std_logic;
 begin
   u_CTRL: entity work.tm_read_controller_dbg
     port map(
@@ -106,6 +107,9 @@ begin
   o_dbg_txn_start_pulse <= w_txn_start_pulse;
   o_dbg_rbeat_pulse     <= w_rbeat_pulse;
 
+  -- Combinational read-data handshake (same-cycle RVALID&RREADY)
+  w_r_hs_comb <= RVALID and RREADY;
+
   u_DP: entity work.tm_read_datapath_dbg
     generic map(
       p_INIT_VALUE => p_INIT_VALUE
@@ -118,7 +122,8 @@ begin
       STARTING_SEED => STARTING_SEED,
 
       i_txn_start_pulse => w_txn_start_pulse,
-      i_rbeat_pulse     => w_rbeat_pulse,
+      -- Use same-cycle R handshake for stepping/checking (avoid 1-cycle delayed pulse)
+      i_rbeat_pulse     => w_r_hs_comb,
 
       RDATA => RDATA,
 

@@ -52,6 +52,7 @@ architecture rtl of tm_read_top is
   signal w_read_done       : std_logic;
   signal w_txn_start_pulse : std_logic;
   signal w_rbeat_pulse     : std_logic;
+  signal w_r_hs_comb       : std_logic;
 begin
   u_CTRL: entity work.tm_read_controller
     port map(
@@ -72,6 +73,9 @@ begin
       o_rbeat_pulse     => w_rbeat_pulse
     );
 
+  -- Combinational read-data handshake (same-cycle RVALID&RREADY)
+  w_r_hs_comb <= RVALID and RREADY;
+
   u_DP: entity work.tm_read_datapath
     generic map(
       p_INIT_VALUE => p_INIT_VALUE
@@ -84,7 +88,8 @@ begin
       STARTING_SEED => STARTING_SEED,
 
       i_txn_start_pulse => w_txn_start_pulse,
-      i_rbeat_pulse     => w_rbeat_pulse,
+      -- Use same-cycle R handshake for stepping/checking (avoid 1-cycle delayed pulse)
+      i_rbeat_pulse     => w_r_hs_comb,
 
       RDATA => RDATA,
 

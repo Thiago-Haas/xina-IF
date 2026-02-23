@@ -27,6 +27,10 @@ architecture tb of tb_tm_ni_manager_loopback_dbg is
   constant c_TIMEOUT_CYCLES : natural := 50000;
   constant c_NUM_ITERS      : natural := 20;
   constant c_GAP_CYCLES     : natural := 2;
+  -- Fault injection in TB payload to validate mismatch detection
+  constant c_INJECT_MISMATCH_EN  : boolean := true;
+  constant c_INJECT_MISMATCH_AT  : natural := 3; -- transaction index (0-based)
+  constant c_INJECT_MISMATCH_BIT : natural := 0; -- bit to flip in first payload word
 
   signal ACLK    : std_logic := '0';
   signal ARESETn : std_logic := '0';
@@ -154,7 +158,7 @@ begin
   ACLK <= not ACLK after c_CLK_PERIOD/2;
 
   -- DUT
-  u_dut: entity work.tm_ni_read_only_top_dbg
+  u_dut: entity work.tm_ni_read_only_top_dbg_fixhs
     port map(
       ACLK    => ACLK,
       ARESETn => ARESETn,
@@ -281,7 +285,9 @@ begin
     variable len_field : unsigned(7 downto 0);
     variable payload_words : natural;
     variable word : std_logic_vector(31 downto 0);
-    variable exp : std_logic_vector(31 downto 0);
+    variable tb_exp_state : std_logic_vector(31 downto 0) := (others => '0');
+    variable tb_seeded    : boolean := false;
+    variable tb_txn_idx   : natural := 0;
 
     variable cyc : natural;
 
@@ -386,7 +392,11 @@ begin
           " payload_words=" & integer'image(integer(payload_words)));
 
       -- seed expected sequence (matches tm_read_datapath): expected0 = next(seed)
-      exp := next_lfsr32(starting_seed);
+      -- TB expected stream mirrors TM: seeded once after reset, then continues across transactions.
+      if not tb_seeded then
+        tb_exp_state := next_lfsr32(starting_seed);
+        tb_seeded := true;
+      end if;
 
       -- Send response flits: hdr0(ctrl=1), hdr1, hdr2, payload..., checksum(ctrl=1)
       send_resp_flit(mk_flit('1', resp0), 0);
@@ -394,12 +404,21 @@ begin
       send_resp_flit(mk_flit('0', resp2), 2);
 
       for p in 0 to integer(payload_words)-1 loop
-        word := exp;
+        word := tb_exp_state;
+        -- Inject a deterministic mismatch on a chosen transaction to validate the checker
+        if c_INJECT_MISMATCH_EN and (tb_txn_idx = c_INJECT_MISMATCH_AT) and (p = 0) then
+          dbg("*** TB FAULT INJECT: flipping bit " & integer'image(integer(c_INJECT_MISMATCH_BIT)) &
+              " in payload word 0 at txn=" & integer'image(integer(tb_txn_idx)) &
+              " (before=0x" & hex32(word) & ")");
+          word(c_INJECT_MISMATCH_BIT) := not word(c_INJECT_MISMATCH_BIT);
+          dbg("*** TB FAULT INJECT: after=0x" & hex32(word));
+        end if;
         send_resp_flit(mk_flit('0', word), 3 + natural(p));
-        exp := next_lfsr32(exp);
+        tb_exp_state := next_lfsr32(tb_exp_state);
       end loop;
 
       send_resp_flit(mk_flit('1', (others => '0')), 3 + natural(payload_words));
+      tb_txn_idx := tb_txn_idx + 1;
     end loop;
 
     wait;
@@ -450,7 +469,6 @@ begin
 
       -- vary address/seed
       input_address <= std_logic_vector(unsigned(input_address) + 16);
-      starting_seed <= std_logic_vector(unsigned(starting_seed) + 1);
     end loop;
 
     sim_done <= '1';
