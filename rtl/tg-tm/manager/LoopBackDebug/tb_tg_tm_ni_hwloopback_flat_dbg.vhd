@@ -97,8 +97,9 @@ architecture tb of tb_tg_tm_ni_hwloopback_flat_dbg is
       when "010" => return "HDR1";
       when "011" => return "HDR2";
       when "100" => return "PAYL";
-      when "101" => return "DELIM";
-      when "110" => return "CHK";
+      -- In the debug loopback we use a single checksum flit (ctrl='1') like the reference TBs.
+      when "101" => return "CHK";
+      when "110" => return "(unused)";
       when others => return "UNK";
     end case;
   end function;
@@ -191,51 +192,9 @@ begin
   -- Console logger: prints on key events
   logger: process(ACLK)
     variable prev_state : std_logic_vector(2 downto 0) := (others => '0');
-    variable cyc        : natural := 0;
-    variable quiet      : natural := 0; -- cycles since last handshake
   begin
     if rising_edge(ACLK) then
       if ARESETn = '1' then
-        cyc := cyc + 1;
-
-        -- track "stuck" behaviour: no RX/TX handshakes
-        if (dbg_lin_val='1' and dbg_lin_ack='1') or (dbg_lout_val='1' and dbg_lout_ack='1') then
-          quiet := 0;
-        else
-          quiet := quiet + 1;
-        end if;
-
-        -- periodic snapshot (every 50 cycles) while something is running
-        if (cyc mod 50 = 0) and (tg_done = '0' or tm_done = '0') then
-          report "LB SNAP cyc=" & integer'image(cyc) &
-                 " st=" & st_name(dbg_ctrl_state) &
-                 " lin(v/a)=" & std_logic'image(dbg_lin_val) & "/" & std_logic'image(dbg_lin_ack) &
-                 " lout(v/a)=" & std_logic'image(dbg_lout_val) & "/" & std_logic'image(dbg_lout_ack) &
-                 " cap_idx=" & integer'image(to_integer(dbg_ctrl_cap_idx)) &
-                 " pay_idx=" & integer'image(to_integer(dbg_ctrl_payload_idx)) &
-                 " pay_words=" & integer'image(to_integer(dbg_ctrl_payload_words)) &
-                 " req_ready=" & std_logic'image(dbg_req_ready) &
-                 " wr/rd=" & std_logic'image(dbg_req_is_write) & "/" & std_logic'image(dbg_req_is_read) &
-                 " hold=" & std_logic'image(dbg_hold_valid) &
-                 " dp_ready=" & std_logic'image(dbg_dp_ready) &
-                 " addr=0x" & hex32(dbg_dp_addr) &
-                 " hdr0=0x" & hex32(dbg_dp_hdr0) &
-                 " hdr1=0x" & hex32(dbg_dp_hdr1) &
-                 " hdr2=0x" & hex32(dbg_dp_hdr2)
-                 severity note;
-        end if;
-
-        -- warn if we're quiet for too long while a transaction should be happening
-        if (quiet = 200) and (tg_done = '0' or tm_done = '0') then
-          report "LB WARNING: no flit handshake for 200 cycles. " &
-                 "st=" & st_name(dbg_ctrl_state) &
-                 " lin(v/a)=" & std_logic'image(dbg_lin_val) & "/" & std_logic'image(dbg_lin_ack) &
-                 " lout(v/a)=" & std_logic'image(dbg_lout_val) & "/" & std_logic'image(dbg_lout_ack) &
-                 " req_ready=" & std_logic'image(dbg_req_ready) &
-                 " dp_ready=" & std_logic'image(dbg_dp_ready)
-                 severity warning;
-        end if;
-
         if dbg_ctrl_state /= prev_state then
           report "LB FSM " & st_name(prev_state) & " -> " & st_name(dbg_ctrl_state) &
                  " cap_idx=" & integer'image(to_integer(dbg_ctrl_cap_idx)) &
@@ -252,29 +211,15 @@ begin
         if dbg_lin_val='1' and dbg_lin_ack='1' then
           report "LB RX flit: ctrl=" & std_logic'image(dbg_lin_data(dbg_lin_data'left)) &
                  " data=0x" & hex32(dbg_lin_data(31 downto 0)) &
-                 " cap_idx=" & integer'image(to_integer(dbg_ctrl_cap_idx)) &
-                 " st=" & st_name(dbg_ctrl_state)
+                 " cap_idx=" & integer'image(to_integer(dbg_ctrl_cap_idx))
                  severity note;
-
-          -- extra decode for header capture
-          if dbg_ctrl_cap_idx = 0 then
-            report "   CAP hdr0=0x" & hex32(dbg_lin_data(31 downto 0)) severity note;
-          elsif dbg_ctrl_cap_idx = 1 then
-            report "   CAP hdr1=0x" & hex32(dbg_lin_data(31 downto 0)) severity note;
-          elsif dbg_ctrl_cap_idx = 2 then
-            report "   CAP hdr2=0x" & hex32(dbg_lin_data(31 downto 0)) severity note;
-          elsif dbg_ctrl_cap_idx = 3 then
-            report "   CAP addr=0x" & hex32(dbg_lin_data(31 downto 0)) severity note;
-          end if;
         end if;
 
         -- response flit accepted by NI
         if dbg_lout_val='1' and dbg_lout_ack='1' then
           report "LB TX flit: ctrl=" & std_logic'image(dbg_lout_data(dbg_lout_data'left)) &
                  " data=0x" & hex32(dbg_lout_data(31 downto 0)) &
-                 " payload_idx=" & integer'image(to_integer(dbg_ctrl_payload_idx)) &
-                 " resp_is_read=" & std_logic'image(dbg_ctrl_resp_is_read) &
-                 " st=" & st_name(dbg_ctrl_state)
+                 " payload_idx=" & integer'image(to_integer(dbg_ctrl_payload_idx))
                  severity note;
         end if;
       end if;
