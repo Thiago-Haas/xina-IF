@@ -6,14 +6,14 @@ use IEEE.numeric_std.all;
 use work.xina_ni_ft_pkg.all;
 use work.xina_ft_pkg.all;
 
--- Write-phase datapath:
---  * One register BEFORE the LFSR (r_lfsr_in)
---  * One register AFTER the LFSR (r_wdata)  => WDATA output
---  * Feedback uses the SAME WDATA that was sent (r_wdata) to update r_lfsr_in
+-- Write-phase datapath (resource-minimized, lock-step with TM):
+--  * ONE register AFTER the LFSR (r_wdata) => WDATA output AND LFSR state
+--  * Optional 1-bit r_seeded to match TM behaviour (seed only once after reset)
+--  * First word after init is precomputed as next_lfsr(init_value)
+--  * Each accepted W beat advances: r_wdata <= next_lfsr(r_wdata)
 --
--- Initialization:
---  r_lfsr_in starts from generic p_INIT_VALUE, with its lower 32 bits overwritten by STARTING_SEED.
---  r_wdata is precomputed as next_lfsr(r_lfsr_in) so it is ready when the W phase begins.
+-- This matches TM behaviour where the first expected RDATA beat is next_lfsr(init_value)
+-- and subsequent beats advance from the previous expected value.
 entity tg_write_datapath is
   generic(
     p_AWID      : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0) := (others => '0');
@@ -53,9 +53,8 @@ entity tg_write_datapath is
 end tg_write_datapath;
 
 architecture rtl of tg_write_datapath is
-  signal r_lfsr_in : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
-  signal r_wdata   : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
-  signal r_seeded  : std_logic := '0';
+  signal r_wdata  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
+  signal r_seeded : std_logic := '0';
 
   signal w_init_value   : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
   signal w_feedback_val : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
@@ -64,23 +63,24 @@ architecture rtl of tg_write_datapath is
 
   signal w_do_init : std_logic;
   signal w_do_step : std_logic;
-function apply_seed(base : std_logic_vector; seed : std_logic_vector(31 downto 0)) return std_logic_vector is
-  variable v : std_logic_vector(base'range) := base;
-  constant W : integer := base'length;
-  variable N : integer;
-begin
-  if W >= 32 then
-    N := 32;
-  else
-    N := W;
-  end if;
 
-  -- overwrite the least-significant bits with the seed
-  for i in 0 to N-1 loop
-    v(i) := seed(i);
-  end loop;
-  return v;
-end function;
+  function apply_seed(base : std_logic_vector; seed : std_logic_vector(31 downto 0)) return std_logic_vector is
+    variable v : std_logic_vector(base'range) := base;
+    constant W : integer := base'length;
+    variable N : integer;
+  begin
+    if W >= 32 then
+      N := 32;
+    else
+      N := W;
+    end if;
+
+    -- overwrite the least-significant bits with the seed
+    for i in 0 to N-1 loop
+      v(i) := seed(i);
+    end loop;
+    return v;
+  end function;
 
 begin
   -- Constant fields
@@ -102,14 +102,16 @@ begin
   -- Feedback value (CONTROL override optional)
   w_feedback_val <= i_ext_data_in when (i_ext_update_en = '1') else r_wdata;
 
-  -- Fire init only once after reset, on the first transaction start
+  -- Match TM: seed only once after reset, on first transaction start
   w_do_init <= i_txn_start_pulse and (not r_seeded);
   w_do_step <= i_wbeat_pulse;
 
-  -- Select what feeds the LFSR combinational block
-  w_lfsr_input <= w_init_value    when (w_do_init = '1') else
-                  w_feedback_val  when (w_do_step = '1') else
-                  r_lfsr_in;
+  -- LFSR input:
+  --  * init: feed init value, compute first WDATA = next(init)
+  --  * step: feed previous sent/expected value (r_wdata) and advance
+  w_lfsr_input <= w_init_value   when (w_do_init = '1') else
+                  w_feedback_val when (w_do_step = '1') else
+                  r_wdata;
 
   u_LFSR: entity work.tg_write_lfsr
     generic map(
@@ -124,20 +126,17 @@ begin
   begin
     if rising_edge(ACLK) then
       if ARESETn = '0' then
-        r_seeded  <= '0';
-        r_lfsr_in <= (others => '0');
-        r_wdata   <= (others => '0');
+        r_seeded <= '0';
+        r_wdata  <= (others => '0');
       else
         if w_do_init = '1' then
-          r_seeded  <= '1';
-          r_lfsr_in <= w_init_value;  -- LFSR(in) reg
-          r_wdata   <= w_lfsr_next;   -- LFSR(out) reg = WDATA
+          r_seeded <= '1';
+          r_wdata  <= w_lfsr_next;  -- precompute first WDATA = next(init)
         elsif w_do_step = '1' then
-          -- feedback with exactly what was sent (WDATA), unless override enabled
-          r_lfsr_in <= w_feedback_val;
-          r_wdata   <= w_lfsr_next;
+          r_wdata  <= w_lfsr_next;  -- advance once per accepted beat
         end if;
       end if;
     end if;
   end process;
+
 end rtl;
