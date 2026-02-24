@@ -5,37 +5,31 @@ use ieee.numeric_std.all;
 use work.xina_ft_pkg.all;
 use work.xina_ni_ft_pkg.all;
 
--- Controller for tg_tm_loopback_datapath.
+-- Loopback controller (NON-DBG), derived 1:1 from the WORKING dbg controller.
+-- TB-faithful semantics:
+--   * lin_ack is a 1-cycle PULSE per accepted flit (VALID/ACK semantics)
+--   * capture: accept hdr0(ctrl=1) first, then keep accepting until checksum(ctrl=1)
+--              (hdr0 is also ctrl=1, so checksum is ctrl=1 AND idx>0)
+--   * response TX: hdr0(ctrl=1), hdr1(ctrl=0), hdr2(ctrl=0), payload(ctrl=0)*, checksum(ctrl=1)
+--   * TX handshake: hold VAL until ACK, then drop VAL for >=1 cycle, and wait ACK deassert before next flit
 --
--- Simple behaviour (TB-controlled sequencing):
---  * Capture one full request packet from NI (lin_*).
---  * After capture, stream a response packet back (lout_*).
---  * No coupling/delays between WRITE and READ beyond the natural request/response.
---
--- Packet shape (matches the existing TB/NI expectations used in your loopback designs):
---   Response: hdr0, hdr1, hdr2, [payload words for READ], checksum_delim(ctrl=1), checksum_word(ctrl=0)
---   checksum_word is fixed to 0x00000000.
+-- No special "delay B until read" or "data available" gating. TB controls TG/TM sequencing.
 
 entity tg_tm_loopback_controller is
   port (
     ACLK    : in  std_logic;
     ARESETn : in  std_logic;
 
-    -- Request stream from NI
+    -- NoC request stream from NI
     i_lin_data : in  std_logic_vector(c_FLIT_WIDTH-1 downto 0);
     i_lin_val  : in  std_logic;
     o_lin_ack  : out std_logic;
-
-    -- Response stream to NI
-    o_lout_data : out std_logic_vector(c_FLIT_WIDTH-1 downto 0);
-    o_lout_val  : out std_logic;
-    i_lout_ack  : in  std_logic;
 
     -- Capture interface to datapath
     o_cap_en   : out std_logic;
     o_cap_flit : out std_logic_vector(c_FLIT_WIDTH-1 downto 0);
     o_cap_idx  : out unsigned(5 downto 0);
-    o_cap_last : out std_logic;
+    o_cap_last : out std_logic;  -- 1-cycle pulse on checksum flit (ctrl=1 and idx>0)
 
     -- Decoded request summary from datapath
     i_req_ready    : in  std_logic;
@@ -43,16 +37,21 @@ entity tg_tm_loopback_controller is
     i_req_is_read  : in  std_logic;
     i_req_len      : in  unsigned(7 downto 0);
 
-    -- Response headers from datapath
+    -- Response header words from datapath
     i_resp_hdr0 : in  std_logic_vector(31 downto 0);
     i_resp_hdr1 : in  std_logic_vector(31 downto 0);
     i_resp_hdr2 : in  std_logic_vector(31 downto 0);
 
-    -- Payload access
+    -- Response payload read (from datapath)
     o_rd_payload_idx : out unsigned(7 downto 0);
     i_rd_payload     : in  std_logic_vector(31 downto 0);
 
-    -- Availability tracking (optional)
+    -- NoC response stream to NI
+    o_lout_val  : out std_logic;
+    o_lout_data : out std_logic_vector(c_FLIT_WIDTH-1 downto 0);
+    i_lout_ack  : in  std_logic;
+
+    -- Availability tracking (kept for port-compat, not used)
     i_hold_valid : in  std_logic;
     o_hold_clr   : out std_logic
   );
@@ -65,185 +64,234 @@ architecture rtl of tg_tm_loopback_controller is
     return f(f'left);
   end function;
 
-  function flit_data(f : std_logic_vector(c_FLIT_WIDTH-1 downto 0)) return std_logic_vector is
-    variable d : std_logic_vector(31 downto 0);
+  function mk_flit(ctrl : std_logic; w : std_logic_vector(31 downto 0)) return std_logic_vector is
+    variable f : std_logic_vector(c_FLIT_WIDTH-1 downto 0) := (others => '0');
   begin
-    d := f(31 downto 0);
-    return d;
-  end function;
-
-  function mk_flit(ctrl : std_logic; data32 : std_logic_vector(31 downto 0)) return std_logic_vector is
-    variable f : std_logic_vector(c_FLIT_WIDTH-1 downto 0);
-  begin
-    f := (others => '0');
     f(f'left) := ctrl;
-    f(31 downto 0) := data32;
+    f(31 downto 0) := w;
     return f;
   end function;
 
-  type state_t is (S_CAP, S_RESP_HDR0, S_RESP_HDR1, S_RESP_HDR2,
-                   S_RESP_PAYLOAD, S_RESP_CHK_DELIM, S_RESP_CHK_WORD);
+  type t_state is (
+    -- RX (capture)
+    S_RX_WAIT_VAL,
+    S_RX_ACK_HI,
+    S_RX_WAIT_DROP,
 
-  signal st : state_t := S_CAP;
+    -- TX
+    S_TX_WAIT_ACK_LO,
+    S_TX_PAYLOAD_PREP,
+    S_TX_WAIT_ACCEPT,
+    S_TX_GAP
+  );
 
-  signal cap_idx_r   : unsigned(5 downto 0) := (others => '0');
-  signal seen_last_r : std_logic := '0';
+  signal st : t_state := S_RX_WAIT_VAL;
 
-  signal payload_idx_r : unsigned(7 downto 0) := (others => '0');
-  signal payload_words : unsigned(8 downto 0) := (others => '0'); -- len+1 up to 256
+  signal r_cap_idx    : unsigned(5 downto 0) := (others => '0');
+  signal r_seen_last  : std_logic := '0';
+  signal r_cap_flit   : std_logic_vector(c_FLIT_WIDTH-1 downto 0) := (others => '0');
+  signal p_cap_en     : std_logic := '0';
+  signal p_cap_last   : std_logic := '0';
 
-  signal resp_is_read : std_logic := '0';
+  signal r_lin_ack : std_logic := '0';
 
-  signal lout_val_r  : std_logic := '0';
-  signal lout_data_r : std_logic_vector(c_FLIT_WIDTH-1 downto 0) := (others => '0');
+  signal r_lout_val  : std_logic := '0';
+  signal r_lout_data : std_logic_vector(c_FLIT_WIDTH-1 downto 0) := (others => '0');
+
+  -- TX sequencing
+  signal r_tx_idx        : unsigned(8 downto 0) := (others => '0');
+  signal r_payload_idx   : unsigned(7 downto 0) := (others => '0');
+  signal r_payload_words : unsigned(8 downto 0) := (others => '0');
+  signal r_resp_is_read  : std_logic := '0';
+
+  function last_idx(payload_words : unsigned(8 downto 0)) return unsigned is
+    variable v : unsigned(8 downto 0);
+  begin
+    -- hdr0=0 hdr1=1 hdr2=2 checksum at 3+payload_words
+    v := to_unsigned(3, 9) + payload_words;
+    return v;
+  end function;
 
 begin
 
-  o_lout_val  <= lout_val_r;
-  o_lout_data <= lout_data_r;
+  o_lin_ack   <= r_lin_ack;
+  o_lout_val  <= r_lout_val;
+  o_lout_data <= r_lout_data;
 
-  o_cap_flit <= i_lin_data;
+  o_cap_en   <= p_cap_en;
+  o_cap_last <= p_cap_last;
+  o_cap_flit <= r_cap_flit;
+  o_cap_idx  <= r_cap_idx;
 
-  -- capture side
-  o_lin_ack <= '1' when st = S_CAP else '0';
+  o_rd_payload_idx <= r_payload_idx;
 
-  o_cap_en <= i_lin_val and o_lin_ack;
-  o_cap_idx <= cap_idx_r;
-  o_cap_last <= (i_lin_val and o_lin_ack and flit_ctrl(i_lin_data));
+  -- match working dbg: do not clear hold here (TB controls sequencing)
+  o_hold_clr <= '0';
 
-  -- payload read index
-  o_rd_payload_idx <= payload_idx_r;
-
-  -- hold clear: only pulse after finishing a READ response (optional)
   process(ACLK)
+    variable v_last : unsigned(8 downto 0);
+    variable v_ctrl : std_logic;
+    variable v_is_checksum : std_logic;
+    variable v_word : std_logic_vector(31 downto 0);
+    variable v_payload_idx9 : unsigned(8 downto 0);
   begin
     if rising_edge(ACLK) then
       if ARESETn = '0' then
-        o_hold_clr <= '0';
-      else
-        o_hold_clr <= '0';
-        if st = S_RESP_CHK_WORD and lout_val_r = '1' and i_lout_ack = '1' then
-          if resp_is_read = '1' then
-            o_hold_clr <= '1';
-          end if;
-        end if;
-      end if;
-    end if;
-  end process;
+        st <= S_RX_WAIT_VAL;
 
-  -- main FSM
-  process(ACLK)
-  begin
-    if rising_edge(ACLK) then
-      if ARESETn = '0' then
-        st <= S_CAP;
-        cap_idx_r <= (others => '0');
-        seen_last_r <= '0';
-        payload_idx_r <= (others => '0');
-        payload_words <= (others => '0');
-        resp_is_read <= '0';
-        lout_val_r <= '0';
-        lout_data_r <= (others => '0');
+        r_cap_idx   <= (others => '0');
+        r_seen_last <= '0';
+        r_cap_flit  <= (others => '0');
+        p_cap_en    <= '0';
+        p_cap_last  <= '0';
+        r_lin_ack   <= '0';
+
+        r_lout_val  <= '0';
+        r_lout_data <= (others => '0');
+
+        r_tx_idx        <= (others => '0');
+        r_payload_idx   <= (others => '0');
+        r_payload_words <= (others => '0');
+        r_resp_is_read  <= '0';
+
       else
+        -- default pulses low
+        p_cap_en   <= '0';
+        p_cap_last <= '0';
+
         case st is
-          --------------------------------------------------------------------
-          -- CAPTURE REQUEST
-          --------------------------------------------------------------------
-          when S_CAP =>
-            lout_val_r <= '0';
+
+          -----------------------------------------------------------------
+          -- RX
+          -----------------------------------------------------------------
+          when S_RX_WAIT_VAL =>
+            r_lout_val <= '0';
+            r_lin_ack  <= '0';
+
             if i_lin_val = '1' then
-              if o_lin_ack = '1' then
-                -- increment capture index for each accepted flit
-                if flit_ctrl(i_lin_data) = '1' then
-                  seen_last_r <= '1';
-                end if;
+              -- Sample flit (TB samples before ACK pulse)
+              r_cap_flit <= i_lin_data;
+              p_cap_en   <= '1';
 
-                if flit_ctrl(i_lin_data) = '1' then
-                  -- end-of-packet delimiter captured; next flit is checksum word, also capture
-                  cap_idx_r <= cap_idx_r + 1;
+              v_ctrl := flit_ctrl(i_lin_data);
+              v_is_checksum := '0';
+
+              -- checksum is ctrl=1 when idx>0 (hdr0 is idx=0 and also ctrl=1)
+              if (v_ctrl = '1') and (r_cap_idx /= to_unsigned(0, r_cap_idx'length)) then
+                v_is_checksum := '1';
+              end if;
+
+              if v_is_checksum = '1' then
+                p_cap_last  <= '1';
+                r_seen_last <= '1';
+              end if;
+
+              -- 1-cycle ACK pulse
+              r_lin_ack <= '1';
+              st <= S_RX_ACK_HI;
+            end if;
+
+          when S_RX_ACK_HI =>
+            -- keep ACK high for exactly one cycle
+            r_lin_ack <= '0';
+            st <= S_RX_WAIT_DROP;
+
+          when S_RX_WAIT_DROP =>
+            r_lin_ack <= '0';
+            -- wait for VAL to drop to mark beat boundary
+            if i_lin_val = '0' then
+              if r_seen_last = '1' then
+                -- request fully captured -> arm TX
+                r_resp_is_read <= i_req_is_read;
+                if i_req_is_read = '1' then
+                  r_payload_words <= unsigned('0' & i_req_len) + 1; -- beats = len+1
                 else
-                  cap_idx_r <= cap_idx_r + 1;
+                  r_payload_words <= (others => '0');
                 end if;
-              end if;
-            end if;
 
-            -- Start response only once datapath says req is ready and we've seen the delimiter.
-            -- (In your format, delimiter is ctrl='1' flit.)
-            if i_req_ready = '1' and seen_last_r = '1' then
-              -- decide response type from decoded request
-              resp_is_read <= i_req_is_read;
-              payload_words <= unsigned('0' & i_req_len) + 1;
-              payload_idx_r <= (others => '0');
-              -- reset capture state for next packet
-              cap_idx_r <= (others => '0');
-              seen_last_r <= '0';
-              -- optional: if you want to block READ until hold_valid, you could gate here,
-              -- but user requested TB to control sequencing, so we do not.
-              st <= S_RESP_HDR0;
-            end if;
+                r_tx_idx      <= (others => '0');
+                r_payload_idx <= (others => '0');
 
-          --------------------------------------------------------------------
-          -- RESPONSE STREAMING
-          --------------------------------------------------------------------
-          when S_RESP_HDR0 =>
-            lout_val_r  <= '1';
-            lout_data_r <= mk_flit('0', i_resp_hdr0);
-            if i_lout_ack = '1' then
-              st <= S_RESP_HDR1;
-            end if;
+                -- reset capture counters
+                r_cap_idx   <= (others => '0');
+                r_seen_last <= '0';
 
-          when S_RESP_HDR1 =>
-            lout_val_r  <= '1';
-            lout_data_r <= mk_flit('0', i_resp_hdr1);
-            if i_lout_ack = '1' then
-              st <= S_RESP_HDR2;
-            end if;
-
-          when S_RESP_HDR2 =>
-            lout_val_r  <= '1';
-            lout_data_r <= mk_flit('0', i_resp_hdr2);
-            if i_lout_ack = '1' then
-              if resp_is_read = '1' then
-                -- READ has payload
-                if payload_words = 0 then
-                  st <= S_RESP_CHK_DELIM;
-                else
-                  st <= S_RESP_PAYLOAD;
-                end if;
+                st <= S_TX_WAIT_ACK_LO;
               else
-                -- WRITE has no payload
-                st <= S_RESP_CHK_DELIM;
+                r_cap_idx <= r_cap_idx + 1;
+                st <= S_RX_WAIT_VAL;
               end if;
             end if;
 
-          when S_RESP_PAYLOAD =>
-            lout_val_r  <= '1';
-            lout_data_r <= mk_flit('0', i_rd_payload);
-            if i_lout_ack = '1' then
-              if payload_idx_r = payload_words - 1 then
-                st <= S_RESP_CHK_DELIM;
+          -----------------------------------------------------------------
+          -- TX
+          -----------------------------------------------------------------
+          when S_TX_WAIT_ACK_LO =>
+            r_lin_ack  <= '0';
+            r_lout_val <= '0';
+
+            if i_lout_ack = '0' then
+              v_last := last_idx(r_payload_words);
+
+              if r_tx_idx = to_unsigned(0, 9) then
+                r_lout_data <= mk_flit('1', i_resp_hdr0);
+                r_lout_val  <= '1';
+                st <= S_TX_WAIT_ACCEPT;
+
+              elsif r_tx_idx = to_unsigned(1, 9) then
+                r_lout_data <= mk_flit('0', i_resp_hdr1);
+                r_lout_val  <= '1';
+                st <= S_TX_WAIT_ACCEPT;
+
+              elsif r_tx_idx = to_unsigned(2, 9) then
+                r_lout_data <= mk_flit('0', i_resp_hdr2);
+                r_lout_val  <= '1';
+                st <= S_TX_WAIT_ACCEPT;
+
+              elsif r_tx_idx = v_last then
+                r_lout_data <= mk_flit('1', (others => '0')); -- checksum
+                r_lout_val  <= '1';
+                st <= S_TX_WAIT_ACCEPT;
+
               else
-                payload_idx_r <= payload_idx_r + 1;
+                -- payload beat: program index, then wait one cycle before sending
+                v_payload_idx9 := r_tx_idx - to_unsigned(3, 9);
+                r_payload_idx  <= v_payload_idx9(7 downto 0);
+                st <= S_TX_PAYLOAD_PREP;
               end if;
             end if;
 
-          when S_RESP_CHK_DELIM =>
-            lout_val_r  <= '1';
-            lout_data_r <= mk_flit('1', (others => '0'));
-            if i_lout_ack = '1' then
-              st <= S_RESP_CHK_WORD;
+          when S_TX_PAYLOAD_PREP =>
+            -- payload word is now available on i_rd_payload
+            r_lout_val <= '0';
+            if i_lout_ack = '0' then
+              r_lout_data <= mk_flit('0', i_rd_payload);
+              r_lout_val  <= '1';
+              st <= S_TX_WAIT_ACCEPT;
             end if;
 
-          when S_RESP_CHK_WORD =>
-            lout_val_r  <= '1';
-            lout_data_r <= mk_flit('0', (others => '0'));
+          when S_TX_WAIT_ACCEPT =>
+            -- hold VAL until accepted
             if i_lout_ack = '1' then
-              lout_val_r <= '0';
-              st <= S_CAP;
+              r_lout_val <= '0';
+              st <= S_TX_GAP;
+            end if;
+
+          when S_TX_GAP =>
+            -- enforce one full cycle with VAL=0
+            v_last := last_idx(r_payload_words);
+            if r_tx_idx = v_last then
+              -- done
+              st <= S_RX_WAIT_VAL;
+              r_lout_val <= '0';
+            else
+              r_tx_idx <= r_tx_idx + 1;
+              st <= S_TX_WAIT_ACK_LO;
             end if;
 
           when others =>
-            st <= S_CAP;
+            st <= S_RX_WAIT_VAL;
+
         end case;
       end if;
     end if;

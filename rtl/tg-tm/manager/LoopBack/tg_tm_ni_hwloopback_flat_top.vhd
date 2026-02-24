@@ -1,15 +1,19 @@
 library IEEE;
 use IEEE.std_logic_1164.all;
+use IEEE.numeric_std.all;
 
 use work.xina_ft_pkg.all;
 use work.xina_ni_ft_pkg.all;
 
--- Flat hierarchy top: TG, TM, NI manager, and HW loopback all at the SAME level.
+-- Flat hierarchy top (non-debug): TG + TM + single NI + loopback.
 --
--- This is meant for easy waveform debug.
--- Control sequencing is done ONLY by the TB (TG runs, then TM runs, etc.).
--- The loopback does NOT delay write responses.
-
+-- IMPORTANT (matches working tg_ni_write_only_top / tm_ni_read_only_top wrappers):
+--   * top_manager exposes NI->NoC request stream on ports named l_in_* (yes, *_i suffix!)
+--   * top_manager consumes NoC->NI response stream on ports named l_out_* (yes, *_o suffix!)
+--
+-- Wiring:
+--   NI request  (top_manager.l_in_*)  -> loopback.lin_*
+--   NI response (top_manager.l_out_*) <- loopback.lout_*
 entity tg_tm_ni_hwloopback_flat_top is
   generic (
     p_MEM_ADDR_BITS : natural := 10
@@ -181,28 +185,28 @@ begin
       ARLEN   => arlen,
       ARBURST => arburst,
 
-      RVALID  => rvalid,
-      RREADY  => rready,
-      RDATA   => rdata,
-      RLAST   => rlast,
-      RID     => rid,
-      RRESP   => rresp,
+      RVALID => rvalid,
+      RREADY => rready,
+      RDATA  => rdata,
+      RLAST  => rlast,
+      RID    => rid,
+      RRESP  => rresp,
 
-      -- NoC ports (top_manager naming from NI perspective)
-      --   l_in_*  : NoC -> NI  (response stream coming *from* loopback)
-      --   l_out_* : NI  -> NoC (request stream going *to*   loopback)
-      l_in_data_i  => lout_data,
-      l_in_val_i   => lout_val,
-      l_in_ack_o   => lout_ack,
+      -- NoC-side ports (see header comment)
+      -- NI -> NoC (request stream)
+      l_in_data_i  => lin_data,
+      l_in_val_i   => lin_val,
+      l_in_ack_o   => lin_ack,
 
-      l_out_data_o => lin_data,
-      l_out_val_o  => lin_val,
-      l_out_ack_i  => lin_ack,
+      -- NoC -> NI (response stream)
+      l_out_data_o => lout_data,
+      l_out_val_o  => lout_val,
+      l_out_ack_i  => lout_ack,
 
-      CORRUPT_PACKET => open
+      corrupt_packet => open
     );
 
-  -- HW loopback (subordinate emulator)
+  -- HW loopback (non-debug)
   u_lb: entity work.tg_tm_loopback_top
     generic map(
       p_MEM_ADDR_BITS => p_MEM_ADDR_BITS
