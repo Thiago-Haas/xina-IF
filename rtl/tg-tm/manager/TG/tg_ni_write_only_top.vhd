@@ -65,7 +65,6 @@ architecture rtl of tg_ni_write_only_top is
   signal rresp  : std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
 
   signal corrupt_packet : std_logic;
-  signal tg_lfsr_value  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
 begin
 
@@ -79,9 +78,6 @@ begin
 
       INPUT_ADDRESS => INPUT_ADDRESS,
       STARTING_SEED => STARTING_SEED,
-
-      i_ext_update_en => '0',
-      i_ext_data_in   => (others => '0'),
 
       AWID    => awid,
       AWADDR  => awaddr,
@@ -98,9 +94,7 @@ begin
       BID     => bid,
       BRESP   => bresp,
       BVALID  => bvalid,
-      BREADY  => bready,
-
-      o_lfsr_value => tg_lfsr_value
+      BREADY  => bready
     );
 
   u_ni: entity work.top_manager

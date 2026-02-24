@@ -100,8 +100,8 @@ begin
       INPUT_ADDRESS => TG_INPUT_ADDRESS,
       STARTING_SEED => TG_STARTING_SEED,
 
-      i_ext_update_en => '0',
-      i_ext_data_in   => (others => '0'),
+      --i_ext_update_en => '0',
+      --i_ext_data_in   => (others => '0'),
 
       AWID    => awid,
       AWADDR  => awaddr,
@@ -118,9 +118,9 @@ begin
       BID     => bid,
       BRESP   => bresp,
       BVALID  => bvalid,
-      BREADY  => bready,
+      BREADY  => bready
 
-      o_lfsr_value => tg_lfsr_value
+      --o_lfsr_value => tg_lfsr_value
     );
 
   -- TM

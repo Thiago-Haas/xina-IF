@@ -15,15 +15,10 @@ entity tg_write_lfsr is
 end entity;
 
 architecture rtl of tg_write_lfsr is
-  function next_lfsr(x : std_logic_vector) return std_logic_vector is
-    variable v  : std_logic_vector(x'range) := x;
-    variable fb : std_logic;
-  begin
-    -- Example taps (works for width >= 5). Adjust if you need a specific polynomial.
-    fb := v(v'high) xor v(v'high-1) xor v(v'high-3) xor v(v'high-4);
-    v  := v(v'high-1 downto 0) & fb;
-    return v;
-  end function;
+  signal fb : std_logic;
 begin
-  o_next <= next_lfsr(i_data);
+  -- Same taps as before:
+  -- fb := x(msb) xor x(msb-1) xor x(msb-3) xor x(msb-4)
+  fb     <= i_data(p_WIDTH-1) xor i_data(p_WIDTH-2) xor i_data(p_WIDTH-4) xor i_data(p_WIDTH-5);
+  o_next <= i_data(p_WIDTH-2 downto 0) & fb;
 end rtl;
