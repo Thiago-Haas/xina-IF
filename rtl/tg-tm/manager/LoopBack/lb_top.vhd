@@ -7,7 +7,7 @@ use work.xina_ni_ft_pkg.all;
 
 -- Synthesizable NoC-side loopback (subordinate emulator) for the combined TG/TM+NI top.
 -- Split into controller + datapath.
-entity tg_tm_loopback_top is
+entity lb_top is
   generic (
     p_MEM_ADDR_BITS : natural := 10
   );
@@ -28,7 +28,7 @@ entity tg_tm_loopback_top is
   );
 end entity;
 
-architecture rtl of tg_tm_loopback_top is
+architecture rtl of lb_top is
 
   signal cap_en   : std_logic;
   signal cap_flit : std_logic_vector(c_FLIT_WIDTH-1 downto 0);
@@ -53,7 +53,7 @@ architecture rtl of tg_tm_loopback_top is
 
 begin
 
-  u_dp: entity work.tg_tm_loopback_datapath
+  u_dp: entity work.lb_dp
     generic map(
       p_MEM_ADDR_BITS => p_MEM_ADDR_BITS
     )
@@ -85,7 +85,7 @@ begin
       i_hold_clr   => hold_clr
     );
 
-  u_ctrl: entity work.tg_tm_loopback_controller
+  u_ctrl: entity work.lb_ctrl
     port map(
       ACLK    => ACLK,
       ARESETn => ARESETn,

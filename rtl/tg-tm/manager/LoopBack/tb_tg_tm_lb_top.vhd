@@ -8,10 +8,10 @@ use std.env.all;
 use work.xina_ft_pkg.all;
 use work.xina_ni_ft_pkg.all;
 
-entity tb_tg_tm_ni_hwloopback_flat is
+entity tb_tg_tm_lb_top is
 end entity;
 
-architecture tb of tb_tg_tm_ni_hwloopback_flat is
+architecture tb of tb_tg_tm_lb_top is
 
   constant c_CLK_PERIOD : time := 10 ns;
 
@@ -81,7 +81,7 @@ begin
   ACLK <= not ACLK after c_CLK_PERIOD/2;
 
   -- DUT
-  dut: entity work.tg_tm_ni_hwloopback_flat_top
+  dut: entity work.tg_tm_lb_top
     port map(
       ACLK    => ACLK,
       ARESETn => ARESETn,

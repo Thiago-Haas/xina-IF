@@ -8,7 +8,7 @@ use work.xina_ni_ft_pkg.all;
 -- Ultra-minimal loopback datapath (NON-DBG)
 --  * ONLY stores one 32-bit payload word (register).
 --  * No RAM / no header registers / no request decode.
-entity tg_tm_loopback_datapath is
+entity lb_dp is
   generic (
     p_MEM_ADDR_BITS : natural := 10  -- kept for compatibility; unused
   );
@@ -41,7 +41,7 @@ entity tg_tm_loopback_datapath is
   );
 end entity;
 
-architecture rtl of tg_tm_loopback_datapath is
+architecture rtl of lb_dp is
   signal r_payload    : std_logic_vector(31 downto 0) := (others => '0');
   signal r_hold_valid : std_logic := '0';
 begin

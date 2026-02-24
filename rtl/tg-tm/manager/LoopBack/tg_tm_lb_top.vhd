@@ -14,7 +14,7 @@ use work.xina_ni_ft_pkg.all;
 -- Wiring:
 --   NI request  (top_manager.l_in_*)  -> loopback.lin_*
 --   NI response (top_manager.l_out_*) <- loopback.lout_*
-entity tg_tm_ni_hwloopback_flat_top is
+entity tg_tm_lb_top is
   generic (
     p_MEM_ADDR_BITS : natural := 10
   );
@@ -40,7 +40,7 @@ entity tg_tm_ni_hwloopback_flat_top is
   );
 end entity;
 
-architecture rtl of tg_tm_ni_hwloopback_flat_top is
+architecture rtl of tg_tm_lb_top is
 
   -- AXI write (TG)
   signal awid    : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
@@ -207,7 +207,7 @@ begin
     );
 
   -- HW loopback (non-debug)
-  u_lb: entity work.tg_tm_loopback_top
+  u_lb: entity work.lb_top
     generic map(
       p_MEM_ADDR_BITS => p_MEM_ADDR_BITS
     )

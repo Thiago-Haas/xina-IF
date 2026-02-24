@@ -10,7 +10,7 @@ use work.xina_ni_ft_pkg.all;
 --  * TX: hold lout_val until lout_ack, force a 1-cycle gap, then next flit.
 --  * Response headers/hdr2 are CONSTANTS; only payload comes from datapath.
 --  * Assumes fixed traffic pattern: WRITE request then READ request then repeats.
-entity tg_tm_loopback_controller is
+entity lb_ctrl is
   port (
     ACLK    : in  std_logic;
     ARESETn : in  std_logic;
@@ -52,7 +52,7 @@ entity tg_tm_loopback_controller is
   );
 end entity;
 
-architecture rtl of tg_tm_loopback_controller is
+architecture rtl of lb_ctrl is
 
   function flit_ctrl(f : std_logic_vector(c_FLIT_WIDTH-1 downto 0)) return std_logic is
   begin
