@@ -15,6 +15,15 @@ architecture tb of tb_tg_tm_ni_hwloopback_flat is
 
   constant c_CLK_PERIOD : time := 10 ns;
 
+  -- number of iterations
+  constant c_NUM_ITERS : natural := 200;
+
+  -- step between base addresses (bytes) each iter
+  constant c_ADDR_STEP : unsigned(63 downto 0) := to_unsigned(16, 64); -- 0x10
+
+  constant c_BASE_ADDR_INIT : std_logic_vector(63 downto 0) := x"00000000_00000100";
+  constant c_SEED_INIT      : std_logic_vector(31 downto 0) := x"1ACEB00C";
+
   signal ACLK    : std_logic := '0';
   signal ARESETn : std_logic := '0';
 
@@ -24,11 +33,11 @@ architecture tb of tb_tg_tm_ni_hwloopback_flat is
   signal tm_start : std_logic := '0';
   signal tm_done  : std_logic;
 
-  signal tg_addr  : std_logic_vector(63 downto 0) := x"00000000_00000100";
-  signal tm_addr  : std_logic_vector(63 downto 0) := x"00000000_00000100";
+  signal tg_addr  : std_logic_vector(63 downto 0) := c_BASE_ADDR_INIT;
+  signal tm_addr  : std_logic_vector(63 downto 0) := c_BASE_ADDR_INIT;
 
-  signal tg_seed  : std_logic_vector(31 downto 0) := x"1ACEB00C";
-  signal tm_seed  : std_logic_vector(31 downto 0) := x"1ACEB00C";
+  signal tg_seed  : std_logic_vector(31 downto 0) := c_SEED_INIT;
+  signal tm_seed  : std_logic_vector(31 downto 0) := c_SEED_INIT;
 
   signal tm_mismatch : std_logic;
   signal tm_expected : std_logic_vector(c_AXI_DATA_WIDTH-1 downto 0);
@@ -93,6 +102,8 @@ begin
 
   -- reset + stimulus
   stim: process
+    variable base_addr : unsigned(63 downto 0);
+    variable seed      : unsigned(31 downto 0);
   begin
     ARESETn <= '0';
     tg_start <= '0';
@@ -101,24 +112,51 @@ begin
     ARESETn <= '1';
     wait for 50 ns;
 
-    report "=== starting TG ===" severity note;
-    tg_start <= '1';
-    wait until rising_edge(ACLK);
-    tg_start <= '0';
-    wait until tg_done = '1';
-    report "=== TG done, starting TM ===" severity note;
+    -- Vivado-safe init (cast from SLV constants)
+    base_addr := unsigned(c_BASE_ADDR_INIT);
+    seed      := unsigned(c_SEED_INIT);
 
-    tm_start <= '1';
-    wait until rising_edge(ACLK);
-    tm_start <= '0';
+    for it in 0 to integer(c_NUM_ITERS-1) loop
+      tg_addr <= std_logic_vector(base_addr);
+      tm_addr <= std_logic_vector(base_addr);
 
-    wait until tm_done = '1';
-    report "=== TM done. mismatch=" & std_logic'image(tm_mismatch) severity note;
+      tg_seed <= std_logic_vector(seed);
+      tm_seed <= std_logic_vector(seed);
 
-    if tm_mismatch = '1' then
-      report "TM expected=" & hex32(tm_expected(31 downto 0)) severity error;
-    end if;
+      report "=== ITER " & integer'image(it) &
+             " START: addr=0x" & hex32(std_logic_vector(base_addr(31 downto 0))) &
+             " seed=0x" & hex32(std_logic_vector(seed)) & " ==="
+             severity note;
 
+      -- TG
+      tg_start <= '1';
+      wait until rising_edge(ACLK);
+      tg_start <= '0';
+      wait until tg_done = '1';
+
+      -- TM
+      tm_start <= '1';
+      wait until rising_edge(ACLK);
+      tm_start <= '0';
+      wait until tm_done = '1';
+
+      report "=== ITER " & integer'image(it) &
+             " DONE. mismatch=" & std_logic'image(tm_mismatch) severity note;
+
+      if tm_mismatch = '1' then
+        report "ITER " & integer'image(it) &
+               " FAILED: expected=" & hex32(tm_expected(31 downto 0)) severity error;
+        std.env.stop;
+        wait;
+      end if;
+
+      -- next iteration
+      base_addr := base_addr + c_ADDR_STEP;
+      seed      := seed + 1;
+      wait for 20 ns;
+    end loop;
+
+    report "=== ALL ITERS PASSED (" & integer'image(integer(c_NUM_ITERS)) & ") ===" severity note;
     std.env.stop;
     wait;
   end process;
