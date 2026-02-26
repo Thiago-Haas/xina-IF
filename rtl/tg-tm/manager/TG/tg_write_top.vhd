@@ -13,11 +13,7 @@ entity tg_write_top is
   generic(
     -- Base/random start value for LFSR(in).
     -- Lower 32 bits are overwritten by STARTING_SEED.
-    p_INIT_VALUE : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
-
-    -- Small index counter width used by the tiny payload generator
-    -- (wraps naturally at 2**p_INDEX_BITS)
-    p_INDEX_BITS : positive := 8
+    p_INIT_VALUE : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0')
   );
   port(
     ACLK    : in std_logic;
@@ -51,9 +47,6 @@ entity tg_write_top is
 
     -- Write response channel
     BID    : in  std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0) := (others => '0');
-    -- Note: In this project the NI exposes a response width constant (c_AXI_RESP_WIDTH)
-    -- which may be wider than the AXI BRESP(2b). TG does not decode BRESP, so we
-    -- accept the full width here to avoid top-level width mismatches.
     BRESP  : in  std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0) := (others => '0');
     BVALID : in  std_logic;
     BREADY : out std_logic;
@@ -90,8 +83,7 @@ begin
 
   u_DP: entity work.tg_write_datapath
     generic map(
-      p_INIT_VALUE => p_INIT_VALUE,
-      p_INDEX_BITS => p_INDEX_BITS
+      p_INIT_VALUE => p_INIT_VALUE
     )
     port map(
       ACLK    => ACLK,

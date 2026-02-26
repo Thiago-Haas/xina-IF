@@ -9,10 +9,6 @@ use work.xina_ni_ft_pkg.all;
 -- so a TB can emulate a loopback/subordinate.
 
 entity tg_ni_write_only_top is
-  generic(
-    -- Number of bits of the payload index used inside TG.
-    p_INDEX_BITS : positive := 8
-  );
   port(
     ACLK    : in  std_logic;
     ARESETn : in  std_logic;
@@ -73,9 +69,6 @@ architecture rtl of tg_ni_write_only_top is
 begin
 
   u_tg: entity work.tg_write_top
-    generic map(
-      p_INDEX_BITS => p_INDEX_BITS
-    )
     port map(
       ACLK    => ACLK,
       ARESETn => ARESETn,
@@ -86,6 +79,9 @@ begin
       INPUT_ADDRESS => INPUT_ADDRESS,
       STARTING_SEED => STARTING_SEED,
 
+
+      i_ext_update_en => '0',
+      i_ext_data_in   => (others => '0'),
       AWID    => awid,
       AWADDR  => awaddr,
       AWLEN   => awlen,
@@ -101,7 +97,9 @@ begin
       BID     => bid,
       BRESP   => bresp,
       BVALID  => bvalid,
-      BREADY  => bready
+      BREADY  => bready,
+
+      o_lfsr_value => open
     );
 
   u_ni: entity work.top_manager

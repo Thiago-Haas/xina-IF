@@ -78,8 +78,8 @@ begin
 
   u_DP: entity work.tm_read_datapath
     generic map(
-      p_INIT_VALUE => p_INIT_VALUE,
-      p_INDEX_BITS => p_INDEX_BITS
+      p_INIT_VALUE => p_INIT_VALUE
+      --p_INDEX_BITS => p_INDEX_BITS
     )
     port map(
       ACLK    => ACLK,

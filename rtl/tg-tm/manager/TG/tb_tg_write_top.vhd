@@ -31,7 +31,8 @@ architecture tb of tb_tg_write_top is
   signal INPUT_ADDRESS : std_logic_vector(63 downto 0) := (others => '0');
   signal STARTING_SEED : std_logic_vector(31 downto 0) := (others => '0');
 
-  -- override removed in minimal TG
+  signal i_ext_update_en : std_logic := '0';
+  signal i_ext_data_in   : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
 
   -- AXI write address channel
   signal AWID    : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
@@ -49,11 +50,12 @@ architecture tb of tb_tg_write_top is
 
   -- AXI write response channel
   signal BID    : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0) := (others => '0');
-  signal BRESP  : std_logic_vector(1 downto 0) := (others => '0');
+  signal BRESP  : std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0) := (others => '0');
   signal BVALID : std_logic := '0';
   signal BREADY : std_logic;
 
-  -- debug removed (to match minimal TG)
+  -- debug
+  signal o_lfsr_value : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
   -- Slave-side bookkeeping
   signal saw_aw : std_logic := '0';
@@ -97,6 +99,9 @@ begin
       INPUT_ADDRESS => INPUT_ADDRESS,
       STARTING_SEED => STARTING_SEED,
 
+      i_ext_update_en => i_ext_update_en,
+      i_ext_data_in   => i_ext_data_in,
+
       AWID    => AWID,
       AWADDR  => AWADDR,
       AWLEN   => AWLEN,
@@ -112,7 +117,9 @@ begin
       BID    => BID,
       BRESP  => BRESP,
       BVALID => BVALID,
-      BREADY => BREADY
+      BREADY => BREADY,
+
+      o_lfsr_value => o_lfsr_value
     );
 
   ---------------------------------------------------------------------------
@@ -158,7 +165,7 @@ begin
           if (saw_aw = '1' and saw_w = '1') then
             BVALID <= '1';
             BID    <= lat_awid;
-            BRESP  <= "00"; -- OKAY
+            BRESP  <= (others => '0'); -- OKAY
           end if;
         else
           -- Complete response when TG accepts it
@@ -194,7 +201,9 @@ begin
     INPUT_ADDRESS <= x"0000000000001000";
     STARTING_SEED <= "01010101010101010101010101010101";
 
-    -- (override removed)
+    -- optional external injection for FIRST transaction only
+    i_ext_data_in   <= (others => '0');
+    i_ext_data_in(31 downto 0) <= x"A5A5_1234";
 
     -- Reset
     ARESETn <= '0';
@@ -205,11 +214,18 @@ begin
 
     -- Run 5 single write transactions
     for k in 0 to 4 loop
+      -- Apply external override only for first transaction (1-cycle pulse)
+      if k = 0 then
+        i_ext_update_en <= '1';
+      else
+        i_ext_update_en <= '0';
+      end if;
+
       -- Start pulse (1 cycle)
       i_start <= '1';
       wait until rising_edge(ACLK);
       i_start <= '0';
-      -- no override
+      i_ext_update_en <= '0'; -- ensure one-shot from TB side
 
       -- Wait for done pulse (should occur after B handshake)
       wait until rising_edge(ACLK);
