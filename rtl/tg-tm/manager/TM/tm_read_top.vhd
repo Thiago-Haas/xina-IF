@@ -9,7 +9,11 @@ use work.xina_ft_pkg.all;
 -- Top for the read phase (AR/R) with minimal comparator output.
 entity tm_read_top is
   generic(
-    p_INIT_VALUE : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0')
+    p_INIT_VALUE : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
+
+    -- Small index counter width used by the tiny expected generator
+    -- (wraps naturally at 2**p_INDEX_BITS)
+    p_INDEX_BITS : positive := 8
   );
   port(
     ACLK    : in std_logic;
@@ -52,7 +56,6 @@ architecture rtl of tm_read_top is
   signal w_read_done       : std_logic;
   signal w_txn_start_pulse : std_logic;
   signal w_rbeat_pulse     : std_logic;
-  signal w_r_hs_comb       : std_logic;
 begin
   u_CTRL: entity work.tm_read_controller
     port map(
@@ -73,12 +76,10 @@ begin
       o_rbeat_pulse     => w_rbeat_pulse
     );
 
-  -- Combinational read-data handshake (same-cycle RVALID&RREADY)
-  w_r_hs_comb <= RVALID and RREADY;
-
   u_DP: entity work.tm_read_datapath
     generic map(
-      p_INIT_VALUE => p_INIT_VALUE
+      p_INIT_VALUE => p_INIT_VALUE,
+      p_INDEX_BITS => p_INDEX_BITS
     )
     port map(
       ACLK    => ACLK,
@@ -88,8 +89,7 @@ begin
       STARTING_SEED => STARTING_SEED,
 
       i_txn_start_pulse => w_txn_start_pulse,
-      -- Use same-cycle R handshake for stepping/checking (avoid 1-cycle delayed pulse)
-      i_rbeat_pulse     => w_r_hs_comb,
+      i_rbeat_pulse     => w_rbeat_pulse,
 
       RDATA => RDATA,
 

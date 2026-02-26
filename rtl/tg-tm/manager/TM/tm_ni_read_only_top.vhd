@@ -12,6 +12,10 @@ use work.xina_ni_ft_pkg.all;
 --
 -- NoC-side ports are exposed so a TB can emulate a subordinate/loopback.
 entity tm_ni_read_only_top is
+  generic(
+    -- Number of bits of the payload index used inside TM.
+    p_INDEX_BITS : positive := 8
+  );
   port(
     ACLK    : in  std_logic;
     ARESETn : in  std_logic;
@@ -76,6 +80,9 @@ begin
 
   -- Traffic Monitor / Read generator
   u_tm: entity work.tm_read_top
+    generic map(
+      p_INDEX_BITS => p_INDEX_BITS
+    )
     port map(
       ACLK    => ACLK,
       ARESETn => ARESETn,

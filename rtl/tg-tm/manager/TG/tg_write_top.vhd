@@ -6,10 +6,19 @@ use IEEE.numeric_std.all;
 use work.xina_ni_ft_pkg.all;
 use work.xina_ft_pkg.all;
 
--- Minimal top for the write phase (AW/W/B).
--- Aggressive LUT reduction: removed optional override + debug ports and
--- removed init-value generic (init is seed-only inside datapath).
+-- Top for the write phase (AW/W/B).
+-- Only the AXI ports are used for communication through the NI.
+-- STARTING_SEED and p_INIT_VALUE are CONTROL-only and are meant to match the TM side later.
 entity tg_write_top is
+  generic(
+    -- Base/random start value for LFSR(in).
+    -- Lower 32 bits are overwritten by STARTING_SEED.
+    p_INIT_VALUE : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
+
+    -- Small index counter width used by the tiny payload generator
+    -- (wraps naturally at 2**p_INDEX_BITS)
+    p_INDEX_BITS : positive := 8
+  );
   port(
     ACLK    : in std_logic;
     ARESETn : in std_logic;
@@ -21,6 +30,10 @@ entity tg_write_top is
     -- control inputs
     INPUT_ADDRESS : in std_logic_vector(63 downto 0);
     STARTING_SEED : in std_logic_vector(31 downto 0);
+
+    -- Optional CONTROL-only override (default off)
+    i_ext_update_en : in std_logic := '0';
+    i_ext_data_in   : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
 
     -- Write request channel
     AWID    : out std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
@@ -38,14 +51,20 @@ entity tg_write_top is
 
     -- Write response channel
     BID    : in  std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0) := (others => '0');
-    BRESP  : out std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0) := (others => '0');
+    -- Note: In this project the NI exposes a response width constant (c_AXI_RESP_WIDTH)
+    -- which may be wider than the AXI BRESP(2b). TG does not decode BRESP, so we
+    -- accept the full width here to avoid top-level width mismatches.
+    BRESP  : in  std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0) := (others => '0');
     BVALID : in  std_logic;
-    BREADY : out std_logic
+    BREADY : out std_logic;
+
+    -- debug (post-LFSR reg = WDATA)
+    o_lfsr_value : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0)
   );
 end tg_write_top;
 
 architecture rtl of tg_write_top is
-  signal w_write_done      : std_logic;
+  signal w_write_done : std_logic;
   signal w_txn_start_pulse : std_logic;
   signal w_wbeat_pulse     : std_logic;
 begin
@@ -70,6 +89,10 @@ begin
     );
 
   u_DP: entity work.tg_write_datapath
+    generic map(
+      p_INIT_VALUE => p_INIT_VALUE,
+      p_INDEX_BITS => p_INDEX_BITS
+    )
     port map(
       ACLK    => ACLK,
       ARESETn => ARESETn,
@@ -80,13 +103,18 @@ begin
       i_txn_start_pulse => w_txn_start_pulse,
       i_wbeat_pulse     => w_wbeat_pulse,
 
+      i_ext_update_en => i_ext_update_en,
+      i_ext_data_in   => i_ext_data_in,
+
       AWID    => AWID,
       AWADDR  => AWADDR,
       AWLEN   => AWLEN,
       AWBURST => AWBURST,
 
       WDATA   => WDATA,
-      WLAST   => WLAST
+      WLAST   => WLAST,
+
+      o_lfsr_value => o_lfsr_value
     );
 
   o_done <= w_write_done;
