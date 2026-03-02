@@ -15,7 +15,9 @@ entity backend_manager_injection is
         p_USE_TMR_FLOW      : boolean;
         p_USE_TMR_INTEGRITY : boolean;
         p_USE_HAMMING       : boolean;
-        p_USE_INTEGRITY     : boolean
+        p_USE_INTEGRITY     : boolean;
+
+        DETECT_DOUBLE : boolean
     );
 
     port(
@@ -41,7 +43,12 @@ entity backend_manager_injection is
         -- XINA signals.
         l_in_data_i: out std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
         l_in_val_i : out std_logic;
-        l_in_ack_o : in std_logic
+        l_in_ack_o : in std_logic;
+
+        -- Hamming (new buffer ports) - EXTERNAL
+        i_CORRECT_ERROR : in  std_logic;
+        o_SINGLE_ERR    : out std_logic;
+        o_DOUBLE_ERR    : out std_logic
     );
 end backend_manager_injection;
 
@@ -131,7 +138,6 @@ begin
             p_SRC_X => p_SRC_X,
             p_SRC_Y => p_SRC_Y
         )
-
         port map(
             ACLK    => ACLK,
             ARESETn => ARESETn,
@@ -181,19 +187,27 @@ begin
         u_BUFFER_FIFO_HAM: entity work.buffer_fifo_ham
             generic map(
                 p_DATA_WIDTH   => c_FLIT_WIDTH,
-                p_BUFFER_DEPTH => p_BUFFER_DEPTH
+                p_BUFFER_DEPTH => p_BUFFER_DEPTH,
+                DETECT_DOUBLE  => DETECT_DOUBLE
             )
             port map(
                 ACLK   => ACLK,
                 ARESET => w_ARESET,
 
-                o_READ_OK  => w_READ_OK_BUFFER,
-                i_READ     => w_READ_BUFFER,
-                o_DATA     => l_in_data_i,
+                -- Read
+                o_READ_OK => w_READ_OK_BUFFER,
+                i_READ    => w_READ_BUFFER,
+                o_DATA    => l_in_data_i,
 
+                -- Write
                 o_WRITE_OK => w_WRITE_OK_BUFFER,
                 i_WRITE    => w_WRITE_BUFFER,
-                i_DATA     => w_FLIT
+                i_DATA     => w_FLIT,
+
+                -- Hamming status/control (EXTERNAL WIRES)
+                correct_error_i => i_CORRECT_ERROR,
+                single_err_o    => o_SINGLE_ERR,
+                double_err_o    => o_DOUBLE_ERR
             );
     else generate
         u_BUFFER_FIFO_NORMAL: entity work.buffer_fifo
@@ -225,8 +239,8 @@ begin
                 i_READ_OK_BUFFER => w_READ_OK_BUFFER,
                 o_READ_BUFFER    => w_READ_BUFFER,
 
-                l_in_val_i  => l_in_val_i,
-                l_in_ack_o  => l_in_ack_o
+                l_in_val_i => l_in_val_i,
+                l_in_ack_o => l_in_ack_o
             );
     else generate
         u_SEND_CONTROL_NORMAL: entity work.send_control
@@ -237,10 +251,11 @@ begin
                 i_READ_OK_BUFFER => w_READ_OK_BUFFER,
                 o_READ_BUFFER    => w_READ_BUFFER,
 
-                l_in_val_i  => l_in_val_i,
-                l_in_ack_o  => l_in_ack_o
+                l_in_val_i => l_in_val_i,
+                l_in_ack_o => l_in_ack_o
             );
     end generate;
 
     w_ARESET <= not ARESETn;
+
 end rtl;

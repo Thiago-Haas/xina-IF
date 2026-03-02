@@ -15,7 +15,9 @@ entity backend_manager is
         p_USE_TMR_FLOW      : boolean;
         p_USE_TMR_INTEGRITY : boolean;
         p_USE_HAMMING       : boolean;
-        p_USE_INTEGRITY     : boolean
+        p_USE_INTEGRITY     : boolean;
+
+        DETECT_DOUBLE       : boolean
     );
 
     port(
@@ -57,7 +59,18 @@ entity backend_manager is
         l_in_ack_o  : in std_logic;
         l_out_data_o: in std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
         l_out_val_o : in std_logic;
-        l_out_ack_i : out std_logic
+        l_out_ack_i : out std_logic;
+
+        -- Hamming/ECC ports (EXTERNAL)
+        -- Injection side
+        i_INJ_CORRECT_ERROR : in  std_logic;
+        o_INJ_SINGLE_ERR    : out std_logic;
+        o_INJ_DOUBLE_ERR    : out std_logic;
+
+        -- Reception side
+        i_RX_CORRECT_ERROR  : in  std_logic;
+        o_RX_SINGLE_ERR     : out std_logic;
+        o_RX_DOUBLE_ERR     : out std_logic
     );
 end backend_manager;
 
@@ -73,9 +86,10 @@ begin
             p_USE_TMR_FLOW       => p_USE_TMR_FLOW,
             p_USE_TMR_INTEGRITY  => p_USE_TMR_INTEGRITY,
             p_USE_HAMMING        => p_USE_HAMMING,
-            p_USE_INTEGRITY      => p_USE_INTEGRITY
-        )
+            p_USE_INTEGRITY      => p_USE_INTEGRITY,
 
+            DETECT_DOUBLE        => DETECT_DOUBLE
+        )
         port map(
             ACLK    => ACLK,
             ARESETn => ARESETn,
@@ -95,7 +109,12 @@ begin
 
             l_in_data_i => l_in_data_i,
             l_in_val_i  => l_in_val_i,
-            l_in_ack_o  => l_in_ack_o
+            l_in_ack_o  => l_in_ack_o,
+
+            -- Hamming/ECC ports (EXTERNAL WIRES)
+            i_CORRECT_ERROR => i_INJ_CORRECT_ERROR,
+            o_SINGLE_ERR    => o_INJ_SINGLE_ERR,
+            o_DOUBLE_ERR    => o_INJ_DOUBLE_ERR
         );
 
     u_RECEPTION: entity work.backend_manager_reception
@@ -105,9 +124,10 @@ begin
             p_USE_TMR_FLOW       => p_USE_TMR_FLOW,
             p_USE_TMR_INTEGRITY  => p_USE_TMR_INTEGRITY,
             p_USE_HAMMING        => p_USE_HAMMING,
-            p_USE_INTEGRITY      => p_USE_INTEGRITY
-        )
+            p_USE_INTEGRITY      => p_USE_INTEGRITY,
 
+            DETECT_DOUBLE        => DETECT_DOUBLE
+        )
         port map(
             ACLK    => ACLK,
             ARESETn => ARESETn,
@@ -115,8 +135,8 @@ begin
             i_READY_RECEIVE_PACKET => i_READY_RECEIVE_PACKET,
             i_READY_RECEIVE_DATA   => i_READY_RECEIVE_DATA,
 
-            o_VALID_RECEIVE_DATA  => o_VALID_RECEIVE_DATA,
-            o_LAST_RECEIVE_DATA   => o_LAST_RECEIVE_DATA,
+            o_VALID_RECEIVE_DATA => o_VALID_RECEIVE_DATA,
+            o_LAST_RECEIVE_DATA  => o_LAST_RECEIVE_DATA,
 
             o_ID_RECEIVE     => o_ID_RECEIVE,
             o_STATUS_RECEIVE => o_STATUS_RECEIVE,
@@ -127,6 +147,12 @@ begin
 
             l_out_data_o => l_out_data_o,
             l_out_val_o  => l_out_val_o,
-            l_out_ack_i  => l_out_ack_i
+            l_out_ack_i  => l_out_ack_i,
+
+            -- Hamming/ECC ports (EXTERNAL WIRES)
+            i_CORRECT_ERROR => i_RX_CORRECT_ERROR,
+            o_SINGLE_ERR    => o_RX_SINGLE_ERR,
+            o_DOUBLE_ERR    => o_RX_DOUBLE_ERR
         );
+
 end rtl;

@@ -12,7 +12,9 @@ entity backend_manager_reception is
         p_USE_TMR_FLOW      : boolean;
         p_USE_TMR_INTEGRITY : boolean;
         p_USE_HAMMING       : boolean;
-        p_USE_INTEGRITY     : boolean
+        p_USE_INTEGRITY     : boolean;
+
+        DETECT_DOUBLE : boolean
     );
 
     port(
@@ -35,9 +37,14 @@ entity backend_manager_reception is
         o_CORRUPT_RECEIVE: out std_logic := '0';
 
         -- XINA signals.
-        l_out_data_o: in std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-        l_out_val_o : in std_logic;
-        l_out_ack_i : out std_logic
+        l_out_data_o: in  std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+        l_out_val_o : in  std_logic;
+        l_out_ack_i : out std_logic;
+
+        -- Hamming (new buffer ports) - EXTERNAL
+        i_CORRECT_ERROR : in  std_logic;
+        o_SINGLE_ERR    : out std_logic;
+        o_DOUBLE_ERR    : out std_logic
     );
 end backend_manager_reception;
 
@@ -81,7 +88,7 @@ begin
     if (p_USE_TMR_PACKETIZER) generate
         u_DEPACKETIZER_CONTROL_TMR: entity work.backend_manager_depacketizer_control_tmr
             port map(
-                ACLK => ACLK,
+                ACLK    => ACLK,
                 ARESETn => ARESETn,
 
                 i_READY_RECEIVE_PACKET => i_READY_RECEIVE_PACKET,
@@ -95,14 +102,14 @@ begin
 
                 o_WRITE_H_INTERFACE_REG => w_WRITE_H_INTERFACE_REG,
 
-                o_ADD     => w_ADD,
-                o_COMPARE => w_COMPARE,
+                o_ADD              => w_ADD,
+                o_COMPARE          => w_COMPARE,
                 o_INTEGRITY_RESETn => w_INTEGRITY_RESETn
             );
     else generate
         u_DEPACKETIZER_CONTROL_NORMAL: entity work.backend_manager_depacketizer_control
             port map(
-                ACLK => ACLK,
+                ACLK    => ACLK,
                 ARESETn => ARESETn,
 
                 i_READY_RECEIVE_PACKET => i_READY_RECEIVE_PACKET,
@@ -116,8 +123,8 @@ begin
 
                 o_WRITE_H_INTERFACE_REG => w_WRITE_H_INTERFACE_REG,
 
-                o_ADD     => w_ADD,
-                o_COMPARE => w_COMPARE,
+                o_ADD              => w_ADD,
+                o_COMPARE          => w_COMPARE,
                 o_INTEGRITY_RESETn => w_INTEGRITY_RESETn
             );
     end generate;
@@ -129,12 +136,12 @@ begin
                 ACLK    => ACLK,
                 ARESETn => w_INTEGRITY_RESETn,
 
-                i_ADD       => w_ADD,
-                i_VALUE_ADD => w_FLIT(c_AXI_DATA_WIDTH - 1 downto 0),
-                i_COMPARE   => w_COMPARE,
+                i_ADD           => w_ADD,
+                i_VALUE_ADD     => w_FLIT(c_AXI_DATA_WIDTH - 1 downto 0),
+                i_COMPARE       => w_COMPARE,
                 i_VALUE_COMPARE => w_FLIT(c_AXI_DATA_WIDTH - 1 downto 0),
 
-                o_CORRUPT  => o_CORRUPT_RECEIVE
+                o_CORRUPT => o_CORRUPT_RECEIVE
             );
     elsif (p_USE_INTEGRITY) generate
         u_INTEGRITY_CONTROL_RECEIVE_NORMAL: entity work.integrity_control_receive
@@ -142,12 +149,12 @@ begin
                 ACLK    => ACLK,
                 ARESETn => w_INTEGRITY_RESETn,
 
-                i_ADD       => w_ADD,
-                i_VALUE_ADD => w_FLIT(c_AXI_DATA_WIDTH - 1 downto 0),
-                i_COMPARE   => w_COMPARE,
+                i_ADD           => w_ADD,
+                i_VALUE_ADD     => w_FLIT(c_AXI_DATA_WIDTH - 1 downto 0),
+                i_COMPARE       => w_COMPARE,
                 i_VALUE_COMPARE => w_FLIT(c_AXI_DATA_WIDTH - 1 downto 0),
 
-                o_CORRUPT  => o_CORRUPT_RECEIVE
+                o_CORRUPT => o_CORRUPT_RECEIVE
             );
     end generate;
 
@@ -156,19 +163,27 @@ begin
         u_BUFFER_FIFO_HAM: entity work.buffer_fifo_ham
             generic map(
                 p_DATA_WIDTH   => c_FLIT_WIDTH,
-                p_BUFFER_DEPTH => p_BUFFER_DEPTH
+                p_BUFFER_DEPTH => p_BUFFER_DEPTH,
+                DETECT_DOUBLE  => DETECT_DOUBLE
             )
             port map(
                 ACLK   => ACLK,
                 ARESET => w_ARESET,
 
-                o_READ_OK  => w_READ_OK_BUFFER,
-                i_READ     => w_READ_BUFFER,
-                o_DATA     => w_FLIT,
+                -- Read
+                o_READ_OK => w_READ_OK_BUFFER,
+                i_READ    => w_READ_BUFFER,
+                o_DATA    => w_FLIT,
 
+                -- Write
                 o_WRITE_OK => w_WRITE_OK_BUFFER,
                 i_WRITE    => w_WRITE_BUFFER,
-                i_DATA     => l_out_data_o
+                i_DATA     => l_out_data_o,
+
+                -- Hamming status/control (EXTERNAL WIRES)
+                correct_error_i => i_CORRECT_ERROR,
+                single_err_o    => o_SINGLE_ERR,
+                double_err_o    => o_DOUBLE_ERR
             );
     else generate
         u_BUFFER_FIFO_NORMAL: entity work.buffer_fifo
@@ -218,4 +233,5 @@ begin
     end generate;
 
     w_ARESET <= not ARESETn;
+
 end rtl;

@@ -18,4 +18,6 @@ package xina_ni_ft_pkg is
     constant c_USE_TMR_PACKETIZER: boolean  := true;
     constant c_USE_TMR_FLOW      : boolean  := true;
     constant c_USE_TMR_INTEGRITY : boolean  := true;
+
+    constant DETECT_DOUBLE : boolean  := true;
 end package;

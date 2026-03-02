@@ -16,12 +16,14 @@ entity top_manager is
         p_USE_TMR_FLOW      : boolean  := c_USE_TMR_FLOW;
         p_USE_TMR_INTEGRITY : boolean  := c_USE_TMR_INTEGRITY;
         p_USE_HAMMING       : boolean  := c_USE_HAMMING;
-        p_USE_INTEGRITY     : boolean  := c_USE_INTEGRITY
+        p_USE_INTEGRITY     : boolean  := c_USE_INTEGRITY;
+
+        DETECT_DOUBLE       : boolean  := TRUE
     );
 
     port(
         -- AMBA AXI 5 signals.
-        ACLK: in std_logic;
+        ACLK   : in std_logic;
         ARESETn: in std_logic := '1';
 
             -- Write request signals.
@@ -69,7 +71,18 @@ entity top_manager is
         l_in_ack_o  : in std_logic;
         l_out_data_o: in std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
         l_out_val_o : in std_logic;
-        l_out_ack_i : out std_logic
+        l_out_ack_i : out std_logic;
+
+        -- Hamming/ECC ports (EXTERNAL, through backend_manager)
+        -- Injection side
+        i_INJ_CORRECT_ERROR : in  std_logic;
+        o_INJ_SINGLE_ERR    : out std_logic;
+        o_INJ_DOUBLE_ERR    : out std_logic;
+
+        -- Reception side
+        i_RX_CORRECT_ERROR  : in  std_logic;
+        o_RX_SINGLE_ERR     : out std_logic;
+        o_RX_DOUBLE_ERR     : out std_logic
     );
 end top_manager;
 
@@ -107,7 +120,7 @@ begin
     u_FRONTEND: entity work.frontend_manager
         port map(
             -- AMBA AXI 5 signals.
-            ACLK => ACLK,
+            ACLK    => ACLK,
             ARESETn => ARESETn,
 
                 -- Write request signals.
@@ -149,7 +162,7 @@ begin
                 -- Extra signals.
                 CORRUPT_PACKET => CORRUPT_PACKET,
 
-            -- Backend signals.
+            -- Backend signals (injection).
             i_READY_SEND_PACKET => w_READY_SEND_PACKET,
             i_READY_SEND_DATA   => w_READY_SEND_DATA,
 
@@ -173,7 +186,7 @@ begin
             i_OPC_RECEIVE    => w_OPC_RECEIVE,
             i_DATA_RECEIVE   => w_DATA_RECEIVE,
 
-            i_CORRUPT_RECEIVE      => w_CORRUPT_RECEIVE,
+            i_CORRUPT_RECEIVE => w_CORRUPT_RECEIVE,
 
             o_READY_RECEIVE_PACKET => w_READY_RECEIVE_PACKET,
             o_READY_RECEIVE_DATA   => w_READY_RECEIVE_DATA
@@ -183,20 +196,22 @@ begin
         generic map(
             p_SRC_X => p_SRC_X,
             p_SRC_Y => p_SRC_Y,
+
             p_BUFFER_DEPTH       => p_BUFFER_DEPTH,
             p_USE_TMR_PACKETIZER => p_USE_TMR_PACKETIZER,
             p_USE_TMR_FLOW       => p_USE_TMR_FLOW,
             p_USE_TMR_INTEGRITY  => p_USE_TMR_INTEGRITY,
             p_USE_HAMMING        => p_USE_HAMMING,
-            p_USE_INTEGRITY      => p_USE_INTEGRITY
-        )
+            p_USE_INTEGRITY      => p_USE_INTEGRITY,
 
+            DETECT_DOUBLE        => DETECT_DOUBLE
+        )
         port map(
             -- AMBA AXI 5 signals.
-            ACLK => ACLK,
+            ACLK    => ACLK,
             ARESETn => ARESETn,
 
-            -- Backend signals.
+            -- Backend signals (injection).
             i_START_SEND_PACKET => w_START_SEND_PACKET,
             i_VALID_SEND_DATA   => w_VALID_SEND_DATA,
             i_LAST_SEND_DATA    => w_LAST_SEND_DATA,
@@ -214,8 +229,8 @@ begin
             i_READY_RECEIVE_PACKET => w_READY_RECEIVE_PACKET,
             i_READY_RECEIVE_DATA   => w_READY_RECEIVE_DATA,
 
-            o_VALID_RECEIVE_DATA   => w_VALID_RECEIVE_DATA,
-            o_LAST_RECEIVE_DATA    => w_LAST_RECEIVE_DATA,
+            o_VALID_RECEIVE_DATA => w_VALID_RECEIVE_DATA,
+            o_LAST_RECEIVE_DATA  => w_LAST_RECEIVE_DATA,
 
             o_ID_RECEIVE     => w_ID_RECEIVE,
             o_STATUS_RECEIVE => w_STATUS_RECEIVE,
@@ -230,6 +245,16 @@ begin
             l_in_ack_o   => l_in_ack_o,
             l_out_data_o => l_out_data_o,
             l_out_val_o  => l_out_val_o,
-            l_out_ack_i  => l_out_ack_i
+            l_out_ack_i  => l_out_ack_i,
+
+            -- Hamming/ECC ports (EXTERNAL WIRES)
+            i_INJ_CORRECT_ERROR => i_INJ_CORRECT_ERROR,
+            o_INJ_SINGLE_ERR    => o_INJ_SINGLE_ERR,
+            o_INJ_DOUBLE_ERR    => o_INJ_DOUBLE_ERR,
+
+            i_RX_CORRECT_ERROR  => i_RX_CORRECT_ERROR,
+            o_RX_SINGLE_ERR     => o_RX_SINGLE_ERR,
+            o_RX_DOUBLE_ERR     => o_RX_DOUBLE_ERR
         );
+
 end rtl;
