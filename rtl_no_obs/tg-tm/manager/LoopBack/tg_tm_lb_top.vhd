@@ -2,50 +2,47 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 
-library std;
-use std.env.all;
-
 use work.xina_ft_pkg.all;
 use work.xina_ni_ft_pkg.all;
 
-entity tb_tg_tm_lb_top is
+-- Flat hierarchy top (non-debug): TG + TM + single NI + loopback.
+--
+-- IMPORTANT (matches working tg_ni_write_only_top / tm_ni_read_only_top wrappers):
+--   * top_manager exposes NI->NoC request stream on ports named l_in_* (yes, *_i suffix!)
+--   * top_manager consumes NoC->NI response stream on ports named l_out_* (yes, *_o suffix!)
+--
+-- Wiring:
+--   NI request  (top_manager.l_in_*)  -> loopback.lin_*
+--   NI response (top_manager.l_out_*) <- loopback.lout_*
+entity tg_tm_lb_top is
+  generic (
+    p_MEM_ADDR_BITS : natural := 10
+  );
+  port(
+    ACLK    : in  std_logic;
+    ARESETn : in  std_logic;
+
+    -- TG control
+    i_tg_start       : in  std_logic;
+    o_tg_done        : out std_logic;
+    TG_INPUT_ADDRESS : in  std_logic_vector(63 downto 0);
+    TG_STARTING_SEED : in  std_logic_vector(31 downto 0);
+
+    -- TM control
+    i_tm_start       : in  std_logic;
+    o_tm_done        : out std_logic;
+    TM_INPUT_ADDRESS : in  std_logic_vector(63 downto 0);
+    TM_STARTING_SEED : in  std_logic_vector(31 downto 0);
+
+    -- TM observability
+    o_tm_mismatch       : out std_logic;
+    o_tm_expected_value : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0)
+  );
 end entity;
 
-architecture tb of tb_tg_tm_lb_top is
+architecture rtl of tg_tm_lb_top is
 
-  constant c_CLK_PERIOD : time := 10 ns;
-
-  -- number of iterations
-  constant c_NUM_ITERS : natural := 200;
-
-  -- step between base addresses (bytes) each iter
-  constant c_ADDR_STEP : unsigned(63 downto 0) := to_unsigned(16, 64); -- 0x10
-
-  constant c_BASE_ADDR_INIT : std_logic_vector(63 downto 0) := x"00000000_00000100";
-  constant c_SEED_INIT      : std_logic_vector(31 downto 0) := x"1ACEB00C";
-
-  -- ECC
-  constant c_DETECT_DOUBLE : boolean := TRUE;
-
-  signal ACLK    : std_logic := '0';
-  signal ARESETn : std_logic := '0';
-
-  signal tg_start : std_logic := '0';
-  signal tg_done  : std_logic;
-
-  signal tm_start : std_logic := '0';
-  signal tm_done  : std_logic;
-
-  signal tg_addr  : std_logic_vector(63 downto 0) := c_BASE_ADDR_INIT;
-  signal tm_addr  : std_logic_vector(63 downto 0) := c_BASE_ADDR_INIT;
-
-  signal tg_seed  : std_logic_vector(31 downto 0) := c_SEED_INIT;
-  signal tm_seed  : std_logic_vector(31 downto 0) := c_SEED_INIT;
-
-  signal tm_mismatch : std_logic;
-  signal tm_expected : std_logic_vector(c_AXI_DATA_WIDTH-1 downto 0);
-
-  -- AXI write (TG -> NI)
+  -- AXI write (TG)
   signal awid    : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
   signal awaddr  : std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
   signal awlen   : std_logic_vector(7 downto 0);
@@ -63,7 +60,7 @@ architecture tb of tb_tg_tm_lb_top is
   signal bvalid : std_logic;
   signal bready : std_logic;
 
-  -- AXI read (NI -> TM)
+  -- AXI read (TM)
   signal arid    : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
   signal araddr  : std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
   signal arlen   : std_logic_vector(7 downto 0);
@@ -87,18 +84,9 @@ architecture tb of tb_tg_tm_lb_top is
   signal lout_val  : std_logic;
   signal lout_ack  : std_logic;
 
-  -- ECC ports (top-level)
-  signal inj_correct_error : std_logic := '1';
-  signal rx_correct_error  : std_logic := '1';
-  signal inj_single_err    : std_logic;
-  signal inj_double_err    : std_logic;
-  signal rx_single_err     : std_logic;
-  signal rx_double_err     : std_logic;
+  signal tg_lfsr_value : std_logic_vector(c_AXI_DATA_WIDTH-1 downto 0);
 
 begin
-
-  -- clock
-  ACLK <= not ACLK after c_CLK_PERIOD/2;
 
   -- TG
   u_tg: entity work.tg_write_top
@@ -106,11 +94,14 @@ begin
       ACLK    => ACLK,
       ARESETn => ARESETn,
 
-      i_start => tg_start,
-      o_done  => tg_done,
+      i_start => i_tg_start,
+      o_done  => o_tg_done,
 
-      INPUT_ADDRESS => tg_addr,
-      STARTING_SEED => tg_seed,
+      INPUT_ADDRESS => TG_INPUT_ADDRESS,
+      STARTING_SEED => TG_STARTING_SEED,
+
+      --i_ext_update_en => '0',
+      --i_ext_data_in   => (others => '0'),
 
       AWID    => awid,
       AWADDR  => awaddr,
@@ -128,6 +119,8 @@ begin
       BRESP   => bresp,
       BVALID  => bvalid,
       BREADY  => bready
+
+      --o_lfsr_value => tg_lfsr_value
     );
 
   -- TM
@@ -136,11 +129,11 @@ begin
       ACLK    => ACLK,
       ARESETn => ARESETn,
 
-      i_start => tm_start,
-      o_done  => tm_done,
+      i_start => i_tm_start,
+      o_done  => o_tm_done,
 
-      INPUT_ADDRESS => tm_addr,
-      STARTING_SEED => tm_seed,
+      INPUT_ADDRESS => TM_INPUT_ADDRESS,
+      STARTING_SEED => TM_STARTING_SEED,
 
       ARID    => arid,
       ARADDR  => araddr,
@@ -156,15 +149,12 @@ begin
       RID    => rid,
       RRESP  => rresp,
 
-      o_mismatch       => tm_mismatch,
-      o_expected_value => tm_expected
+      o_mismatch       => o_tm_mismatch,
+      o_expected_value => o_tm_expected_value
     );
 
-  -- NI manager
+  -- Single NI manager
   u_ni: entity work.top_manager
-    generic map(
-      DETECT_DOUBLE => c_DETECT_DOUBLE
-    )
     port map(
       ACLK    => ACLK,
       ARESETn => ARESETn,
@@ -202,31 +192,24 @@ begin
       RID    => rid,
       RRESP  => rresp,
 
-      -- NoC-side ports
+      -- NoC-side ports (see header comment)
+      -- NI -> NoC (request stream)
       l_in_data_i  => lin_data,
       l_in_val_i   => lin_val,
       l_in_ack_o   => lin_ack,
 
+      -- NoC -> NI (response stream)
       l_out_data_o => lout_data,
       l_out_val_o  => lout_val,
       l_out_ack_i  => lout_ack,
 
-      corrupt_packet => open,
-
-      -- ECC ports
-      i_INJ_CORRECT_ERROR => inj_correct_error,
-      o_INJ_SINGLE_ERR    => inj_single_err,
-      o_INJ_DOUBLE_ERR    => inj_double_err,
-
-      i_RX_CORRECT_ERROR  => rx_correct_error,
-      o_RX_SINGLE_ERR     => rx_single_err,
-      o_RX_DOUBLE_ERR     => rx_double_err
+      corrupt_packet => open
     );
 
-  -- Loopback
+  -- HW loopback (non-debug)
   u_lb: entity work.lb_top
     generic map(
-      p_MEM_ADDR_BITS => 10
+      p_MEM_ADDR_BITS => p_MEM_ADDR_BITS
     )
     port map(
       ACLK    => ACLK,
@@ -240,48 +223,5 @@ begin
       lout_val_o  => lout_val,
       lout_ack_i  => lout_ack
     );
-
-  -- reset + stimulus (quiet)
-  stim: process
-    variable base_addr : unsigned(63 downto 0);
-    variable seed      : unsigned(31 downto 0);
-  begin
-    ARESETn  <= '0';
-    tg_start <= '0';
-    tm_start <= '0';
-    wait for 50 ns;
-    ARESETn <= '1';
-    wait for 50 ns;
-
-    base_addr := unsigned(c_BASE_ADDR_INIT);
-    seed      := unsigned(c_SEED_INIT);
-
-    for it in 0 to integer(c_NUM_ITERS-1) loop
-      tg_addr <= std_logic_vector(base_addr);
-      tm_addr <= std_logic_vector(base_addr);
-
-      tg_seed <= std_logic_vector(seed);
-      tm_seed <= std_logic_vector(seed);
-
-      -- TG
-      tg_start <= '1';
-      wait until rising_edge(ACLK);
-      tg_start <= '0';
-      wait until tg_done = '1';
-
-      -- TM
-      tm_start <= '1';
-      wait until rising_edge(ACLK);
-      tm_start <= '0';
-      wait until tm_done = '1';
-
-      base_addr := base_addr + c_ADDR_STEP;
-      seed      := seed + 1;
-      wait for 20 ns;
-    end loop;
-
-    std.env.stop;
-    wait;
-  end process;
 
 end architecture;
