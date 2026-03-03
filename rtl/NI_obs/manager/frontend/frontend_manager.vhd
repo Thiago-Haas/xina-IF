@@ -15,76 +15,76 @@ use work.xina_ni_ft_pkg.all;
 entity frontend_manager is
     port(
         -- AMBA AXI 5 signals.
-        ACLK: in std_logic;
-        ARESETn: in std_logic;
+        ACLK    : in  std_logic;
+        ARESETn : in  std_logic;
 
         -- Write request signals.
-        AWVALID: in std_logic;
-        AWREADY: out std_logic;
-        AWID   : in std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
-        AWADDR : in std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
-        AWLEN  : in std_logic_vector(7 downto 0);
-        AWBURST: in std_logic_vector(1 downto 0);
+        AWVALID : in  std_logic;
+        AWREADY : out std_logic;
+        AWID    : in  std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
+        AWADDR  : in  std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
+        AWLEN   : in  std_logic_vector(7 downto 0);
+        AWBURST : in  std_logic_vector(1 downto 0);
 
         -- Write data signals.
-        WVALID : in std_logic;
+        WVALID : in  std_logic;
         WREADY : out std_logic;
-        WDATA  : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
-        WLAST  : in std_logic;
+        WDATA  : in  std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+        WLAST  : in  std_logic;
 
         -- Write response signals.
         BVALID : out std_logic;
-        BREADY : in std_logic;
+        BREADY : in  std_logic;
         BID    : out std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0) := (others => '0');
         BRESP  : out std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0) := (others => '0');
 
         -- Read request signals.
-        ARVALID: in std_logic;
-        ARREADY: out std_logic;
-        ARID   : in std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
-        ARADDR : in std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
-        ARLEN  : in std_logic_vector(7 downto 0);
-        ARBURST: in std_logic_vector(1 downto 0);
+        ARVALID : in  std_logic;
+        ARREADY : out std_logic;
+        ARID    : in  std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
+        ARADDR  : in  std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
+        ARLEN   : in  std_logic_vector(7 downto 0);
+        ARBURST : in  std_logic_vector(1 downto 0);
 
         -- Read response/data signals.
         RVALID : out std_logic;
-        RREADY : in std_logic;
+        RREADY : in  std_logic;
         RDATA  : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
         RLAST  : out std_logic;
         RID    : out std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0) := (others => '0');
         RRESP  : out std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0) := (others => '0');
 
         -- Extra signals.
-        CORRUPT_PACKET: out std_logic;
+        CORRUPT_PACKET : out std_logic;
 
         -- Backend signals (injection).
-        i_READY_SEND_DATA  : in std_logic;
-        i_READY_SEND_PACKET: in std_logic;
+        i_READY_SEND_DATA   : in std_logic;
+        i_READY_SEND_PACKET : in std_logic;
 
-        o_START_SEND_PACKET: out std_logic;
-        o_VALID_SEND_DATA  : out std_logic;
-        o_LAST_SEND_DATA   : out std_logic;
+        o_START_SEND_PACKET : out std_logic;
+        o_VALID_SEND_DATA   : out std_logic;
+        o_LAST_SEND_DATA    : out std_logic;
 
-        o_ADDR     : out std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
-        o_ID       : out std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
-        o_LENGTH   : out std_logic_vector(7 downto 0);
-        o_BURST    : out std_logic_vector(1 downto 0);
-        o_OPC_SEND : out std_logic;
-        o_DATA_SEND: out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+        o_ADDR      : out std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
+        o_ID        : out std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
+        o_LENGTH    : out std_logic_vector(7 downto 0);
+        o_BURST     : out std_logic_vector(1 downto 0);
+        o_OPC_SEND  : out std_logic;
+        o_DATA_SEND : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
         -- Backend signals (reception).
-        i_VALID_RECEIVE_DATA: in std_logic;
-        i_LAST_RECEIVE_DATA : in std_logic;
+        i_VALID_RECEIVE_DATA : in std_logic;
+        i_LAST_RECEIVE_DATA  : in std_logic;
 
-        i_ID_RECEIVE    : in std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
-        i_STATUS_RECEIVE: in std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
-        i_OPC_RECEIVE   : in std_logic;
-        i_DATA_RECEIVE  : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+        i_ID_RECEIVE     : in std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
+        i_STATUS_RECEIVE : in std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
+        i_OPC_RECEIVE    : in std_logic;
+        i_DATA_RECEIVE   : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
-        i_CORRUPT_RECEIVE: in std_logic;
+        i_CORRUPT_RECEIVE : in std_logic;
 
-        o_READY_RECEIVE_PACKET: out std_logic;
-        o_READY_RECEIVE_DATA  : out std_logic
+        o_READY_RECEIVE_PACKET : out std_logic;
+        o_READY_RECEIVE_DATA   : out std_logic
     );
 end frontend_manager;
 
@@ -95,7 +95,7 @@ architecture rtl of frontend_manager is
 
     signal cap_aw_w   : std_logic;
     signal cap_ar_w   : std_logic;
-    signal opc_send_r : std_logic;
+    signal opc_send_w : std_logic;
 
     ---------------------------------------------------------------------------------------------
     -- Ejection internal signals
@@ -121,10 +121,11 @@ begin
         i_READY_SEND_PACKET => i_READY_SEND_PACKET,
         i_READY_SEND_DATA   => i_READY_SEND_DATA,
 
+        -- Opcode comes from datapath registered header bundle (future ECC target)
+        i_OPC_SEND => opc_send_w,
+
         o_CAP_AW => cap_aw_w,
         o_CAP_AR => cap_ar_w,
-
-        o_OPC_SEND => opc_send_r,
 
         o_START_SEND_PACKET => o_START_SEND_PACKET,
         o_VALID_SEND_DATA   => o_VALID_SEND_DATA,
@@ -140,9 +141,8 @@ begin
         ACLK    => ACLK,
         ARESETn => ARESETn,
 
-        i_CAP_AW   => cap_aw_w,
-        i_CAP_AR   => cap_ar_w,
-        i_OPC_SEND => opc_send_r,
+        i_CAP_AW => cap_aw_w,
+        i_CAP_AR => cap_ar_w,
 
         i_AWID    => AWID,
         i_AWADDR  => AWADDR,
@@ -161,11 +161,12 @@ begin
         o_ID        => o_ID,
         o_LENGTH    => o_LENGTH,
         o_BURST     => o_BURST,
+        o_OPC_SEND  => opc_send_w,
         o_DATA_SEND => o_DATA_SEND
       );
 
     -- Expose opcode to backend with the original port name.
-    o_OPC_SEND <= opc_send_r;
+    o_OPC_SEND <= opc_send_w;
 
     ---------------------------------------------------------------------------------------------
     -- Ejection path (backend receive -> AXI)
@@ -175,8 +176,8 @@ begin
         i_VALID_RECEIVE_DATA => i_VALID_RECEIVE_DATA,
         i_OPC_RECEIVE        => i_OPC_RECEIVE,
 
-        i_BREADY => BREADY,
-        i_RREADY => RREADY,
+        BREADY => BREADY,
+        RREADY => RREADY,
 
         o_READY_RECEIVE_PACKET => o_READY_RECEIVE_PACKET,
         o_READY_RECEIVE_DATA   => o_READY_RECEIVE_DATA,
@@ -196,17 +197,17 @@ begin
         i_BVALID_EN => bvalid_en_w,
         i_RVALID_EN => rvalid_en_w,
 
-        o_BVALID => BVALID,
-        o_BID    => BID,
-        o_BRESP  => BRESP,
+        BVALID => BVALID,
+        BID    => BID,
+        BRESP  => BRESP,
 
-        o_RVALID => RVALID,
-        o_RDATA  => RDATA,
-        o_RLAST  => RLAST,
-        o_RID    => RID,
-        o_RRESP  => RRESP,
+        RVALID => RVALID,
+        RDATA  => RDATA,
+        RLAST  => RLAST,
+        RID    => RID,
+        RRESP  => RRESP,
 
-        o_CORRUPT_PACKET => CORRUPT_PACKET
+        CORRUPT_PACKET => CORRUPT_PACKET
       );
 
 end rtl;
