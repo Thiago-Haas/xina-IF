@@ -4,8 +4,14 @@ library work;
 use IEEE.std_logic_1164.all;
 use work.xina_ni_ft_pkg.all;
 
--- Frontend manager: top-level wrapper keeping the ORIGINAL interface/behaviour,
--- while splitting logic into injection/ejection + controller/datapath.
+-- Frontend manager
+--  * Keeps the ORIGINAL external interface.
+--  * Internally split into injection/ejection paths.
+--  * Each path is split into controller + datapath.
+--
+-- Naming convention (aligned with backend style):
+--  * *_r  : registered elements
+--  * *_w  : combinational wires
 entity frontend_manager is
     port(
         -- AMBA AXI 5 signals.
@@ -84,98 +90,102 @@ end frontend_manager;
 
 architecture rtl of frontend_manager is
 
+    ---------------------------------------------------------------------------------------------
     -- Injection internal signals
-    signal w_cap_aw    : std_logic;
-    signal w_cap_ar    : std_logic;
-    signal w_opc_send  : std_logic;
 
+    signal cap_aw_w   : std_logic;
+    signal cap_ar_w   : std_logic;
+    signal opc_send_r : std_logic;
+
+    ---------------------------------------------------------------------------------------------
     -- Ejection internal signals
-    signal w_bvalid_en : std_logic;
-    signal w_rvalid_en : std_logic;
+
+    signal bvalid_en_w : std_logic;
+    signal rvalid_en_w : std_logic;
 
 begin
 
     ---------------------------------------------------------------------------------------------
-    -- Injection (AXI -> backend send)
+    -- Injection path (AXI -> backend send)
 
-    u_injection_ctrl: entity work.frontend_manager_injection_ctrl
+    u_frontend_manager_injection_ctrl: entity work.frontend_manager_injection_ctrl
       port map(
         ACLK    => ACLK,
         ARESETn => ARESETn,
 
-        AWVALID => AWVALID,
-        ARVALID => ARVALID,
-        WVALID  => WVALID,
-        WLAST   => WLAST,
+        i_AWVALID => AWVALID,
+        i_ARVALID => ARVALID,
+        i_WVALID  => WVALID,
+        i_WLAST   => WLAST,
 
         i_READY_SEND_PACKET => i_READY_SEND_PACKET,
         i_READY_SEND_DATA   => i_READY_SEND_DATA,
 
-        i_OPC_SEND_R => w_opc_send,
+        o_CAP_AW => cap_aw_w,
+        o_CAP_AR => cap_ar_w,
 
-        o_CAP_AW => w_cap_aw,
-        o_CAP_AR => w_cap_ar,
+        o_OPC_SEND => opc_send_r,
 
         o_START_SEND_PACKET => o_START_SEND_PACKET,
         o_VALID_SEND_DATA   => o_VALID_SEND_DATA,
         o_LAST_SEND_DATA    => o_LAST_SEND_DATA,
 
-        AWREADY => AWREADY,
-        ARREADY => ARREADY,
-        WREADY  => WREADY
+        o_AWREADY => AWREADY,
+        o_ARREADY => ARREADY,
+        o_WREADY  => WREADY
       );
 
-    u_injection_dp: entity work.frontend_manager_injection_dp
+    u_frontend_manager_injection_dp: entity work.frontend_manager_injection_dp
       port map(
         ACLK    => ACLK,
         ARESETn => ARESETn,
 
-        i_CAP_AW => w_cap_aw,
-        i_CAP_AR => w_cap_ar,
+        i_CAP_AW   => cap_aw_w,
+        i_CAP_AR   => cap_ar_w,
+        i_OPC_SEND => opc_send_r,
 
-        AWID    => AWID,
-        AWADDR  => AWADDR,
-        AWLEN   => AWLEN,
-        AWBURST => AWBURST,
+        i_AWID    => AWID,
+        i_AWADDR  => AWADDR,
+        i_AWLEN   => AWLEN,
+        i_AWBURST => AWBURST,
 
-        ARID    => ARID,
-        ARADDR  => ARADDR,
-        ARLEN   => ARLEN,
-        ARBURST => ARBURST,
+        i_ARID    => ARID,
+        i_ARADDR  => ARADDR,
+        i_ARLEN   => ARLEN,
+        i_ARBURST => ARBURST,
 
-        WVALID => WVALID,
-        WDATA  => WDATA,
+        i_WVALID => WVALID,
+        i_WDATA  => WDATA,
 
         o_ADDR      => o_ADDR,
         o_ID        => o_ID,
         o_LENGTH    => o_LENGTH,
         o_BURST     => o_BURST,
-        o_OPC_SEND  => w_opc_send,
         o_DATA_SEND => o_DATA_SEND
       );
 
-    -- expose opcode to backend with the same name as before
-    o_OPC_SEND <= w_opc_send;
+    -- Expose opcode to backend with the original port name.
+    o_OPC_SEND <= opc_send_r;
 
     ---------------------------------------------------------------------------------------------
-    -- Ejection (backend receive -> AXI)
+    -- Ejection path (backend receive -> AXI)
 
-    u_ejection_ctrl: entity work.frontend_manager_ejection_ctrl
+    u_frontend_manager_ejection_ctrl: entity work.frontend_manager_ejection_ctrl
       port map(
         i_VALID_RECEIVE_DATA => i_VALID_RECEIVE_DATA,
         i_OPC_RECEIVE        => i_OPC_RECEIVE,
 
-        BREADY => BREADY,
-        RREADY => RREADY,
+        i_BREADY => BREADY,
+        i_RREADY => RREADY,
 
         o_READY_RECEIVE_PACKET => o_READY_RECEIVE_PACKET,
         o_READY_RECEIVE_DATA   => o_READY_RECEIVE_DATA,
 
-        o_BVALID_EN => w_bvalid_en,
-        o_RVALID_EN => w_rvalid_en
+        o_BVALID_EN => bvalid_en_w,
+        o_RVALID_EN => rvalid_en_w
       );
 
-    u_ejection_dp: entity work.frontend_manager_ejection_dp
+    u_frontend_manager_ejection_dp: entity work.frontend_manager_ejection_dp
       port map(
         i_LAST_RECEIVE_DATA => i_LAST_RECEIVE_DATA,
         i_ID_RECEIVE        => i_ID_RECEIVE,
@@ -183,20 +193,20 @@ begin
         i_DATA_RECEIVE      => i_DATA_RECEIVE,
         i_CORRUPT_RECEIVE   => i_CORRUPT_RECEIVE,
 
-        i_BVALID_EN => w_bvalid_en,
-        i_RVALID_EN => w_rvalid_en,
+        i_BVALID_EN => bvalid_en_w,
+        i_RVALID_EN => rvalid_en_w,
 
-        BVALID => BVALID,
-        BID    => BID,
-        BRESP  => BRESP,
+        o_BVALID => BVALID,
+        o_BID    => BID,
+        o_BRESP  => BRESP,
 
-        RVALID => RVALID,
-        RDATA  => RDATA,
-        RLAST  => RLAST,
-        RID    => RID,
-        RRESP  => RRESP,
+        o_RVALID => RVALID,
+        o_RDATA  => RDATA,
+        o_RLAST  => RLAST,
+        o_RID    => RID,
+        o_RRESP  => RRESP,
 
-        CORRUPT_PACKET => CORRUPT_PACKET
+        o_CORRUPT_PACKET => CORRUPT_PACKET
       );
 
 end rtl;
