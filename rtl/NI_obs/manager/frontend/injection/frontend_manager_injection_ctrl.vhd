@@ -9,6 +9,12 @@ use work.xina_ni_ft_pkg.all;
 --  * Generates backend injection control strobes.
 --  * Holds ONLY control/handshake logic (future TMR region).
 --  * Opcode is stored in the datapath with the other header fields (future ECC region).
+--
+-- Naming convention (aligned with backend style):
+--  * i_*  : inputs
+--  * o_*  : outputs
+--  * *_r  : registered elements
+--  * *_w  : combinational wires
 entity frontend_manager_injection_ctrl is
   port(
     -- AMBA AXI clock / reset.
@@ -26,7 +32,7 @@ entity frontend_manager_injection_ctrl is
     i_READY_SEND_DATA   : in std_logic;
 
     -- From datapath: registered opcode (0=write, 1=read).
-    i_OPC_SEND : in std_logic;
+    i_OPC_SEND_R : in std_logic;
 
     -- To datapath: capture strobes (AW has priority over AR).
     o_CAP_AW : out std_logic;
@@ -46,15 +52,13 @@ end entity;
 
 architecture rtl of frontend_manager_injection_ctrl is
 
-  -- Combinational capture wires.
   signal cap_aw_w : std_logic;
   signal cap_ar_w : std_logic;
 
 begin
 
   ---------------------------------------------------------------------------------------------
-  -- Combinational capture qualification (preserves original priority: AW over AR)
-  -- Capture only when backend can accept a packet header.
+  -- Capture qualification (preserves original priority: AW over AR)
 
   cap_aw_w <= '1' when (i_READY_SEND_PACKET = '1' and i_AWVALID = '1') else '0';
   cap_ar_w <= '1' when (i_READY_SEND_PACKET = '1' and i_AWVALID = '0' and i_ARVALID = '1') else '0';
@@ -71,10 +75,9 @@ begin
 
   ---------------------------------------------------------------------------------------------
   -- Backend injection control (preserve original combinational behaviour)
-  -- NOTE: opcode comes from datapath registered header bundle.
 
   o_START_SEND_PACKET <= '1' when (i_AWVALID = '1' or i_ARVALID = '1') else '0';
-  o_VALID_SEND_DATA   <= '1' when (i_OPC_SEND = '0' and i_WVALID = '1') else '0';
-  o_LAST_SEND_DATA    <= '1' when (i_OPC_SEND = '0' and i_WLAST  = '1') else '0';
+  o_VALID_SEND_DATA   <= '1' when (i_OPC_SEND_R = '0' and i_WVALID = '1') else '0';
+  o_LAST_SEND_DATA    <= '1' when (i_OPC_SEND_R = '0' and i_WLAST  = '1') else '0';
 
 end architecture;

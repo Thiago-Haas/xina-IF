@@ -65,6 +65,12 @@ entity top_manager is
             -- Extra signals.
             CORRUPT_PACKET: out std_logic;
 
+        -- Frontend injection Hamming detection flags
+        o_FE_INJ_META_HDR_SINGLE_ERR: out std_logic;
+        o_FE_INJ_META_HDR_DOUBLE_ERR: out std_logic;
+        o_FE_INJ_ADDR_SINGLE_ERR    : out std_logic;
+        o_FE_INJ_ADDR_DOUBLE_ERR    : out std_logic;
+
         -- XINA signals.
         l_in_data_i : out std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
         l_in_val_i  : out std_logic;
@@ -161,6 +167,12 @@ begin
 
                 -- Extra signals.
                 CORRUPT_PACKET => CORRUPT_PACKET,
+
+                -- Frontend injection Hamming detection flags
+                o_FE_INJ_META_HDR_SINGLE_ERR => o_FE_INJ_META_HDR_SINGLE_ERR,
+                o_FE_INJ_META_HDR_DOUBLE_ERR => o_FE_INJ_META_HDR_DOUBLE_ERR,
+                o_FE_INJ_ADDR_SINGLE_ERR     => o_FE_INJ_ADDR_SINGLE_ERR,
+                o_FE_INJ_ADDR_DOUBLE_ERR     => o_FE_INJ_ADDR_DOUBLE_ERR,
 
             -- Backend signals (injection).
             i_READY_SEND_PACKET => w_READY_SEND_PACKET,
