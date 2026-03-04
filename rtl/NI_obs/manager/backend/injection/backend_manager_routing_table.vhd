@@ -3,7 +3,6 @@ library work;
 
 use IEEE.std_logic_1164.all;
 use work.xina_ni_ft_pkg.all;
-use work.xina_ft_pkg.all;
 
 entity backend_manager_routing_table is
     port(
