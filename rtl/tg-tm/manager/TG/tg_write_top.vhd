@@ -6,9 +6,11 @@ use IEEE.numeric_std.all;
 use work.xina_ni_ft_pkg.all;
 
 -- Minimal top for the write phase (AW/W/B).
--- Aggressive LUT reduction: removed optional override + debug ports and
--- removed init-value generic (init is seed-only inside datapath).
 entity tg_write_top is
+  generic (
+
+    CTRL_TMR_ENABLE : boolean := True
+  );
   port(
     ACLK    : in std_logic;
     ARESETn : in std_logic;
@@ -49,26 +51,57 @@ architecture rtl of tg_write_top is
   signal w_seed_pulse      : std_logic;
   signal w_wbeat_pulse     : std_logic;
 begin
-  u_CTRL: entity work.tg_write_controller
-    port map(
-      ACLK    => ACLK,
-      ARESETn => ARESETn,
 
-      i_start => i_start,
-      o_done  => w_write_done,
+  gen_ctrl_plain : if (not CTRL_TMR_ENABLE) generate
+    u_CTRL: entity work.tg_write_controller
+      port map(
+        ACLK    => ACLK,
+        ARESETn => ARESETn,
 
-      AWREADY => AWREADY,
-      WREADY  => WREADY,
-      BVALID  => BVALID,
+        i_start => i_start,
+        o_done  => w_write_done,
 
-      AWVALID => AWVALID,
-      WVALID  => WVALID,
-      BREADY  => BREADY,
+        AWREADY => AWREADY,
+        WREADY  => WREADY,
+        BVALID  => BVALID,
 
-      o_txn_start_pulse => w_txn_start_pulse,
-      o_seed_pulse      => w_seed_pulse,
-      o_wbeat_pulse     => w_wbeat_pulse
-    );
+        AWVALID => AWVALID,
+        WVALID  => WVALID,
+        BREADY  => BREADY,
+
+        o_txn_start_pulse => w_txn_start_pulse,
+        o_seed_pulse      => w_seed_pulse,
+        o_wbeat_pulse     => w_wbeat_pulse
+      );
+  end generate;
+
+  gen_ctrl_tmr : if CTRL_TMR_ENABLE generate
+    signal w_ctrl_tmr_err : std_logic;
+  begin
+    u_CTRL_TMR: entity work.tg_write_controller_tmr
+      port map(
+        ACLK    => ACLK,
+        ARESETn => ARESETn,
+
+        i_start => i_start,
+        o_done  => w_write_done,
+
+        AWREADY => AWREADY,
+        WREADY  => WREADY,
+        BVALID  => BVALID,
+
+        AWVALID => AWVALID,
+        WVALID  => WVALID,
+        BREADY  => BREADY,
+
+        o_txn_start_pulse => w_txn_start_pulse,
+        o_seed_pulse      => w_seed_pulse,
+        o_wbeat_pulse     => w_wbeat_pulse,
+
+        correct_error_i => '1',
+        error_o         => w_ctrl_tmr_err
+      );
+  end generate;
 
   u_DP: entity work.tg_write_datapath
     port map(
