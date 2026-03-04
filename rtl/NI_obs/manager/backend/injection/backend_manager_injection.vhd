@@ -47,7 +47,12 @@ entity backend_manager_injection is
         -- Hamming (new buffer ports) - EXTERNAL
         i_CORRECT_ERROR : in  std_logic;
         o_SINGLE_ERR    : out std_logic;
-        o_DOUBLE_ERR    : out std_logic
+        o_DOUBLE_ERR    : out std_logic;
+
+        -- Injection flow control TMR (send_control_tmr)
+        -- Meaningful when p_USE_TMR_FLOW = TRUE.
+        i_INJ_FLOW_CTRL_CORRECT_ERROR : in  std_logic := '0';
+        o_INJ_FLOW_CTRL_TMR_ERR       : out std_logic := '0'
     );
 end backend_manager_injection;
 
@@ -239,7 +244,10 @@ begin
                 o_READ_BUFFER    => w_READ_BUFFER,
 
                 l_in_val_i => l_in_val_i,
-                l_in_ack_o => l_in_ack_o
+                l_in_ack_o => l_in_ack_o,
+
+                correct_error_i => i_INJ_FLOW_CTRL_CORRECT_ERROR,
+                error_o         => o_INJ_FLOW_CTRL_TMR_ERR
             );
     else generate
         u_SEND_CONTROL_NORMAL: entity work.send_control

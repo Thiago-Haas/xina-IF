@@ -87,7 +87,20 @@ entity top_manager is
         -- Reception side
         i_RX_CORRECT_ERROR  : in  std_logic;
         o_RX_SINGLE_ERR     : out std_logic;
-        o_RX_DOUBLE_ERR     : out std_logic
+        o_RX_DOUBLE_ERR     : out std_logic;
+
+        -- Reception-side integrity checker (from backend_manager_reception integrity_control_receive_tmr)
+        i_BE_RX_INTEGRITY_CORRECT_ERROR : in  std_logic := '0';
+        o_BE_RX_INTEGRITY_CORRUPT       : out std_logic;
+        o_BE_RX_INTEGRITY_TMR_ERR       : out std_logic;
+
+        -- Receive flow control TMR detection (from backend_manager_reception / receive_control_tmr)
+        i_BE_RX_FLOW_CTRL_CORRECT_ERROR : in  std_logic := '0';
+        o_BE_RX_FLOW_CTRL_TMR_ERR       : out std_logic;
+
+        -- Injection flow control TMR detection (from backend_manager_injection / send_control_tmr)
+        i_BE_INJ_FLOW_CTRL_CORRECT_ERROR : in  std_logic := '0';
+        o_BE_INJ_FLOW_CTRL_TMR_ERR       : out std_logic
     );
 end top_manager;
 
@@ -120,6 +133,14 @@ architecture rtl of top_manager is
     signal w_DATA_RECEIVE  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
     signal w_CORRUPT_RECEIVE: std_logic;
+
+    -- Exported integrity RX signals from backend
+    signal w_RX_INTEGRITY_CORRUPT : std_logic;
+    signal w_RX_INTEGRITY_TMR_ERR : std_logic;
+
+    -- Exported receive flow-control TMR detection
+    signal w_RX_FLOW_CTRL_TMR_ERR  : std_logic;
+    signal w_INJ_FLOW_CTRL_TMR_ERR : std_logic;
 
 begin
     u_FRONTEND: entity work.frontend_manager
@@ -265,7 +286,24 @@ begin
 
             i_RX_CORRECT_ERROR  => i_RX_CORRECT_ERROR,
             o_RX_SINGLE_ERR     => o_RX_SINGLE_ERR,
-            o_RX_DOUBLE_ERR     => o_RX_DOUBLE_ERR
+            o_RX_DOUBLE_ERR     => o_RX_DOUBLE_ERR,
+
+            -- Integrity checker (EXTERNAL WIRES)
+            o_RX_INTEGRITY_CORRUPT       => w_RX_INTEGRITY_CORRUPT,
+            i_RX_INTEGRITY_CORRECT_ERROR => i_BE_RX_INTEGRITY_CORRECT_ERROR,
+            o_RX_INTEGRITY_TMR_ERR       => w_RX_INTEGRITY_TMR_ERR,
+
+            i_RX_FLOW_CTRL_CORRECT_ERROR => i_BE_RX_FLOW_CTRL_CORRECT_ERROR,
+            o_RX_FLOW_CTRL_TMR_ERR       => w_RX_FLOW_CTRL_TMR_ERR,
+
+            i_INJ_FLOW_CTRL_CORRECT_ERROR => i_BE_INJ_FLOW_CTRL_CORRECT_ERROR,
+            o_INJ_FLOW_CTRL_TMR_ERR       => w_INJ_FLOW_CTRL_TMR_ERR
         );
 
+    -- Top-level exports (descriptive)
+    o_BE_RX_INTEGRITY_CORRUPT <= w_RX_INTEGRITY_CORRUPT;
+    o_BE_RX_INTEGRITY_TMR_ERR <= w_RX_INTEGRITY_TMR_ERR;
+
+    o_BE_RX_FLOW_CTRL_TMR_ERR  <= w_RX_FLOW_CTRL_TMR_ERR;
+    o_BE_INJ_FLOW_CTRL_TMR_ERR <= w_INJ_FLOW_CTRL_TMR_ERR;
 end rtl;

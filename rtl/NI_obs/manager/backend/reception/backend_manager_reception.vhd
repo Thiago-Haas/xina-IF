@@ -40,10 +40,22 @@ entity backend_manager_reception is
         l_out_val_o : in  std_logic;
         l_out_ack_i : out std_logic;
 
-        -- Hamming (new buffer ports) - EXTERNAL
+        -- Hamming (buffer) - EXTERNAL
         i_CORRECT_ERROR : in  std_logic;
         o_SINGLE_ERR    : out std_logic;
-        o_DOUBLE_ERR    : out std_logic
+        o_DOUBLE_ERR    : out std_logic;
+
+        -- Integrity receive checker (integrity_control_receive[_tmr]) - EXTERNAL
+        -- Meaningful when p_USE_INTEGRITY = TRUE.
+        o_INTEGRITY_CORRUPT        : out std_logic := '0';
+        -- Meaningful when (p_USE_INTEGRITY and p_USE_TMR_INTEGRITY) = TRUE.
+        i_INTEGRITY_CORRECT_ERROR  : in  std_logic := '0';
+        o_INTEGRITY_TMR_ERR        : out std_logic := '0';
+
+        -- Receive flow control TMR (receive_control_tmr) - EXTERNAL
+        -- Meaningful when p_USE_TMR_FLOW = TRUE.
+        i_RX_FLOW_CTRL_CORRECT_ERROR : in  std_logic := '0';
+        o_RX_FLOW_CTRL_TMR_ERR       : out std_logic := '0'
     );
 end backend_manager_reception;
 
@@ -56,6 +68,9 @@ architecture rtl of backend_manager_reception is
     -- Registers.
     signal w_WRITE_H_INTERFACE_REG: std_logic;
     signal w_H_INTERFACE: std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+
+    -- Integrity (receive) outputs.
+    signal w_INTEGRITY_CORRUPT : std_logic;
 
     -- Checksum.
     signal w_ADD: std_logic;
@@ -137,10 +152,14 @@ begin
 
                 i_ADD           => w_ADD,
                 i_VALUE_ADD     => w_FLIT(c_AXI_DATA_WIDTH - 1 downto 0),
+
                 i_COMPARE       => w_COMPARE,
                 i_VALUE_COMPARE => w_FLIT(c_AXI_DATA_WIDTH - 1 downto 0),
 
-                o_CORRUPT => o_CORRUPT_RECEIVE
+                o_CORRUPT       => w_INTEGRITY_CORRUPT,
+
+                correct_error_i => i_INTEGRITY_CORRECT_ERROR,
+                error_o         => o_INTEGRITY_TMR_ERR
             );
     elsif (p_USE_INTEGRITY) generate
         u_INTEGRITY_CONTROL_RECEIVE_NORMAL: entity work.integrity_control_receive
@@ -153,9 +172,19 @@ begin
                 i_COMPARE       => w_COMPARE,
                 i_VALUE_COMPARE => w_FLIT(c_AXI_DATA_WIDTH - 1 downto 0),
 
-                o_CORRUPT => o_CORRUPT_RECEIVE
+                o_CORRUPT       => w_INTEGRITY_CORRUPT
             );
+
+        o_INTEGRITY_TMR_ERR <= '0';
+    else generate
+        -- Integrity disabled.
+        w_INTEGRITY_CORRUPT  <= '0';
+        o_INTEGRITY_TMR_ERR  <= '0';
     end generate;
+
+    -- Export integrity checker outputs with descriptive names.
+    o_CORRUPT_RECEIVE   <= w_INTEGRITY_CORRUPT;
+    o_INTEGRITY_CORRUPT <= w_INTEGRITY_CORRUPT;
 
     u_BUFFER_FIFO:
     if (p_USE_HAMMING) generate
@@ -215,7 +244,10 @@ begin
                 o_WRITE_BUFFER    => w_WRITE_BUFFER,
 
                 l_out_val_o => l_out_val_o,
-                l_out_ack_i => l_out_ack_i
+                l_out_ack_i => l_out_ack_i,
+
+                correct_error_i => i_RX_FLOW_CTRL_CORRECT_ERROR,
+                error_o         => o_RX_FLOW_CTRL_TMR_ERR
             );
     else generate
         u_RECEIVE_CONTROL_NORMAL: entity work.receive_control
@@ -229,6 +261,8 @@ begin
                 l_out_val_o => l_out_val_o,
                 l_out_ack_i => l_out_ack_i
             );
+
+        o_RX_FLOW_CTRL_TMR_ERR <= '0';
     end generate;
 
     w_ARESET <= not ARESETn;
