@@ -9,7 +9,11 @@ use work.xina_ni_ft_pkg.all;
 entity tg_write_top is
   generic (
 
-    CTRL_TMR_ENABLE : boolean := True
+    CTRL_TMR_ENABLE        : boolean := True;
+    HAMMING_ENABLE         : boolean := True;
+    HAMMING_DETECT_DOUBLE  : boolean := True;
+    
+    HAMMING_INJECT_ERROR   : boolean := false
   );
   port(
     ACLK    : in std_logic;
@@ -41,7 +45,12 @@ entity tg_write_top is
     BID    : in  std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0) := (others => '0');
     BRESP  : out std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0) := (others => '0');
     BVALID : in  std_logic;
-    BREADY : out std_logic
+    BREADY : out std_logic;
+
+    -- observation (routed to top)
+    o_ctrl_tmr_err   : out std_logic;
+    o_ham_single_err : out std_logic;
+    o_ham_double_err : out std_logic
   );
 end tg_write_top;
 
@@ -50,33 +59,17 @@ architecture rtl of tg_write_top is
   signal w_txn_start_pulse : std_logic;
   signal w_seed_pulse      : std_logic;
   signal w_wbeat_pulse     : std_logic;
+  signal w_ctrl_tmr_err   : std_logic;
+  signal w_ham_single_err : std_logic;
+  signal w_ham_double_err : std_logic;
 begin
 
   gen_ctrl_plain : if (not CTRL_TMR_ENABLE) generate
-    u_CTRL: entity work.tg_write_controller
-      port map(
-        ACLK    => ACLK,
-        ARESETn => ARESETn,
-
-        i_start => i_start,
-        o_done  => w_write_done,
-
-        AWREADY => AWREADY,
-        WREADY  => WREADY,
-        BVALID  => BVALID,
-
-        AWVALID => AWVALID,
-        WVALID  => WVALID,
-        BREADY  => BREADY,
-
-        o_txn_start_pulse => w_txn_start_pulse,
-        o_seed_pulse      => w_seed_pulse,
-        o_wbeat_pulse     => w_wbeat_pulse
-      );
+    
+    w_ctrl_tmr_err <= '0';
   end generate;
 
   gen_ctrl_tmr : if CTRL_TMR_ENABLE generate
-    signal w_ctrl_tmr_err : std_logic;
   begin
     u_CTRL_TMR: entity work.tg_write_controller_tmr
       port map(
@@ -104,6 +97,11 @@ begin
   end generate;
 
   u_DP: entity work.tg_write_datapath
+    generic map(
+      HAMMING_ENABLE        => HAMMING_ENABLE,
+      HAMMING_DETECT_DOUBLE => HAMMING_DETECT_DOUBLE,
+      HAMMING_INJECT_ERROR  => HAMMING_INJECT_ERROR
+    )
     port map(
       ACLK    => ACLK,
       ARESETn => ARESETn,
@@ -120,8 +118,17 @@ begin
       AWBURST => AWBURST,
 
       WDATA   => WDATA,
-      WLAST   => WLAST
+
+      WLAST   => WLAST,
+
+      o_single_err => w_ham_single_err,
+      o_double_err => w_ham_double_err
     );
 
   o_done <= w_write_done;
+
+  -- observation outputs
+  o_ctrl_tmr_err   <= w_ctrl_tmr_err;
+  o_ham_single_err <= w_ham_single_err;
+  o_ham_double_err <= w_ham_double_err;
 end rtl;

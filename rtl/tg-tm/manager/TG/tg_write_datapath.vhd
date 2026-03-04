@@ -12,6 +12,11 @@ use work.xina_ni_ft_pkg.all;
 --  * ONE data register (r_wdata) acts as both WDATA output and LFSR state
 --  * Seed is inserted into LSBs of an all-zero init word
 entity tg_write_datapath is
+  generic (
+    HAMMING_ENABLE        : boolean := false;
+    HAMMING_DETECT_DOUBLE : boolean := true;
+    HAMMING_INJECT_ERROR  : boolean := false
+  );
   port(
     ACLK    : in  std_logic;
     ARESETn : in  std_logic;
@@ -31,12 +36,21 @@ entity tg_write_datapath is
 
     -- write data
     WDATA   : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
-    WLAST   : out std_logic
+    WLAST   : out std_logic;
+
+    -- observation
+    o_single_err : out std_logic;
+    o_double_err : out std_logic
   );
 end tg_write_datapath;
 
 architecture rtl of tg_write_datapath is
+  -- Stored payload/LFSR state (optionally protected by Hamming register)
   signal r_wdata  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
+  signal w_single_err : std_logic;
+  signal w_double_err : std_logic;
+  -- Not used externally; handy for debug visibility if you ever need it.
+  signal w_enc_state  : std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, HAMMING_DETECT_DOUBLE) - 1 downto 0);
 
   signal w_init_value : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
   signal w_lfsr_input : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
@@ -72,7 +86,7 @@ begin
     w_init_value <= v;
   end process;
 
-  -- Feed init value only when seeding; otherwise feed the current state.
+  -- Feed init value only when seeding; otherwise feed the current (decoded) state.
   w_lfsr_input <= w_init_value when (i_seed_pulse = '1') else r_wdata;
 
   u_LFSR: entity work.tg_write_lfsr
@@ -84,19 +98,30 @@ begin
       o_next => w_lfsr_next
     );
 
-  process(ACLK)
-  begin
-    if rising_edge(ACLK) then
-      if ARESETn = '0' then
-        r_wdata  <= (others => '0');
-      else
-        if i_seed_pulse = '1' then
-          r_wdata  <= w_lfsr_next;  -- first WDATA = next(init)
-        elsif w_do_step = '1' then
-          r_wdata  <= w_lfsr_next;  -- advance once per accepted beat
-        end if;
-      end if;
-    end if;
-  end process;
+  -- Optional Hamming-protected state register.
+  -- The decoded output is used as both WDATA and feedback into the LFSR.
+  u_STATE_REG : entity work.hamming_register
+    generic map(
+      DATA_WIDTH     => c_AXI_DATA_WIDTH,
+      HAMMING_ENABLE => HAMMING_ENABLE,
+      DETECT_DOUBLE  => HAMMING_DETECT_DOUBLE,
+      RESET_VALUE    => (c_AXI_DATA_WIDTH-1 downto 0 => '0'),
+      INJECT_ERROR   => HAMMING_INJECT_ERROR
+    )
+    port map(
+      correct_en_i => '1',
+      write_en_i   => (i_seed_pulse or w_do_step),
+      data_i       => w_lfsr_next,
+      rstn_i       => ARESETn,
+      clk_i        => ACLK,
+      single_err_o => w_single_err,
+      double_err_o => w_double_err,
+      enc_data_o   => w_enc_state,
+      data_o       => r_wdata
+    );
+
+  -- observation outputs
+  o_single_err <= w_single_err;
+  o_double_err <= w_double_err;
 
 end rtl;
