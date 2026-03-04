@@ -39,8 +39,9 @@ entity tg_write_datapath is
     WLAST   : out std_logic;
 
     -- observation
-    o_single_err : out std_logic;
-    o_double_err : out std_logic
+    i_correct_enable : in  std_logic;
+    o_single_err     : out std_logic;
+    o_double_err     : out std_logic
   );
 end tg_write_datapath;
 
@@ -109,7 +110,7 @@ begin
       INJECT_ERROR   => HAMMING_INJECT_ERROR
     )
     port map(
-      correct_en_i => '1',
+      correct_en_i => i_correct_enable,
       write_en_i   => (i_seed_pulse or w_do_step),
       data_i       => w_lfsr_next,
       rstn_i       => ARESETn,

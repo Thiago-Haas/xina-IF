@@ -34,7 +34,7 @@ entity tg_write_controller_tmr is
     o_wbeat_pulse     : out std_logic;
 
     -- hardening
-    correct_error_i : in  std_logic;
+    i_correct_enable: in  std_logic;
     error_o         : out std_logic
   );
 end entity;
@@ -127,12 +127,12 @@ begin
              err_txn_start_pulse_w or err_seed_pulse_w or err_wbeat_pulse_w;
 
   -- output selection (same style as control_tmr.vhd)
-  o_done            <= corr_done_w            when correct_error_i = '1' else done_w(0);
-  AWVALID           <= corr_awvalid_w         when correct_error_i = '1' else awvalid_w(0);
-  WVALID            <= corr_wvalid_w          when correct_error_i = '1' else wvalid_w(0);
-  BREADY            <= corr_bready_w          when correct_error_i = '1' else bready_w(0);
-  o_txn_start_pulse <= corr_txn_start_pulse_w when correct_error_i = '1' else txn_start_pulse_w(0);
-  o_seed_pulse      <= corr_seed_pulse_w      when correct_error_i = '1' else seed_pulse_w(0);
-  o_wbeat_pulse     <= corr_wbeat_pulse_w     when correct_error_i = '1' else wbeat_pulse_w(0);
+  o_done            <= corr_done_w            when i_correct_enable = '1' else done_w(0);
+  AWVALID           <= corr_awvalid_w         when i_correct_enable = '1' else awvalid_w(0);
+  WVALID            <= corr_wvalid_w          when i_correct_enable = '1' else wvalid_w(0);
+  BREADY            <= corr_bready_w          when i_correct_enable = '1' else bready_w(0);
+  o_txn_start_pulse <= corr_txn_start_pulse_w when i_correct_enable = '1' else txn_start_pulse_w(0);
+  o_seed_pulse      <= corr_seed_pulse_w      when i_correct_enable = '1' else seed_pulse_w(0);
+  o_wbeat_pulse     <= corr_wbeat_pulse_w     when i_correct_enable = '1' else wbeat_pulse_w(0);
 
 end architecture;

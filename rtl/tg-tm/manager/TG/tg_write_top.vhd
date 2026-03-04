@@ -48,6 +48,9 @@ entity tg_write_top is
     BREADY : out std_logic;
 
     -- observation (routed to top)
+    i_ham_correct_enb: in std_logic;
+    i_tmr_correct_enb: in std_logic;
+    
     o_ctrl_tmr_err   : out std_logic;
     o_ham_single_err : out std_logic;
     o_ham_double_err : out std_logic
@@ -91,7 +94,7 @@ begin
         o_seed_pulse      => w_seed_pulse,
         o_wbeat_pulse     => w_wbeat_pulse,
 
-        correct_error_i => '1',
+        i_correct_enable=> i_tmr_correct_enb,
         error_o         => w_ctrl_tmr_err
       );
   end generate;
@@ -120,7 +123,8 @@ begin
       WDATA   => WDATA,
 
       WLAST   => WLAST,
-
+      
+      i_correct_enable => i_ham_correct_enb,
       o_single_err => w_ham_single_err,
       o_double_err => w_ham_double_err
     );
