@@ -2,7 +2,6 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-use work.xina_ft_pkg.all;
 use work.xina_ni_ft_pkg.all;
 
 -- Ultra-minimal loopback controller (NON-DBG)

@@ -2,7 +2,6 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-use work.xina_ft_pkg.all;
 use work.xina_ni_ft_pkg.all;
 
 -- Synthesizable NoC-side loopback (subordinate emulator) for the combined TG/TM+NI top.

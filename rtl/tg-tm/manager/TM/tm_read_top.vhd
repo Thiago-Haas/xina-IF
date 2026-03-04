@@ -4,7 +4,6 @@ library work;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 use work.xina_ni_ft_pkg.all;
-use work.xina_ft_pkg.all;
 
 -- Top for the read phase (AR/R) with minimal comparator output.
 entity tm_read_top is
