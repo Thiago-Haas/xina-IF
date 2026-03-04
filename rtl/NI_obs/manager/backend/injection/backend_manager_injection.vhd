@@ -57,7 +57,12 @@ entity backend_manager_injection is
         -- Injection flow control TMR (send_control_tmr)
         -- Meaningful when p_USE_TMR_FLOW = TRUE.
         i_INJ_FLOW_CTRL_CORRECT_ERROR : in  std_logic := '0';
-        o_INJ_FLOW_CTRL_TMR_ERR       : out std_logic := '0'
+        o_INJ_FLOW_CTRL_TMR_ERR       : out std_logic := '0';
+
+        -- Injection packetizer control TMR (backend_manager_packetizer_control_tmr)
+        -- Meaningful when p_USE_TMR_PACKETIZER = TRUE.
+        i_INJ_PKTZ_CTRL_CORRECT_ERROR : in  std_logic := '0';
+        o_INJ_PKTZ_CTRL_TMR_ERR       : out std_logic := '0'
     );
 end backend_manager_injection;
 
@@ -78,6 +83,7 @@ architecture rtl of backend_manager_injection is
     signal w_CHECKSUM: std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
     signal w_INTEGRITY_RESETn: std_logic;
     signal w_INJ_INTEGRITY_TMR_ERR: std_logic;
+    signal w_INJ_PKTZ_CTRL_TMR_ERR: std_logic;
 
     -- FIFO.
     signal w_WRITE_BUFFER   : std_logic;
@@ -118,7 +124,10 @@ begin
                 o_WRITE_BUFFER    => w_WRITE_BUFFER,
 
                 o_ADD              => w_ADD,
-                o_INTEGRITY_RESETn => w_INTEGRITY_RESETn
+                o_INTEGRITY_RESETn => w_INTEGRITY_RESETn,
+
+                correct_error_i => i_INJ_PKTZ_CTRL_CORRECT_ERROR,
+                error_o         => w_INJ_PKTZ_CTRL_TMR_ERR
             );
     else generate
         u_PACKETIZER_CONTROL_NORMAL: entity work.backend_manager_packetizer_control
@@ -143,6 +152,7 @@ begin
             );
 
         w_INJ_INTEGRITY_TMR_ERR <= '0';
+        w_INJ_PKTZ_CTRL_TMR_ERR   <= '0';
     end generate;
 
     u_PACKETIZER_DATAPATH: entity work.backend_manager_packetizer_datapath
@@ -200,6 +210,7 @@ begin
     u_INTEGRITY_CONTROL_SEND_DISABLE:
     if (not p_USE_INTEGRITY) generate
         w_INJ_INTEGRITY_TMR_ERR <= '0';
+        w_INJ_PKTZ_CTRL_TMR_ERR   <= '0';
     end generate;
 
     u_BUFFER_FIFO:
@@ -284,5 +295,6 @@ begin
     w_ARESET <= not ARESETn;
 
     o_INJ_INTEGRITY_TMR_ERR <= w_INJ_INTEGRITY_TMR_ERR;
+    o_INJ_PKTZ_CTRL_TMR_ERR   <= w_INJ_PKTZ_CTRL_TMR_ERR;
 
 end rtl;

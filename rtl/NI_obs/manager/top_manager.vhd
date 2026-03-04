@@ -92,6 +92,11 @@ entity top_manager is
         i_BE_INJ_FLOW_CTRL_CORRECT_ERROR : in  std_logic := '0';
         o_BE_INJ_FLOW_CTRL_TMR_ERR       : out std_logic;
 
+
+        -- Injection packetizer control TMR detection (backend_manager_packetizer_control_tmr)
+        i_BE_INJ_PKTZ_CTRL_CORRECT_ERROR : in  std_logic := '0';
+        o_BE_INJ_PKTZ_CTRL_TMR_ERR       : out std_logic;
+
         -- Reception side
         i_RX_CORRECT_ERROR  : in  std_logic;
         o_RX_SINGLE_ERR     : out std_logic;
@@ -131,6 +136,7 @@ architecture rtl of top_manager is
 
     signal w_INJ_INTEGRITY_TMR_ERR : std_logic;
     signal w_INJ_FLOW_CTRL_TMR_ERR : std_logic;
+    signal w_INJ_PKTZ_CTRL_TMR_ERR : std_logic;
 
 begin
     u_FRONTEND: entity work.frontend_manager
@@ -280,6 +286,9 @@ begin
             i_INJ_FLOW_CTRL_CORRECT_ERROR => i_BE_INJ_FLOW_CTRL_CORRECT_ERROR,
             o_INJ_FLOW_CTRL_TMR_ERR       => w_INJ_FLOW_CTRL_TMR_ERR,
 
+            i_INJ_PKTZ_CTRL_CORRECT_ERROR => i_BE_INJ_PKTZ_CTRL_CORRECT_ERROR,
+            o_INJ_PKTZ_CTRL_TMR_ERR       => w_INJ_PKTZ_CTRL_TMR_ERR,
+
             i_RX_CORRECT_ERROR  => i_RX_CORRECT_ERROR,
             o_RX_SINGLE_ERR     => o_RX_SINGLE_ERR,
             o_RX_DOUBLE_ERR     => o_RX_DOUBLE_ERR
@@ -287,5 +296,6 @@ begin
 
     o_BE_INJ_INTEGRITY_TMR_ERR <= w_INJ_INTEGRITY_TMR_ERR;
     o_BE_INJ_FLOW_CTRL_TMR_ERR <= w_INJ_FLOW_CTRL_TMR_ERR;
+    o_BE_INJ_PKTZ_CTRL_TMR_ERR <= w_INJ_PKTZ_CTRL_TMR_ERR;
 
 end rtl;

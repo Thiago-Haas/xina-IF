@@ -74,6 +74,11 @@ entity backend_manager is
         i_INJ_FLOW_CTRL_CORRECT_ERROR : in  std_logic := '0';
         o_INJ_FLOW_CTRL_TMR_ERR       : out std_logic;
 
+
+        -- Injection packetizer control TMR (backend_manager_packetizer_control_tmr)
+        i_INJ_PKTZ_CTRL_CORRECT_ERROR : in  std_logic := '0';
+        o_INJ_PKTZ_CTRL_TMR_ERR       : out std_logic;
+
         -- Reception side
         i_RX_CORRECT_ERROR  : in  std_logic;
         o_RX_SINGLE_ERR     : out std_logic;
