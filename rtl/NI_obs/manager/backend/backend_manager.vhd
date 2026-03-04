@@ -66,23 +66,18 @@ entity backend_manager is
         o_INJ_SINGLE_ERR    : out std_logic;
         o_INJ_DOUBLE_ERR    : out std_logic;
 
+        -- Injection integrity checker (integrity_control_send_tmr)
+        i_INJ_INTEGRITY_CORRECT_ERROR : in  std_logic := '0';
+        o_INJ_INTEGRITY_TMR_ERR       : out std_logic;
+
+        -- Injection flow control TMR (send_control_tmr)
+        i_INJ_FLOW_CTRL_CORRECT_ERROR : in  std_logic := '0';
+        o_INJ_FLOW_CTRL_TMR_ERR       : out std_logic;
+
         -- Reception side
         i_RX_CORRECT_ERROR  : in  std_logic;
         o_RX_SINGLE_ERR     : out std_logic;
-        o_RX_DOUBLE_ERR     : out std_logic;
-
-        -- Reception-side integrity checker (integrity_control_receive[_tmr])
-        o_RX_INTEGRITY_CORRUPT        : out std_logic;
-        i_RX_INTEGRITY_CORRECT_ERROR  : in  std_logic := '0';
-        o_RX_INTEGRITY_TMR_ERR        : out std_logic;
-
-        -- Reception flow control TMR (receive_control_tmr) - detection + optional correction
-        i_RX_FLOW_CTRL_CORRECT_ERROR : in  std_logic := '0';
-        o_RX_FLOW_CTRL_TMR_ERR       : out std_logic;
-
-        -- Injection flow control TMR (send_control_tmr) - detection + optional correction
-        i_INJ_FLOW_CTRL_CORRECT_ERROR : in  std_logic := '0';
-        o_INJ_FLOW_CTRL_TMR_ERR       : out std_logic
+        o_RX_DOUBLE_ERR     : out std_logic
     );
 end backend_manager;
 
@@ -128,6 +123,9 @@ begin
             o_SINGLE_ERR    => o_INJ_SINGLE_ERR,
             o_DOUBLE_ERR    => o_INJ_DOUBLE_ERR,
 
+            i_INJ_INTEGRITY_CORRECT_ERROR => i_INJ_INTEGRITY_CORRECT_ERROR,
+            o_INJ_INTEGRITY_TMR_ERR       => o_INJ_INTEGRITY_TMR_ERR,
+
             i_INJ_FLOW_CTRL_CORRECT_ERROR => i_INJ_FLOW_CTRL_CORRECT_ERROR,
             o_INJ_FLOW_CTRL_TMR_ERR       => o_INJ_FLOW_CTRL_TMR_ERR
         );
@@ -167,15 +165,7 @@ begin
             -- Hamming/ECC ports (EXTERNAL WIRES)
             i_CORRECT_ERROR => i_RX_CORRECT_ERROR,
             o_SINGLE_ERR    => o_RX_SINGLE_ERR,
-            o_DOUBLE_ERR    => o_RX_DOUBLE_ERR,
-
-            -- Integrity checker (EXTERNAL WIRES)
-            o_INTEGRITY_CORRUPT       => o_RX_INTEGRITY_CORRUPT,
-            i_INTEGRITY_CORRECT_ERROR => i_RX_INTEGRITY_CORRECT_ERROR,
-            o_INTEGRITY_TMR_ERR       => o_RX_INTEGRITY_TMR_ERR,
-
-            i_RX_FLOW_CTRL_CORRECT_ERROR => i_RX_FLOW_CTRL_CORRECT_ERROR,
-            o_RX_FLOW_CTRL_TMR_ERR       => o_RX_FLOW_CTRL_TMR_ERR
+            o_DOUBLE_ERR    => o_RX_DOUBLE_ERR
         );
 
 end rtl;

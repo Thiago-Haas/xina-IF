@@ -49,6 +49,11 @@ entity backend_manager_injection is
         o_SINGLE_ERR    : out std_logic;
         o_DOUBLE_ERR    : out std_logic;
 
+        -- Injection integrity (checksum) TMR (integrity_control_send_tmr)
+        -- Meaningful when (p_USE_INTEGRITY and p_USE_TMR_INTEGRITY) = TRUE.
+        i_INJ_INTEGRITY_CORRECT_ERROR : in  std_logic := '0';
+        o_INJ_INTEGRITY_TMR_ERR       : out std_logic := '0';
+
         -- Injection flow control TMR (send_control_tmr)
         -- Meaningful when p_USE_TMR_FLOW = TRUE.
         i_INJ_FLOW_CTRL_CORRECT_ERROR : in  std_logic := '0';
@@ -72,6 +77,7 @@ architecture rtl of backend_manager_injection is
     signal w_ADD: std_logic;
     signal w_CHECKSUM: std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
     signal w_INTEGRITY_RESETn: std_logic;
+    signal w_INJ_INTEGRITY_TMR_ERR: std_logic;
 
     -- FIFO.
     signal w_WRITE_BUFFER   : std_logic;
@@ -135,6 +141,8 @@ begin
                 o_ADD              => w_ADD,
                 o_INTEGRITY_RESETn => w_INTEGRITY_RESETn
             );
+
+        w_INJ_INTEGRITY_TMR_ERR <= '0';
     end generate;
 
     u_PACKETIZER_DATAPATH: entity work.backend_manager_packetizer_datapath
@@ -171,7 +179,10 @@ begin
                 i_ADD       => w_ADD,
                 i_VALUE_ADD => w_FLIT(c_AXI_DATA_WIDTH - 1 downto 0),
 
-                o_CHECKSUM => w_CHECKSUM
+                o_CHECKSUM      => w_CHECKSUM,
+
+                correct_error_i => i_INJ_INTEGRITY_CORRECT_ERROR,
+                error_o         => w_INJ_INTEGRITY_TMR_ERR
             );
     elsif (p_USE_INTEGRITY) generate
         u_INTEGRITY_CONTROL_SEND_NORMAL: entity work.integrity_control_send
@@ -182,8 +193,13 @@ begin
                 i_ADD       => w_ADD,
                 i_VALUE_ADD => w_FLIT(c_AXI_DATA_WIDTH - 1 downto 0),
 
-                o_CHECKSUM => w_CHECKSUM
+                o_CHECKSUM      => w_CHECKSUM
             );
+    end generate;
+
+    u_INTEGRITY_CONTROL_SEND_DISABLE:
+    if (not p_USE_INTEGRITY) generate
+        w_INJ_INTEGRITY_TMR_ERR <= '0';
     end generate;
 
     u_BUFFER_FIFO:
@@ -261,8 +277,12 @@ begin
                 l_in_val_i => l_in_val_i,
                 l_in_ack_o => l_in_ack_o
             );
+
+        o_INJ_FLOW_CTRL_TMR_ERR <= '0';
     end generate;
 
     w_ARESET <= not ARESETn;
+
+    o_INJ_INTEGRITY_TMR_ERR <= w_INJ_INTEGRITY_TMR_ERR;
 
 end rtl;
