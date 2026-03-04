@@ -13,12 +13,14 @@ package xina_ni_ft_pkg is
     -- Interface attributes.
     constant c_FLIT_WIDTH        : natural  := c_AXI_DATA_WIDTH + 1;
     constant c_BUFFER_DEPTH      : positive := 8;
-    constant c_USE_HAMMING       : boolean  := true;
-    constant c_USE_INTEGRITY     : boolean  := true;
+    
     constant c_USE_TMR_PACKETIZER: boolean  := true;
     constant c_USE_TMR_FLOW      : boolean  := true;
+    
+    constant c_USE_INTEGRITY     : boolean  := true;
     constant c_USE_TMR_INTEGRITY : boolean  := true;
-
+    
+    constant c_USE_HAMMING : boolean  := true;
     constant DETECT_DOUBLE : boolean  := true;
     
     -- XINA SETTINGS
