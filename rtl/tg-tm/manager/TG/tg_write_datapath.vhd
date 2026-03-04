@@ -20,7 +20,7 @@ entity tg_write_datapath is
     STARTING_SEED : in  std_logic_vector(31 downto 0);
 
     -- from controller
-    i_txn_start_pulse : in std_logic;
+    i_seed_pulse      : in std_logic;
     i_wbeat_pulse     : in std_logic;
 
     -- AXI constant fields (write address)
@@ -37,13 +37,11 @@ end tg_write_datapath;
 
 architecture rtl of tg_write_datapath is
   signal r_wdata  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
-  signal r_seeded : std_logic := '0';
 
   signal w_init_value : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
   signal w_lfsr_input : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
   signal w_lfsr_next  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
-  signal w_do_init : std_logic;
   signal w_do_step : std_logic;
 begin
   -- Constant fields
@@ -58,8 +56,7 @@ begin
   -- Payload comes from the state register
   WDATA <= r_wdata;
 
-  -- Seed only once after reset, on first transaction start
-  w_do_init <= i_txn_start_pulse and (not r_seeded);
+  -- Controller provides a single-cycle seed pulse (only once after reset)
   w_do_step <= i_wbeat_pulse;
 
   -- Init value = all zeros, with seed in low bits
@@ -75,8 +72,8 @@ begin
     w_init_value <= v;
   end process;
 
-  -- Feed init value only when initializing; otherwise feed the current state.
-  w_lfsr_input <= w_init_value when (w_do_init = '1') else r_wdata;
+  -- Feed init value only when seeding; otherwise feed the current state.
+  w_lfsr_input <= w_init_value when (i_seed_pulse = '1') else r_wdata;
 
   u_LFSR: entity work.tg_write_lfsr
     generic map(
@@ -91,11 +88,9 @@ begin
   begin
     if rising_edge(ACLK) then
       if ARESETn = '0' then
-        r_seeded <= '0';
         r_wdata  <= (others => '0');
       else
-        if w_do_init = '1' then
-          r_seeded <= '1';
+        if i_seed_pulse = '1' then
           r_wdata  <= w_lfsr_next;  -- first WDATA = next(init)
         elsif w_do_step = '1' then
           r_wdata  <= w_lfsr_next;  -- advance once per accepted beat

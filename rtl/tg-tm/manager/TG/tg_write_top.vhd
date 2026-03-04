@@ -46,6 +46,7 @@ end tg_write_top;
 architecture rtl of tg_write_top is
   signal w_write_done      : std_logic;
   signal w_txn_start_pulse : std_logic;
+  signal w_seed_pulse      : std_logic;
   signal w_wbeat_pulse     : std_logic;
 begin
   u_CTRL: entity work.tg_write_controller
@@ -65,6 +66,7 @@ begin
       BREADY  => BREADY,
 
       o_txn_start_pulse => w_txn_start_pulse,
+      o_seed_pulse      => w_seed_pulse,
       o_wbeat_pulse     => w_wbeat_pulse
     );
 
@@ -76,7 +78,7 @@ begin
       INPUT_ADDRESS => INPUT_ADDRESS,
       STARTING_SEED => STARTING_SEED,
 
-      i_txn_start_pulse => w_txn_start_pulse,
+      i_seed_pulse      => w_seed_pulse,
       i_wbeat_pulse     => w_wbeat_pulse,
 
       AWID    => AWID,
