@@ -6,20 +6,24 @@ use IEEE.numeric_std.all;
 use work.xina_ni_ft_pkg.all;
 
 -- Read-phase datapath (minimal compare):
---  * One register BEFORE the LFSR (r_lfsr_in)
---  * One register AFTER  the LFSR (r_expected)  => expected RDATA
---  * Feedback uses expected value (r_expected) to update r_lfsr_in
+--  * Single state register = expected word (optionally protected with Hamming)
+--  * LFSR is purely combinational: next = f(curr)
+--  * Feedback uses expected value (curr) to compute next expected
 --  * Comparator is encapsulated in tm_read_compare and outputs ONLY a sticky mismatch flag
 --
 -- Initialization (mirrors TG):
---  r_lfsr_in starts from p_INIT_VALUE, with its lower 32 bits overwritten by STARTING_SEED.
---  r_expected is precomputed as next_lfsr(r_lfsr_in) so it is ready when the first R beat arrives.
+--  expected is precomputed as next_lfsr(init_value) so it is ready when the first R beat arrives.
 entity tm_read_datapath is
   generic(
     p_ARID      : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0) := (others => '0');
     p_LEN       : std_logic_vector(7 downto 0) := x"00";
     p_BURST     : std_logic_vector(1 downto 0) := "01";
-    p_INIT_VALUE: std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0')
+    p_INIT_VALUE: std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
+
+    -- optional Hamming-protected register for the expected word
+    HAMMING_ENABLE        : boolean := false;
+    HAMMING_DETECT_DOUBLE : boolean := true;
+    HAMMING_INJECT_ERROR  : boolean := false
   );
   port(
     ACLK    : in  std_logic;
@@ -45,13 +49,21 @@ entity tm_read_datapath is
     o_mismatch : out std_logic;
 
     -- debug (post-LFSR reg = expected value)
-    o_expected_value : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0)
+    o_expected_value : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+
+    -- observation (only meaningful when HAMMING_ENABLE=true)
+    o_ham_single_err : out std_logic;
+    o_ham_double_err : out std_logic
   );
 end tm_read_datapath;
 
 architecture rtl of tm_read_datapath is
-  signal r_lfsr_in   : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
-  signal r_expected  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
+  -- expected word register (optionally protected)
+  signal w_expected_q : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
+  signal w_expected_d : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
+  signal w_exp_we     : std_logic := '0';
+  signal w_ham_single : std_logic := '0';
+  signal w_ham_double : std_logic := '0';
 
   signal w_init_value : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
   signal w_lfsr_input : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
@@ -85,7 +97,9 @@ begin
   ARBURST <= p_BURST;
 
   -- debug
-  o_expected_value <= r_expected;
+  o_expected_value <= w_expected_q;
+  o_ham_single_err <= w_ham_single;
+  o_ham_double_err <= w_ham_double;
 
   -- Build init value = base/random generic + seed in lower bits
   w_init_value <= apply_seed(p_INIT_VALUE, STARTING_SEED);
@@ -97,9 +111,9 @@ begin
   -- LFSR input:
   --  * init: feed init value, compute expected = next(init)
   --  * step: feed current expected, compute next expected = next(expected)
+  --  * idle: feed current expected (no state update)
   w_lfsr_input <= w_init_value when (w_do_init = '1') else
-                  r_expected  when (w_do_step = '1') else
-                  r_lfsr_in;
+                  w_expected_q;
 
   u_LFSR: entity work.tm_read_lfsr
     generic map(
@@ -122,28 +136,53 @@ begin
       i_init_pulse  => w_do_init,
       i_check_pulse => w_do_step,
 
-      i_expected => r_expected,
+      i_expected => w_expected_q,
       i_rdata    => RDATA,
 
       o_mismatch => o_mismatch
     );
 
-  process(ACLK)
-  begin
-    if rising_edge(ACLK) then
-      if ARESETn = '0' then
-        r_lfsr_in  <= (others => '0');
-        r_expected <= (others => '0');
-      else
-        if w_do_init = '1' then
-          r_lfsr_in  <= w_init_value; -- LFSR(in) reg
-          r_expected <= w_lfsr_next;  -- LFSR(out) reg = expected word
-        elsif w_do_step = '1' then
-          -- feedback uses expected value (keeps TM sequence independent of RDATA)
-          r_lfsr_in  <= r_expected;
-          r_expected <= w_lfsr_next;
+  -- Expected-word next value + write-enable
+  w_exp_we     <= '1' when (w_do_init = '1' or w_do_step = '1') else '0';
+  w_expected_d <= w_lfsr_next;
+
+  -- Optional Hamming register for the expected word
+  gen_ham : if HAMMING_ENABLE generate
+    u_EXP_HAM : entity work.hamming_register
+      generic map(
+        DATA_WIDTH     => c_AXI_DATA_WIDTH,
+        HAMMING_ENABLE => true,
+        DETECT_DOUBLE  => HAMMING_DETECT_DOUBLE,
+        RESET_VALUE    => (c_AXI_DATA_WIDTH-1 downto 0 => '0'),
+        INJECT_ERROR   => HAMMING_INJECT_ERROR
+      )
+      port map(
+        correct_en_i => '1',
+        write_en_i   => w_exp_we,
+        data_i       => w_expected_d,
+        rstn_i       => ARESETn,
+        clk_i        => ACLK,
+        single_err_o => w_ham_single,
+        double_err_o => w_ham_double,
+        enc_data_o   => open,
+        data_o       => w_expected_q
+      );
+  end generate;
+
+  gen_no_ham : if not HAMMING_ENABLE generate
+    w_ham_single <= '0';
+    w_ham_double <= '0';
+    process(ACLK)
+    begin
+      if rising_edge(ACLK) then
+        if ARESETn = '0' then
+          w_expected_q <= (others => '0');
+        else
+          if w_exp_we = '1' then
+            w_expected_q <= w_expected_d;
+          end if;
         end if;
       end if;
-    end if;
-  end process;
+    end process;
+  end generate;
 end rtl;

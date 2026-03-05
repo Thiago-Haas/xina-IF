@@ -8,7 +8,13 @@ use work.xina_ni_ft_pkg.all;
 -- Top for the read phase (AR/R) with minimal comparator output.
 entity tm_read_top is
   generic(
-    p_INIT_VALUE : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0')
+    p_INIT_VALUE : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
+
+    -- optional hardening (mirrors TG)
+    CTRL_TMR_ENABLE        : boolean := true;
+    HAMMING_ENABLE         : boolean := true;
+    HAMMING_DETECT_DOUBLE  : boolean := true;
+    HAMMING_INJECT_ERROR   : boolean := false
   );
   port(
     ACLK    : in std_logic;
@@ -43,7 +49,12 @@ entity tm_read_top is
     o_mismatch : out std_logic;
 
     -- debug
-    o_expected_value : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0)
+    o_expected_value : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+
+    -- observation
+    o_ctrl_tmr_err   : out std_logic;
+    o_ham_single_err : out std_logic;
+    o_ham_double_err : out std_logic
   );
 end tm_read_top;
 
@@ -53,31 +64,69 @@ architecture rtl of tm_read_top is
   signal w_rbeat_pulse     : std_logic;
   signal w_r_hs_comb       : std_logic;
   signal w_seed_pulse      : std_logic;
+
+  signal w_ctrl_tmr_err    : std_logic := '0';
+  signal w_ham_single_err  : std_logic := '0';
+  signal w_ham_double_err  : std_logic := '0';
 begin
-  u_CTRL: entity work.tm_read_controller
-    port map(
-      ACLK    => ACLK,
-      ARESETn => ARESETn,
 
-      i_start => i_start,
-      o_done  => w_read_done,
+  -- Controller selection: plain vs TMR
+  gen_ctrl_plain : if not CTRL_TMR_ENABLE generate
+    u_CTRL: entity work.tm_read_controller
+      port map(
+        ACLK    => ACLK,
+        ARESETn => ARESETn,
 
-      ARREADY => ARREADY,
-      RVALID  => RVALID,
-      RLAST   => RLAST,
+        i_start => i_start,
+        o_done  => w_read_done,
 
-      ARVALID => ARVALID,
-      RREADY  => RREADY,
+        ARREADY => ARREADY,
+        RVALID  => RVALID,
+        RLAST   => RLAST,
 
-      o_txn_start_pulse => w_txn_start_pulse,
-      o_rbeat_pulse     => w_rbeat_pulse,
-      o_rbeat_hs_comb   => w_r_hs_comb,
-      o_seed_pulse      => w_seed_pulse
-    );
+        ARVALID => ARVALID,
+        RREADY  => RREADY,
+
+        o_txn_start_pulse => w_txn_start_pulse,
+        o_rbeat_pulse     => w_rbeat_pulse,
+        o_rbeat_hs_comb   => w_r_hs_comb,
+        o_seed_pulse      => w_seed_pulse
+      );
+    w_ctrl_tmr_err <= '0';
+  end generate;
+
+  gen_ctrl_tmr : if CTRL_TMR_ENABLE generate
+    u_CTRL_TMR: entity work.tm_read_controller_tmr
+      port map(
+        ACLK    => ACLK,
+        ARESETn => ARESETn,
+
+        i_start => i_start,
+        o_done  => w_read_done,
+
+        ARREADY => ARREADY,
+        RVALID  => RVALID,
+        RLAST   => RLAST,
+
+        ARVALID => ARVALID,
+        RREADY  => RREADY,
+
+        o_txn_start_pulse => w_txn_start_pulse,
+        o_rbeat_pulse     => w_rbeat_pulse,
+        o_rbeat_hs_comb   => w_r_hs_comb,
+        o_seed_pulse      => w_seed_pulse,
+
+        i_correct_enable  => '1',
+        error_o           => w_ctrl_tmr_err
+      );
+  end generate;
 
   u_DP: entity work.tm_read_datapath
     generic map(
-      p_INIT_VALUE => p_INIT_VALUE
+      p_INIT_VALUE           => p_INIT_VALUE,
+      HAMMING_ENABLE         => HAMMING_ENABLE,
+      HAMMING_DETECT_DOUBLE  => HAMMING_DETECT_DOUBLE,
+      HAMMING_INJECT_ERROR   => HAMMING_INJECT_ERROR
     )
     port map(
       ACLK    => ACLK,
@@ -98,8 +147,16 @@ begin
       ARBURST => ARBURST,
 
       o_mismatch       => o_mismatch,
-      o_expected_value => o_expected_value
+      o_expected_value => o_expected_value,
+
+      o_ham_single_err => w_ham_single_err,
+      o_ham_double_err => w_ham_double_err
     );
 
   o_done <= w_read_done;
+
+  -- obs to top
+  o_ctrl_tmr_err   <= w_ctrl_tmr_err;
+  o_ham_single_err <= w_ham_single_err;
+  o_ham_double_err <= w_ham_double_err;
 end rtl;

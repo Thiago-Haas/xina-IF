@@ -126,7 +126,7 @@ begin
   error_o <= err_done_w or err_awvalid_w or err_wvalid_w or err_bready_w or
              err_txn_start_pulse_w or err_seed_pulse_w or err_wbeat_pulse_w;
 
-  -- output selection (same style as control_tmr.vhd)
+  -- output selection
   o_done            <= corr_done_w            when i_correct_enable = '1' else done_w(0);
   AWVALID           <= corr_awvalid_w         when i_correct_enable = '1' else awvalid_w(0);
   WVALID            <= corr_wvalid_w          when i_correct_enable = '1' else wvalid_w(0);

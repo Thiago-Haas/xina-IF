@@ -45,6 +45,18 @@ architecture tb of tb_tg_tm_lb_top is
   signal tm_mismatch : std_logic;
   signal tm_expected : std_logic_vector(c_AXI_DATA_WIDTH-1 downto 0);
 
+  -- TG/TM observation + correction enables (wired at TB top)
+  signal tg_ham_correct_enb : std_logic := '1';
+  signal tg_tmr_correct_enb : std_logic := '1';
+
+  signal tg_ctrl_tmr_err   : std_logic;
+  signal tg_ham_single_err : std_logic;
+  signal tg_ham_double_err : std_logic;
+
+  signal tm_ctrl_tmr_err   : std_logic;
+  signal tm_ham_single_err : std_logic;
+  signal tm_ham_double_err : std_logic;
+
   -- AXI write (TG -> NI)
   signal awid    : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
   signal awaddr  : std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
@@ -87,7 +99,7 @@ architecture tb of tb_tg_tm_lb_top is
   signal lout_val  : std_logic;
   signal lout_ack  : std_logic;
 
-  -- ECC ports (top-level)
+  -- NI ECC ports (top-level)
   signal inj_correct_error : std_logic := '1';
   signal rx_correct_error  : std_logic := '1';
   signal inj_single_err    : std_logic;
@@ -112,6 +124,7 @@ begin
       INPUT_ADDRESS => tg_addr,
       STARTING_SEED => tg_seed,
 
+      -- Write request channel
       AWID    => awid,
       AWADDR  => awaddr,
       AWLEN   => awlen,
@@ -119,15 +132,25 @@ begin
       AWVALID => awvalid,
       AWREADY => awready,
 
+      -- Write data channel
       WVALID  => wvalid,
       WREADY  => wready,
       WDATA   => wdata,
       WLAST   => wlast,
 
-      BID     => bid,
-      BRESP   => bresp,
-      BVALID  => bvalid,
-      BREADY  => bready
+      -- Write response channel
+      BID    => bid,
+      BRESP  => bresp,
+      BVALID => bvalid,
+      BREADY => bready,
+
+      -- observation/correction
+      i_ham_correct_enb => tg_ham_correct_enb,
+      i_tmr_correct_enb => tg_tmr_correct_enb,
+
+      o_ctrl_tmr_err   => tg_ctrl_tmr_err,
+      o_ham_single_err => tg_ham_single_err,
+      o_ham_double_err => tg_ham_double_err
     );
 
   -- TM
@@ -142,6 +165,7 @@ begin
       INPUT_ADDRESS => tm_addr,
       STARTING_SEED => tm_seed,
 
+      -- Read address channel
       ARID    => arid,
       ARADDR  => araddr,
       ARLEN   => arlen,
@@ -149,15 +173,23 @@ begin
       ARVALID => arvalid,
       ARREADY => arready,
 
+      -- Read data channel
       RVALID => rvalid,
       RREADY => rready,
       RDATA  => rdata,
       RLAST  => rlast,
+
       RID    => rid,
       RRESP  => rresp,
 
+      -- compare/debug
       o_mismatch       => tm_mismatch,
-      o_expected_value => tm_expected
+      o_expected_value => tm_expected,
+
+      -- observation
+      o_ctrl_tmr_err   => tm_ctrl_tmr_err,
+      o_ham_single_err => tm_ham_single_err,
+      o_ham_double_err => tm_ham_double_err
     );
 
   -- NI manager
@@ -241,14 +273,18 @@ begin
       lout_ack_i  => lout_ack
     );
 
-  -- reset + stimulus (quiet)
+  -- reset + stimulus
   stim: process
     variable base_addr : unsigned(63 downto 0);
     variable seed      : unsigned(31 downto 0);
   begin
-    ARESETn  <= '0';
+    ARESETn <= '0';
     tg_start <= '0';
     tm_start <= '0';
+
+    tg_ham_correct_enb <= '1';
+    tg_tmr_correct_enb <= '1';
+
     wait for 50 ns;
     ARESETn <= '1';
     wait for 50 ns;
