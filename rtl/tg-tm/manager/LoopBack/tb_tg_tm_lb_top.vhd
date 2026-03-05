@@ -57,6 +57,14 @@ architecture tb of tb_tg_tm_lb_top is
   signal tm_ham_single_err : std_logic;
   signal tm_ham_double_err : std_logic;
 
+  -- LB observation + correction enables (NEW, wired at TB top like TG)
+  signal lb_ham_correct_enb : std_logic := '1';
+  signal lb_tmr_correct_enb : std_logic := '1';
+
+  signal lb_ctrl_tmr_err   : std_logic;
+  signal lb_ham_single_err : std_logic;
+  signal lb_ham_double_err : std_logic;
+
   -- AXI write (TG -> NI)
   signal awid    : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
   signal awaddr  : std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
@@ -270,7 +278,15 @@ begin
 
       lout_data_o => lout_data,
       lout_val_o  => lout_val,
-      lout_ack_i  => lout_ack
+      lout_ack_i  => lout_ack,
+
+      -- NEW: ECC observation/correction ports for loopback (same style as TG)
+      i_ham_correct_enb => lb_ham_correct_enb,
+      i_tmr_correct_enb => lb_tmr_correct_enb,
+
+      o_ctrl_tmr_err   => lb_ctrl_tmr_err,
+      o_ham_single_err => lb_ham_single_err,
+      o_ham_double_err => lb_ham_double_err
     );
 
   -- reset + stimulus
@@ -284,6 +300,10 @@ begin
 
     tg_ham_correct_enb <= '1';
     tg_tmr_correct_enb <= '1';
+
+    -- LB enables default on (same behaviour as TG/TM)
+    lb_ham_correct_enb <= '1';
+    lb_tmr_correct_enb <= '1';
 
     wait for 50 ns;
     ARESETn <= '1';

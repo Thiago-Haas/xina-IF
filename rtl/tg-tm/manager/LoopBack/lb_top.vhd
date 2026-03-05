@@ -5,10 +5,15 @@ use ieee.numeric_std.all;
 use work.xina_ni_ft_pkg.all;
 
 -- Synthesizable NoC-side loopback (subordinate emulator) for the combined TG/TM+NI top.
--- Split into controller + datapath.
+-- Split into controller + datapath, with optional ECC hardening (TMR on ctrl, Hamming on DP reg).
 entity lb_top is
   generic (
-    p_MEM_ADDR_BITS : natural := 10
+    p_MEM_ADDR_BITS        : natural := 10;
+
+    CTRL_TMR_ENABLE        : boolean := true;
+    HAMMING_ENABLE         : boolean := true;
+    HAMMING_DETECT_DOUBLE  : boolean := true;
+    HAMMING_INJECT_ERROR   : boolean := false
   );
   port (
     ACLK    : in  std_logic;
@@ -23,7 +28,15 @@ entity lb_top is
     -- Response stream to NI:
     lout_data_o : out std_logic_vector(c_FLIT_WIDTH-1 downto 0);
     lout_val_o  : out std_logic;
-    lout_ack_i  : in  std_logic
+    lout_ack_i  : in  std_logic;
+
+    -- observation / correction (routed to top like TG)
+    i_ham_correct_enb : in  std_logic;
+    i_tmr_correct_enb : in  std_logic;
+
+    o_ctrl_tmr_err   : out std_logic;
+    o_ham_single_err : out std_logic;
+    o_ham_double_err : out std_logic
   );
 end entity;
 
@@ -47,14 +60,21 @@ architecture rtl of lb_top is
   signal rd_payload_idx : unsigned(7 downto 0);
   signal rd_payload     : std_logic_vector(31 downto 0);
 
-  signal hold_valid : std_logic;
-  signal hold_clr   : std_logic;
+  signal hold_valid_pulse : std_logic; -- DP pulse when payload captured
+  signal hold_clr         : std_logic;
+
+  signal w_ctrl_tmr_err   : std_logic;
+  signal w_ham_single_err : std_logic;
+  signal w_ham_double_err : std_logic;
 
 begin
 
   u_dp: entity work.lb_dp
     generic map(
-      p_MEM_ADDR_BITS => p_MEM_ADDR_BITS
+      p_MEM_ADDR_BITS       => p_MEM_ADDR_BITS,
+      HAMMING_ENABLE        => HAMMING_ENABLE,
+      HAMMING_DETECT_DOUBLE => HAMMING_DETECT_DOUBLE,
+      HAMMING_INJECT_ERROR  => HAMMING_INJECT_ERROR
     )
     port map(
       ACLK    => ACLK,
@@ -80,41 +100,98 @@ begin
       o_resp_hdr1 => resp_hdr1,
       o_resp_hdr2 => resp_hdr2,
 
-      o_hold_valid => hold_valid,
+      -- hamming obs/correct
+      i_correct_enable => i_ham_correct_enb,
+      o_single_err     => w_ham_single_err,
+      o_double_err     => w_ham_double_err,
+
+      -- payload-captured pulse
+      o_hold_valid => hold_valid_pulse,
       i_hold_clr   => hold_clr
     );
 
-  u_ctrl: entity work.lb_ctrl
-    port map(
-      ACLK    => ACLK,
-      ARESETn => ARESETn,
+  gen_ctrl_plain : if (not CTRL_TMR_ENABLE) generate
+  begin
+    w_ctrl_tmr_err <= '0';
 
-      i_lin_data => lin_data_i,
-      i_lin_val  => lin_val_i,
-      o_lin_ack  => lin_ack_o,
+    u_ctrl: entity work.lb_ctrl
+      port map(
+        ACLK    => ACLK,
+        ARESETn => ARESETn,
 
-      o_lout_data => lout_data_o,
-      o_lout_val  => lout_val_o,
-      i_lout_ack  => lout_ack_i,
+        i_lin_data => lin_data_i,
+        i_lin_val  => lin_val_i,
+        o_lin_ack  => lin_ack_o,
 
-      o_cap_en   => cap_en,
-      o_cap_flit => cap_flit,
-      o_cap_idx  => cap_idx,
-      o_cap_last => cap_last,
+        o_lout_data => lout_data_o,
+        o_lout_val  => lout_val_o,
+        i_lout_ack  => lout_ack_i,
 
-      i_req_ready    => req_ready,
-      i_req_is_write => req_is_write,
-      i_req_is_read  => req_is_read,
-      i_req_len      => req_len,
-      i_resp_hdr0    => resp_hdr0,
-      i_resp_hdr1    => resp_hdr1,
-      i_resp_hdr2    => resp_hdr2,
+        o_cap_en   => cap_en,
+        o_cap_flit => cap_flit,
+        o_cap_idx  => cap_idx,
+        o_cap_last => cap_last,
 
-      o_rd_payload_idx => rd_payload_idx,
-      i_rd_payload     => rd_payload,
+        i_req_ready    => req_ready,
+        i_req_is_write => req_is_write,
+        i_req_is_read  => req_is_read,
+        i_req_len      => req_len,
 
-      i_hold_valid => hold_valid,
-      o_hold_clr   => hold_clr
-    );
+        i_resp_hdr0 => resp_hdr0,
+        i_resp_hdr1 => resp_hdr1,
+        i_resp_hdr2 => resp_hdr2,
+
+        o_rd_payload_idx => rd_payload_idx,
+        i_rd_payload     => rd_payload,
+
+        i_hold_valid => hold_valid_pulse,
+        o_hold_clr   => hold_clr
+      );
+  end generate;
+
+  gen_ctrl_tmr : if CTRL_TMR_ENABLE generate
+  begin
+    u_ctrl_tmr: entity work.lb_ctrl_tmr
+      port map(
+        ACLK    => ACLK,
+        ARESETn => ARESETn,
+
+        i_lin_data => lin_data_i,
+        i_lin_val  => lin_val_i,
+        o_lin_ack  => lin_ack_o,
+
+        o_lout_data => lout_data_o,
+        o_lout_val  => lout_val_o,
+        i_lout_ack  => lout_ack_i,
+
+        o_cap_en   => cap_en,
+        o_cap_flit => cap_flit,
+        o_cap_idx  => cap_idx,
+        o_cap_last => cap_last,
+
+        i_req_ready    => req_ready,
+        i_req_is_write => req_is_write,
+        i_req_is_read  => req_is_read,
+        i_req_len      => req_len,
+
+        i_resp_hdr0 => resp_hdr0,
+        i_resp_hdr1 => resp_hdr1,
+        i_resp_hdr2 => resp_hdr2,
+
+        o_rd_payload_idx => rd_payload_idx,
+        i_rd_payload     => rd_payload,
+
+        i_hold_valid => hold_valid_pulse,
+        o_hold_clr   => hold_clr,
+
+        i_correct_enable => i_tmr_correct_enb,
+        error_o          => w_ctrl_tmr_err
+      );
+  end generate;
+
+  -- observation outputs (same pattern as TG)
+  o_ctrl_tmr_err   <= w_ctrl_tmr_err;
+  o_ham_single_err <= w_ham_single_err;
+  o_ham_double_err <= w_ham_double_err;
 
 end architecture;
