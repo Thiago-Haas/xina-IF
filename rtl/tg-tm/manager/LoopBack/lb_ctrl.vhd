@@ -46,6 +46,7 @@ entity lb_ctrl is
     i_rd_payload     : in  std_logic_vector(31 downto 0);
 
     -- Availability tracking (optional)
+    -- NOTE: i_hold_valid is now a 1-cycle pulse from DP when payload updates.
     i_hold_valid : in  std_logic;
     o_hold_clr   : out std_logic
   );
@@ -106,6 +107,10 @@ architecture rtl of lb_ctrl is
 
   -- Registered hold clear (avoid multiple drivers)
   signal r_hold_clr : std_logic := '0';
+
+  -- Long-lived valid flag: moved here from lb_dp.
+  -- Set by datapath pulse (i_hold_valid) when payload captured.
+  signal r_hold_valid : std_logic := '0';
 
   -- Combinational TX flit and last index
   signal tx_flit : std_logic_vector(c_FLIT_WIDTH-1 downto 0);
@@ -172,13 +177,20 @@ begin
         r_payload_words <= (others => '0');
         r_next_is_read  <= '0';
 
-        r_hold_clr <= '0';
+        r_hold_clr   <= '0';
+        r_hold_valid <= '0';
       else
         -- defaults
         p_cap_en   <= '0';
         p_cap_last <= '0';
         r_lin_ack  <= '0';
         r_hold_clr <= '0';
+
+        -- Track whether we have a valid stored payload in the DP.
+        -- DP generates a 1-cycle pulse when it updates the payload register.
+        if i_hold_valid = '1' then
+          r_hold_valid <= '1';
+        end if;
 
         case st is
 
@@ -212,7 +224,12 @@ begin
               if r_seen_last = '1' then
                 -- request fully captured -> arm TX
                 if r_next_is_read = '1' then
-                  r_payload_words <= to_unsigned(1, r_payload_words'length); -- exactly one payload word
+                  -- Only send payload if DP has captured one.
+                  if r_hold_valid = '1' then
+                    r_payload_words <= to_unsigned(1, r_payload_words'length); -- exactly one payload word
+                  else
+                    r_payload_words <= to_unsigned(0, r_payload_words'length);
+                  end if;
                 else
                   r_payload_words <= to_unsigned(0, r_payload_words'length);
                 end if;
@@ -237,7 +254,8 @@ begin
             if i_lout_ack = '1' then
               -- optional clear after READ response completes
               if (r_next_is_read = '1') and (r_tx_idx = tx_last) then
-                r_hold_clr <= '1';
+                r_hold_clr   <= '1';
+                r_hold_valid <= '0';
               end if;
               st <= S_TX_GAP;
             end if;

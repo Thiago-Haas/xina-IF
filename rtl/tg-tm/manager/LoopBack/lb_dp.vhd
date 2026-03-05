@@ -4,9 +4,9 @@ use ieee.numeric_std.all;
 
 use work.xina_ni_ft_pkg.all;
 
--- Ultra-minimal loopback datapath (NON-DBG)
---  * ONLY stores one 32-bit payload word (register).
---  * No RAM / no header registers / no request decode.
+-- Ultra-minimal loopback datapath:
+--  * ONLY 1 register: payload word (32-bit)
+--  * o_hold_valid is a 1-cycle pulse (COMBINATIONAL) aligned with i_cap_en when payload captured
 entity lb_dp is
   generic (
     p_MEM_ADDR_BITS : natural := 10  -- kept for compatibility; unused
@@ -35,14 +35,18 @@ entity lb_dp is
     o_resp_hdr1 : out std_logic_vector(31 downto 0);
     o_resp_hdr2 : out std_logic_vector(31 downto 0);
 
+    -- 1-cycle pulse when payload is captured (no reg here!)
     o_hold_valid : out std_logic;
-    i_hold_clr   : in  std_logic
+    i_hold_clr   : in  std_logic  -- kept for compatibility; unused
   );
 end entity;
 
 architecture rtl of lb_dp is
-  signal r_payload    : std_logic_vector(31 downto 0) := (others => '0');
-  signal r_hold_valid : std_logic := '0';
+  -- THE ONLY REGISTER IN THIS DATAPATH
+  signal r_payload_reg : std_logic_vector(31 downto 0) := (others => '0');
+
+  -- local combinational detect
+  signal w_payload_cap : std_logic;
 begin
 
   -- No decode in this ultra-min version
@@ -59,34 +63,35 @@ begin
   o_resp_hdr1 <= (others => '0');
   o_resp_hdr2 <= (others => '0');
 
-  o_hold_valid <= r_hold_valid;
-
   -- Payload read: always the stored word (repeat for any index)
-  o_rd_payload <= r_payload;
+  o_rd_payload <= r_payload_reg;
 
-  -- Store payload at fixed flit index 4 when ctrl=0.
-  -- Assumed request format: hdr0,hdr1,hdr2,addr,payload0,...,checksum
+  -- Payload capture condition:
+  -- store payload at fixed flit index 4 when ctrl=0.
+  -- flit(ctrl) is MSB (leftmost) bit.
+  w_payload_cap <= '1' when (i_cap_en = '1') and
+                          (i_cap_idx = to_unsigned(4, i_cap_idx'length)) and
+                          (i_cap_flit(i_cap_flit'left) = '0')
+                   else '0';
+
+  -- Hold-valid pulse: purely combinational, aligned with capture
+  o_hold_valid <= w_payload_cap;
+
+  -- Store payload word on capture
   process(ACLK)
   begin
     if rising_edge(ACLK) then
       if ARESETn = '0' then
-        r_payload    <= (others => '0');
-        r_hold_valid <= '0';
+        r_payload_reg <= (others => '0');
       else
-        if i_hold_clr = '1' then
-          r_hold_valid <= '0';
-        end if;
-
-        if i_cap_en = '1' then
-          if (i_cap_idx = to_unsigned(4, i_cap_idx'length)) and (i_cap_flit(i_cap_flit'left) = '0') then
-            r_payload    <= i_cap_flit(31 downto 0);
-            r_hold_valid <= '1';
-          end if;
+        if w_payload_cap = '1' then
+          r_payload_reg <= i_cap_flit(31 downto 0);
         end if;
       end if;
     end if;
   end process;
 
-  -- i_cap_last and i_rd_payload_idx unused intentionally
+  -- Unused intentionally in this ultra-min datapath
+  -- i_cap_last, i_rd_payload_idx, i_hold_clr
 
 end architecture;
