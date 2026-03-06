@@ -28,6 +28,8 @@ entity tg_tm_lb_top is
     p_USE_TM_HAMMING               : boolean := c_ENABLE_TM_HAMMING_PROTECTION;
     p_USE_TM_HAMMING_DOUBLE_DETECT : boolean := c_ENABLE_TM_HAMMING_DOUBLE_DETECT;
     p_USE_TM_HAMMING_INJECT_ERROR  : boolean := c_ENABLE_TM_HAMMING_INJECT_ERROR;
+    p_USE_TM_TXN_COUNTER_HAMMING   : boolean := c_ENABLE_TM_TXN_COUNTER_HAMMING;
+    p_TM_TXN_COUNTER_WIDTH         : natural := c_TM_TRANSACTION_COUNTER_WIDTH;
 
     -- LB ECC/TMR enables (follows NI p_USE_* scheme)
     p_USE_LB_CTRL_TMR              : boolean := c_ENABLE_LB_CTRL_TMR;
@@ -56,9 +58,13 @@ entity tg_tm_lb_top is
     o_tm_expected_value : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
     i_OBS_TM_HAM_BUFFER_CORRECT_ERROR : in  std_logic := '1';
     i_OBS_TM_TMR_CTRL_CORRECT_ERROR   : in  std_logic := '1';
+    i_OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR : in std_logic := '1';
     o_OBS_TM_TMR_CTRL_ERROR           : out std_logic;
     o_OBS_TM_HAM_BUFFER_SINGLE_ERR    : out std_logic;
     o_OBS_TM_HAM_BUFFER_DOUBLE_ERR    : out std_logic;
+    o_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR : out std_logic;
+    o_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR : out std_logic;
+    o_TM_TRANSACTION_COUNT              : out std_logic_vector(p_TM_TXN_COUNTER_WIDTH - 1 downto 0);
 
     -- LB observability
     i_OBS_LB_HAM_BUFFER_CORRECT_ERROR : in  std_logic := '1';
@@ -216,7 +222,9 @@ begin
       p_USE_TM_CTRL_TMR              => p_USE_TM_CTRL_TMR,
       p_USE_TM_HAMMING               => p_USE_TM_HAMMING,
       p_USE_TM_HAMMING_DOUBLE_DETECT => p_USE_TM_HAMMING_DOUBLE_DETECT,
-      p_USE_TM_HAMMING_INJECT_ERROR  => p_USE_TM_HAMMING_INJECT_ERROR
+      p_USE_TM_HAMMING_INJECT_ERROR  => p_USE_TM_HAMMING_INJECT_ERROR,
+      p_USE_TM_TXN_COUNTER_HAMMING   => p_USE_TM_TXN_COUNTER_HAMMING,
+      p_TM_TXN_COUNTER_WIDTH         => p_TM_TXN_COUNTER_WIDTH
     )
     port map(
       ACLK    => ACLK,
@@ -247,9 +255,13 @@ begin
 
       i_OBS_TM_HAM_BUFFER_CORRECT_ERROR => i_OBS_TM_HAM_BUFFER_CORRECT_ERROR,
       i_OBS_TM_TMR_CTRL_CORRECT_ERROR   => i_OBS_TM_TMR_CTRL_CORRECT_ERROR,
+      i_OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR => i_OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR,
       o_OBS_TM_TMR_CTRL_ERROR           => o_OBS_TM_TMR_CTRL_ERROR,
       o_OBS_TM_HAM_BUFFER_SINGLE_ERR    => o_OBS_TM_HAM_BUFFER_SINGLE_ERR,
-      o_OBS_TM_HAM_BUFFER_DOUBLE_ERR    => o_OBS_TM_HAM_BUFFER_DOUBLE_ERR
+      o_OBS_TM_HAM_BUFFER_DOUBLE_ERR    => o_OBS_TM_HAM_BUFFER_DOUBLE_ERR,
+      o_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR => o_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR,
+      o_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR => o_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR,
+      o_TM_TRANSACTION_COUNT              => o_TM_TRANSACTION_COUNT
     );
 
   -- Single NI manager

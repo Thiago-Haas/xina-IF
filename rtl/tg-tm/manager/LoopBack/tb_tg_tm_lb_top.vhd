@@ -16,6 +16,7 @@ entity tb_tg_tm_lb_top is
     -- TM correction enables
     i_obs_tm_ham_buffer_correct_error : in std_logic := '1';
     i_obs_tm_tmr_ctrl_correct_error   : in std_logic := '1';
+    i_obs_tm_ham_txn_counter_correct_error : in std_logic := '1';
 
     -- Loopback correction enables
     i_obs_lb_ham_buffer_correct_error : in std_logic := '1';
@@ -80,6 +81,9 @@ architecture tb of tb_tg_tm_lb_top is
   signal tm_ctrl_tmr_err   : std_logic;
   signal tm_ham_single_err : std_logic;
   signal tm_ham_double_err : std_logic;
+  signal tm_ham_txn_counter_single_err : std_logic;
+  signal tm_ham_txn_counter_double_err : std_logic;
+  signal tm_transaction_count          : std_logic_vector(c_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
 
   -- LB observation + correction enables (NEW, wired at TB top like TG)
   signal lb_ctrl_tmr_err   : std_logic;
@@ -216,9 +220,13 @@ begin
       -- observation
       i_OBS_TM_HAM_BUFFER_CORRECT_ERROR => i_obs_tm_ham_buffer_correct_error,
       i_OBS_TM_TMR_CTRL_CORRECT_ERROR   => i_obs_tm_tmr_ctrl_correct_error,
+      i_OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR => i_obs_tm_ham_txn_counter_correct_error,
       o_OBS_TM_TMR_CTRL_ERROR           => tm_ctrl_tmr_err,
       o_OBS_TM_HAM_BUFFER_SINGLE_ERR    => tm_ham_single_err,
-      o_OBS_TM_HAM_BUFFER_DOUBLE_ERR    => tm_ham_double_err
+      o_OBS_TM_HAM_BUFFER_DOUBLE_ERR    => tm_ham_double_err,
+      o_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR => tm_ham_txn_counter_single_err,
+      o_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR => tm_ham_txn_counter_double_err,
+      o_TM_TRANSACTION_COUNT              => tm_transaction_count
     );
 
   -- NI manager

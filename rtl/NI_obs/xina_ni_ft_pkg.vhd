@@ -52,6 +52,8 @@ package xina_ni_ft_pkg is
     constant c_ENABLE_TM_HAMMING_PROTECTION      : boolean := true;
     constant c_ENABLE_TM_HAMMING_DOUBLE_DETECT   : boolean := true;
     constant c_ENABLE_TM_HAMMING_INJECT_ERROR    : boolean := false;
+    constant c_ENABLE_TM_TXN_COUNTER_HAMMING     : boolean := true;
+    constant c_TM_TRANSACTION_COUNTER_WIDTH       : natural := 24;
 
     -- Loopback ECC/TMR toggles.
     constant c_ENABLE_LB_CTRL_TMR                : boolean := true;

@@ -14,7 +14,9 @@ entity tm_read_top is
     p_USE_TM_CTRL_TMR              : boolean := c_ENABLE_TM_CTRL_TMR;
     p_USE_TM_HAMMING               : boolean := c_ENABLE_TM_HAMMING_PROTECTION;
     p_USE_TM_HAMMING_DOUBLE_DETECT : boolean := c_ENABLE_TM_HAMMING_DOUBLE_DETECT;
-    p_USE_TM_HAMMING_INJECT_ERROR  : boolean := c_ENABLE_TM_HAMMING_INJECT_ERROR
+    p_USE_TM_HAMMING_INJECT_ERROR  : boolean := c_ENABLE_TM_HAMMING_INJECT_ERROR;
+    p_USE_TM_TXN_COUNTER_HAMMING   : boolean := c_ENABLE_TM_TXN_COUNTER_HAMMING;
+    p_TM_TXN_COUNTER_WIDTH         : natural := c_TM_TRANSACTION_COUNTER_WIDTH
   );
   port(
     ACLK    : in std_logic;
@@ -54,9 +56,13 @@ entity tm_read_top is
     -- observation
     i_OBS_TM_HAM_BUFFER_CORRECT_ERROR : in  std_logic := '1';
     i_OBS_TM_TMR_CTRL_CORRECT_ERROR   : in  std_logic := '1';
+    i_OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR : in std_logic := '1';
     o_OBS_TM_TMR_CTRL_ERROR           : out std_logic;
     o_OBS_TM_HAM_BUFFER_SINGLE_ERR    : out std_logic;
-    o_OBS_TM_HAM_BUFFER_DOUBLE_ERR    : out std_logic
+    o_OBS_TM_HAM_BUFFER_DOUBLE_ERR    : out std_logic;
+    o_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR : out std_logic;
+    o_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR : out std_logic;
+    o_TM_TRANSACTION_COUNT              : out std_logic_vector(p_TM_TXN_COUNTER_WIDTH - 1 downto 0)
   );
 end tm_read_top;
 
@@ -70,6 +76,10 @@ architecture rtl of tm_read_top is
   signal w_ctrl_tmr_err    : std_logic := '0';
   signal w_ham_single_err  : std_logic := '0';
   signal w_ham_double_err  : std_logic := '0';
+  signal w_txn_count_data_in  : std_logic_vector(p_TM_TXN_COUNTER_WIDTH - 1 downto 0);
+  signal w_txn_count_data_out : std_logic_vector(p_TM_TXN_COUNTER_WIDTH - 1 downto 0);
+  signal w_txn_count_single_err : std_logic := '0';
+  signal w_txn_count_double_err : std_logic := '0';
 begin
 
   -- Controller selection: plain vs TMR
@@ -156,10 +166,35 @@ begin
       o_ham_double_err => w_ham_double_err
     );
 
+  w_txn_count_data_in <= std_logic_vector(unsigned(w_txn_count_data_out) + 1);
+
+  u_TM_TXN_COUNTER: entity work.hamming_register
+    generic map(
+      DATA_WIDTH     => p_TM_TXN_COUNTER_WIDTH,
+      HAMMING_ENABLE => p_USE_TM_TXN_COUNTER_HAMMING,
+      DETECT_DOUBLE  => p_USE_TM_HAMMING_DOUBLE_DETECT,
+      RESET_VALUE    => (p_TM_TXN_COUNTER_WIDTH - 1 downto 0 => '0'),
+      INJECT_ERROR   => false
+    )
+    port map(
+      correct_en_i => i_OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR,
+      write_en_i   => w_read_done,
+      data_i       => w_txn_count_data_in,
+      rstn_i       => ARESETn,
+      clk_i        => ACLK,
+      single_err_o => w_txn_count_single_err,
+      double_err_o => w_txn_count_double_err,
+      enc_data_o   => open,
+      data_o       => w_txn_count_data_out
+    );
+
   o_done <= w_read_done;
 
   -- obs to top
   o_OBS_TM_TMR_CTRL_ERROR        <= w_ctrl_tmr_err;
   o_OBS_TM_HAM_BUFFER_SINGLE_ERR <= w_ham_single_err;
   o_OBS_TM_HAM_BUFFER_DOUBLE_ERR <= w_ham_double_err;
+  o_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR <= w_txn_count_single_err;
+  o_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR <= w_txn_count_double_err;
+  o_TM_TRANSACTION_COUNT <= w_txn_count_data_out;
 end rtl;
