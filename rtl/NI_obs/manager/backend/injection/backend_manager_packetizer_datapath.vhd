@@ -42,21 +42,6 @@ architecture rtl of backend_manager_packetizer_datapath is
     signal w_FLIT_TRAILER : std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
 
 begin
-    u_MUX6: entity work.mux6
-        generic map(
-            p_DATA_WIDTH => c_FLIT_WIDTH
-        )
-        port map(
-            i_SELECTOR => i_FLIT_SELECTOR,
-            i_DATA_A   => w_FLIT_H_DEST,
-            i_DATA_B   => w_FLIT_H_SRC,
-            i_DATA_C   => w_FLIT_H_INTERFACE,
-            i_DATA_D   => w_FLIT_H_ADDRESS,
-            i_DATA_E   => w_FLIT_PAYLOAD,
-            i_DATA_F   => w_FLIT_TRAILER,
-            o_DATA     => o_FLIT
-        );
-
     w_FLIT_H_DEST      <= '1' & i_DEST_X & i_DEST_Y;
     w_FLIT_H_SRC       <= '0' & p_SRC_X  & p_SRC_Y;
     w_FLIT_H_INTERFACE <= '0' & "000000000000" & i_ID & i_LENGTH & i_BURST & "000" & i_OPC_SEND & "0";
@@ -64,4 +49,24 @@ begin
 
     w_FLIT_PAYLOAD <= '0' & i_DATA_SEND;
     w_FLIT_TRAILER <= '1' & i_CHECKSUM;
+
+    process (w_FLIT_H_DEST, w_FLIT_H_SRC, w_FLIT_H_INTERFACE, w_FLIT_H_ADDRESS, w_FLIT_PAYLOAD, w_FLIT_TRAILER, i_FLIT_SELECTOR)
+    begin
+        case i_FLIT_SELECTOR is
+            when "000" =>
+                o_FLIT <= w_FLIT_H_DEST;
+            when "001" =>
+                o_FLIT <= w_FLIT_H_SRC;
+            when "010" =>
+                o_FLIT <= w_FLIT_H_INTERFACE;
+            when "011" =>
+                o_FLIT <= w_FLIT_H_ADDRESS;
+            when "100" =>
+                o_FLIT <= w_FLIT_PAYLOAD;
+            when "101" =>
+                o_FLIT <= w_FLIT_TRAILER;
+            when others =>
+                o_FLIT <= (others => '0');
+        end case;
+    end process;
 end rtl;
