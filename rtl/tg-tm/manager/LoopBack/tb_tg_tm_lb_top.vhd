@@ -5,10 +5,31 @@ use IEEE.numeric_std.all;
 library std;
 use std.env.all;
 
-use work.xina_ft_pkg.all;
 use work.xina_ni_ft_pkg.all;
 
 entity tb_tg_tm_lb_top is
+  port(
+    -- TG correction enables
+    i_tg_ham_correct_enb : in std_logic := '1';
+    i_tg_tmr_correct_enb : in std_logic := '1';
+
+    -- Loopback correction enables
+    i_lb_ham_correct_enb : in std_logic := '1';
+    i_lb_tmr_correct_enb : in std_logic := '1';
+
+    -- NI frontend correction enables
+    i_obs_fe_inj_meta_hdr_correct_error : in std_logic := '1';
+    i_obs_fe_inj_addr_correct_error     : in std_logic := '1';
+
+    -- NI backend correction enables
+    i_obs_be_inj_ham_buffer_correct_error    : in std_logic := '1';
+    i_obs_be_inj_tmr_integrity_correct_error : in std_logic := '1';
+    i_obs_be_inj_tmr_flow_ctrl_correct_error : in std_logic := '1';
+    i_obs_be_inj_tmr_pktz_ctrl_correct_error : in std_logic := '1';
+    i_obs_be_rx_ham_buffer_correct_error     : in std_logic := '1';
+    i_obs_be_rx_tmr_integrity_correct_error  : in std_logic := '1';
+    i_obs_be_rx_tmr_flow_ctrl_correct_error  : in std_logic := '1'
+  );
 end entity;
 
 architecture tb of tb_tg_tm_lb_top is
@@ -46,9 +67,6 @@ architecture tb of tb_tg_tm_lb_top is
   signal tm_expected : std_logic_vector(c_AXI_DATA_WIDTH-1 downto 0);
 
   -- TG/TM observation + correction enables (wired at TB top)
-  signal tg_ham_correct_enb : std_logic := '1';
-  signal tg_tmr_correct_enb : std_logic := '1';
-
   signal tg_ctrl_tmr_err   : std_logic;
   signal tg_ham_single_err : std_logic;
   signal tg_ham_double_err : std_logic;
@@ -58,9 +76,6 @@ architecture tb of tb_tg_tm_lb_top is
   signal tm_ham_double_err : std_logic;
 
   -- LB observation + correction enables (NEW, wired at TB top like TG)
-  signal lb_ham_correct_enb : std_logic := '1';
-  signal lb_tmr_correct_enb : std_logic := '1';
-
   signal lb_ctrl_tmr_err   : std_logic;
   signal lb_ham_single_err : std_logic;
   signal lb_ham_double_err : std_logic;
@@ -108,8 +123,6 @@ architecture tb of tb_tg_tm_lb_top is
   signal lout_ack  : std_logic;
 
   -- NI ECC ports (top-level)
-  signal inj_correct_error : std_logic := '1';
-  signal rx_correct_error  : std_logic := '1';
   signal inj_single_err    : std_logic;
   signal inj_double_err    : std_logic;
   signal rx_single_err     : std_logic;
@@ -153,8 +166,8 @@ begin
       BREADY => bready,
 
       -- observation/correction
-      i_ham_correct_enb => tg_ham_correct_enb,
-      i_tmr_correct_enb => tg_tmr_correct_enb,
+      i_ham_correct_enb => i_tg_ham_correct_enb,
+      i_tmr_correct_enb => i_tg_tmr_correct_enb,
 
       o_ctrl_tmr_err   => tg_ctrl_tmr_err,
       o_ham_single_err => tg_ham_single_err,
@@ -258,18 +271,25 @@ begin
       o_OBS_FE_INJ_META_HDR_DOUBLE_ERR => open,
       o_OBS_FE_INJ_ADDR_SINGLE_ERR     => open,
       o_OBS_FE_INJ_ADDR_DOUBLE_ERR     => open,
+      i_OBS_FE_INJ_META_HDR_CORRECT_ERROR => i_obs_fe_inj_meta_hdr_correct_error,
+      i_OBS_FE_INJ_ADDR_CORRECT_ERROR     => i_obs_fe_inj_addr_correct_error,
 
-      i_OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR => inj_correct_error,
+      i_OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR => i_obs_be_inj_ham_buffer_correct_error,
       o_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR    => inj_single_err,
       o_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR    => inj_double_err,
+      i_OBS_BE_INJ_TMR_INTEGRITY_CORRECT_ERROR => i_obs_be_inj_tmr_integrity_correct_error,
+      i_OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR => i_obs_be_inj_tmr_flow_ctrl_correct_error,
+      i_OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR => i_obs_be_inj_tmr_pktz_ctrl_correct_error,
 
       o_OBS_BE_INJ_TMR_INTEGRITY_ERROR => open,
       o_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR => open,
       o_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR => open,
 
-      i_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR => rx_correct_error,
+      i_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR => i_obs_be_rx_ham_buffer_correct_error,
       o_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR    => rx_single_err,
       o_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR    => rx_double_err,
+      i_OBS_BE_RX_TMR_INTEGRITY_CORRECT_ERROR => i_obs_be_rx_tmr_integrity_correct_error,
+      i_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR => i_obs_be_rx_tmr_flow_ctrl_correct_error,
 
       o_OBS_BE_RX_TMR_INTEGRITY_ERROR => open,
       o_OBS_BE_RX_INTEGRITY_CORRUPT   => open,
@@ -294,8 +314,8 @@ begin
       lout_ack_i  => lout_ack,
 
       -- NEW: ECC observation/correction ports for loopback (same style as TG)
-      i_ham_correct_enb => lb_ham_correct_enb,
-      i_tmr_correct_enb => lb_tmr_correct_enb,
+      i_ham_correct_enb => i_lb_ham_correct_enb,
+      i_tmr_correct_enb => i_lb_tmr_correct_enb,
 
       o_ctrl_tmr_err   => lb_ctrl_tmr_err,
       o_ham_single_err => lb_ham_single_err,
@@ -310,13 +330,6 @@ begin
     ARESETn <= '0';
     tg_start <= '0';
     tm_start <= '0';
-
-    tg_ham_correct_enb <= '1';
-    tg_tmr_correct_enb <= '1';
-
-    -- LB enables default on (same behaviour as TG/TM)
-    lb_ham_correct_enb <= '1';
-    lb_tmr_correct_enb <= '1';
 
     wait for 50 ns;
     ARESETn <= '1';

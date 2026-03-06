@@ -85,6 +85,8 @@ entity top_manager is
         o_OBS_FE_INJ_META_HDR_DOUBLE_ERR: out std_logic;
         o_OBS_FE_INJ_ADDR_SINGLE_ERR    : out std_logic;
         o_OBS_FE_INJ_ADDR_DOUBLE_ERR    : out std_logic;
+        i_OBS_FE_INJ_META_HDR_CORRECT_ERROR: in std_logic := '1';
+        i_OBS_FE_INJ_ADDR_CORRECT_ERROR    : in std_logic := '1';
 
         -- XINA signals.
         l_in_data_i : out std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
@@ -171,7 +173,7 @@ begin
         generic map(
             p_USE_HAMMING_META_HDR  => (p_USE_HAMMING and p_USE_FE_INJ_META_HDR_HAMMING),
             p_USE_HAMMING_ADDR      => (p_USE_HAMMING and p_USE_FE_INJ_ADDR_HAMMING),
-            p_HAMMING_DETECT_DOUBLE => c_ENABLE_HAMMING_DOUBLE_DETECT
+            p_HAMMING_DETECT_DOUBLE => DETECT_DOUBLE
         )
         port map(
             -- AMBA AXI 5 signals.
@@ -222,6 +224,8 @@ begin
                 o_OBS_FE_INJ_META_HDR_DOUBLE_ERR => o_OBS_FE_INJ_META_HDR_DOUBLE_ERR,
                 o_OBS_FE_INJ_ADDR_SINGLE_ERR     => o_OBS_FE_INJ_ADDR_SINGLE_ERR,
                 o_OBS_FE_INJ_ADDR_DOUBLE_ERR     => o_OBS_FE_INJ_ADDR_DOUBLE_ERR,
+                i_OBS_FE_INJ_META_HDR_CORRECT_ERROR => i_OBS_FE_INJ_META_HDR_CORRECT_ERROR,
+                i_OBS_FE_INJ_ADDR_CORRECT_ERROR     => i_OBS_FE_INJ_ADDR_CORRECT_ERROR,
 
             -- Backend signals (injection).
             i_READY_SEND_PACKET => w_READY_SEND_PACKET,

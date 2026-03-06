@@ -45,6 +45,10 @@ entity frontend_manager_injection_dp is
     WVALID : in std_logic;
     WDATA  : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
+    -- Frontend injection Hamming correction enables
+    i_META_HDR_CORRECT_ERROR : in std_logic := '1';
+    i_ADDR_CORRECT_ERROR     : in std_logic := '1';
+
     -- Outputs to backend
     o_ADDR      : out std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
     o_ID        : out std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
@@ -154,7 +158,7 @@ begin
       INJECT_ERROR   => INJECT_ERROR_C
     )
     port map(
-      correct_en_i => '1',
+      correct_en_i => i_META_HDR_CORRECT_ERROR,
       write_en_i   => cap_hdr_w,
       data_i       => meta_hdr_in_w,
       rstn_i       => ARESETn,
@@ -177,7 +181,7 @@ begin
       INJECT_ERROR   => INJECT_ERROR_C
     )
     port map(
-      correct_en_i => '1',
+      correct_en_i => i_ADDR_CORRECT_ERROR,
       write_en_i   => cap_hdr_w,
       data_i       => addr_in_w,
       rstn_i       => ARESETn,

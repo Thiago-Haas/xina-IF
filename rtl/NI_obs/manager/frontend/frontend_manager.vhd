@@ -89,7 +89,11 @@ entity frontend_manager is
         o_OBS_FE_INJ_META_HDR_SINGLE_ERR : out std_logic;
         o_OBS_FE_INJ_META_HDR_DOUBLE_ERR : out std_logic;
         o_OBS_FE_INJ_ADDR_SINGLE_ERR     : out std_logic;
-        o_OBS_FE_INJ_ADDR_DOUBLE_ERR     : out std_logic
+        o_OBS_FE_INJ_ADDR_DOUBLE_ERR     : out std_logic;
+
+        -- Frontend injection Hamming correction enables (from top)
+        i_OBS_FE_INJ_META_HDR_CORRECT_ERROR : in std_logic := '1';
+        i_OBS_FE_INJ_ADDR_CORRECT_ERROR     : in std_logic := '1'
     );
 end frontend_manager;
 
@@ -167,6 +171,9 @@ begin
 
         WVALID => WVALID,
         WDATA  => WDATA,
+
+        i_META_HDR_CORRECT_ERROR => i_OBS_FE_INJ_META_HDR_CORRECT_ERROR,
+        i_ADDR_CORRECT_ERROR     => i_OBS_FE_INJ_ADDR_CORRECT_ERROR,
 
         o_ADDR      => o_ADDR,
         o_ID        => o_ID,
