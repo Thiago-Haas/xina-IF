@@ -81,10 +81,10 @@ entity frontend_manager is
         o_READY_RECEIVE_DATA  : out std_logic;
 
         -- Frontend injection Hamming detection flags (exported to top)
-        o_FE_INJ_META_HDR_SINGLE_ERR : out std_logic;
-        o_FE_INJ_META_HDR_DOUBLE_ERR : out std_logic;
-        o_FE_INJ_ADDR_SINGLE_ERR     : out std_logic;
-        o_FE_INJ_ADDR_DOUBLE_ERR     : out std_logic
+        o_OBS_FE_INJ_META_HDR_SINGLE_ERR : out std_logic;
+        o_OBS_FE_INJ_META_HDR_DOUBLE_ERR : out std_logic;
+        o_OBS_FE_INJ_ADDR_SINGLE_ERR     : out std_logic;
+        o_OBS_FE_INJ_ADDR_DOUBLE_ERR     : out std_logic
     );
 end frontend_manager;
 
@@ -217,9 +217,9 @@ begin
       );
 
     -- Export frontend injection Hamming detection flags
-    o_FE_INJ_META_HDR_SINGLE_ERR <= w_fe_inj_meta_hdr_single_err;
-    o_FE_INJ_META_HDR_DOUBLE_ERR <= w_fe_inj_meta_hdr_double_err;
-    o_FE_INJ_ADDR_SINGLE_ERR     <= w_fe_inj_addr_single_err;
-    o_FE_INJ_ADDR_DOUBLE_ERR     <= w_fe_inj_addr_double_err;
+    o_OBS_FE_INJ_META_HDR_SINGLE_ERR <= w_fe_inj_meta_hdr_single_err;
+    o_OBS_FE_INJ_META_HDR_DOUBLE_ERR <= w_fe_inj_meta_hdr_double_err;
+    o_OBS_FE_INJ_ADDR_SINGLE_ERR     <= w_fe_inj_addr_single_err;
+    o_OBS_FE_INJ_ADDR_DOUBLE_ERR     <= w_fe_inj_addr_double_err;
 
 end rtl;

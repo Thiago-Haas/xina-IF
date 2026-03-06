@@ -253,14 +253,27 @@ begin
 
       corrupt_packet => open,
 
-      -- ECC ports
-      i_INJ_CORRECT_ERROR => inj_correct_error,
-      o_INJ_SINGLE_ERR    => inj_single_err,
-      o_INJ_DOUBLE_ERR    => inj_double_err,
+      -- Observability/ECC ports
+      o_OBS_FE_INJ_META_HDR_SINGLE_ERR => open,
+      o_OBS_FE_INJ_META_HDR_DOUBLE_ERR => open,
+      o_OBS_FE_INJ_ADDR_SINGLE_ERR     => open,
+      o_OBS_FE_INJ_ADDR_DOUBLE_ERR     => open,
 
-      i_RX_CORRECT_ERROR  => rx_correct_error,
-      o_RX_SINGLE_ERR     => rx_single_err,
-      o_RX_DOUBLE_ERR     => rx_double_err
+      i_OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR => inj_correct_error,
+      o_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR    => inj_single_err,
+      o_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR    => inj_double_err,
+
+      o_OBS_BE_INJ_TMR_INTEGRITY_ERROR => open,
+      o_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR => open,
+      o_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR => open,
+
+      i_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR => rx_correct_error,
+      o_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR    => rx_single_err,
+      o_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR    => rx_double_err,
+
+      o_OBS_BE_RX_TMR_INTEGRITY_ERROR => open,
+      o_OBS_BE_RX_INTEGRITY_CORRUPT   => open,
+      o_OBS_BE_RX_TMR_FLOW_CTRL_ERROR => open
     );
 
   -- Loopback

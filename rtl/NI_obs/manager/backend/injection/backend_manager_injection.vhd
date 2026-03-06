@@ -45,24 +45,24 @@ entity backend_manager_injection is
         l_in_ack_o : in std_logic;
 
         -- Hamming (new buffer ports) - EXTERNAL
-        i_CORRECT_ERROR : in  std_logic;
-        o_SINGLE_ERR    : out std_logic;
-        o_DOUBLE_ERR    : out std_logic;
+        i_OBS_INJ_HAM_BUFFER_CORRECT_ERROR : in  std_logic;
+        o_OBS_INJ_HAM_BUFFER_SINGLE_ERR    : out std_logic;
+        o_OBS_INJ_HAM_BUFFER_DOUBLE_ERR    : out std_logic;
 
         -- Injection integrity (checksum) TMR (integrity_control_send_tmr)
         -- Meaningful when (p_USE_INTEGRITY and p_USE_TMR_INTEGRITY) = TRUE.
-        i_INJ_INTEGRITY_CORRECT_ERROR : in  std_logic := '0';
-        o_INJ_INTEGRITY_TMR_ERR       : out std_logic := '0';
+        i_OBS_INJ_TMR_INTEGRITY_CORRECT_ERROR : in  std_logic := '0';
+        o_OBS_INJ_TMR_INTEGRITY_ERROR       : out std_logic := '0';
 
         -- Injection flow control TMR (send_control_tmr)
         -- Meaningful when p_USE_TMR_FLOW = TRUE.
-        i_INJ_FLOW_CTRL_CORRECT_ERROR : in  std_logic := '0';
-        o_INJ_FLOW_CTRL_TMR_ERR       : out std_logic := '0';
+        i_OBS_INJ_TMR_FLOW_CTRL_CORRECT_ERROR : in  std_logic := '0';
+        o_OBS_INJ_TMR_FLOW_CTRL_ERROR       : out std_logic := '0';
 
         -- Injection packetizer control TMR (backend_manager_packetizer_control_tmr)
         -- Meaningful when p_USE_TMR_PACKETIZER = TRUE.
-        i_INJ_PKTZ_CTRL_CORRECT_ERROR : in  std_logic := '0';
-        o_INJ_PKTZ_CTRL_TMR_ERR       : out std_logic := '0'
+        i_OBS_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR : in  std_logic := '0';
+        o_OBS_INJ_TMR_PKTZ_CTRL_ERROR       : out std_logic := '0'
     );
 end backend_manager_injection;
 
@@ -82,8 +82,8 @@ architecture rtl of backend_manager_injection is
     signal w_ADD: std_logic;
     signal w_CHECKSUM: std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
     signal w_INTEGRITY_RESETn: std_logic;
-    signal w_INJ_INTEGRITY_TMR_ERR: std_logic;
-    signal w_INJ_PKTZ_CTRL_TMR_ERR: std_logic;
+    signal w_OBS_INJ_TMR_INTEGRITY_ERROR: std_logic;
+    signal w_OBS_INJ_TMR_PKTZ_CTRL_ERROR: std_logic;
 
     -- FIFO.
     signal w_WRITE_BUFFER   : std_logic;
@@ -126,8 +126,8 @@ begin
                 o_ADD              => w_ADD,
                 o_INTEGRITY_RESETn => w_INTEGRITY_RESETn,
 
-                correct_error_i => i_INJ_PKTZ_CTRL_CORRECT_ERROR,
-                error_o         => w_INJ_PKTZ_CTRL_TMR_ERR
+                correct_error_i => i_OBS_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR,
+                error_o         => w_OBS_INJ_TMR_PKTZ_CTRL_ERROR
             );
     else generate
         u_PACKETIZER_CONTROL_NORMAL: entity work.backend_manager_packetizer_control
@@ -151,8 +151,8 @@ begin
                 o_INTEGRITY_RESETn => w_INTEGRITY_RESETn
             );
 
-        w_INJ_INTEGRITY_TMR_ERR <= '0';
-        w_INJ_PKTZ_CTRL_TMR_ERR   <= '0';
+        w_OBS_INJ_TMR_INTEGRITY_ERROR <= '0';
+        w_OBS_INJ_TMR_PKTZ_CTRL_ERROR   <= '0';
     end generate;
 
     u_PACKETIZER_DATAPATH: entity work.backend_manager_packetizer_datapath
@@ -191,8 +191,8 @@ begin
 
                 o_CHECKSUM      => w_CHECKSUM,
 
-                correct_error_i => i_INJ_INTEGRITY_CORRECT_ERROR,
-                error_o         => w_INJ_INTEGRITY_TMR_ERR
+                correct_error_i => i_OBS_INJ_TMR_INTEGRITY_CORRECT_ERROR,
+                error_o         => w_OBS_INJ_TMR_INTEGRITY_ERROR
             );
     elsif (p_USE_INTEGRITY) generate
         u_INTEGRITY_CONTROL_SEND_NORMAL: entity work.integrity_control_send
@@ -209,8 +209,8 @@ begin
 
     u_INTEGRITY_CONTROL_SEND_DISABLE:
     if (not p_USE_INTEGRITY) generate
-        w_INJ_INTEGRITY_TMR_ERR <= '0';
-        w_INJ_PKTZ_CTRL_TMR_ERR   <= '0';
+        w_OBS_INJ_TMR_INTEGRITY_ERROR <= '0';
+        w_OBS_INJ_TMR_PKTZ_CTRL_ERROR   <= '0';
     end generate;
 
     u_BUFFER_FIFO:
@@ -236,9 +236,9 @@ begin
                 i_DATA     => w_FLIT,
 
                 -- Hamming status/control (EXTERNAL WIRES)
-                correct_error_i => i_CORRECT_ERROR,
-                single_err_o    => o_SINGLE_ERR,
-                double_err_o    => o_DOUBLE_ERR
+                correct_error_i => i_OBS_INJ_HAM_BUFFER_CORRECT_ERROR,
+                single_err_o    => o_OBS_INJ_HAM_BUFFER_SINGLE_ERR,
+                double_err_o    => o_OBS_INJ_HAM_BUFFER_DOUBLE_ERR
             );
     else generate
         u_BUFFER_FIFO_NORMAL: entity work.buffer_fifo
@@ -273,8 +273,8 @@ begin
                 l_in_val_i => l_in_val_i,
                 l_in_ack_o => l_in_ack_o,
 
-                correct_error_i => i_INJ_FLOW_CTRL_CORRECT_ERROR,
-                error_o         => o_INJ_FLOW_CTRL_TMR_ERR
+                correct_error_i => i_OBS_INJ_TMR_FLOW_CTRL_CORRECT_ERROR,
+                error_o         => o_OBS_INJ_TMR_FLOW_CTRL_ERROR
             );
     else generate
         u_SEND_CONTROL_NORMAL: entity work.send_control
@@ -289,12 +289,12 @@ begin
                 l_in_ack_o => l_in_ack_o
             );
 
-        o_INJ_FLOW_CTRL_TMR_ERR <= '0';
+        o_OBS_INJ_TMR_FLOW_CTRL_ERROR <= '0';
     end generate;
 
     w_ARESET <= not ARESETn;
 
-    o_INJ_INTEGRITY_TMR_ERR <= w_INJ_INTEGRITY_TMR_ERR;
-    o_INJ_PKTZ_CTRL_TMR_ERR   <= w_INJ_PKTZ_CTRL_TMR_ERR;
+    o_OBS_INJ_TMR_INTEGRITY_ERROR <= w_OBS_INJ_TMR_INTEGRITY_ERROR;
+    o_OBS_INJ_TMR_PKTZ_CTRL_ERROR   <= w_OBS_INJ_TMR_PKTZ_CTRL_ERROR;
 
 end rtl;

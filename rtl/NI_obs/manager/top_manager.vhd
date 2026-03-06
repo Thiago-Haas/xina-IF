@@ -65,10 +65,10 @@ entity top_manager is
             CORRUPT_PACKET: out std_logic;
 
         -- Frontend injection Hamming detection flags
-        o_FE_INJ_META_HDR_SINGLE_ERR: out std_logic;
-        o_FE_INJ_META_HDR_DOUBLE_ERR: out std_logic;
-        o_FE_INJ_ADDR_SINGLE_ERR    : out std_logic;
-        o_FE_INJ_ADDR_DOUBLE_ERR    : out std_logic;
+        o_OBS_FE_INJ_META_HDR_SINGLE_ERR: out std_logic;
+        o_OBS_FE_INJ_META_HDR_DOUBLE_ERR: out std_logic;
+        o_OBS_FE_INJ_ADDR_SINGLE_ERR    : out std_logic;
+        o_OBS_FE_INJ_ADDR_DOUBLE_ERR    : out std_logic;
 
         -- XINA signals.
         l_in_data_i : out std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
@@ -80,27 +80,36 @@ entity top_manager is
 
         -- Hamming/ECC ports (EXTERNAL, through backend_manager)
         -- Injection side
-        i_INJ_CORRECT_ERROR : in  std_logic;
-        o_INJ_SINGLE_ERR    : out std_logic;
-        o_INJ_DOUBLE_ERR    : out std_logic;
+        i_OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR : in  std_logic;
+        o_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR    : out std_logic;
+        o_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR    : out std_logic;
 
         -- Injection integrity checker (backend_manager_injection / integrity_control_send_tmr)
-        i_BE_INJ_INTEGRITY_CORRECT_ERROR : in  std_logic := '0';
-        o_BE_INJ_INTEGRITY_TMR_ERR       : out std_logic;
+        i_OBS_BE_INJ_TMR_INTEGRITY_CORRECT_ERROR : in  std_logic := '0';
+        o_OBS_BE_INJ_TMR_INTEGRITY_ERROR       : out std_logic;
 
         -- Injection flow control TMR (backend_manager_injection / send_control_tmr)
-        i_BE_INJ_FLOW_CTRL_CORRECT_ERROR : in  std_logic := '0';
-        o_BE_INJ_FLOW_CTRL_TMR_ERR       : out std_logic;
+        i_OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR : in  std_logic := '0';
+        o_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR       : out std_logic;
 
 
         -- Injection packetizer control TMR detection (backend_manager_packetizer_control_tmr)
-        i_BE_INJ_PKTZ_CTRL_CORRECT_ERROR : in  std_logic := '0';
-        o_BE_INJ_PKTZ_CTRL_TMR_ERR       : out std_logic;
+        i_OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR : in  std_logic := '0';
+        o_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR       : out std_logic;
 
         -- Reception side
-        i_RX_CORRECT_ERROR  : in  std_logic;
-        o_RX_SINGLE_ERR     : out std_logic;
-        o_RX_DOUBLE_ERR     : out std_logic
+        i_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR  : in  std_logic;
+        o_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR     : out std_logic;
+        o_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR     : out std_logic;
+
+        -- Reception integrity checker (backend_manager_reception / integrity_control_receive_tmr)
+        i_OBS_BE_RX_TMR_INTEGRITY_CORRECT_ERROR : in  std_logic := '0';
+        o_OBS_BE_RX_TMR_INTEGRITY_ERROR       : out std_logic;
+        o_OBS_BE_RX_INTEGRITY_CORRUPT       : out std_logic;
+
+        -- Reception flow control TMR (backend_manager_reception / receive_control_tmr)
+        i_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR : in  std_logic := '0';
+        o_OBS_BE_RX_TMR_FLOW_CTRL_ERROR       : out std_logic
     );
 end top_manager;
 
@@ -134,9 +143,12 @@ architecture rtl of top_manager is
 
     signal w_CORRUPT_RECEIVE: std_logic;
 
-    signal w_INJ_INTEGRITY_TMR_ERR : std_logic;
-    signal w_INJ_FLOW_CTRL_TMR_ERR : std_logic;
-    signal w_INJ_PKTZ_CTRL_TMR_ERR : std_logic;
+    signal w_OBS_BE_INJ_TMR_INTEGRITY_ERROR : std_logic;
+    signal w_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR : std_logic;
+    signal w_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR : std_logic;
+    signal w_OBS_BE_RX_TMR_INTEGRITY_ERROR  : std_logic;
+    signal w_OBS_BE_RX_INTEGRITY_CORRUPT    : std_logic;
+    signal w_OBS_BE_RX_TMR_FLOW_CTRL_ERROR  : std_logic;
 
 begin
     u_FRONTEND: entity work.frontend_manager
@@ -185,10 +197,10 @@ begin
                 CORRUPT_PACKET => CORRUPT_PACKET,
 
                 -- Frontend injection Hamming detection flags
-                o_FE_INJ_META_HDR_SINGLE_ERR => o_FE_INJ_META_HDR_SINGLE_ERR,
-                o_FE_INJ_META_HDR_DOUBLE_ERR => o_FE_INJ_META_HDR_DOUBLE_ERR,
-                o_FE_INJ_ADDR_SINGLE_ERR     => o_FE_INJ_ADDR_SINGLE_ERR,
-                o_FE_INJ_ADDR_DOUBLE_ERR     => o_FE_INJ_ADDR_DOUBLE_ERR,
+                o_OBS_FE_INJ_META_HDR_SINGLE_ERR => o_OBS_FE_INJ_META_HDR_SINGLE_ERR,
+                o_OBS_FE_INJ_META_HDR_DOUBLE_ERR => o_OBS_FE_INJ_META_HDR_DOUBLE_ERR,
+                o_OBS_FE_INJ_ADDR_SINGLE_ERR     => o_OBS_FE_INJ_ADDR_SINGLE_ERR,
+                o_OBS_FE_INJ_ADDR_DOUBLE_ERR     => o_OBS_FE_INJ_ADDR_DOUBLE_ERR,
 
             -- Backend signals (injection).
             i_READY_SEND_PACKET => w_READY_SEND_PACKET,
@@ -276,26 +288,36 @@ begin
             l_out_ack_i  => l_out_ack_i,
 
             -- Hamming/ECC ports (EXTERNAL WIRES)
-            i_INJ_CORRECT_ERROR => i_INJ_CORRECT_ERROR,
-            o_INJ_SINGLE_ERR    => o_INJ_SINGLE_ERR,
-            o_INJ_DOUBLE_ERR    => o_INJ_DOUBLE_ERR,
+            i_OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR => i_OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR,
+            o_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR    => o_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR,
+            o_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR    => o_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR,
 
-            i_INJ_INTEGRITY_CORRECT_ERROR => i_BE_INJ_INTEGRITY_CORRECT_ERROR,
-            o_INJ_INTEGRITY_TMR_ERR       => w_INJ_INTEGRITY_TMR_ERR,
+            i_OBS_BE_INJ_TMR_INTEGRITY_CORRECT_ERROR => i_OBS_BE_INJ_TMR_INTEGRITY_CORRECT_ERROR,
+            o_OBS_BE_INJ_TMR_INTEGRITY_ERROR         => w_OBS_BE_INJ_TMR_INTEGRITY_ERROR,
 
-            i_INJ_FLOW_CTRL_CORRECT_ERROR => i_BE_INJ_FLOW_CTRL_CORRECT_ERROR,
-            o_INJ_FLOW_CTRL_TMR_ERR       => w_INJ_FLOW_CTRL_TMR_ERR,
+            i_OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR => i_OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR,
+            o_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR         => w_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR,
 
-            i_INJ_PKTZ_CTRL_CORRECT_ERROR => i_BE_INJ_PKTZ_CTRL_CORRECT_ERROR,
-            o_INJ_PKTZ_CTRL_TMR_ERR       => w_INJ_PKTZ_CTRL_TMR_ERR,
+            i_OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR => i_OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR,
+            o_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR         => w_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR,
 
-            i_RX_CORRECT_ERROR  => i_RX_CORRECT_ERROR,
-            o_RX_SINGLE_ERR     => o_RX_SINGLE_ERR,
-            o_RX_DOUBLE_ERR     => o_RX_DOUBLE_ERR
+            i_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR  => i_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR,
+            o_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR     => o_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR,
+            o_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR     => o_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR,
+
+            i_OBS_BE_RX_TMR_INTEGRITY_CORRECT_ERROR => i_OBS_BE_RX_TMR_INTEGRITY_CORRECT_ERROR,
+            o_OBS_BE_RX_TMR_INTEGRITY_ERROR         => w_OBS_BE_RX_TMR_INTEGRITY_ERROR,
+            o_OBS_BE_RX_INTEGRITY_CORRUPT           => w_OBS_BE_RX_INTEGRITY_CORRUPT,
+
+            i_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR => i_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR,
+            o_OBS_BE_RX_TMR_FLOW_CTRL_ERROR         => w_OBS_BE_RX_TMR_FLOW_CTRL_ERROR
         );
 
-    o_BE_INJ_INTEGRITY_TMR_ERR <= w_INJ_INTEGRITY_TMR_ERR;
-    o_BE_INJ_FLOW_CTRL_TMR_ERR <= w_INJ_FLOW_CTRL_TMR_ERR;
-    o_BE_INJ_PKTZ_CTRL_TMR_ERR <= w_INJ_PKTZ_CTRL_TMR_ERR;
+    o_OBS_BE_INJ_TMR_INTEGRITY_ERROR <= w_OBS_BE_INJ_TMR_INTEGRITY_ERROR;
+    o_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR <= w_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR;
+    o_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR <= w_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR;
+    o_OBS_BE_RX_TMR_INTEGRITY_ERROR  <= w_OBS_BE_RX_TMR_INTEGRITY_ERROR;
+    o_OBS_BE_RX_INTEGRITY_CORRUPT    <= w_OBS_BE_RX_INTEGRITY_CORRUPT;
+    o_OBS_BE_RX_TMR_FLOW_CTRL_ERROR  <= w_OBS_BE_RX_TMR_FLOW_CTRL_ERROR;
 
 end rtl;
