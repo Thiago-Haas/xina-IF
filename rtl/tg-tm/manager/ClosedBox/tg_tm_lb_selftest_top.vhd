@@ -100,7 +100,11 @@ begin
       TM_STARTING_SEED => tm_seed,
 
       o_tm_mismatch       => tm_mismatch,
-      o_tm_expected_value => open
+      o_tm_expected_value => open,
+
+      o_OBS_TG_TMR_CTRL_ERROR        => open,
+      o_OBS_TG_HAM_BUFFER_SINGLE_ERR => open,
+      o_OBS_TG_HAM_BUFFER_DOUBLE_ERR => open
     );
 
 end architecture;

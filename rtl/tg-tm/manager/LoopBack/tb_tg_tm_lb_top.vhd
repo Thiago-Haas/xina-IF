@@ -10,8 +10,8 @@ use work.xina_ni_ft_pkg.all;
 entity tb_tg_tm_lb_top is
   port(
     -- TG correction enables
-    i_tg_ham_correct_enb : in std_logic := '1';
-    i_tg_tmr_correct_enb : in std_logic := '1';
+    i_obs_tg_ham_buffer_correct_error : in std_logic := '1';
+    i_obs_tg_tmr_ctrl_correct_error   : in std_logic := '1';
 
     -- Loopback correction enables
     i_lb_ham_correct_enb : in std_logic := '1';
@@ -166,12 +166,12 @@ begin
       BREADY => bready,
 
       -- observation/correction
-      i_ham_correct_enb => i_tg_ham_correct_enb,
-      i_tmr_correct_enb => i_tg_tmr_correct_enb,
+      i_OBS_TG_HAM_BUFFER_CORRECT_ERROR => i_obs_tg_ham_buffer_correct_error,
+      i_OBS_TG_TMR_CTRL_CORRECT_ERROR   => i_obs_tg_tmr_ctrl_correct_error,
 
-      o_ctrl_tmr_err   => tg_ctrl_tmr_err,
-      o_ham_single_err => tg_ham_single_err,
-      o_ham_double_err => tg_ham_double_err
+      o_OBS_TG_TMR_CTRL_ERROR        => tg_ctrl_tmr_err,
+      o_OBS_TG_HAM_BUFFER_SINGLE_ERR => tg_ham_single_err,
+      o_OBS_TG_HAM_BUFFER_DOUBLE_ERR => tg_ham_double_err
     );
 
   -- TM

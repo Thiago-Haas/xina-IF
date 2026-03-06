@@ -8,12 +8,10 @@ use work.xina_ni_ft_pkg.all;
 -- Minimal top for the write phase (AW/W/B).
 entity tg_write_top is
   generic (
-
-    CTRL_TMR_ENABLE        : boolean := True;
-    HAMMING_ENABLE         : boolean := True;
-    HAMMING_DETECT_DOUBLE  : boolean := True;
-    
-    HAMMING_INJECT_ERROR   : boolean := false
+    p_USE_TG_CTRL_TMR              : boolean := c_ENABLE_TG_CTRL_TMR;
+    p_USE_TG_HAMMING               : boolean := c_ENABLE_TG_HAMMING_PROTECTION;
+    p_USE_TG_HAMMING_DOUBLE_DETECT : boolean := c_ENABLE_TG_HAMMING_DOUBLE_DETECT;
+    p_USE_TG_HAMMING_INJECT_ERROR  : boolean := c_ENABLE_TG_HAMMING_INJECT_ERROR
   );
   port(
     ACLK    : in std_logic;
@@ -48,12 +46,12 @@ entity tg_write_top is
     BREADY : out std_logic;
 
     -- observation (routed to top)
-    i_ham_correct_enb: in std_logic;
-    i_tmr_correct_enb: in std_logic;
-    
-    o_ctrl_tmr_err   : out std_logic;
-    o_ham_single_err : out std_logic;
-    o_ham_double_err : out std_logic
+    i_OBS_TG_HAM_BUFFER_CORRECT_ERROR : in std_logic := '1';
+    i_OBS_TG_TMR_CTRL_CORRECT_ERROR   : in std_logic := '1';
+
+    o_OBS_TG_TMR_CTRL_ERROR        : out std_logic;
+    o_OBS_TG_HAM_BUFFER_SINGLE_ERR : out std_logic;
+    o_OBS_TG_HAM_BUFFER_DOUBLE_ERR : out std_logic
   );
 end tg_write_top;
 
@@ -67,12 +65,12 @@ architecture rtl of tg_write_top is
   signal w_ham_double_err : std_logic;
 begin
 
-  gen_ctrl_plain : if (not CTRL_TMR_ENABLE) generate
+  gen_ctrl_plain : if (not p_USE_TG_CTRL_TMR) generate
     
     w_ctrl_tmr_err <= '0';
   end generate;
 
-  gen_ctrl_tmr : if CTRL_TMR_ENABLE generate
+  gen_ctrl_tmr : if p_USE_TG_CTRL_TMR generate
   begin
     u_CTRL_TMR: entity work.tg_write_controller_tmr
       port map(
@@ -94,16 +92,16 @@ begin
         o_seed_pulse      => w_seed_pulse,
         o_wbeat_pulse     => w_wbeat_pulse,
 
-        i_correct_enable=> i_tmr_correct_enb,
+        i_correct_enable=> i_OBS_TG_TMR_CTRL_CORRECT_ERROR,
         error_o         => w_ctrl_tmr_err
       );
   end generate;
 
   u_DP: entity work.tg_write_datapath
     generic map(
-      HAMMING_ENABLE        => HAMMING_ENABLE,
-      HAMMING_DETECT_DOUBLE => HAMMING_DETECT_DOUBLE,
-      HAMMING_INJECT_ERROR  => HAMMING_INJECT_ERROR
+      p_USE_HAMMING               => p_USE_TG_HAMMING,
+      p_USE_HAMMING_DOUBLE_DETECT => p_USE_TG_HAMMING_DOUBLE_DETECT,
+      p_USE_HAMMING_INJECT_ERROR  => p_USE_TG_HAMMING_INJECT_ERROR
     )
     port map(
       ACLK    => ACLK,
@@ -124,7 +122,7 @@ begin
 
       WLAST   => WLAST,
       
-      i_correct_enable => i_ham_correct_enb,
+      i_correct_enable => i_OBS_TG_HAM_BUFFER_CORRECT_ERROR,
       o_single_err => w_ham_single_err,
       o_double_err => w_ham_double_err
     );
@@ -132,7 +130,7 @@ begin
   o_done <= w_write_done;
 
   -- observation outputs
-  o_ctrl_tmr_err   <= w_ctrl_tmr_err;
-  o_ham_single_err <= w_ham_single_err;
-  o_ham_double_err <= w_ham_double_err;
+  o_OBS_TG_TMR_CTRL_ERROR        <= w_ctrl_tmr_err;
+  o_OBS_TG_HAM_BUFFER_SINGLE_ERR <= w_ham_single_err;
+  o_OBS_TG_HAM_BUFFER_DOUBLE_ERR <= w_ham_double_err;
 end rtl;

@@ -39,6 +39,12 @@ package xina_ni_ft_pkg is
     constant c_ENABLE_MGR_BE_RX_FLOW_CTRL_TMR      : boolean := true;
     constant c_ENABLE_MGR_BE_RX_INTEGRITY_CHECK    : boolean := true;
     constant c_ENABLE_MGR_BE_RX_INTEGRITY_TMR      : boolean := true;
+
+    -- TG ECC/TMR toggles.
+    constant c_ENABLE_TG_CTRL_TMR                : boolean := true;
+    constant c_ENABLE_TG_HAMMING_PROTECTION      : boolean := true;
+    constant c_ENABLE_TG_HAMMING_DOUBLE_DETECT   : boolean := true;
+    constant c_ENABLE_TG_HAMMING_INJECT_ERROR    : boolean := false;
     
     -- XINA SETTINGS
     constant flow_ft_c          : natural  := 1; -- 1 for TMR, 0 for Standard

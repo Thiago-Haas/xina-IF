@@ -15,7 +15,13 @@ use work.xina_ni_ft_pkg.all;
 --   NI response (top_manager.l_out_*) <- loopback.lout_*
 entity tg_tm_lb_top is
   generic (
-    p_MEM_ADDR_BITS : natural := 10
+    p_MEM_ADDR_BITS : natural := 10;
+
+    -- TG ECC/TMR enables (follows NI p_USE_* scheme)
+    p_USE_TG_CTRL_TMR              : boolean := c_ENABLE_TG_CTRL_TMR;
+    p_USE_TG_HAMMING               : boolean := c_ENABLE_TG_HAMMING_PROTECTION;
+    p_USE_TG_HAMMING_DOUBLE_DETECT : boolean := c_ENABLE_TG_HAMMING_DOUBLE_DETECT;
+    p_USE_TG_HAMMING_INJECT_ERROR  : boolean := c_ENABLE_TG_HAMMING_INJECT_ERROR
   );
   port(
     ACLK    : in  std_logic;
@@ -35,7 +41,14 @@ entity tg_tm_lb_top is
 
     -- TM observability
     o_tm_mismatch       : out std_logic;
-    o_tm_expected_value : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0)
+    o_tm_expected_value : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+
+    -- TG observability (same naming pattern as NI OBS ports)
+    i_OBS_TG_HAM_BUFFER_CORRECT_ERROR : in  std_logic := '1';
+    i_OBS_TG_TMR_CTRL_CORRECT_ERROR   : in  std_logic := '1';
+    o_OBS_TG_TMR_CTRL_ERROR           : out std_logic;
+    o_OBS_TG_HAM_BUFFER_SINGLE_ERR    : out std_logic;
+    o_OBS_TG_HAM_BUFFER_DOUBLE_ERR    : out std_logic
   );
 end entity;
 
@@ -89,6 +102,12 @@ begin
 
   -- TG
   u_tg: entity work.tg_write_top
+    generic map(
+      p_USE_TG_CTRL_TMR              => p_USE_TG_CTRL_TMR,
+      p_USE_TG_HAMMING               => p_USE_TG_HAMMING,
+      p_USE_TG_HAMMING_DOUBLE_DETECT => p_USE_TG_HAMMING_DOUBLE_DETECT,
+      p_USE_TG_HAMMING_INJECT_ERROR  => p_USE_TG_HAMMING_INJECT_ERROR
+    )
     port map(
       ACLK    => ACLK,
       ARESETn => ARESETn,
@@ -119,9 +138,12 @@ begin
       BVALID  => bvalid,
       BREADY  => bready,
 
-      -- Keep correction enabled by default in this closed/flat wrapper
-      i_ham_correct_enb => '1',
-      i_tmr_correct_enb => '1'
+      i_OBS_TG_HAM_BUFFER_CORRECT_ERROR => i_OBS_TG_HAM_BUFFER_CORRECT_ERROR,
+      i_OBS_TG_TMR_CTRL_CORRECT_ERROR   => i_OBS_TG_TMR_CTRL_CORRECT_ERROR,
+
+      o_OBS_TG_TMR_CTRL_ERROR        => o_OBS_TG_TMR_CTRL_ERROR,
+      o_OBS_TG_HAM_BUFFER_SINGLE_ERR => o_OBS_TG_HAM_BUFFER_SINGLE_ERR,
+      o_OBS_TG_HAM_BUFFER_DOUBLE_ERR => o_OBS_TG_HAM_BUFFER_DOUBLE_ERR
 
       --o_lfsr_value => tg_lfsr_value
     );

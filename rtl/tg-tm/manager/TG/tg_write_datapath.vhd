@@ -13,9 +13,9 @@ use work.xina_ni_ft_pkg.all;
 --  * Seed is inserted into LSBs of an all-zero init word
 entity tg_write_datapath is
   generic (
-    HAMMING_ENABLE        : boolean := false;
-    HAMMING_DETECT_DOUBLE : boolean := true;
-    HAMMING_INJECT_ERROR  : boolean := false
+    p_USE_HAMMING               : boolean := c_ENABLE_TG_HAMMING_PROTECTION;
+    p_USE_HAMMING_DOUBLE_DETECT : boolean := c_ENABLE_TG_HAMMING_DOUBLE_DETECT;
+    p_USE_HAMMING_INJECT_ERROR  : boolean := c_ENABLE_TG_HAMMING_INJECT_ERROR
   );
   port(
     ACLK    : in  std_logic;
@@ -51,7 +51,7 @@ architecture rtl of tg_write_datapath is
   signal w_single_err : std_logic;
   signal w_double_err : std_logic;
   -- Not used externally; handy for debug visibility if you ever need it.
-  signal w_enc_state  : std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, HAMMING_DETECT_DOUBLE) - 1 downto 0);
+  signal w_enc_state  : std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
   signal w_init_value : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
   signal w_lfsr_input : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
@@ -104,10 +104,10 @@ begin
   u_STATE_REG : entity work.hamming_register
     generic map(
       DATA_WIDTH     => c_AXI_DATA_WIDTH,
-      HAMMING_ENABLE => HAMMING_ENABLE,
-      DETECT_DOUBLE  => HAMMING_DETECT_DOUBLE,
+      HAMMING_ENABLE => p_USE_HAMMING,
+      DETECT_DOUBLE  => p_USE_HAMMING_DOUBLE_DETECT,
       RESET_VALUE    => (c_AXI_DATA_WIDTH-1 downto 0 => '0'),
-      INJECT_ERROR   => HAMMING_INJECT_ERROR
+      INJECT_ERROR   => p_USE_HAMMING_INJECT_ERROR
     )
     port map(
       correct_en_i => i_correct_enable,
