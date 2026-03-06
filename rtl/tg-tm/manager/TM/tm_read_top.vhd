@@ -11,10 +11,10 @@ entity tm_read_top is
     p_INIT_VALUE : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
 
     -- optional hardening (mirrors TG)
-    CTRL_TMR_ENABLE        : boolean := true;
-    HAMMING_ENABLE         : boolean := true;
-    HAMMING_DETECT_DOUBLE  : boolean := true;
-    HAMMING_INJECT_ERROR   : boolean := false
+    p_USE_TM_CTRL_TMR              : boolean := c_ENABLE_TM_CTRL_TMR;
+    p_USE_TM_HAMMING               : boolean := c_ENABLE_TM_HAMMING_PROTECTION;
+    p_USE_TM_HAMMING_DOUBLE_DETECT : boolean := c_ENABLE_TM_HAMMING_DOUBLE_DETECT;
+    p_USE_TM_HAMMING_INJECT_ERROR  : boolean := c_ENABLE_TM_HAMMING_INJECT_ERROR
   );
   port(
     ACLK    : in std_logic;
@@ -52,9 +52,11 @@ entity tm_read_top is
     o_expected_value : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
     -- observation
-    o_ctrl_tmr_err   : out std_logic;
-    o_ham_single_err : out std_logic;
-    o_ham_double_err : out std_logic
+    i_OBS_TM_HAM_BUFFER_CORRECT_ERROR : in  std_logic := '1';
+    i_OBS_TM_TMR_CTRL_CORRECT_ERROR   : in  std_logic := '1';
+    o_OBS_TM_TMR_CTRL_ERROR           : out std_logic;
+    o_OBS_TM_HAM_BUFFER_SINGLE_ERR    : out std_logic;
+    o_OBS_TM_HAM_BUFFER_DOUBLE_ERR    : out std_logic
   );
 end tm_read_top;
 
@@ -71,7 +73,7 @@ architecture rtl of tm_read_top is
 begin
 
   -- Controller selection: plain vs TMR
-  gen_ctrl_plain : if not CTRL_TMR_ENABLE generate
+  gen_ctrl_plain : if not p_USE_TM_CTRL_TMR generate
     u_CTRL: entity work.tm_read_controller
       port map(
         ACLK    => ACLK,
@@ -95,7 +97,7 @@ begin
     w_ctrl_tmr_err <= '0';
   end generate;
 
-  gen_ctrl_tmr : if CTRL_TMR_ENABLE generate
+  gen_ctrl_tmr : if p_USE_TM_CTRL_TMR generate
     u_CTRL_TMR: entity work.tm_read_controller_tmr
       port map(
         ACLK    => ACLK,
@@ -116,7 +118,7 @@ begin
         o_rbeat_hs_comb   => w_r_hs_comb,
         o_seed_pulse      => w_seed_pulse,
 
-        i_correct_enable  => '1',
+        i_correct_enable  => i_OBS_TM_TMR_CTRL_CORRECT_ERROR,
         error_o           => w_ctrl_tmr_err
       );
   end generate;
@@ -124,9 +126,9 @@ begin
   u_DP: entity work.tm_read_datapath
     generic map(
       p_INIT_VALUE           => p_INIT_VALUE,
-      HAMMING_ENABLE         => HAMMING_ENABLE,
-      HAMMING_DETECT_DOUBLE  => HAMMING_DETECT_DOUBLE,
-      HAMMING_INJECT_ERROR   => HAMMING_INJECT_ERROR
+      p_USE_TM_HAMMING               => p_USE_TM_HAMMING,
+      p_USE_TM_HAMMING_DOUBLE_DETECT => p_USE_TM_HAMMING_DOUBLE_DETECT,
+      p_USE_TM_HAMMING_INJECT_ERROR  => p_USE_TM_HAMMING_INJECT_ERROR
     )
     port map(
       ACLK    => ACLK,
@@ -149,6 +151,7 @@ begin
       o_mismatch       => o_mismatch,
       o_expected_value => o_expected_value,
 
+      i_OBS_TM_HAM_BUFFER_CORRECT_ERROR => i_OBS_TM_HAM_BUFFER_CORRECT_ERROR,
       o_ham_single_err => w_ham_single_err,
       o_ham_double_err => w_ham_double_err
     );
@@ -156,7 +159,7 @@ begin
   o_done <= w_read_done;
 
   -- obs to top
-  o_ctrl_tmr_err   <= w_ctrl_tmr_err;
-  o_ham_single_err <= w_ham_single_err;
-  o_ham_double_err <= w_ham_double_err;
+  o_OBS_TM_TMR_CTRL_ERROR        <= w_ctrl_tmr_err;
+  o_OBS_TM_HAM_BUFFER_SINGLE_ERR <= w_ham_single_err;
+  o_OBS_TM_HAM_BUFFER_DOUBLE_ERR <= w_ham_double_err;
 end rtl;

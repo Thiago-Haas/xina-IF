@@ -21,7 +21,13 @@ entity tg_tm_lb_top is
     p_USE_TG_CTRL_TMR              : boolean := c_ENABLE_TG_CTRL_TMR;
     p_USE_TG_HAMMING               : boolean := c_ENABLE_TG_HAMMING_PROTECTION;
     p_USE_TG_HAMMING_DOUBLE_DETECT : boolean := c_ENABLE_TG_HAMMING_DOUBLE_DETECT;
-    p_USE_TG_HAMMING_INJECT_ERROR  : boolean := c_ENABLE_TG_HAMMING_INJECT_ERROR
+    p_USE_TG_HAMMING_INJECT_ERROR  : boolean := c_ENABLE_TG_HAMMING_INJECT_ERROR;
+
+    -- TM ECC/TMR enables (follows NI p_USE_* scheme)
+    p_USE_TM_CTRL_TMR              : boolean := c_ENABLE_TM_CTRL_TMR;
+    p_USE_TM_HAMMING               : boolean := c_ENABLE_TM_HAMMING_PROTECTION;
+    p_USE_TM_HAMMING_DOUBLE_DETECT : boolean := c_ENABLE_TM_HAMMING_DOUBLE_DETECT;
+    p_USE_TM_HAMMING_INJECT_ERROR  : boolean := c_ENABLE_TM_HAMMING_INJECT_ERROR
   );
   port(
     ACLK    : in  std_logic;
@@ -42,6 +48,11 @@ entity tg_tm_lb_top is
     -- TM observability
     o_tm_mismatch       : out std_logic;
     o_tm_expected_value : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+    i_OBS_TM_HAM_BUFFER_CORRECT_ERROR : in  std_logic := '1';
+    i_OBS_TM_TMR_CTRL_CORRECT_ERROR   : in  std_logic := '1';
+    o_OBS_TM_TMR_CTRL_ERROR           : out std_logic;
+    o_OBS_TM_HAM_BUFFER_SINGLE_ERR    : out std_logic;
+    o_OBS_TM_HAM_BUFFER_DOUBLE_ERR    : out std_logic;
 
     -- TG observability (same naming pattern as NI OBS ports)
     i_OBS_TG_HAM_BUFFER_CORRECT_ERROR : in  std_logic := '1';
@@ -150,6 +161,12 @@ begin
 
   -- TM
   u_tm: entity work.tm_read_top
+    generic map(
+      p_USE_TM_CTRL_TMR              => p_USE_TM_CTRL_TMR,
+      p_USE_TM_HAMMING               => p_USE_TM_HAMMING,
+      p_USE_TM_HAMMING_DOUBLE_DETECT => p_USE_TM_HAMMING_DOUBLE_DETECT,
+      p_USE_TM_HAMMING_INJECT_ERROR  => p_USE_TM_HAMMING_INJECT_ERROR
+    )
     port map(
       ACLK    => ACLK,
       ARESETn => ARESETn,
@@ -175,7 +192,13 @@ begin
       RRESP  => rresp,
 
       o_mismatch       => o_tm_mismatch,
-      o_expected_value => o_tm_expected_value
+      o_expected_value => o_tm_expected_value,
+
+      i_OBS_TM_HAM_BUFFER_CORRECT_ERROR => i_OBS_TM_HAM_BUFFER_CORRECT_ERROR,
+      i_OBS_TM_TMR_CTRL_CORRECT_ERROR   => i_OBS_TM_TMR_CTRL_CORRECT_ERROR,
+      o_OBS_TM_TMR_CTRL_ERROR           => o_OBS_TM_TMR_CTRL_ERROR,
+      o_OBS_TM_HAM_BUFFER_SINGLE_ERR    => o_OBS_TM_HAM_BUFFER_SINGLE_ERR,
+      o_OBS_TM_HAM_BUFFER_DOUBLE_ERR    => o_OBS_TM_HAM_BUFFER_DOUBLE_ERR
     );
 
   -- Single NI manager

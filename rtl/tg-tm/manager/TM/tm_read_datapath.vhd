@@ -21,9 +21,9 @@ entity tm_read_datapath is
     p_INIT_VALUE: std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
 
     -- optional Hamming-protected register for the expected word
-    HAMMING_ENABLE        : boolean := false;
-    HAMMING_DETECT_DOUBLE : boolean := true;
-    HAMMING_INJECT_ERROR  : boolean := false
+    p_USE_TM_HAMMING               : boolean := c_ENABLE_TM_HAMMING_PROTECTION;
+    p_USE_TM_HAMMING_DOUBLE_DETECT : boolean := c_ENABLE_TM_HAMMING_DOUBLE_DETECT;
+    p_USE_TM_HAMMING_INJECT_ERROR  : boolean := c_ENABLE_TM_HAMMING_INJECT_ERROR
   );
   port(
     ACLK    : in  std_logic;
@@ -52,6 +52,7 @@ entity tm_read_datapath is
     o_expected_value : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
     -- observation (only meaningful when HAMMING_ENABLE=true)
+    i_OBS_TM_HAM_BUFFER_CORRECT_ERROR : in  std_logic := '1';
     o_ham_single_err : out std_logic;
     o_ham_double_err : out std_logic
   );
@@ -147,17 +148,17 @@ begin
   w_expected_d <= w_lfsr_next;
 
   -- Optional Hamming register for the expected word
-  gen_ham : if HAMMING_ENABLE generate
+  gen_ham : if p_USE_TM_HAMMING generate
     u_EXP_HAM : entity work.hamming_register
       generic map(
         DATA_WIDTH     => c_AXI_DATA_WIDTH,
         HAMMING_ENABLE => true,
-        DETECT_DOUBLE  => HAMMING_DETECT_DOUBLE,
+        DETECT_DOUBLE  => p_USE_TM_HAMMING_DOUBLE_DETECT,
         RESET_VALUE    => (c_AXI_DATA_WIDTH-1 downto 0 => '0'),
-        INJECT_ERROR   => HAMMING_INJECT_ERROR
+        INJECT_ERROR   => p_USE_TM_HAMMING_INJECT_ERROR
       )
       port map(
-        correct_en_i => '1',
+        correct_en_i => i_OBS_TM_HAM_BUFFER_CORRECT_ERROR,
         write_en_i   => w_exp_we,
         data_i       => w_expected_d,
         rstn_i       => ARESETn,
@@ -169,7 +170,7 @@ begin
       );
   end generate;
 
-  gen_no_ham : if not HAMMING_ENABLE generate
+  gen_no_ham : if not p_USE_TM_HAMMING generate
     w_ham_single <= '0';
     w_ham_double <= '0';
     process(ACLK)

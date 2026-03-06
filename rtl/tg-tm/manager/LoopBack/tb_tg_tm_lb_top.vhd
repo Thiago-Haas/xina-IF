@@ -13,6 +13,10 @@ entity tb_tg_tm_lb_top is
     i_obs_tg_ham_buffer_correct_error : in std_logic := '1';
     i_obs_tg_tmr_ctrl_correct_error   : in std_logic := '1';
 
+    -- TM correction enables
+    i_obs_tm_ham_buffer_correct_error : in std_logic := '1';
+    i_obs_tm_tmr_ctrl_correct_error   : in std_logic := '1';
+
     -- Loopback correction enables
     i_lb_ham_correct_enb : in std_logic := '1';
     i_lb_tmr_correct_enb : in std_logic := '1';
@@ -208,9 +212,11 @@ begin
       o_expected_value => tm_expected,
 
       -- observation
-      o_ctrl_tmr_err   => tm_ctrl_tmr_err,
-      o_ham_single_err => tm_ham_single_err,
-      o_ham_double_err => tm_ham_double_err
+      i_OBS_TM_HAM_BUFFER_CORRECT_ERROR => i_obs_tm_ham_buffer_correct_error,
+      i_OBS_TM_TMR_CTRL_CORRECT_ERROR   => i_obs_tm_tmr_ctrl_correct_error,
+      o_OBS_TM_TMR_CTRL_ERROR           => tm_ctrl_tmr_err,
+      o_OBS_TM_HAM_BUFFER_SINGLE_ERR    => tm_ham_single_err,
+      o_OBS_TM_HAM_BUFFER_DOUBLE_ERR    => tm_ham_double_err
     );
 
   -- NI manager
