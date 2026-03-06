@@ -35,6 +35,7 @@ package xina_ni_ft_pkg is
 
     -- Manager backend reception ECC/TMR toggles.
     constant c_ENABLE_MGR_BE_RX_BUFFER_HAMMING     : boolean := true;
+    constant c_ENABLE_MGR_BE_RX_INTERFACE_HDR_HAMMING : boolean := true;
     constant c_ENABLE_MGR_BE_RX_DEPKTZ_CTRL_TMR    : boolean := true;
     constant c_ENABLE_MGR_BE_RX_FLOW_CTRL_TMR      : boolean := true;
     constant c_ENABLE_MGR_BE_RX_INTEGRITY_CHECK    : boolean := true;

@@ -19,6 +19,7 @@ entity backend_manager is
         p_USE_RX_FLOW_CTRL_TMR   : boolean;
         p_USE_RX_INTEGRITY_CHECK : boolean;
         p_USE_RX_INTEGRITY_TMR   : boolean;
+        p_USE_RX_INTERFACE_HDR_HAMMING : boolean;
         p_USE_RX_BUFFER_HAMMING  : boolean;
 
         DETECT_DOUBLE       : boolean
@@ -91,6 +92,9 @@ entity backend_manager is
         i_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR  : in  std_logic;
         o_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR     : out std_logic;
         o_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR     : out std_logic;
+        i_OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR : in std_logic := '1';
+        o_OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR    : out std_logic;
+        o_OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR    : out std_logic;
 
         -- Reception integrity checker (integrity_control_receive_hamming)
         i_OBS_BE_RX_TMR_INTEGRITY_CORRECT_ERROR : in  std_logic := '0';
@@ -168,6 +172,7 @@ begin
             p_USE_RX_FLOW_CTRL_TMR  => p_USE_RX_FLOW_CTRL_TMR,
             p_USE_RX_INTEGRITY_CHECK=> p_USE_RX_INTEGRITY_CHECK,
             p_USE_RX_INTEGRITY_TMR  => p_USE_RX_INTEGRITY_TMR,
+            p_USE_RX_INTERFACE_HDR_HAMMING => p_USE_RX_INTERFACE_HDR_HAMMING,
             p_USE_RX_BUFFER_HAMMING => p_USE_RX_BUFFER_HAMMING,
 
             DETECT_DOUBLE        => DETECT_DOUBLE
@@ -197,6 +202,9 @@ begin
             i_OBS_RX_HAM_BUFFER_CORRECT_ERROR => i_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR,
             o_OBS_RX_HAM_BUFFER_SINGLE_ERR    => o_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR,
             o_OBS_RX_HAM_BUFFER_DOUBLE_ERR    => o_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR,
+            i_OBS_RX_HAM_INTERFACE_HDR_CORRECT_ERROR => i_OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR,
+            o_OBS_RX_HAM_INTERFACE_HDR_SINGLE_ERR    => o_OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR,
+            o_OBS_RX_HAM_INTERFACE_HDR_DOUBLE_ERR    => o_OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR,
 
             o_OBS_RX_INTEGRITY_CORRUPT            => o_OBS_BE_RX_INTEGRITY_CORRUPT,
             i_OBS_RX_TMR_INTEGRITY_CORRECT_ERROR  => i_OBS_BE_RX_TMR_INTEGRITY_CORRECT_ERROR,

@@ -127,6 +127,8 @@ begin
 
       o_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR => open,
       o_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR => open,
+      o_OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR => open,
+      o_OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR => open,
       o_OBS_BE_RX_TMR_INTEGRITY_ERROR   => open,
       o_OBS_BE_RX_INTEGRITY_CORRUPT     => open,
       o_OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR => open,

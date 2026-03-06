@@ -28,6 +28,7 @@ entity top_manager is
         p_USE_BE_INJ_INTEGRITY_TMR     : boolean := c_ENABLE_MGR_BE_INJ_INTEGRITY_TMR;
 
         p_USE_BE_RX_BUFFER_HAMMING     : boolean := c_ENABLE_MGR_BE_RX_BUFFER_HAMMING;
+        p_USE_BE_RX_INTERFACE_HDR_HAMMING : boolean := c_ENABLE_MGR_BE_RX_INTERFACE_HDR_HAMMING;
         p_USE_BE_RX_DEPKTZ_CTRL_TMR    : boolean := c_ENABLE_MGR_BE_RX_DEPKTZ_CTRL_TMR;
         p_USE_BE_RX_FLOW_CTRL_TMR      : boolean := c_ENABLE_MGR_BE_RX_FLOW_CTRL_TMR;
         p_USE_BE_RX_INTEGRITY_CHECK    : boolean := c_ENABLE_MGR_BE_RX_INTEGRITY_CHECK;
@@ -122,6 +123,9 @@ entity top_manager is
         i_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR  : in  std_logic;
         o_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR     : out std_logic;
         o_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR     : out std_logic;
+        i_OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR : in std_logic := '1';
+        o_OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR    : out std_logic;
+        o_OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR    : out std_logic;
 
         -- Reception integrity checker (backend_manager_reception / integrity_control_receive_hamming)
         i_OBS_BE_RX_TMR_INTEGRITY_CORRECT_ERROR : in  std_logic := '0';
@@ -278,6 +282,7 @@ begin
             p_USE_RX_FLOW_CTRL_TMR   => (p_USE_TMR_FLOW and p_USE_BE_RX_FLOW_CTRL_TMR),
             p_USE_RX_INTEGRITY_CHECK => (p_USE_INTEGRITY and p_USE_BE_RX_INTEGRITY_CHECK),
             p_USE_RX_INTEGRITY_TMR   => (p_USE_TMR_INTEGRITY and p_USE_BE_RX_INTEGRITY_TMR),
+            p_USE_RX_INTERFACE_HDR_HAMMING => (p_USE_HAMMING and p_USE_BE_RX_INTERFACE_HDR_HAMMING),
             p_USE_RX_BUFFER_HAMMING  => (p_USE_HAMMING and p_USE_BE_RX_BUFFER_HAMMING),
 
             DETECT_DOUBLE        => DETECT_DOUBLE
@@ -343,6 +348,9 @@ begin
             i_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR  => i_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR,
             o_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR     => o_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR,
             o_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR     => o_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR,
+            i_OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR => i_OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR,
+            o_OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR    => o_OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR,
+            o_OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR    => o_OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR,
 
             i_OBS_BE_RX_TMR_INTEGRITY_CORRECT_ERROR => i_OBS_BE_RX_TMR_INTEGRITY_CORRECT_ERROR,
             o_OBS_BE_RX_TMR_INTEGRITY_ERROR         => w_OBS_BE_RX_TMR_INTEGRITY_ERROR,

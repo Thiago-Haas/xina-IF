@@ -32,6 +32,7 @@ entity tb_tg_tm_lb_top is
     i_obs_be_inj_tmr_flow_ctrl_correct_error : in std_logic := '1';
     i_obs_be_inj_tmr_pktz_ctrl_correct_error : in std_logic := '1';
     i_obs_be_rx_ham_buffer_correct_error     : in std_logic := '1';
+    i_obs_be_rx_ham_interface_hdr_correct_error : in std_logic := '1';
     i_obs_be_rx_tmr_integrity_correct_error  : in std_logic := '1';
     i_obs_be_rx_tmr_flow_ctrl_correct_error  : in std_logic := '1'
   );
@@ -298,6 +299,9 @@ begin
       i_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR => i_obs_be_rx_ham_buffer_correct_error,
       o_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR    => rx_single_err,
       o_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR    => rx_double_err,
+      i_OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR => i_obs_be_rx_ham_interface_hdr_correct_error,
+      o_OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR    => open,
+      o_OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR    => open,
       i_OBS_BE_RX_TMR_INTEGRITY_CORRECT_ERROR => i_obs_be_rx_tmr_integrity_correct_error,
       i_OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR => '1',
       i_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR => i_obs_be_rx_tmr_flow_ctrl_correct_error,

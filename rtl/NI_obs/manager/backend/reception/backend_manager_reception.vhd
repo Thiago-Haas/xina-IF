@@ -11,6 +11,7 @@ entity backend_manager_reception is
         p_USE_RX_FLOW_CTRL_TMR  : boolean;
         p_USE_RX_INTEGRITY_CHECK: boolean;
         p_USE_RX_INTEGRITY_TMR  : boolean;
+        p_USE_RX_INTERFACE_HDR_HAMMING: boolean;
         p_USE_RX_BUFFER_HAMMING : boolean;
 
         DETECT_DOUBLE : boolean
@@ -44,6 +45,10 @@ entity backend_manager_reception is
         i_OBS_RX_HAM_BUFFER_CORRECT_ERROR : in  std_logic;
         o_OBS_RX_HAM_BUFFER_SINGLE_ERR    : out std_logic;
         o_OBS_RX_HAM_BUFFER_DOUBLE_ERR    : out std_logic;
+        -- Hamming (interface header register) - EXTERNAL
+        i_OBS_RX_HAM_INTERFACE_HDR_CORRECT_ERROR : in  std_logic := '1';
+        o_OBS_RX_HAM_INTERFACE_HDR_SINGLE_ERR    : out std_logic := '0';
+        o_OBS_RX_HAM_INTERFACE_HDR_DOUBLE_ERR    : out std_logic := '0';
 
         -- Integrity receive checker (integrity_control_receive[_tmr]) - EXTERNAL
         -- Meaningful when p_USE_RX_INTEGRITY_CHECK = TRUE.
@@ -88,14 +93,23 @@ architecture rtl of backend_manager_reception is
     signal w_READ_OK_BUFFER : std_logic;
 
 begin
-    -- Registering headers.
-    -- TODO: Apply ECC
-    registering: process(all)
-    begin
-        if (rising_edge(ACLK) and w_WRITE_H_INTERFACE_REG = '1') then
-            w_H_INTERFACE <= w_FLIT;
-        end if;
-    end process registering;
+    u_H_INTERFACE_REG: entity work.backend_manager_reception_h_interface_reg
+        generic map(
+            p_USE_HAMMING           => p_USE_RX_INTERFACE_HDR_HAMMING,
+            p_HAMMING_DETECT_DOUBLE => DETECT_DOUBLE
+        )
+        port map(
+            ACLK    => ACLK,
+            ARESETn => ARESETn,
+
+            i_WRITE_EN => w_WRITE_H_INTERFACE_REG,
+            i_DATA     => w_FLIT,
+            o_DATA     => w_H_INTERFACE,
+
+            i_OBS_HAM_CORRECT_ERROR => i_OBS_RX_HAM_INTERFACE_HDR_CORRECT_ERROR,
+            o_OBS_HAM_SINGLE_ERR    => o_OBS_RX_HAM_INTERFACE_HDR_SINGLE_ERR,
+            o_OBS_HAM_DOUBLE_ERR    => o_OBS_RX_HAM_INTERFACE_HDR_DOUBLE_ERR
+        );
 
     o_ID_RECEIVE     <= w_H_INTERFACE(19 downto 15);
     o_STATUS_RECEIVE <= w_H_INTERFACE(4 downto 2);
