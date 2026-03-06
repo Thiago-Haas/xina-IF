@@ -7,6 +7,11 @@ use work.xina_ni_ft_pkg.all;
 -- Frontend manager: top-level wrapper keeping the ORIGINAL interface/behaviour,
 -- while splitting logic into injection/ejection + controller/datapath.
 entity frontend_manager is
+    generic(
+        p_USE_HAMMING_META_HDR : boolean := c_ENABLE_MGR_FE_INJ_META_HDR_HAMMING;
+        p_USE_HAMMING_ADDR     : boolean := c_ENABLE_MGR_FE_INJ_ADDR_HAMMING;
+        p_HAMMING_DETECT_DOUBLE: boolean := c_ENABLE_HAMMING_DOUBLE_DETECT
+    );
     port(
         -- AMBA AXI 5 signals.
         ACLK: in std_logic;
@@ -138,6 +143,11 @@ begin
       );
 
     u_injection_dp: entity work.frontend_manager_injection_dp
+      generic map(
+        p_USE_HAMMING_META_HDR => p_USE_HAMMING_META_HDR,
+        p_USE_HAMMING_ADDR     => p_USE_HAMMING_ADDR,
+        p_HAMMING_DETECT_DOUBLE=> p_HAMMING_DETECT_DOUBLE
+      )
       port map(
         ACLK    => ACLK,
         ARESETn => ARESETn,

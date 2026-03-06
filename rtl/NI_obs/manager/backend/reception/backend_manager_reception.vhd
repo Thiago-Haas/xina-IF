@@ -6,12 +6,12 @@ use work.xina_ni_ft_pkg.all;
 
 entity backend_manager_reception is
     generic(
-        p_BUFFER_DEPTH      : positive;
-        p_USE_TMR_PACKETIZER: boolean;
-        p_USE_TMR_FLOW      : boolean;
-        p_USE_TMR_INTEGRITY : boolean;
-        p_USE_HAMMING       : boolean;
-        p_USE_INTEGRITY     : boolean;
+        p_BUFFER_DEPTH           : positive;
+        p_USE_RX_DEPKTZ_CTRL_TMR: boolean;
+        p_USE_RX_FLOW_CTRL_TMR  : boolean;
+        p_USE_RX_INTEGRITY_CHECK: boolean;
+        p_USE_RX_INTEGRITY_TMR  : boolean;
+        p_USE_RX_BUFFER_HAMMING : boolean;
 
         DETECT_DOUBLE : boolean
     );
@@ -46,14 +46,14 @@ entity backend_manager_reception is
         o_OBS_RX_HAM_BUFFER_DOUBLE_ERR    : out std_logic;
 
         -- Integrity receive checker (integrity_control_receive[_tmr]) - EXTERNAL
-        -- Meaningful when p_USE_INTEGRITY = TRUE.
+        -- Meaningful when p_USE_RX_INTEGRITY_CHECK = TRUE.
         o_OBS_RX_INTEGRITY_CORRUPT        : out std_logic := '0';
-        -- Meaningful when (p_USE_INTEGRITY and p_USE_TMR_INTEGRITY) = TRUE.
+        -- Meaningful when (p_USE_RX_INTEGRITY_CHECK and p_USE_RX_INTEGRITY_TMR) = TRUE.
         i_OBS_RX_TMR_INTEGRITY_CORRECT_ERROR  : in  std_logic := '0';
         o_OBS_RX_TMR_INTEGRITY_ERROR        : out std_logic := '0';
 
         -- Receive flow control TMR (receive_control_tmr) - EXTERNAL
-        -- Meaningful when p_USE_TMR_FLOW = TRUE.
+        -- Meaningful when p_USE_RX_FLOW_CTRL_TMR = TRUE.
         i_OBS_RX_TMR_FLOW_CTRL_CORRECT_ERROR : in  std_logic := '0';
         o_OBS_RX_TMR_FLOW_CTRL_ERROR       : out std_logic := '0'
     );
@@ -99,7 +99,7 @@ begin
     o_DATA_RECEIVE   <= w_FLIT(31 downto 0);
 
     u_DEPACKETIZER_CONTROL:
-    if (p_USE_TMR_PACKETIZER) generate
+    if (p_USE_RX_DEPKTZ_CTRL_TMR) generate
         u_DEPACKETIZER_CONTROL_TMR: entity work.backend_manager_depacketizer_control_tmr
             port map(
                 ACLK    => ACLK,
@@ -144,7 +144,7 @@ begin
     end generate;
 
     u_INTEGRITY_CONTROL_RECEIVE:
-    if (p_USE_INTEGRITY and p_USE_TMR_INTEGRITY) generate
+    if (p_USE_RX_INTEGRITY_CHECK and p_USE_RX_INTEGRITY_TMR) generate
         u_INTEGRITY_CONTROL_RECEIVE_TMR: entity work.integrity_control_receive_tmr
             port map(
                 ACLK    => ACLK,
@@ -161,7 +161,7 @@ begin
                 correct_error_i => i_OBS_RX_TMR_INTEGRITY_CORRECT_ERROR,
                 error_o         => o_OBS_RX_TMR_INTEGRITY_ERROR
             );
-    elsif (p_USE_INTEGRITY) generate
+    elsif (p_USE_RX_INTEGRITY_CHECK) generate
         u_INTEGRITY_CONTROL_RECEIVE_NORMAL: entity work.integrity_control_receive
             port map(
                 ACLK    => ACLK,
@@ -187,7 +187,7 @@ begin
     o_OBS_RX_INTEGRITY_CORRUPT <= w_OBS_RX_INTEGRITY_CORRUPT;
 
     u_BUFFER_FIFO:
-    if (p_USE_HAMMING) generate
+    if (p_USE_RX_BUFFER_HAMMING) generate
         u_BUFFER_FIFO_HAM: entity work.buffer_fifo_ham
             generic map(
                 p_DATA_WIDTH   => c_FLIT_WIDTH,
@@ -234,7 +234,7 @@ begin
     end generate;
 
     u_RECEIVE_CONTROL:
-    if (p_USE_TMR_FLOW) generate
+    if (p_USE_RX_FLOW_CTRL_TMR) generate
         u_RECEIVE_CONTROL_TMR: entity work.receive_control_tmr
             port map(
                 ACLK    => ACLK,

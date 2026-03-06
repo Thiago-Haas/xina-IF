@@ -16,6 +16,11 @@ use work.hamming_pkg.all;
 --  * *_r  : registered elements
 --  * *_w  : combinational wires
 entity frontend_manager_injection_dp is
+  generic(
+    p_USE_HAMMING_META_HDR : boolean := c_ENABLE_MGR_FE_INJ_META_HDR_HAMMING;
+    p_USE_HAMMING_ADDR     : boolean := c_ENABLE_MGR_FE_INJ_ADDR_HAMMING;
+    p_HAMMING_DETECT_DOUBLE: boolean := c_ENABLE_HAMMING_DOUBLE_DETECT
+  );
   port(
     -- AMBA AXI clock / reset.
     ACLK    : in  std_logic;
@@ -61,10 +66,7 @@ end entity;
 architecture rtl of frontend_manager_injection_dp is
 
   ---------------------------------------------------------------------------------------------
-  -- Hamming configuration (simple constants; can be promoted to generics later)
-
-  constant HAMMING_ENABLE_C : boolean := true;
-  constant DETECT_DOUBLE_C  : boolean := true;
+  -- Hamming configuration
   constant INJECT_ERROR_C   : boolean := false;
 
   ---------------------------------------------------------------------------------------------
@@ -146,8 +148,8 @@ begin
   u_meta_hdr_hamming_reg : hamming_register
     generic map(
       DATA_WIDTH     => META_HDR_WIDTH_C,
-      HAMMING_ENABLE => HAMMING_ENABLE_C,
-      DETECT_DOUBLE  => DETECT_DOUBLE_C,
+      HAMMING_ENABLE => p_USE_HAMMING_META_HDR,
+      DETECT_DOUBLE  => p_HAMMING_DETECT_DOUBLE,
       RESET_VALUE    => (META_HDR_WIDTH_C - 1 downto 0 => '0'),
       INJECT_ERROR   => INJECT_ERROR_C
     )
@@ -169,8 +171,8 @@ begin
   u_addr_hamming_reg : hamming_register
     generic map(
       DATA_WIDTH     => c_AXI_ADDR_WIDTH,
-      HAMMING_ENABLE => HAMMING_ENABLE_C,
-      DETECT_DOUBLE  => DETECT_DOUBLE_C,
+      HAMMING_ENABLE => p_USE_HAMMING_ADDR,
+      DETECT_DOUBLE  => p_HAMMING_DETECT_DOUBLE,
       RESET_VALUE    => (c_AXI_ADDR_WIDTH - 1 downto 0 => '0'),
       INJECT_ERROR   => INJECT_ERROR_C
     )

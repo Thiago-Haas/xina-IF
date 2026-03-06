@@ -11,13 +11,29 @@ entity top_manager is
         p_SRC_Y: std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0) := (others => '0');
 
         p_BUFFER_DEPTH      : positive := c_BUFFER_DEPTH;
-        p_USE_TMR_PACKETIZER: boolean  := c_USE_TMR_PACKETIZER;
-        p_USE_TMR_FLOW      : boolean  := c_USE_TMR_FLOW;
-        p_USE_TMR_INTEGRITY : boolean  := c_USE_TMR_INTEGRITY;
-        p_USE_HAMMING       : boolean  := c_USE_HAMMING;
-        p_USE_INTEGRITY     : boolean  := c_USE_INTEGRITY;
+        p_USE_TMR_PACKETIZER: boolean  := c_ENABLE_TMR_PACKETIZER;
+        p_USE_TMR_FLOW      : boolean  := c_ENABLE_TMR_FLOW_CTRL;
+        p_USE_TMR_INTEGRITY : boolean  := c_ENABLE_TMR_INTEGRITY_CHECK;
+        p_USE_HAMMING       : boolean  := c_ENABLE_HAMMING_PROTECTION;
+        p_USE_INTEGRITY     : boolean  := c_ENABLE_INTEGRITY_CHECK;
 
-        DETECT_DOUBLE       : boolean  := TRUE
+        -- Fine-grain ECC/TMR enables (manager path)
+        p_USE_FE_INJ_META_HDR_HAMMING : boolean := c_ENABLE_MGR_FE_INJ_META_HDR_HAMMING;
+        p_USE_FE_INJ_ADDR_HAMMING     : boolean := c_ENABLE_MGR_FE_INJ_ADDR_HAMMING;
+
+        p_USE_BE_INJ_BUFFER_HAMMING    : boolean := c_ENABLE_MGR_BE_INJ_BUFFER_HAMMING;
+        p_USE_BE_INJ_PKTZ_CTRL_TMR     : boolean := c_ENABLE_MGR_BE_INJ_PKTZ_CTRL_TMR;
+        p_USE_BE_INJ_FLOW_CTRL_TMR     : boolean := c_ENABLE_MGR_BE_INJ_FLOW_CTRL_TMR;
+        p_USE_BE_INJ_INTEGRITY_CHECK   : boolean := c_ENABLE_MGR_BE_INJ_INTEGRITY_CHECK;
+        p_USE_BE_INJ_INTEGRITY_TMR     : boolean := c_ENABLE_MGR_BE_INJ_INTEGRITY_TMR;
+
+        p_USE_BE_RX_BUFFER_HAMMING     : boolean := c_ENABLE_MGR_BE_RX_BUFFER_HAMMING;
+        p_USE_BE_RX_DEPKTZ_CTRL_TMR    : boolean := c_ENABLE_MGR_BE_RX_DEPKTZ_CTRL_TMR;
+        p_USE_BE_RX_FLOW_CTRL_TMR      : boolean := c_ENABLE_MGR_BE_RX_FLOW_CTRL_TMR;
+        p_USE_BE_RX_INTEGRITY_CHECK    : boolean := c_ENABLE_MGR_BE_RX_INTEGRITY_CHECK;
+        p_USE_BE_RX_INTEGRITY_TMR      : boolean := c_ENABLE_MGR_BE_RX_INTEGRITY_TMR;
+
+        DETECT_DOUBLE       : boolean  := c_ENABLE_HAMMING_DOUBLE_DETECT
     );
 
     port(
@@ -152,6 +168,11 @@ architecture rtl of top_manager is
 
 begin
     u_FRONTEND: entity work.frontend_manager
+        generic map(
+            p_USE_HAMMING_META_HDR  => (p_USE_HAMMING and p_USE_FE_INJ_META_HDR_HAMMING),
+            p_USE_HAMMING_ADDR      => (p_USE_HAMMING and p_USE_FE_INJ_ADDR_HAMMING),
+            p_HAMMING_DETECT_DOUBLE => c_ENABLE_HAMMING_DOUBLE_DETECT
+        )
         port map(
             -- AMBA AXI 5 signals.
             ACLK    => ACLK,
@@ -237,12 +258,17 @@ begin
             p_SRC_X => p_SRC_X,
             p_SRC_Y => p_SRC_Y,
 
-            p_BUFFER_DEPTH       => p_BUFFER_DEPTH,
-            p_USE_TMR_PACKETIZER => p_USE_TMR_PACKETIZER,
-            p_USE_TMR_FLOW       => p_USE_TMR_FLOW,
-            p_USE_TMR_INTEGRITY  => p_USE_TMR_INTEGRITY,
-            p_USE_HAMMING        => p_USE_HAMMING,
-            p_USE_INTEGRITY      => p_USE_INTEGRITY,
+            p_BUFFER_DEPTH            => p_BUFFER_DEPTH,
+            p_USE_INJ_PKTZ_CTRL_TMR  => (p_USE_TMR_PACKETIZER and p_USE_BE_INJ_PKTZ_CTRL_TMR),
+            p_USE_INJ_FLOW_CTRL_TMR  => (p_USE_TMR_FLOW and p_USE_BE_INJ_FLOW_CTRL_TMR),
+            p_USE_INJ_INTEGRITY_CHECK=> (p_USE_INTEGRITY and p_USE_BE_INJ_INTEGRITY_CHECK),
+            p_USE_INJ_INTEGRITY_TMR  => (p_USE_TMR_INTEGRITY and p_USE_BE_INJ_INTEGRITY_TMR),
+            p_USE_INJ_BUFFER_HAMMING => (p_USE_HAMMING and p_USE_BE_INJ_BUFFER_HAMMING),
+            p_USE_RX_DEPKTZ_CTRL_TMR => (p_USE_TMR_PACKETIZER and p_USE_BE_RX_DEPKTZ_CTRL_TMR),
+            p_USE_RX_FLOW_CTRL_TMR   => (p_USE_TMR_FLOW and p_USE_BE_RX_FLOW_CTRL_TMR),
+            p_USE_RX_INTEGRITY_CHECK => (p_USE_INTEGRITY and p_USE_BE_RX_INTEGRITY_CHECK),
+            p_USE_RX_INTEGRITY_TMR   => (p_USE_TMR_INTEGRITY and p_USE_BE_RX_INTEGRITY_TMR),
+            p_USE_RX_BUFFER_HAMMING  => (p_USE_HAMMING and p_USE_BE_RX_BUFFER_HAMMING),
 
             DETECT_DOUBLE        => DETECT_DOUBLE
         )

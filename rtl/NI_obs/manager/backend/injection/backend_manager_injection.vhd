@@ -9,12 +9,12 @@ entity backend_manager_injection is
         p_SRC_X: std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0);
         p_SRC_Y: std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0);
 
-        p_BUFFER_DEPTH      : positive;
-        p_USE_TMR_PACKETIZER: boolean;
-        p_USE_TMR_FLOW      : boolean;
-        p_USE_TMR_INTEGRITY : boolean;
-        p_USE_HAMMING       : boolean;
-        p_USE_INTEGRITY     : boolean;
+        p_BUFFER_DEPTH            : positive;
+        p_USE_INJ_PKTZ_CTRL_TMR  : boolean;
+        p_USE_INJ_FLOW_CTRL_TMR  : boolean;
+        p_USE_INJ_INTEGRITY_CHECK: boolean;
+        p_USE_INJ_INTEGRITY_TMR  : boolean;
+        p_USE_INJ_BUFFER_HAMMING : boolean;
 
         DETECT_DOUBLE : boolean
     );
@@ -50,17 +50,17 @@ entity backend_manager_injection is
         o_OBS_INJ_HAM_BUFFER_DOUBLE_ERR    : out std_logic;
 
         -- Injection integrity (checksum) TMR (integrity_control_send_tmr)
-        -- Meaningful when (p_USE_INTEGRITY and p_USE_TMR_INTEGRITY) = TRUE.
+        -- Meaningful when (p_USE_INJ_INTEGRITY_CHECK and p_USE_INJ_INTEGRITY_TMR) = TRUE.
         i_OBS_INJ_TMR_INTEGRITY_CORRECT_ERROR : in  std_logic := '0';
         o_OBS_INJ_TMR_INTEGRITY_ERROR       : out std_logic := '0';
 
         -- Injection flow control TMR (send_control_tmr)
-        -- Meaningful when p_USE_TMR_FLOW = TRUE.
+        -- Meaningful when p_USE_INJ_FLOW_CTRL_TMR = TRUE.
         i_OBS_INJ_TMR_FLOW_CTRL_CORRECT_ERROR : in  std_logic := '0';
         o_OBS_INJ_TMR_FLOW_CTRL_ERROR       : out std_logic := '0';
 
         -- Injection packetizer control TMR (backend_manager_packetizer_control_tmr)
-        -- Meaningful when p_USE_TMR_PACKETIZER = TRUE.
+        -- Meaningful when p_USE_INJ_PKTZ_CTRL_TMR = TRUE.
         i_OBS_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR : in  std_logic := '0';
         o_OBS_INJ_TMR_PKTZ_CTRL_ERROR       : out std_logic := '0'
     );
@@ -105,7 +105,7 @@ begin
         );
 
     u_PACKETIZER_CONTROL:
-    if (p_USE_TMR_PACKETIZER) generate
+    if (p_USE_INJ_PKTZ_CTRL_TMR) generate
         u_PACKETIZER_CONTROL_TMR: entity work.backend_manager_packetizer_control_tmr
             port map(
                 ACLK    => ACLK,
@@ -180,7 +180,7 @@ begin
         );
 
     u_INTEGRITY_CONTROL_SEND:
-    if (p_USE_INTEGRITY and p_USE_TMR_INTEGRITY) generate
+    if (p_USE_INJ_INTEGRITY_CHECK and p_USE_INJ_INTEGRITY_TMR) generate
         u_INTEGRITY_CONTROL_SEND_TMR: entity work.integrity_control_send_tmr
             port map(
                 ACLK    => ACLK,
@@ -194,7 +194,7 @@ begin
                 correct_error_i => i_OBS_INJ_TMR_INTEGRITY_CORRECT_ERROR,
                 error_o         => w_OBS_INJ_TMR_INTEGRITY_ERROR
             );
-    elsif (p_USE_INTEGRITY) generate
+    elsif (p_USE_INJ_INTEGRITY_CHECK) generate
         u_INTEGRITY_CONTROL_SEND_NORMAL: entity work.integrity_control_send
             port map(
                 ACLK    => ACLK,
@@ -208,13 +208,13 @@ begin
     end generate;
 
     u_INTEGRITY_CONTROL_SEND_DISABLE:
-    if (not p_USE_INTEGRITY) generate
+    if (not p_USE_INJ_INTEGRITY_CHECK) generate
         w_OBS_INJ_TMR_INTEGRITY_ERROR <= '0';
         w_OBS_INJ_TMR_PKTZ_CTRL_ERROR   <= '0';
     end generate;
 
     u_BUFFER_FIFO:
-    if (p_USE_HAMMING) generate
+    if (p_USE_INJ_BUFFER_HAMMING) generate
         u_BUFFER_FIFO_HAM: entity work.buffer_fifo_ham
             generic map(
                 p_DATA_WIDTH   => c_FLIT_WIDTH,
@@ -261,7 +261,7 @@ begin
     end generate;
 
     u_SEND_CONTROL:
-    if (p_USE_TMR_FLOW) generate
+    if (p_USE_INJ_FLOW_CTRL_TMR) generate
         u_SEND_CONTROL_TMR: entity work.send_control_tmr
             port map(
                 ACLK    => ACLK,

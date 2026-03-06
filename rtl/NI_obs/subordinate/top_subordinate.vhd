@@ -10,11 +10,11 @@ entity top_subordinate is
         p_SRC_Y: std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0) := (others => '0');
 
         p_BUFFER_DEPTH      : positive := c_BUFFER_DEPTH;
-        p_USE_TMR_PACKETIZER: boolean  := c_USE_TMR_PACKETIZER;
-        p_USE_TMR_FLOW      : boolean  := c_USE_TMR_FLOW;
-        p_USE_TMR_INTEGRITY : boolean  := c_USE_TMR_INTEGRITY;
-        p_USE_HAMMING       : boolean  := c_USE_HAMMING;
-        p_USE_INTEGRITY     : boolean  := c_USE_INTEGRITY
+        p_USE_TMR_PACKETIZER: boolean  := c_ENABLE_TMR_PACKETIZER;
+        p_USE_TMR_FLOW      : boolean  := c_ENABLE_TMR_FLOW_CTRL;
+        p_USE_TMR_INTEGRITY : boolean  := c_ENABLE_TMR_INTEGRITY_CHECK;
+        p_USE_HAMMING       : boolean  := c_ENABLE_HAMMING_PROTECTION;
+        p_USE_INTEGRITY     : boolean  := c_ENABLE_INTEGRITY_CHECK
     );
 
     port(

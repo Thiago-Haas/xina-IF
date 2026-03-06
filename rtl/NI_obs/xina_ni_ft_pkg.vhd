@@ -14,14 +14,31 @@ package xina_ni_ft_pkg is
     constant c_FLIT_WIDTH        : natural  := c_AXI_DATA_WIDTH + 1;
     constant c_BUFFER_DEPTH      : positive := 8;
     
-    constant c_USE_TMR_PACKETIZER: boolean  := true;
-    constant c_USE_TMR_FLOW      : boolean  := true;
-    
-    constant c_USE_INTEGRITY     : boolean  := true;
-    constant c_USE_TMR_INTEGRITY : boolean  := true;
-    
-    constant c_USE_HAMMING : boolean  := true;
-    constant DETECT_DOUBLE : boolean  := true;
+    -- Grouped FT switches (global defaults).
+    constant c_ENABLE_TMR_PACKETIZER          : boolean := true;
+    constant c_ENABLE_TMR_FLOW_CTRL           : boolean := true;
+    constant c_ENABLE_INTEGRITY_CHECK         : boolean := true;
+    constant c_ENABLE_TMR_INTEGRITY_CHECK     : boolean := true;
+    constant c_ENABLE_HAMMING_PROTECTION      : boolean := true;
+    constant c_ENABLE_HAMMING_DOUBLE_DETECT   : boolean := true;
+
+    -- Manager frontend ECC toggles.
+    constant c_ENABLE_MGR_FE_INJ_META_HDR_HAMMING : boolean := true;
+    constant c_ENABLE_MGR_FE_INJ_ADDR_HAMMING     : boolean := true;
+
+    -- Manager backend injection ECC/TMR toggles.
+    constant c_ENABLE_MGR_BE_INJ_BUFFER_HAMMING    : boolean := true;
+    constant c_ENABLE_MGR_BE_INJ_PKTZ_CTRL_TMR     : boolean := true;
+    constant c_ENABLE_MGR_BE_INJ_FLOW_CTRL_TMR     : boolean := true;
+    constant c_ENABLE_MGR_BE_INJ_INTEGRITY_CHECK   : boolean := true;
+    constant c_ENABLE_MGR_BE_INJ_INTEGRITY_TMR     : boolean := true;
+
+    -- Manager backend reception ECC/TMR toggles.
+    constant c_ENABLE_MGR_BE_RX_BUFFER_HAMMING     : boolean := true;
+    constant c_ENABLE_MGR_BE_RX_DEPKTZ_CTRL_TMR    : boolean := true;
+    constant c_ENABLE_MGR_BE_RX_FLOW_CTRL_TMR      : boolean := true;
+    constant c_ENABLE_MGR_BE_RX_INTEGRITY_CHECK    : boolean := true;
+    constant c_ENABLE_MGR_BE_RX_INTEGRITY_TMR      : boolean := true;
     
     -- XINA SETTINGS
     constant flow_ft_c          : natural  := 1; -- 1 for TMR, 0 for Standard
