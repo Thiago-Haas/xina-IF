@@ -2,7 +2,6 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 
-use work.xina_ft_pkg.all;
 use work.xina_ni_ft_pkg.all;
 
 -- Flat hierarchy top (non-debug): TG + TM + single NI + loopback.
@@ -118,7 +117,11 @@ begin
       BID     => bid,
       BRESP   => bresp,
       BVALID  => bvalid,
-      BREADY  => bready
+      BREADY  => bready,
+
+      -- Keep correction enabled by default in this closed/flat wrapper
+      i_ham_correct_enb => '1',
+      i_tmr_correct_enb => '1'
 
       --o_lfsr_value => tg_lfsr_value
     );
@@ -203,7 +206,33 @@ begin
       l_out_val_o  => lout_val,
       l_out_ack_i  => lout_ack,
 
-      corrupt_packet => open
+      corrupt_packet => open,
+
+      -- Frontend observation ports
+      o_OBS_FE_INJ_META_HDR_SINGLE_ERR => open,
+      o_OBS_FE_INJ_META_HDR_DOUBLE_ERR => open,
+      o_OBS_FE_INJ_ADDR_SINGLE_ERR     => open,
+      o_OBS_FE_INJ_ADDR_DOUBLE_ERR     => open,
+
+      -- Backend correction enables / observation ports
+      i_OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR => '1',
+      o_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR    => open,
+      o_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR    => open,
+      i_OBS_BE_INJ_TMR_INTEGRITY_CORRECT_ERROR => '1',
+      o_OBS_BE_INJ_TMR_INTEGRITY_ERROR         => open,
+      i_OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR => '1',
+      o_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR         => open,
+      i_OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR => '1',
+      o_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR         => open,
+
+      i_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR => '1',
+      o_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR    => open,
+      o_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR    => open,
+      i_OBS_BE_RX_TMR_INTEGRITY_CORRECT_ERROR => '1',
+      o_OBS_BE_RX_TMR_INTEGRITY_ERROR         => open,
+      o_OBS_BE_RX_INTEGRITY_CORRUPT           => open,
+      i_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR => '1',
+      o_OBS_BE_RX_TMR_FLOW_CTRL_ERROR         => open
     );
 
   -- HW loopback (non-debug)
@@ -221,7 +250,11 @@ begin
 
       lout_data_o => lout_data,
       lout_val_o  => lout_val,
-      lout_ack_i  => lout_ack
+      lout_ack_i  => lout_ack,
+
+      -- Keep correction enabled by default in this closed/flat wrapper
+      i_ham_correct_enb => '1',
+      i_tmr_correct_enb => '1'
     );
 
 end architecture;
