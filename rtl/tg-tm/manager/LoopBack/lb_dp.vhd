@@ -39,6 +39,7 @@ entity lb_dp is
     i_OBS_LB_HAM_BUFFER_CORRECT_ERROR : in  std_logic := '1';
     o_single_err     : out std_logic;
     o_double_err     : out std_logic;
+    o_ham_buffer_enc_data : out std_logic_vector(32 + work.hamming_pkg.get_ecc_size(32, p_USE_LB_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
     -- pulse when payload captured
     o_hold_valid : out std_logic;
@@ -116,6 +117,7 @@ begin
   -- outputs
   o_single_err <= w_single_err;
   o_double_err <= w_double_err;
+  o_ham_buffer_enc_data <= w_enc_payload;
 
   -- for READ responses, always drive the (decoded) payload
   o_rd_payload <= r_payload_dec;

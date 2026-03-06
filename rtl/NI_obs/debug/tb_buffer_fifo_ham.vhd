@@ -62,7 +62,8 @@ begin
 
       correct_error_i => correct_error_i,
       single_err_o    => single_err_o,
-      double_err_o    => double_err_o
+      double_err_o    => double_err_o,
+      o_enc_stage_data => open
     );
 
   --------------------------------------------------------------------------

@@ -27,7 +27,8 @@ entity buffer_fifo_ham is
     -- Hamming decoder control/status
     correct_error_i : in  std_logic := '1';  -- default: correct if possible
     single_err_o    : out std_logic;
-    double_err_o    : out std_logic
+    double_err_o    : out std_logic;
+    o_enc_stage_data : out std_logic_vector(p_DATA_WIDTH + get_ecc_size(p_DATA_WIDTH, DETECT_DOUBLE) - 1 downto 0)
   );
 end buffer_fifo_ham;
 
@@ -137,5 +138,7 @@ begin
       end if;
     end if;
   end process;
+
+  o_enc_stage_data <= enc_reg_word;
 
 end rtl;

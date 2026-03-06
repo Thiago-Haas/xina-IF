@@ -45,10 +45,12 @@ entity backend_manager_reception is
         i_OBS_RX_HAM_BUFFER_CORRECT_ERROR : in  std_logic;
         o_OBS_RX_HAM_BUFFER_SINGLE_ERR    : out std_logic;
         o_OBS_RX_HAM_BUFFER_DOUBLE_ERR    : out std_logic;
+        o_OBS_RX_HAM_BUFFER_ENC_DATA      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, DETECT_DOUBLE) - 1 downto 0);
         -- Hamming (interface header register) - EXTERNAL
         i_OBS_RX_HAM_INTERFACE_HDR_CORRECT_ERROR : in  std_logic := '1';
         o_OBS_RX_HAM_INTERFACE_HDR_SINGLE_ERR    : out std_logic := '0';
         o_OBS_RX_HAM_INTERFACE_HDR_DOUBLE_ERR    : out std_logic := '0';
+        o_OBS_RX_HAM_INTERFACE_HDR_ENC_DATA      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, DETECT_DOUBLE) - 1 downto 0);
 
         -- Integrity receive checker (integrity_control_receive[_tmr]) - EXTERNAL
         -- Meaningful when p_USE_RX_INTEGRITY_CHECK = TRUE.
@@ -60,6 +62,7 @@ entity backend_manager_reception is
         i_OBS_RX_HAM_INTEGRITY_CORRECT_ERROR : in  std_logic := '1';
         o_OBS_RX_HAM_INTEGRITY_SINGLE_ERR    : out std_logic := '0';
         o_OBS_RX_HAM_INTEGRITY_DOUBLE_ERR    : out std_logic := '0';
+        o_OBS_RX_HAM_INTEGRITY_ENC_DATA      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
         -- Receive flow control TMR (receive_control_tmr) - EXTERNAL
         -- Meaningful when p_USE_RX_FLOW_CTRL_TMR = TRUE.
@@ -108,7 +111,8 @@ begin
 
             i_OBS_HAM_CORRECT_ERROR => i_OBS_RX_HAM_INTERFACE_HDR_CORRECT_ERROR,
             o_OBS_HAM_SINGLE_ERR    => o_OBS_RX_HAM_INTERFACE_HDR_SINGLE_ERR,
-            o_OBS_HAM_DOUBLE_ERR    => o_OBS_RX_HAM_INTERFACE_HDR_DOUBLE_ERR
+            o_OBS_HAM_DOUBLE_ERR    => o_OBS_RX_HAM_INTERFACE_HDR_DOUBLE_ERR,
+            o_OBS_HAM_ENC_DATA      => o_OBS_RX_HAM_INTERFACE_HDR_ENC_DATA
         );
 
     o_ID_RECEIVE     <= w_H_INTERFACE(19 downto 15);
@@ -181,7 +185,8 @@ begin
 
                 i_OBS_HAM_INTEGRITY_CORRECT_ERROR => i_OBS_RX_HAM_INTEGRITY_CORRECT_ERROR,
                 o_OBS_HAM_INTEGRITY_SINGLE_ERR    => o_OBS_RX_HAM_INTEGRITY_SINGLE_ERR,
-                o_OBS_HAM_INTEGRITY_DOUBLE_ERR    => o_OBS_RX_HAM_INTEGRITY_DOUBLE_ERR
+                o_OBS_HAM_INTEGRITY_DOUBLE_ERR    => o_OBS_RX_HAM_INTEGRITY_DOUBLE_ERR,
+                o_OBS_HAM_INTEGRITY_ENC_DATA      => o_OBS_RX_HAM_INTEGRITY_ENC_DATA
             );
     else generate
         -- Integrity disabled.
@@ -189,6 +194,7 @@ begin
         o_OBS_RX_TMR_INTEGRITY_ERROR  <= '0';
         o_OBS_RX_HAM_INTEGRITY_SINGLE_ERR <= '0';
         o_OBS_RX_HAM_INTEGRITY_DOUBLE_ERR <= '0';
+        o_OBS_RX_HAM_INTEGRITY_ENC_DATA   <= (others => '0');
     end generate;
 
     -- Export integrity checker outputs with descriptive names.
@@ -220,7 +226,8 @@ begin
                 -- Hamming status/control (EXTERNAL WIRES)
                 correct_error_i => i_OBS_RX_HAM_BUFFER_CORRECT_ERROR,
                 single_err_o    => o_OBS_RX_HAM_BUFFER_SINGLE_ERR,
-                double_err_o    => o_OBS_RX_HAM_BUFFER_DOUBLE_ERR
+                double_err_o    => o_OBS_RX_HAM_BUFFER_DOUBLE_ERR,
+                o_enc_stage_data => o_OBS_RX_HAM_BUFFER_ENC_DATA
             );
     else generate
         u_BUFFER_FIFO_NORMAL: entity work.buffer_fifo
@@ -240,6 +247,8 @@ begin
                 i_WRITE    => w_WRITE_BUFFER,
                 i_DATA     => l_out_data_o
             );
+
+        o_OBS_RX_HAM_BUFFER_ENC_DATA <= (others => '0');
     end generate;
 
     u_RECEIVE_CONTROL:

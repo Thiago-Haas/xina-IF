@@ -90,6 +90,8 @@ entity frontend_manager is
         o_OBS_FE_INJ_META_HDR_DOUBLE_ERR : out std_logic;
         o_OBS_FE_INJ_ADDR_SINGLE_ERR     : out std_logic;
         o_OBS_FE_INJ_ADDR_DOUBLE_ERR     : out std_logic;
+        o_OBS_FE_INJ_HAM_META_HDR_ENC_DATA : out std_logic_vector((1 + c_AXI_ID_WIDTH + 8 + 2) + work.hamming_pkg.get_ecc_size((1 + c_AXI_ID_WIDTH + 8 + 2), p_HAMMING_DETECT_DOUBLE) - 1 downto 0);
+        o_OBS_FE_INJ_HAM_ADDR_ENC_DATA     : out std_logic_vector(c_AXI_ADDR_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_ADDR_WIDTH, p_HAMMING_DETECT_DOUBLE) - 1 downto 0);
 
         -- Frontend injection Hamming correction enables (from top)
         i_OBS_FE_INJ_META_HDR_CORRECT_ERROR : in std_logic := '1';
@@ -109,6 +111,8 @@ architecture rtl of frontend_manager is
     signal w_fe_inj_meta_hdr_double_err : std_logic;
     signal w_fe_inj_addr_single_err     : std_logic;
     signal w_fe_inj_addr_double_err     : std_logic;
+    signal w_fe_inj_meta_hdr_enc_data   : std_logic_vector((1 + c_AXI_ID_WIDTH + 8 + 2) + work.hamming_pkg.get_ecc_size((1 + c_AXI_ID_WIDTH + 8 + 2), p_HAMMING_DETECT_DOUBLE) - 1 downto 0);
+    signal w_fe_inj_addr_enc_data       : std_logic_vector(c_AXI_ADDR_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_ADDR_WIDTH, p_HAMMING_DETECT_DOUBLE) - 1 downto 0);
 
     -- Ejection internal signals
     signal w_bvalid_en : std_logic;
@@ -185,7 +189,9 @@ begin
         o_META_HDR_SINGLE_ERR => w_fe_inj_meta_hdr_single_err,
         o_META_HDR_DOUBLE_ERR => w_fe_inj_meta_hdr_double_err,
         o_ADDR_SINGLE_ERR     => w_fe_inj_addr_single_err,
-        o_ADDR_DOUBLE_ERR     => w_fe_inj_addr_double_err
+        o_ADDR_DOUBLE_ERR     => w_fe_inj_addr_double_err,
+        o_META_HDR_ENC_DATA   => w_fe_inj_meta_hdr_enc_data,
+        o_ADDR_ENC_DATA       => w_fe_inj_addr_enc_data
       );
 
     -- expose opcode to backend with the same name as before
@@ -238,5 +244,7 @@ begin
     o_OBS_FE_INJ_META_HDR_DOUBLE_ERR <= w_fe_inj_meta_hdr_double_err;
     o_OBS_FE_INJ_ADDR_SINGLE_ERR     <= w_fe_inj_addr_single_err;
     o_OBS_FE_INJ_ADDR_DOUBLE_ERR     <= w_fe_inj_addr_double_err;
+    o_OBS_FE_INJ_HAM_META_HDR_ENC_DATA <= w_fe_inj_meta_hdr_enc_data;
+    o_OBS_FE_INJ_HAM_ADDR_ENC_DATA     <= w_fe_inj_addr_enc_data;
 
 end rtl;

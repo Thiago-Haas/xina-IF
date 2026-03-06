@@ -63,7 +63,9 @@ entity frontend_manager_injection_dp is
     o_META_HDR_DOUBLE_ERR : out std_logic;
     --  * address = addr
     o_ADDR_SINGLE_ERR     : out std_logic;
-    o_ADDR_DOUBLE_ERR     : out std_logic
+    o_ADDR_DOUBLE_ERR     : out std_logic;
+    o_META_HDR_ENC_DATA   : out std_logic_vector((1 + c_AXI_ID_WIDTH + 8 + 2) + work.hamming_pkg.get_ecc_size((1 + c_AXI_ID_WIDTH + 8 + 2), p_HAMMING_DETECT_DOUBLE) - 1 downto 0);
+    o_ADDR_ENC_DATA       : out std_logic_vector(c_AXI_ADDR_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_ADDR_WIDTH, p_HAMMING_DETECT_DOUBLE) - 1 downto 0)
   );
 end entity;
 
@@ -102,6 +104,7 @@ architecture rtl of frontend_manager_injection_dp is
 
   signal meta_hdr_single_err_w : std_logic;
   signal meta_hdr_double_err_w : std_logic;
+  signal meta_hdr_enc_w        : std_logic_vector(META_HDR_WIDTH_C + work.hamming_pkg.get_ecc_size(META_HDR_WIDTH_C, p_HAMMING_DETECT_DOUBLE) - 1 downto 0);
 
   ---------------------------------------------------------------------------------------------
   -- Address bundle: addr
@@ -110,6 +113,7 @@ architecture rtl of frontend_manager_injection_dp is
 
   signal addr_single_err_w : std_logic;
   signal addr_double_err_w : std_logic;
+  signal addr_enc_w        : std_logic_vector(c_AXI_ADDR_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_ADDR_WIDTH, p_HAMMING_DETECT_DOUBLE) - 1 downto 0);
 
 begin
 
@@ -165,7 +169,7 @@ begin
       clk_i        => ACLK,
       single_err_o => meta_hdr_single_err_w,
       double_err_o => meta_hdr_double_err_w,
-      enc_data_o   => open,
+      enc_data_o   => meta_hdr_enc_w,
       data_o       => meta_hdr_out_w
     );
 
@@ -188,7 +192,7 @@ begin
       clk_i        => ACLK,
       single_err_o => addr_single_err_w,
       double_err_o => addr_double_err_w,
-      enc_data_o   => open,
+      enc_data_o   => addr_enc_w,
       data_o       => addr_out_w
     );
 
@@ -220,6 +224,8 @@ begin
 
   o_ADDR_SINGLE_ERR <= addr_single_err_w;
   o_ADDR_DOUBLE_ERR <= addr_double_err_w;
+  o_META_HDR_ENC_DATA <= meta_hdr_enc_w;
+  o_ADDR_ENC_DATA <= addr_enc_w;
 
   ---------------------------------------------------------------------------------------------
   -- Preserve original data send behaviour (only meaningful for writes and when WVALID=1)

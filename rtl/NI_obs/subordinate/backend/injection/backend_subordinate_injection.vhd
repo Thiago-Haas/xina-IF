@@ -141,7 +141,8 @@ begin
                 error_o         => open,
                 i_OBS_HAM_INTEGRITY_CORRECT_ERROR => '0',
                 o_OBS_HAM_INTEGRITY_SINGLE_ERR    => open,
-                o_OBS_HAM_INTEGRITY_DOUBLE_ERR    => open
+                o_OBS_HAM_INTEGRITY_DOUBLE_ERR    => open,
+                o_OBS_HAM_INTEGRITY_ENC_DATA      => open
             );
     elsif (p_USE_INTEGRITY) generate
         u_INTEGRITY_CONTROL_SEND_NORMAL: entity work.integrity_control_send
@@ -173,7 +174,8 @@ begin
 
                 o_WRITE_OK => w_WRITE_OK_BUFFER,
                 i_WRITE    => w_WRITE_BUFFER,
-                i_DATA     => w_FLIT
+                i_DATA     => w_FLIT,
+                o_enc_stage_data => open
             );
     else generate
         u_BUFFER_FIFO_NORMAL: entity work.buffer_fifo

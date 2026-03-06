@@ -48,6 +48,7 @@ entity backend_manager_injection is
         i_OBS_INJ_HAM_BUFFER_CORRECT_ERROR : in  std_logic;
         o_OBS_INJ_HAM_BUFFER_SINGLE_ERR    : out std_logic;
         o_OBS_INJ_HAM_BUFFER_DOUBLE_ERR    : out std_logic;
+        o_OBS_INJ_HAM_BUFFER_ENC_DATA      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, DETECT_DOUBLE) - 1 downto 0);
 
         -- Injection integrity legacy TMR status/control (kept for compatibility).
         i_OBS_INJ_TMR_INTEGRITY_CORRECT_ERROR : in  std_logic := '0';
@@ -56,6 +57,7 @@ entity backend_manager_injection is
         i_OBS_INJ_HAM_INTEGRITY_CORRECT_ERROR : in  std_logic := '1';
         o_OBS_INJ_HAM_INTEGRITY_SINGLE_ERR    : out std_logic := '0';
         o_OBS_INJ_HAM_INTEGRITY_DOUBLE_ERR    : out std_logic := '0';
+        o_OBS_INJ_HAM_INTEGRITY_ENC_DATA      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
         -- Injection flow control TMR (send_control_tmr)
         -- Meaningful when p_USE_INJ_FLOW_CTRL_TMR = TRUE.
@@ -199,7 +201,8 @@ begin
 
                 i_OBS_HAM_INTEGRITY_CORRECT_ERROR => i_OBS_INJ_HAM_INTEGRITY_CORRECT_ERROR,
                 o_OBS_HAM_INTEGRITY_SINGLE_ERR    => o_OBS_INJ_HAM_INTEGRITY_SINGLE_ERR,
-                o_OBS_HAM_INTEGRITY_DOUBLE_ERR    => o_OBS_INJ_HAM_INTEGRITY_DOUBLE_ERR
+                o_OBS_HAM_INTEGRITY_DOUBLE_ERR    => o_OBS_INJ_HAM_INTEGRITY_DOUBLE_ERR,
+                o_OBS_HAM_INTEGRITY_ENC_DATA      => o_OBS_INJ_HAM_INTEGRITY_ENC_DATA
             );
     end generate;
 
@@ -208,6 +211,7 @@ begin
         w_OBS_INJ_TMR_INTEGRITY_ERROR <= '0';
         o_OBS_INJ_HAM_INTEGRITY_SINGLE_ERR <= '0';
         o_OBS_INJ_HAM_INTEGRITY_DOUBLE_ERR <= '0';
+        o_OBS_INJ_HAM_INTEGRITY_ENC_DATA   <= (others => '0');
         w_OBS_INJ_TMR_PKTZ_CTRL_ERROR   <= '0';
     end generate;
 
@@ -236,7 +240,8 @@ begin
                 -- Hamming status/control (EXTERNAL WIRES)
                 correct_error_i => i_OBS_INJ_HAM_BUFFER_CORRECT_ERROR,
                 single_err_o    => o_OBS_INJ_HAM_BUFFER_SINGLE_ERR,
-                double_err_o    => o_OBS_INJ_HAM_BUFFER_DOUBLE_ERR
+                double_err_o    => o_OBS_INJ_HAM_BUFFER_DOUBLE_ERR,
+                o_enc_stage_data => o_OBS_INJ_HAM_BUFFER_ENC_DATA
             );
     else generate
         u_BUFFER_FIFO_NORMAL: entity work.buffer_fifo
@@ -256,6 +261,8 @@ begin
                 i_WRITE    => w_WRITE_BUFFER,
                 i_DATA     => w_FLIT
             );
+
+        o_OBS_INJ_HAM_BUFFER_ENC_DATA <= (others => '0');
     end generate;
 
     u_SEND_CONTROL:

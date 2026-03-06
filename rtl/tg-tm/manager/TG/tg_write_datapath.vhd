@@ -41,7 +41,8 @@ entity tg_write_datapath is
     -- observation
     i_correct_enable : in  std_logic;
     o_single_err     : out std_logic;
-    o_double_err     : out std_logic
+    o_double_err     : out std_logic;
+    o_ham_buffer_enc_data : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_HAMMING_DOUBLE_DETECT) - 1 downto 0)
   );
 end tg_write_datapath;
 
@@ -124,5 +125,6 @@ begin
   -- observation outputs
   o_single_err <= w_single_err;
   o_double_err <= w_double_err;
+  o_ham_buffer_enc_data <= w_enc_state;
 
 end rtl;

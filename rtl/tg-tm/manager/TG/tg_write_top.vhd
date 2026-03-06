@@ -51,7 +51,8 @@ entity tg_write_top is
 
     o_OBS_TG_TMR_CTRL_ERROR        : out std_logic;
     o_OBS_TG_HAM_BUFFER_SINGLE_ERR : out std_logic;
-    o_OBS_TG_HAM_BUFFER_DOUBLE_ERR : out std_logic
+    o_OBS_TG_HAM_BUFFER_DOUBLE_ERR : out std_logic;
+    o_OBS_TG_HAM_BUFFER_ENC_DATA   : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_TG_HAMMING_DOUBLE_DETECT) - 1 downto 0)
   );
 end tg_write_top;
 
@@ -63,6 +64,7 @@ architecture rtl of tg_write_top is
   signal w_ctrl_tmr_err   : std_logic;
   signal w_ham_single_err : std_logic;
   signal w_ham_double_err : std_logic;
+  signal w_ham_enc_data   : std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_TG_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 begin
 
   gen_ctrl_plain : if (not p_USE_TG_CTRL_TMR) generate
@@ -124,7 +126,8 @@ begin
       
       i_correct_enable => i_OBS_TG_HAM_BUFFER_CORRECT_ERROR,
       o_single_err => w_ham_single_err,
-      o_double_err => w_ham_double_err
+      o_double_err => w_ham_double_err,
+      o_ham_buffer_enc_data => w_ham_enc_data
     );
 
   o_done <= w_write_done;
@@ -133,4 +136,5 @@ begin
   o_OBS_TG_TMR_CTRL_ERROR        <= w_ctrl_tmr_err;
   o_OBS_TG_HAM_BUFFER_SINGLE_ERR <= w_ham_single_err;
   o_OBS_TG_HAM_BUFFER_DOUBLE_ERR <= w_ham_double_err;
+  o_OBS_TG_HAM_BUFFER_ENC_DATA   <= w_ham_enc_data;
 end rtl;

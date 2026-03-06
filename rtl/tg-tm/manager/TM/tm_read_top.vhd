@@ -60,8 +60,10 @@ entity tm_read_top is
     o_OBS_TM_TMR_CTRL_ERROR           : out std_logic;
     o_OBS_TM_HAM_BUFFER_SINGLE_ERR    : out std_logic;
     o_OBS_TM_HAM_BUFFER_DOUBLE_ERR    : out std_logic;
+    o_OBS_TM_HAM_BUFFER_ENC_DATA      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
     o_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR : out std_logic;
     o_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR : out std_logic;
+    o_OBS_TM_HAM_TXN_COUNTER_ENC_DATA   : out std_logic_vector(p_TM_TXN_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(p_TM_TXN_COUNTER_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
     o_TM_TRANSACTION_COUNT              : out std_logic_vector(p_TM_TXN_COUNTER_WIDTH - 1 downto 0)
   );
 end tm_read_top;
@@ -76,8 +78,10 @@ architecture rtl of tm_read_top is
   signal w_ctrl_tmr_err    : std_logic := '0';
   signal w_ham_single_err  : std_logic := '0';
   signal w_ham_double_err  : std_logic := '0';
+  signal w_ham_buffer_enc_data : std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
   signal w_txn_count_data_in  : std_logic_vector(p_TM_TXN_COUNTER_WIDTH - 1 downto 0);
   signal w_txn_count_data_out : std_logic_vector(p_TM_TXN_COUNTER_WIDTH - 1 downto 0);
+  signal w_txn_count_enc_data : std_logic_vector(p_TM_TXN_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(p_TM_TXN_COUNTER_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
   signal w_txn_count_single_err : std_logic := '0';
   signal w_txn_count_double_err : std_logic := '0';
 begin
@@ -163,7 +167,8 @@ begin
 
       i_OBS_TM_HAM_BUFFER_CORRECT_ERROR => i_OBS_TM_HAM_BUFFER_CORRECT_ERROR,
       o_ham_single_err => w_ham_single_err,
-      o_ham_double_err => w_ham_double_err
+      o_ham_double_err => w_ham_double_err,
+      o_ham_buffer_enc_data => w_ham_buffer_enc_data
     );
 
   w_txn_count_data_in <= std_logic_vector(unsigned(w_txn_count_data_out) + 1);
@@ -184,7 +189,7 @@ begin
       clk_i        => ACLK,
       single_err_o => w_txn_count_single_err,
       double_err_o => w_txn_count_double_err,
-      enc_data_o   => open,
+      enc_data_o   => w_txn_count_enc_data,
       data_o       => w_txn_count_data_out
     );
 
@@ -194,7 +199,9 @@ begin
   o_OBS_TM_TMR_CTRL_ERROR        <= w_ctrl_tmr_err;
   o_OBS_TM_HAM_BUFFER_SINGLE_ERR <= w_ham_single_err;
   o_OBS_TM_HAM_BUFFER_DOUBLE_ERR <= w_ham_double_err;
+  o_OBS_TM_HAM_BUFFER_ENC_DATA   <= w_ham_buffer_enc_data;
   o_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR <= w_txn_count_single_err;
   o_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR <= w_txn_count_double_err;
+  o_OBS_TM_HAM_TXN_COUNTER_ENC_DATA   <= w_txn_count_enc_data;
   o_TM_TRANSACTION_COUNT <= w_txn_count_data_out;
 end rtl;

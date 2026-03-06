@@ -86,6 +86,8 @@ entity top_manager is
         o_OBS_FE_INJ_META_HDR_DOUBLE_ERR: out std_logic;
         o_OBS_FE_INJ_ADDR_SINGLE_ERR    : out std_logic;
         o_OBS_FE_INJ_ADDR_DOUBLE_ERR    : out std_logic;
+        o_OBS_FE_INJ_HAM_META_HDR_ENC_DATA: out std_logic_vector((1 + c_AXI_ID_WIDTH + 8 + 2) + work.hamming_pkg.get_ecc_size((1 + c_AXI_ID_WIDTH + 8 + 2), DETECT_DOUBLE) - 1 downto 0);
+        o_OBS_FE_INJ_HAM_ADDR_ENC_DATA    : out std_logic_vector(c_AXI_ADDR_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_ADDR_WIDTH, DETECT_DOUBLE) - 1 downto 0);
         i_OBS_FE_INJ_META_HDR_CORRECT_ERROR: in std_logic := '1';
         i_OBS_FE_INJ_ADDR_CORRECT_ERROR    : in std_logic := '1';
 
@@ -102,6 +104,7 @@ entity top_manager is
         i_OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR : in  std_logic;
         o_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR    : out std_logic;
         o_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR    : out std_logic;
+        o_OBS_BE_INJ_HAM_BUFFER_ENC_DATA      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, DETECT_DOUBLE) - 1 downto 0);
 
         -- Injection integrity checker (backend_manager_injection / integrity_control_send_hamming)
         i_OBS_BE_INJ_TMR_INTEGRITY_CORRECT_ERROR : in  std_logic := '0';
@@ -109,6 +112,7 @@ entity top_manager is
         i_OBS_BE_INJ_HAM_INTEGRITY_CORRECT_ERROR : in std_logic := '1';
         o_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR    : out std_logic;
         o_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR    : out std_logic;
+        o_OBS_BE_INJ_HAM_INTEGRITY_ENC_DATA      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
         -- Injection flow control TMR (backend_manager_injection / send_control_tmr)
         i_OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR : in  std_logic := '0';
@@ -123,9 +127,11 @@ entity top_manager is
         i_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR  : in  std_logic;
         o_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR     : out std_logic;
         o_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR     : out std_logic;
+        o_OBS_BE_RX_HAM_BUFFER_ENC_DATA       : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, DETECT_DOUBLE) - 1 downto 0);
         i_OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR : in std_logic := '1';
         o_OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR    : out std_logic;
         o_OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR    : out std_logic;
+        o_OBS_BE_RX_HAM_INTERFACE_HDR_ENC_DATA      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, DETECT_DOUBLE) - 1 downto 0);
 
         -- Reception integrity checker (backend_manager_reception / integrity_control_receive_hamming)
         i_OBS_BE_RX_TMR_INTEGRITY_CORRECT_ERROR : in  std_logic := '0';
@@ -134,6 +140,7 @@ entity top_manager is
         i_OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR : in std_logic := '1';
         o_OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR    : out std_logic;
         o_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR    : out std_logic;
+        o_OBS_BE_RX_HAM_INTEGRITY_ENC_DATA      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
         -- Reception flow control TMR (backend_manager_reception / receive_control_tmr)
         i_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR : in  std_logic := '0';
@@ -234,6 +241,8 @@ begin
                 o_OBS_FE_INJ_META_HDR_DOUBLE_ERR => o_OBS_FE_INJ_META_HDR_DOUBLE_ERR,
                 o_OBS_FE_INJ_ADDR_SINGLE_ERR     => o_OBS_FE_INJ_ADDR_SINGLE_ERR,
                 o_OBS_FE_INJ_ADDR_DOUBLE_ERR     => o_OBS_FE_INJ_ADDR_DOUBLE_ERR,
+                o_OBS_FE_INJ_HAM_META_HDR_ENC_DATA => o_OBS_FE_INJ_HAM_META_HDR_ENC_DATA,
+                o_OBS_FE_INJ_HAM_ADDR_ENC_DATA     => o_OBS_FE_INJ_HAM_ADDR_ENC_DATA,
                 i_OBS_FE_INJ_META_HDR_CORRECT_ERROR => i_OBS_FE_INJ_META_HDR_CORRECT_ERROR,
                 i_OBS_FE_INJ_ADDR_CORRECT_ERROR     => i_OBS_FE_INJ_ADDR_CORRECT_ERROR,
 
@@ -332,12 +341,14 @@ begin
             i_OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR => i_OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR,
             o_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR    => o_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR,
             o_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR    => o_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR,
+            o_OBS_BE_INJ_HAM_BUFFER_ENC_DATA      => o_OBS_BE_INJ_HAM_BUFFER_ENC_DATA,
 
             i_OBS_BE_INJ_TMR_INTEGRITY_CORRECT_ERROR => i_OBS_BE_INJ_TMR_INTEGRITY_CORRECT_ERROR,
             o_OBS_BE_INJ_TMR_INTEGRITY_ERROR         => w_OBS_BE_INJ_TMR_INTEGRITY_ERROR,
             i_OBS_BE_INJ_HAM_INTEGRITY_CORRECT_ERROR => i_OBS_BE_INJ_HAM_INTEGRITY_CORRECT_ERROR,
             o_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR    => o_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR,
             o_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR    => o_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR,
+            o_OBS_BE_INJ_HAM_INTEGRITY_ENC_DATA      => o_OBS_BE_INJ_HAM_INTEGRITY_ENC_DATA,
 
             i_OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR => i_OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR,
             o_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR         => w_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR,
@@ -348,9 +359,11 @@ begin
             i_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR  => i_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR,
             o_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR     => o_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR,
             o_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR     => o_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR,
+            o_OBS_BE_RX_HAM_BUFFER_ENC_DATA       => o_OBS_BE_RX_HAM_BUFFER_ENC_DATA,
             i_OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR => i_OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR,
             o_OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR    => o_OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR,
             o_OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR    => o_OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR,
+            o_OBS_BE_RX_HAM_INTERFACE_HDR_ENC_DATA      => o_OBS_BE_RX_HAM_INTERFACE_HDR_ENC_DATA,
 
             i_OBS_BE_RX_TMR_INTEGRITY_CORRECT_ERROR => i_OBS_BE_RX_TMR_INTEGRITY_CORRECT_ERROR,
             o_OBS_BE_RX_TMR_INTEGRITY_ERROR         => w_OBS_BE_RX_TMR_INTEGRITY_ERROR,
@@ -358,6 +371,7 @@ begin
             i_OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR => i_OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR,
             o_OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR    => o_OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR,
             o_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR    => o_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR,
+            o_OBS_BE_RX_HAM_INTEGRITY_ENC_DATA      => o_OBS_BE_RX_HAM_INTEGRITY_ENC_DATA,
 
             i_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR => i_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR,
             o_OBS_BE_RX_TMR_FLOW_CTRL_ERROR         => w_OBS_BE_RX_TMR_FLOW_CTRL_ERROR

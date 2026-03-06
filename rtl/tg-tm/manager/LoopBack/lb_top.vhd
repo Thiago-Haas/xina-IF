@@ -36,7 +36,8 @@ entity lb_top is
 
     o_OBS_LB_TMR_CTRL_ERROR        : out std_logic;
     o_OBS_LB_HAM_BUFFER_SINGLE_ERR : out std_logic;
-    o_OBS_LB_HAM_BUFFER_DOUBLE_ERR : out std_logic
+    o_OBS_LB_HAM_BUFFER_DOUBLE_ERR : out std_logic;
+    o_OBS_LB_HAM_BUFFER_ENC_DATA   : out std_logic_vector(32 + work.hamming_pkg.get_ecc_size(32, p_USE_LB_HAMMING_DOUBLE_DETECT) - 1 downto 0)
   );
 end entity;
 
@@ -66,6 +67,7 @@ architecture rtl of lb_top is
   signal w_ctrl_tmr_err   : std_logic;
   signal w_ham_single_err : std_logic;
   signal w_ham_double_err : std_logic;
+  signal w_ham_enc_data   : std_logic_vector(32 + work.hamming_pkg.get_ecc_size(32, p_USE_LB_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
 begin
 
@@ -104,6 +106,7 @@ begin
       i_OBS_LB_HAM_BUFFER_CORRECT_ERROR => i_OBS_LB_HAM_BUFFER_CORRECT_ERROR,
       o_single_err     => w_ham_single_err,
       o_double_err     => w_ham_double_err,
+      o_ham_buffer_enc_data => w_ham_enc_data,
 
       -- payload-captured pulse
       o_hold_valid => hold_valid_pulse,
@@ -193,5 +196,6 @@ begin
   o_OBS_LB_TMR_CTRL_ERROR        <= w_ctrl_tmr_err;
   o_OBS_LB_HAM_BUFFER_SINGLE_ERR <= w_ham_single_err;
   o_OBS_LB_HAM_BUFFER_DOUBLE_ERR <= w_ham_double_err;
+  o_OBS_LB_HAM_BUFFER_ENC_DATA   <= w_ham_enc_data;
 
 end architecture;

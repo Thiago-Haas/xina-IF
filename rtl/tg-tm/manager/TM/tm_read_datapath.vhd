@@ -54,7 +54,8 @@ entity tm_read_datapath is
     -- observation (only meaningful when HAMMING_ENABLE=true)
     i_OBS_TM_HAM_BUFFER_CORRECT_ERROR : in  std_logic := '1';
     o_ham_single_err : out std_logic;
-    o_ham_double_err : out std_logic
+    o_ham_double_err : out std_logic;
+    o_ham_buffer_enc_data : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0)
   );
 end tm_read_datapath;
 
@@ -65,6 +66,7 @@ architecture rtl of tm_read_datapath is
   signal w_exp_we     : std_logic := '0';
   signal w_ham_single : std_logic := '0';
   signal w_ham_double : std_logic := '0';
+  signal w_expected_enc : std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
 
   signal w_init_value : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
   signal w_lfsr_input : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
@@ -101,6 +103,7 @@ begin
   o_expected_value <= w_expected_q;
   o_ham_single_err <= w_ham_single;
   o_ham_double_err <= w_ham_double;
+  o_ham_buffer_enc_data <= w_expected_enc;
 
   -- Build init value = base/random generic + seed in lower bits
   w_init_value <= apply_seed(p_INIT_VALUE, STARTING_SEED);
@@ -165,7 +168,7 @@ begin
         clk_i        => ACLK,
         single_err_o => w_ham_single,
         double_err_o => w_ham_double,
-        enc_data_o   => open,
+        enc_data_o   => w_expected_enc,
         data_o       => w_expected_q
       );
   end generate;
@@ -173,6 +176,7 @@ begin
   gen_no_ham : if not p_USE_TM_HAMMING generate
     w_ham_single <= '0';
     w_ham_double <= '0';
+    w_expected_enc <= (w_expected_enc'left downto c_AXI_DATA_WIDTH => '0') & w_expected_q;
     process(ACLK)
     begin
       if rising_edge(ACLK) then
