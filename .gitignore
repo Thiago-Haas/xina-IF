@@ -11,3 +11,4 @@ quartus_project/simulation
 /quartus
 /ModelSim
 /Libero
+*.cf
