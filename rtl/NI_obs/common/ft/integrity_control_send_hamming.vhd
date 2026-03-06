@@ -30,14 +30,14 @@ entity integrity_control_send_hamming is
 end integrity_control_send_hamming;
 
 architecture rtl of integrity_control_send_hamming is
-    signal w_CHECKSUM_ham_q    : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+    signal w_CHECKSUM_ham_r    : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
     signal w_CHECKSUM_ham_next : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
     signal w_HAM_SINGLE_ERR    : std_logic;
     signal w_HAM_DOUBLE_ERR    : std_logic;
     signal w_CHECKSUM_ham_enc  : std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
 begin
-    w_CHECKSUM_ham_next <= std_logic_vector(unsigned(w_CHECKSUM_ham_q) + unsigned(i_VALUE_ADD));
+    w_CHECKSUM_ham_next <= std_logic_vector(unsigned(w_CHECKSUM_ham_r) + unsigned(i_VALUE_ADD));
 
     u_CHECKSUM_HAM_REG: entity work.hamming_register
         generic map(
@@ -56,10 +56,10 @@ begin
             single_err_o => w_HAM_SINGLE_ERR,
             double_err_o => w_HAM_DOUBLE_ERR,
             enc_data_o   => w_CHECKSUM_ham_enc,
-            data_o       => w_CHECKSUM_ham_q
+            data_o       => w_CHECKSUM_ham_r
         );
 
-    o_CHECKSUM <= w_CHECKSUM_ham_q;
+    o_CHECKSUM <= w_CHECKSUM_ham_r;
     -- TMR mode removed for this block; keep legacy ports stable.
     error_o <= '0';
     o_OBS_HAM_INTEGRITY_SINGLE_ERR <= w_HAM_SINGLE_ERR;

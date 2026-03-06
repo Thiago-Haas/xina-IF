@@ -61,7 +61,7 @@ end tm_read_datapath;
 
 architecture rtl of tm_read_datapath is
   -- expected word register (optionally protected)
-  signal w_expected_q : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
+  signal w_expected_r : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
   signal w_expected_d : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
   signal w_exp_we     : std_logic := '0';
   signal w_ham_single : std_logic := '0';
@@ -100,7 +100,7 @@ begin
   ARBURST <= p_BURST;
 
   -- debug
-  o_expected_value <= w_expected_q;
+  o_expected_value <= w_expected_r;
   o_ham_single_err <= w_ham_single;
   o_ham_double_err <= w_ham_double;
   o_ham_buffer_enc_data <= w_expected_enc;
@@ -117,7 +117,7 @@ begin
   --  * step: feed current expected, compute next expected = next(expected)
   --  * idle: feed current expected (no state update)
   w_lfsr_input <= w_init_value when (w_do_init = '1') else
-                  w_expected_q;
+                  w_expected_r;
 
   u_LFSR: entity work.tm_read_lfsr
     generic map(
@@ -140,7 +140,7 @@ begin
       i_init_pulse  => w_do_init,
       i_check_pulse => w_do_step,
 
-      i_expected => w_expected_q,
+      i_expected => w_expected_r,
       i_rdata    => RDATA,
 
       o_mismatch => o_mismatch
@@ -169,22 +169,22 @@ begin
         single_err_o => w_ham_single,
         double_err_o => w_ham_double,
         enc_data_o   => w_expected_enc,
-        data_o       => w_expected_q
+        data_o       => w_expected_r
       );
   end generate;
 
   gen_no_ham : if not p_USE_TM_HAMMING generate
     w_ham_single <= '0';
     w_ham_double <= '0';
-    w_expected_enc <= (w_expected_enc'left downto c_AXI_DATA_WIDTH => '0') & w_expected_q;
+    w_expected_enc <= (w_expected_enc'left downto c_AXI_DATA_WIDTH => '0') & w_expected_r;
     process(ACLK)
     begin
       if rising_edge(ACLK) then
         if ARESETn = '0' then
-          w_expected_q <= (others => '0');
+          w_expected_r <= (others => '0');
         else
           if w_exp_we = '1' then
-            w_expected_q <= w_expected_d;
+            w_expected_r <= w_expected_d;
           end if;
         end if;
       end if;

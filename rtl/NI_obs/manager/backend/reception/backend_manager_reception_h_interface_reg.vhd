@@ -25,7 +25,7 @@ entity backend_manager_reception_h_interface_reg is
 end backend_manager_reception_h_interface_reg;
 
 architecture rtl of backend_manager_reception_h_interface_reg is
-    signal w_H_INTERFACE_q : std_logic_vector(c_FLIT_WIDTH - 1 downto 0) := (others => '0');
+    signal w_H_INTERFACE_r : std_logic_vector(c_FLIT_WIDTH - 1 downto 0) := (others => '0');
     signal w_H_INTERFACE_enc : std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, p_HAMMING_DETECT_DOUBLE) - 1 downto 0) := (others => '0');
     signal w_HAM_SINGLE    : std_logic := '0';
     signal w_HAM_DOUBLE    : std_logic := '0';
@@ -48,7 +48,7 @@ begin
                 single_err_o => w_HAM_SINGLE,
                 double_err_o => w_HAM_DOUBLE,
                 enc_data_o   => w_H_INTERFACE_enc,
-                data_o       => w_H_INTERFACE_q
+                data_o       => w_H_INTERFACE_r
             );
     end generate;
 
@@ -57,19 +57,19 @@ begin
         begin
             if rising_edge(ACLK) then
                 if ARESETn = '0' then
-                    w_H_INTERFACE_q <= (others => '0');
+                    w_H_INTERFACE_r <= (others => '0');
                 elsif i_WRITE_EN = '1' then
-                    w_H_INTERFACE_q <= i_DATA;
+                    w_H_INTERFACE_r <= i_DATA;
                 end if;
             end if;
         end process;
 
         w_HAM_SINGLE <= '0';
         w_HAM_DOUBLE <= '0';
-        w_H_INTERFACE_enc <= (w_H_INTERFACE_enc'left downto c_FLIT_WIDTH => '0') & w_H_INTERFACE_q;
+        w_H_INTERFACE_enc <= (w_H_INTERFACE_enc'left downto c_FLIT_WIDTH => '0') & w_H_INTERFACE_r;
     end generate;
 
-    o_DATA <= w_H_INTERFACE_q;
+    o_DATA <= w_H_INTERFACE_r;
     o_OBS_HAM_SINGLE_ERR <= w_HAM_SINGLE;
     o_OBS_HAM_DOUBLE_ERR <= w_HAM_DOUBLE;
     o_OBS_HAM_ENC_DATA   <= w_H_INTERFACE_enc;
