@@ -150,7 +150,7 @@ begin
 
     u_INTEGRITY_CONTROL_RECEIVE:
     if (p_USE_INTEGRITY and p_USE_TMR_INTEGRITY) generate
-        u_INTEGRITY_CONTROL_RECEIVE_TMR: entity work.integrity_control_receive_tmr
+        u_INTEGRITY_CONTROL_RECEIVE_HAM: entity work.integrity_control_receive_hamming
             port map(
                 ACLK    => ACLK,
                 ARESETn => w_INTEGRITY_RESETn,
@@ -160,7 +160,12 @@ begin
                 i_COMPARE       => w_COMPARE,
                 i_VALUE_COMPARE => w_FLIT(c_AXI_DATA_WIDTH - 1 downto 0),
 
-                o_CORRUPT  => o_CORRUPT_RECEIVE
+                o_CORRUPT  => o_CORRUPT_RECEIVE,
+                correct_error_i => '0',
+                error_o         => open,
+                i_OBS_HAM_INTEGRITY_CORRECT_ERROR => '0',
+                o_OBS_HAM_INTEGRITY_SINGLE_ERR    => open,
+                o_OBS_HAM_INTEGRITY_DOUBLE_ERR    => open
             );
     elsif (p_USE_INTEGRITY) generate
         u_INTEGRITY_CONTROL_RECEIVE_NORMAL: entity work.integrity_control_receive

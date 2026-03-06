@@ -48,9 +48,13 @@ entity backend_manager_reception is
         -- Integrity receive checker (integrity_control_receive[_tmr]) - EXTERNAL
         -- Meaningful when p_USE_RX_INTEGRITY_CHECK = TRUE.
         o_OBS_RX_INTEGRITY_CORRUPT        : out std_logic := '0';
-        -- Meaningful when (p_USE_RX_INTEGRITY_CHECK and p_USE_RX_INTEGRITY_TMR) = TRUE.
+        -- TMR path removed for this checker (kept for interface compatibility).
         i_OBS_RX_TMR_INTEGRITY_CORRECT_ERROR  : in  std_logic := '0';
         o_OBS_RX_TMR_INTEGRITY_ERROR        : out std_logic := '0';
+        -- Meaningful when p_USE_RX_INTEGRITY_CHECK = TRUE.
+        i_OBS_RX_HAM_INTEGRITY_CORRECT_ERROR : in  std_logic := '1';
+        o_OBS_RX_HAM_INTEGRITY_SINGLE_ERR    : out std_logic := '0';
+        o_OBS_RX_HAM_INTEGRITY_DOUBLE_ERR    : out std_logic := '0';
 
         -- Receive flow control TMR (receive_control_tmr) - EXTERNAL
         -- Meaningful when p_USE_RX_FLOW_CTRL_TMR = TRUE.
@@ -144,8 +148,8 @@ begin
     end generate;
 
     u_INTEGRITY_CONTROL_RECEIVE:
-    if (p_USE_RX_INTEGRITY_CHECK and p_USE_RX_INTEGRITY_TMR) generate
-        u_INTEGRITY_CONTROL_RECEIVE_TMR: entity work.integrity_control_receive_tmr
+    if (p_USE_RX_INTEGRITY_CHECK) generate
+        u_INTEGRITY_CONTROL_RECEIVE_HAM: entity work.integrity_control_receive_hamming
             port map(
                 ACLK    => ACLK,
                 ARESETn => w_INTEGRITY_RESETn,
@@ -158,28 +162,19 @@ begin
 
                 o_CORRUPT       => w_OBS_RX_INTEGRITY_CORRUPT,
 
-                correct_error_i => i_OBS_RX_TMR_INTEGRITY_CORRECT_ERROR,
-                error_o         => o_OBS_RX_TMR_INTEGRITY_ERROR
+                correct_error_i => '0',
+                error_o         => o_OBS_RX_TMR_INTEGRITY_ERROR,
+
+                i_OBS_HAM_INTEGRITY_CORRECT_ERROR => i_OBS_RX_HAM_INTEGRITY_CORRECT_ERROR,
+                o_OBS_HAM_INTEGRITY_SINGLE_ERR    => o_OBS_RX_HAM_INTEGRITY_SINGLE_ERR,
+                o_OBS_HAM_INTEGRITY_DOUBLE_ERR    => o_OBS_RX_HAM_INTEGRITY_DOUBLE_ERR
             );
-    elsif (p_USE_RX_INTEGRITY_CHECK) generate
-        u_INTEGRITY_CONTROL_RECEIVE_NORMAL: entity work.integrity_control_receive
-            port map(
-                ACLK    => ACLK,
-                ARESETn => w_INTEGRITY_RESETn,
-
-                i_ADD           => w_ADD,
-                i_VALUE_ADD     => w_FLIT(c_AXI_DATA_WIDTH - 1 downto 0),
-                i_COMPARE       => w_COMPARE,
-                i_VALUE_COMPARE => w_FLIT(c_AXI_DATA_WIDTH - 1 downto 0),
-
-                o_CORRUPT       => w_OBS_RX_INTEGRITY_CORRUPT
-            );
-
-        o_OBS_RX_TMR_INTEGRITY_ERROR <= '0';
     else generate
         -- Integrity disabled.
         w_OBS_RX_INTEGRITY_CORRUPT  <= '0';
         o_OBS_RX_TMR_INTEGRITY_ERROR  <= '0';
+        o_OBS_RX_HAM_INTEGRITY_SINGLE_ERR <= '0';
+        o_OBS_RX_HAM_INTEGRITY_DOUBLE_ERR <= '0';
     end generate;
 
     -- Export integrity checker outputs with descriptive names.

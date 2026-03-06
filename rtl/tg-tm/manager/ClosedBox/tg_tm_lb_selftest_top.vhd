@@ -120,6 +120,8 @@ begin
       o_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR => open,
       o_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR => open,
       o_OBS_BE_INJ_TMR_INTEGRITY_ERROR   => open,
+      o_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR => open,
+      o_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR => open,
       o_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR   => open,
       o_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR   => open,
 
@@ -127,6 +129,8 @@ begin
       o_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR => open,
       o_OBS_BE_RX_TMR_INTEGRITY_ERROR   => open,
       o_OBS_BE_RX_INTEGRITY_CORRUPT     => open,
+      o_OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR => open,
+      o_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR => open,
       o_OBS_BE_RX_TMR_FLOW_CTRL_ERROR   => open,
 
       o_NI_CORRUPT_PACKET => open

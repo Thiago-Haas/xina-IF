@@ -49,10 +49,13 @@ entity backend_manager_injection is
         o_OBS_INJ_HAM_BUFFER_SINGLE_ERR    : out std_logic;
         o_OBS_INJ_HAM_BUFFER_DOUBLE_ERR    : out std_logic;
 
-        -- Injection integrity (checksum) TMR (integrity_control_send_tmr)
-        -- Meaningful when (p_USE_INJ_INTEGRITY_CHECK and p_USE_INJ_INTEGRITY_TMR) = TRUE.
+        -- Injection integrity legacy TMR status/control (kept for compatibility).
         i_OBS_INJ_TMR_INTEGRITY_CORRECT_ERROR : in  std_logic := '0';
         o_OBS_INJ_TMR_INTEGRITY_ERROR       : out std_logic := '0';
+        -- Injection integrity (checksum) Hamming.
+        i_OBS_INJ_HAM_INTEGRITY_CORRECT_ERROR : in  std_logic := '1';
+        o_OBS_INJ_HAM_INTEGRITY_SINGLE_ERR    : out std_logic := '0';
+        o_OBS_INJ_HAM_INTEGRITY_DOUBLE_ERR    : out std_logic := '0';
 
         -- Injection flow control TMR (send_control_tmr)
         -- Meaningful when p_USE_INJ_FLOW_CTRL_TMR = TRUE.
@@ -180,8 +183,8 @@ begin
         );
 
     u_INTEGRITY_CONTROL_SEND:
-    if (p_USE_INJ_INTEGRITY_CHECK and p_USE_INJ_INTEGRITY_TMR) generate
-        u_INTEGRITY_CONTROL_SEND_TMR: entity work.integrity_control_send_tmr
+    if (p_USE_INJ_INTEGRITY_CHECK) generate
+        u_INTEGRITY_CONTROL_SEND_HAM: entity work.integrity_control_send_hamming
             port map(
                 ACLK    => ACLK,
                 ARESETn => w_INTEGRITY_RESETn,
@@ -191,25 +194,20 @@ begin
 
                 o_CHECKSUM      => w_CHECKSUM,
 
-                correct_error_i => i_OBS_INJ_TMR_INTEGRITY_CORRECT_ERROR,
-                error_o         => w_OBS_INJ_TMR_INTEGRITY_ERROR
-            );
-    elsif (p_USE_INJ_INTEGRITY_CHECK) generate
-        u_INTEGRITY_CONTROL_SEND_NORMAL: entity work.integrity_control_send
-            port map(
-                ACLK    => ACLK,
-                ARESETn => w_INTEGRITY_RESETn,
+                correct_error_i => '0',
+                error_o         => w_OBS_INJ_TMR_INTEGRITY_ERROR,
 
-                i_ADD       => w_ADD,
-                i_VALUE_ADD => w_FLIT(c_AXI_DATA_WIDTH - 1 downto 0),
-
-                o_CHECKSUM      => w_CHECKSUM
+                i_OBS_HAM_INTEGRITY_CORRECT_ERROR => i_OBS_INJ_HAM_INTEGRITY_CORRECT_ERROR,
+                o_OBS_HAM_INTEGRITY_SINGLE_ERR    => o_OBS_INJ_HAM_INTEGRITY_SINGLE_ERR,
+                o_OBS_HAM_INTEGRITY_DOUBLE_ERR    => o_OBS_INJ_HAM_INTEGRITY_DOUBLE_ERR
             );
     end generate;
 
     u_INTEGRITY_CONTROL_SEND_DISABLE:
     if (not p_USE_INJ_INTEGRITY_CHECK) generate
         w_OBS_INJ_TMR_INTEGRITY_ERROR <= '0';
+        o_OBS_INJ_HAM_INTEGRITY_SINGLE_ERR <= '0';
+        o_OBS_INJ_HAM_INTEGRITY_DOUBLE_ERR <= '0';
         w_OBS_INJ_TMR_PKTZ_CTRL_ERROR   <= '0';
     end generate;
 

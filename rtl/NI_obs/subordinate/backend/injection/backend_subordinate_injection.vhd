@@ -128,7 +128,7 @@ begin
 
     u_INTEGRITY_CONTROL_SEND:
     if (p_USE_INTEGRITY and p_USE_TMR_INTEGRITY) generate
-        u_INTEGRITY_CONTROL_SEND_TMR: entity work.integrity_control_send_tmr
+        u_INTEGRITY_CONTROL_SEND_HAM: entity work.integrity_control_send_hamming
             port map(
                 ACLK    => ACLK,
                 ARESETn => w_INTEGRITY_RESETn,
@@ -136,7 +136,12 @@ begin
                 i_ADD       => w_ADD,
                 i_VALUE_ADD => w_FLIT(c_AXI_DATA_WIDTH - 1 downto 0),
 
-                o_CHECKSUM => w_CHECKSUM
+                o_CHECKSUM => w_CHECKSUM,
+                correct_error_i => '0',
+                error_o         => open,
+                i_OBS_HAM_INTEGRITY_CORRECT_ERROR => '0',
+                o_OBS_HAM_INTEGRITY_SINGLE_ERR    => open,
+                o_OBS_HAM_INTEGRITY_DOUBLE_ERR    => open
             );
     elsif (p_USE_INTEGRITY) generate
         u_INTEGRITY_CONTROL_SEND_NORMAL: entity work.integrity_control_send
