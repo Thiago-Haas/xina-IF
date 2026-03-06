@@ -7,9 +7,9 @@ use work.xina_ni_ft_pkg.all;
 entity lb_dp is
   generic (
     p_MEM_ADDR_BITS       : natural := 10; -- kept for compatibility; unused
-    HAMMING_ENABLE        : boolean := true;
-    HAMMING_DETECT_DOUBLE : boolean := true;
-    HAMMING_INJECT_ERROR  : boolean := false
+    p_USE_LB_HAMMING               : boolean := c_ENABLE_LB_HAMMING_PROTECTION;
+    p_USE_LB_HAMMING_DOUBLE_DETECT : boolean := c_ENABLE_LB_HAMMING_DOUBLE_DETECT;
+    p_USE_LB_HAMMING_INJECT_ERROR  : boolean := c_ENABLE_LB_HAMMING_INJECT_ERROR
   );
   port (
     ACLK    : in  std_logic;
@@ -35,8 +35,8 @@ entity lb_dp is
     o_resp_hdr1 : out std_logic_vector(31 downto 0);
     o_resp_hdr2 : out std_logic_vector(31 downto 0);
 
-    -- Hamming observe/correct (same "style" as TG datapath)
-    i_correct_enable : in  std_logic;
+    -- Hamming observe/correct (same "style" as TG/TM datapaths)
+    i_OBS_LB_HAM_BUFFER_CORRECT_ERROR : in  std_logic := '1';
     o_single_err     : out std_logic;
     o_double_err     : out std_logic;
 
@@ -55,8 +55,8 @@ architecture rtl of lb_dp is
   signal w_double_err  : std_logic;
 
   -- optional observability of encoded reg (not exported here, but kept for debug parity with TG)
-  -- width = 32 + get_ecc_size(32, HAMMING_DETECT_DOUBLE)
-  signal w_enc_payload : std_logic_vector(32 + work.hamming_pkg.get_ecc_size(32, HAMMING_DETECT_DOUBLE) - 1 downto 0);
+  -- width = 32 + get_ecc_size(32, p_USE_LB_HAMMING_DOUBLE_DETECT)
+  signal w_enc_payload : std_logic_vector(32 + work.hamming_pkg.get_ecc_size(32, p_USE_LB_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
   signal r_payload_dec : std_logic_vector(31 downto 0);
 
@@ -96,13 +96,13 @@ begin
   u_PAYLOAD_REG : entity work.hamming_register
     generic map(
       DATA_WIDTH     => 32,
-      HAMMING_ENABLE => HAMMING_ENABLE,
-      DETECT_DOUBLE  => HAMMING_DETECT_DOUBLE,
+      HAMMING_ENABLE => p_USE_LB_HAMMING,
+      DETECT_DOUBLE  => p_USE_LB_HAMMING_DOUBLE_DETECT,
       RESET_VALUE    => (31 downto 0 => '0'),
-      INJECT_ERROR   => HAMMING_INJECT_ERROR
+      INJECT_ERROR   => p_USE_LB_HAMMING_INJECT_ERROR
     )
     port map(
-      correct_en_i => i_correct_enable,
+      correct_en_i => i_OBS_LB_HAM_BUFFER_CORRECT_ERROR,
       write_en_i   => w_payload_cap,
       data_i       => w_payload,
       rstn_i       => ARESETn,

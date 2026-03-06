@@ -18,8 +18,8 @@ entity tb_tg_tm_lb_top is
     i_obs_tm_tmr_ctrl_correct_error   : in std_logic := '1';
 
     -- Loopback correction enables
-    i_lb_ham_correct_enb : in std_logic := '1';
-    i_lb_tmr_correct_enb : in std_logic := '1';
+    i_obs_lb_ham_buffer_correct_error : in std_logic := '1';
+    i_obs_lb_tmr_ctrl_correct_error   : in std_logic := '1';
 
     -- NI frontend correction enables
     i_obs_fe_inj_meta_hdr_correct_error : in std_logic := '1';
@@ -319,13 +319,13 @@ begin
       lout_val_o  => lout_val,
       lout_ack_i  => lout_ack,
 
-      -- NEW: ECC observation/correction ports for loopback (same style as TG)
-      i_ham_correct_enb => i_lb_ham_correct_enb,
-      i_tmr_correct_enb => i_lb_tmr_correct_enb,
+      -- NEW: ECC observation/correction ports for loopback (same style as TG/TM)
+      i_OBS_LB_HAM_BUFFER_CORRECT_ERROR => i_obs_lb_ham_buffer_correct_error,
+      i_OBS_LB_TMR_CTRL_CORRECT_ERROR   => i_obs_lb_tmr_ctrl_correct_error,
 
-      o_ctrl_tmr_err   => lb_ctrl_tmr_err,
-      o_ham_single_err => lb_ham_single_err,
-      o_ham_double_err => lb_ham_double_err
+      o_OBS_LB_TMR_CTRL_ERROR        => lb_ctrl_tmr_err,
+      o_OBS_LB_HAM_BUFFER_SINGLE_ERR => lb_ham_single_err,
+      o_OBS_LB_HAM_BUFFER_DOUBLE_ERR => lb_ham_double_err
     );
 
   -- reset + stimulus

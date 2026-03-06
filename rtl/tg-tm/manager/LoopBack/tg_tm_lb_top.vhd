@@ -27,7 +27,13 @@ entity tg_tm_lb_top is
     p_USE_TM_CTRL_TMR              : boolean := c_ENABLE_TM_CTRL_TMR;
     p_USE_TM_HAMMING               : boolean := c_ENABLE_TM_HAMMING_PROTECTION;
     p_USE_TM_HAMMING_DOUBLE_DETECT : boolean := c_ENABLE_TM_HAMMING_DOUBLE_DETECT;
-    p_USE_TM_HAMMING_INJECT_ERROR  : boolean := c_ENABLE_TM_HAMMING_INJECT_ERROR
+    p_USE_TM_HAMMING_INJECT_ERROR  : boolean := c_ENABLE_TM_HAMMING_INJECT_ERROR;
+
+    -- LB ECC/TMR enables (follows NI p_USE_* scheme)
+    p_USE_LB_CTRL_TMR              : boolean := c_ENABLE_LB_CTRL_TMR;
+    p_USE_LB_HAMMING               : boolean := c_ENABLE_LB_HAMMING_PROTECTION;
+    p_USE_LB_HAMMING_DOUBLE_DETECT : boolean := c_ENABLE_LB_HAMMING_DOUBLE_DETECT;
+    p_USE_LB_HAMMING_INJECT_ERROR  : boolean := c_ENABLE_LB_HAMMING_INJECT_ERROR
   );
   port(
     ACLK    : in  std_logic;
@@ -54,12 +60,48 @@ entity tg_tm_lb_top is
     o_OBS_TM_HAM_BUFFER_SINGLE_ERR    : out std_logic;
     o_OBS_TM_HAM_BUFFER_DOUBLE_ERR    : out std_logic;
 
+    -- LB observability
+    i_OBS_LB_HAM_BUFFER_CORRECT_ERROR : in  std_logic := '1';
+    i_OBS_LB_TMR_CTRL_CORRECT_ERROR   : in  std_logic := '1';
+    o_OBS_LB_TMR_CTRL_ERROR           : out std_logic;
+    o_OBS_LB_HAM_BUFFER_SINGLE_ERR    : out std_logic;
+    o_OBS_LB_HAM_BUFFER_DOUBLE_ERR    : out std_logic;
+
     -- TG observability (same naming pattern as NI OBS ports)
     i_OBS_TG_HAM_BUFFER_CORRECT_ERROR : in  std_logic := '1';
     i_OBS_TG_TMR_CTRL_CORRECT_ERROR   : in  std_logic := '1';
     o_OBS_TG_TMR_CTRL_ERROR           : out std_logic;
     o_OBS_TG_HAM_BUFFER_SINGLE_ERR    : out std_logic;
-    o_OBS_TG_HAM_BUFFER_DOUBLE_ERR    : out std_logic
+    o_OBS_TG_HAM_BUFFER_DOUBLE_ERR    : out std_logic;
+
+    -- NI observability (forwarded from top_manager)
+    o_OBS_FE_INJ_META_HDR_SINGLE_ERR : out std_logic;
+    o_OBS_FE_INJ_META_HDR_DOUBLE_ERR : out std_logic;
+    o_OBS_FE_INJ_ADDR_SINGLE_ERR     : out std_logic;
+    o_OBS_FE_INJ_ADDR_DOUBLE_ERR     : out std_logic;
+    i_OBS_FE_INJ_META_HDR_CORRECT_ERROR : in std_logic := '1';
+    i_OBS_FE_INJ_ADDR_CORRECT_ERROR     : in std_logic := '1';
+
+    i_OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR    : in std_logic := '1';
+    o_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR       : out std_logic;
+    o_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR       : out std_logic;
+    i_OBS_BE_INJ_TMR_INTEGRITY_CORRECT_ERROR : in std_logic := '1';
+    o_OBS_BE_INJ_TMR_INTEGRITY_ERROR         : out std_logic;
+    i_OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR : in std_logic := '1';
+    o_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR         : out std_logic;
+    i_OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR : in std_logic := '1';
+    o_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR         : out std_logic;
+
+    i_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR     : in std_logic := '1';
+    o_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR        : out std_logic;
+    o_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR        : out std_logic;
+    i_OBS_BE_RX_TMR_INTEGRITY_CORRECT_ERROR  : in std_logic := '1';
+    o_OBS_BE_RX_TMR_INTEGRITY_ERROR          : out std_logic;
+    o_OBS_BE_RX_INTEGRITY_CORRUPT            : out std_logic;
+    i_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR  : in std_logic := '1';
+    o_OBS_BE_RX_TMR_FLOW_CTRL_ERROR          : out std_logic;
+
+    o_NI_CORRUPT_PACKET : out std_logic
   );
 end entity;
 
@@ -251,39 +293,45 @@ begin
       l_out_val_o  => lout_val,
       l_out_ack_i  => lout_ack,
 
-      corrupt_packet => open,
+      corrupt_packet => o_NI_CORRUPT_PACKET,
 
       -- Frontend observation ports
-      o_OBS_FE_INJ_META_HDR_SINGLE_ERR => open,
-      o_OBS_FE_INJ_META_HDR_DOUBLE_ERR => open,
-      o_OBS_FE_INJ_ADDR_SINGLE_ERR     => open,
-      o_OBS_FE_INJ_ADDR_DOUBLE_ERR     => open,
+      o_OBS_FE_INJ_META_HDR_SINGLE_ERR => o_OBS_FE_INJ_META_HDR_SINGLE_ERR,
+      o_OBS_FE_INJ_META_HDR_DOUBLE_ERR => o_OBS_FE_INJ_META_HDR_DOUBLE_ERR,
+      o_OBS_FE_INJ_ADDR_SINGLE_ERR     => o_OBS_FE_INJ_ADDR_SINGLE_ERR,
+      o_OBS_FE_INJ_ADDR_DOUBLE_ERR     => o_OBS_FE_INJ_ADDR_DOUBLE_ERR,
+      i_OBS_FE_INJ_META_HDR_CORRECT_ERROR => i_OBS_FE_INJ_META_HDR_CORRECT_ERROR,
+      i_OBS_FE_INJ_ADDR_CORRECT_ERROR     => i_OBS_FE_INJ_ADDR_CORRECT_ERROR,
 
       -- Backend correction enables / observation ports
-      i_OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR => '1',
-      o_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR    => open,
-      o_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR    => open,
-      i_OBS_BE_INJ_TMR_INTEGRITY_CORRECT_ERROR => '1',
-      o_OBS_BE_INJ_TMR_INTEGRITY_ERROR         => open,
-      i_OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR => '1',
-      o_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR         => open,
-      i_OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR => '1',
-      o_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR         => open,
+      i_OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR    => i_OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR,
+      o_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR       => o_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR,
+      o_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR       => o_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR,
+      i_OBS_BE_INJ_TMR_INTEGRITY_CORRECT_ERROR => i_OBS_BE_INJ_TMR_INTEGRITY_CORRECT_ERROR,
+      o_OBS_BE_INJ_TMR_INTEGRITY_ERROR         => o_OBS_BE_INJ_TMR_INTEGRITY_ERROR,
+      i_OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR => i_OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR,
+      o_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR         => o_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR,
+      i_OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR => i_OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR,
+      o_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR         => o_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR,
 
-      i_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR => '1',
-      o_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR    => open,
-      o_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR    => open,
-      i_OBS_BE_RX_TMR_INTEGRITY_CORRECT_ERROR => '1',
-      o_OBS_BE_RX_TMR_INTEGRITY_ERROR         => open,
-      o_OBS_BE_RX_INTEGRITY_CORRUPT           => open,
-      i_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR => '1',
-      o_OBS_BE_RX_TMR_FLOW_CTRL_ERROR         => open
+      i_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR     => i_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR,
+      o_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR        => o_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR,
+      o_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR        => o_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR,
+      i_OBS_BE_RX_TMR_INTEGRITY_CORRECT_ERROR  => i_OBS_BE_RX_TMR_INTEGRITY_CORRECT_ERROR,
+      o_OBS_BE_RX_TMR_INTEGRITY_ERROR          => o_OBS_BE_RX_TMR_INTEGRITY_ERROR,
+      o_OBS_BE_RX_INTEGRITY_CORRUPT            => o_OBS_BE_RX_INTEGRITY_CORRUPT,
+      i_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR  => i_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR,
+      o_OBS_BE_RX_TMR_FLOW_CTRL_ERROR          => o_OBS_BE_RX_TMR_FLOW_CTRL_ERROR
     );
 
   -- HW loopback (non-debug)
   u_lb: entity work.lb_top
     generic map(
-      p_MEM_ADDR_BITS => p_MEM_ADDR_BITS
+      p_MEM_ADDR_BITS              => p_MEM_ADDR_BITS,
+      p_USE_LB_CTRL_TMR            => p_USE_LB_CTRL_TMR,
+      p_USE_LB_HAMMING             => p_USE_LB_HAMMING,
+      p_USE_LB_HAMMING_DOUBLE_DETECT => p_USE_LB_HAMMING_DOUBLE_DETECT,
+      p_USE_LB_HAMMING_INJECT_ERROR  => p_USE_LB_HAMMING_INJECT_ERROR
     )
     port map(
       ACLK    => ACLK,
@@ -297,9 +345,11 @@ begin
       lout_val_o  => lout_val,
       lout_ack_i  => lout_ack,
 
-      -- Keep correction enabled by default in this closed/flat wrapper
-      i_ham_correct_enb => '1',
-      i_tmr_correct_enb => '1'
+      i_OBS_LB_HAM_BUFFER_CORRECT_ERROR => i_OBS_LB_HAM_BUFFER_CORRECT_ERROR,
+      i_OBS_LB_TMR_CTRL_CORRECT_ERROR   => i_OBS_LB_TMR_CTRL_CORRECT_ERROR,
+      o_OBS_LB_TMR_CTRL_ERROR           => o_OBS_LB_TMR_CTRL_ERROR,
+      o_OBS_LB_HAM_BUFFER_SINGLE_ERR    => o_OBS_LB_HAM_BUFFER_SINGLE_ERR,
+      o_OBS_LB_HAM_BUFFER_DOUBLE_ERR    => o_OBS_LB_HAM_BUFFER_DOUBLE_ERR
     );
 
 end architecture;

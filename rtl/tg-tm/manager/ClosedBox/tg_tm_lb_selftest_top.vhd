@@ -104,10 +104,32 @@ begin
       o_OBS_TM_TMR_CTRL_ERROR        => open,
       o_OBS_TM_HAM_BUFFER_SINGLE_ERR => open,
       o_OBS_TM_HAM_BUFFER_DOUBLE_ERR => open,
+      o_OBS_LB_TMR_CTRL_ERROR        => open,
+      o_OBS_LB_HAM_BUFFER_SINGLE_ERR => open,
+      o_OBS_LB_HAM_BUFFER_DOUBLE_ERR => open,
 
       o_OBS_TG_TMR_CTRL_ERROR        => open,
       o_OBS_TG_HAM_BUFFER_SINGLE_ERR => open,
-      o_OBS_TG_HAM_BUFFER_DOUBLE_ERR => open
+      o_OBS_TG_HAM_BUFFER_DOUBLE_ERR => open,
+
+      o_OBS_FE_INJ_META_HDR_SINGLE_ERR => open,
+      o_OBS_FE_INJ_META_HDR_DOUBLE_ERR => open,
+      o_OBS_FE_INJ_ADDR_SINGLE_ERR     => open,
+      o_OBS_FE_INJ_ADDR_DOUBLE_ERR     => open,
+
+      o_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR => open,
+      o_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR => open,
+      o_OBS_BE_INJ_TMR_INTEGRITY_ERROR   => open,
+      o_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR   => open,
+      o_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR   => open,
+
+      o_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR => open,
+      o_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR => open,
+      o_OBS_BE_RX_TMR_INTEGRITY_ERROR   => open,
+      o_OBS_BE_RX_INTEGRITY_CORRUPT     => open,
+      o_OBS_BE_RX_TMR_FLOW_CTRL_ERROR   => open,
+
+      o_NI_CORRUPT_PACKET => open
     );
 
 end architecture;
