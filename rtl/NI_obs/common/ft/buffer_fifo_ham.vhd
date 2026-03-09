@@ -48,6 +48,7 @@ architecture rtl of buffer_fifo_ham is
   signal stage_load     : std_logic;
 
   signal enc_reg_word   : std_logic_vector(c_ENC_WIDTH - 1 downto 0);
+  signal enc_word_w     : std_logic_vector(c_ENC_WIDTH - 1 downto 0);
 
 begin
 
@@ -103,26 +104,27 @@ begin
   -- (This makes the design simpler and avoids tying acceptance directly to FIFO.)
   o_WRITE_OK <= not stage_valid;
 
-  u_ham_reg : entity work.hamming_register
+  u_ham_enc : entity work.hamming_encoder
     generic map (
-      DATA_WIDTH     => p_DATA_WIDTH,
-      HAMMING_ENABLE => true,
-      DETECT_DOUBLE  => DETECT_DOUBLE,
-      RESET_VALUE    => (p_DATA_WIDTH-1 downto 0 => '0'),
-      INJECT_ERROR   => false
+      DATA_SIZE     => p_DATA_WIDTH,
+      DETECT_DOUBLE => DETECT_DOUBLE
     )
     port map (
-      correct_en_i => '1',        -- not relevant for encode; keep enabled
-      write_en_i   => stage_load, -- capture raw data only when we accept a write
-      data_i       => i_DATA,
-      rstn_i       => not ARESET,
-      clk_i        => ACLK,
-
-      single_err_o => open,
-      double_err_o => open,
-      enc_data_o   => enc_reg_word,
-      data_o       => open
+      data_i    => i_DATA,
+      encoded_o => enc_word_w
     );
+
+  -- Staging register: stores encoded word accepted from the external write side.
+  p_stage_data : process (ACLK, ARESET)
+  begin
+    if ARESET = '1' then
+      enc_reg_word <= (others => '0');
+    elsif rising_edge(ACLK) then
+      if stage_load = '1' then
+        enc_reg_word <= enc_word_w;
+      end if;
+    end if;
+  end process;
 
   -- Stage valid flag
   p_stage : process (ACLK, ARESET)
@@ -139,6 +141,7 @@ begin
     end if;
   end process;
 
-  o_enc_stage_data <= enc_reg_word;
+  -- Expose the encoded word as seen by the decoder input.
+  o_enc_stage_data <= fifo_data_out;
 
 end rtl;
