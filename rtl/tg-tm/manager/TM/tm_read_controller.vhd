@@ -7,8 +7,6 @@ use IEEE.std_logic_1164.all;
 --   s1_R : assert RREADY until RVALID handshake; finish when RLAST=1
 --
 -- Pulses:
---  * o_txn_start_pulse : 1 cycle when a new transaction starts (IDLE->AR)
---  * o_rbeat_pulse     : 1 cycle for each R beat accepted (RVALID&RREADY)
 --  * o_done            : 1 cycle when last R beat is accepted (RVALID&RREADY&RLAST)
 entity tm_read_controller is
   port(
@@ -29,9 +27,6 @@ entity tm_read_controller is
     RREADY  : out std_logic;
 
     -- datapath control
-    o_txn_start_pulse : out std_logic;
-    -- 1-cycle registered pulse (legacy / optional use)
-    o_rbeat_pulse     : out std_logic;
     -- combinational same-cycle handshake (use this to step datapath with no 1-cycle delay)
     o_rbeat_hs_comb   : out std_logic;
     -- seed-only-once logic moved here (mirrors TG)
@@ -47,8 +42,6 @@ architecture rtl of tm_read_controller is
   signal ar_hs, r_hs : std_logic;
 
   signal done_pulse  : std_logic := '0';
-  signal start_pulse : std_logic := '0';
-  signal rbeat_pulse : std_logic := '0';
   signal seed_pulse  : std_logic := '0';
   signal r_seeded    : std_logic := '0';
 begin
@@ -65,16 +58,12 @@ begin
   o_rbeat_hs_comb <= r_hs;
 
   o_done            <= done_pulse;
-  o_txn_start_pulse <= start_pulse;
-  o_rbeat_pulse     <= rbeat_pulse;
   o_seed_pulse      <= seed_pulse;
 
   process(ACLK)
   begin
     if rising_edge(ACLK) then
       done_pulse  <= '0';
-      start_pulse <= '0';
-      rbeat_pulse <= '0';
       seed_pulse  <= '0';
 
       if ARESETn = '0' then
@@ -84,7 +73,6 @@ begin
         case r_state is
           when s_idle =>
             if i_start = '1' then
-              start_pulse <= '1';
               if r_seeded = '0' then
                 seed_pulse <= '1';
                 r_seeded   <= '1';
@@ -99,7 +87,6 @@ begin
 
           when s_r =>
             if r_hs = '1' then
-              rbeat_pulse <= '1';
               if RLAST = '1' then
                 done_pulse <= '1';
                 r_state <= s_idle;

@@ -70,8 +70,6 @@ end tm_read_top;
 
 architecture rtl of tm_read_top is
   signal w_read_done       : std_logic;
-  signal w_txn_start_pulse : std_logic;
-  signal w_rbeat_pulse     : std_logic;
   signal w_r_hs_comb       : std_logic;
   signal w_seed_pulse      : std_logic;
 
@@ -102,8 +100,6 @@ begin
         ARVALID => ARVALID,
         RREADY  => RREADY,
 
-        o_txn_start_pulse => w_txn_start_pulse,
-        o_rbeat_pulse     => w_rbeat_pulse,
         o_rbeat_hs_comb   => w_r_hs_comb,
         o_seed_pulse      => w_seed_pulse
       );
@@ -126,8 +122,6 @@ begin
         ARVALID => ARVALID,
         RREADY  => RREADY,
 
-        o_txn_start_pulse => w_txn_start_pulse,
-        o_rbeat_pulse     => w_rbeat_pulse,
         o_rbeat_hs_comb   => w_r_hs_comb,
         o_seed_pulse      => w_seed_pulse,
 
