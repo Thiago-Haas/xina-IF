@@ -44,25 +44,18 @@ end entity;
 architecture rtl of lb_top is
 
   signal cap_en   : std_logic;
+  signal cap_flit_ctrl : std_logic;
   signal cap_flit : std_logic_vector(c_FLIT_WIDTH-1 downto 0);
   signal cap_idx  : unsigned(5 downto 0);
-  signal cap_last : std_logic;
-
-  signal req_ready    : std_logic;
-  signal req_is_write : std_logic;
-  signal req_is_read  : std_logic;
-  signal req_len      : unsigned(7 downto 0);
-  signal req_id       : std_logic_vector(4 downto 0);
-  signal req_burst    : std_logic_vector(1 downto 0);
-  signal req_base_idx : unsigned(p_MEM_ADDR_BITS-1 downto 0);
-
-  signal resp_hdr0, resp_hdr1, resp_hdr2 : std_logic_vector(31 downto 0);
 
   signal rd_payload_idx : unsigned(7 downto 0);
   signal rd_payload     : std_logic_vector(31 downto 0);
 
   signal hold_valid_pulse : std_logic; -- DP pulse when payload captured
   signal hold_clr         : std_logic;
+  signal tx_idx           : unsigned(3 downto 0);
+  signal tx_last          : unsigned(3 downto 0);
+  signal tx_next_is_read  : std_logic;
 
   signal w_ctrl_tmr_err   : std_logic;
   signal w_ham_single_err : std_logic;
@@ -70,6 +63,19 @@ architecture rtl of lb_top is
   signal w_ham_enc_data   : std_logic_vector(32 + work.hamming_pkg.get_ecc_size(32, p_USE_LB_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
 begin
+  rd_payload_idx <= (others => '0');
+
+  u_ctrl_adapter: entity work.lb_ctrl_adapter
+    port map(
+      i_lin_data       => lin_data_i,
+      i_cap_flit_ctrl  => cap_flit_ctrl,
+      i_tx_idx         => tx_idx,
+      i_tx_last        => tx_last,
+      i_tx_next_is_read=> tx_next_is_read,
+      i_rd_payload     => rd_payload,
+      o_cap_flit       => cap_flit,
+      o_lout_data      => lout_data_o
+    );
 
   u_dp: entity work.lb_dp
     generic map(
@@ -85,22 +91,22 @@ begin
       i_cap_en   => cap_en,
       i_cap_flit => cap_flit,
       i_cap_idx  => cap_idx,
-      i_cap_last => cap_last,
+      i_cap_last => '0',
 
-      o_req_ready    => req_ready,
-      o_req_is_write => req_is_write,
-      o_req_is_read  => req_is_read,
-      o_req_len      => req_len,
-      o_req_id       => req_id,
-      o_req_burst    => req_burst,
-      o_req_base_idx => req_base_idx,
+      o_req_ready    => open,
+      o_req_is_write => open,
+      o_req_is_read  => open,
+      o_req_len      => open,
+      o_req_id       => open,
+      o_req_burst    => open,
+      o_req_base_idx => open,
 
       i_rd_payload_idx => rd_payload_idx,
       o_rd_payload     => rd_payload,
 
-      o_resp_hdr0 => resp_hdr0,
-      o_resp_hdr1 => resp_hdr1,
-      o_resp_hdr2 => resp_hdr2,
+      o_resp_hdr0 => open,
+      o_resp_hdr1 => open,
+      o_resp_hdr2 => open,
 
       -- hamming obs/correct
       i_OBS_LB_HAM_BUFFER_CORRECT_ERROR => i_OBS_LB_HAM_BUFFER_CORRECT_ERROR,
@@ -122,30 +128,19 @@ begin
         ACLK    => ACLK,
         ARESETn => ARESETn,
 
-        i_lin_data => lin_data_i,
+        i_lin_ctrl => lin_data_i(c_FLIT_WIDTH-1),
         i_lin_val  => lin_val_i,
         o_lin_ack  => lin_ack_o,
 
-        o_lout_data => lout_data_o,
         o_lout_val  => lout_val_o,
         i_lout_ack  => lout_ack_i,
+        o_tx_idx    => tx_idx,
+        o_tx_last   => tx_last,
+        o_tx_next_is_read => tx_next_is_read,
 
         o_cap_en   => cap_en,
-        o_cap_flit => cap_flit,
+        o_cap_flit_ctrl => cap_flit_ctrl,
         o_cap_idx  => cap_idx,
-        o_cap_last => cap_last,
-
-        i_req_ready    => req_ready,
-        i_req_is_write => req_is_write,
-        i_req_is_read  => req_is_read,
-        i_req_len      => req_len,
-
-        i_resp_hdr0 => resp_hdr0,
-        i_resp_hdr1 => resp_hdr1,
-        i_resp_hdr2 => resp_hdr2,
-
-        o_rd_payload_idx => rd_payload_idx,
-        i_rd_payload     => rd_payload,
 
         i_hold_valid => hold_valid_pulse,
         o_hold_clr   => hold_clr
@@ -159,30 +154,19 @@ begin
         ACLK    => ACLK,
         ARESETn => ARESETn,
 
-        i_lin_data => lin_data_i,
+        i_lin_ctrl => lin_data_i(c_FLIT_WIDTH-1),
         i_lin_val  => lin_val_i,
         o_lin_ack  => lin_ack_o,
 
-        o_lout_data => lout_data_o,
         o_lout_val  => lout_val_o,
         i_lout_ack  => lout_ack_i,
+        o_tx_idx    => tx_idx,
+        o_tx_last   => tx_last,
+        o_tx_next_is_read => tx_next_is_read,
 
         o_cap_en   => cap_en,
-        o_cap_flit => cap_flit,
+        o_cap_flit_ctrl => cap_flit_ctrl,
         o_cap_idx  => cap_idx,
-        o_cap_last => cap_last,
-
-        i_req_ready    => req_ready,
-        i_req_is_write => req_is_write,
-        i_req_is_read  => req_is_read,
-        i_req_len      => req_len,
-
-        i_resp_hdr0 => resp_hdr0,
-        i_resp_hdr1 => resp_hdr1,
-        i_resp_hdr2 => resp_hdr2,
-
-        o_rd_payload_idx => rd_payload_idx,
-        i_rd_payload     => rd_payload,
 
         i_hold_valid => hold_valid_pulse,
         o_hold_clr   => hold_clr,
