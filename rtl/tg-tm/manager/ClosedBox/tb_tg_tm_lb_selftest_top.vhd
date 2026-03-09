@@ -17,9 +17,6 @@ architecture tb of tb_tg_tm_lb_selftest_top is
   signal ACLK    : std_logic := '0';
   signal ARESETn : std_logic := '0';
 
-  -- simple probe from DUT (kept so ports are connected)
-  signal probe : std_logic_vector(7 downto 0);
-
 begin
 
   -- clock
@@ -29,8 +26,7 @@ begin
   dut: entity work.tg_tm_lb_selftest_top
     port map (
       ACLK    => ACLK,
-      ARESETn => ARESETn,
-      o_probe => probe
+      ARESETn => ARESETn
     );
 
   -- reset + run

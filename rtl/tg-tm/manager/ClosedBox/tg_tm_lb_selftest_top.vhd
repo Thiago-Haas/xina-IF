@@ -6,17 +6,12 @@ use IEEE.numeric_std.all;
 -- Closed-box self-test top:
 --   Inputs: ACLK, ARESETn
 --   Internally instantiates TG+TM+NI+loopback (tg_tm_lb_top)
---   and a small controller (tg_tm_lb_selftest_ctrl) that drives
---   start pulses and the address/seed sequence.
+--   and an observation block that is split into control/datapath.
 
 entity tg_tm_lb_selftest_top is
   port (
     ACLK    : in std_logic;
-    ARESETn : in std_logic;
-
-    -- Simple outward-facing probe bus to prevent aggressive trimming during synthesis.
-    -- (Use it only for utilization checks / debug.)
-    o_probe : out std_logic_vector(7 downto 0)
+    ARESETn : in std_logic
   );
 end entity;
 
@@ -40,32 +35,9 @@ architecture rtl of tg_tm_lb_selftest_top is
   -- self-test status (kept internal)
   signal selftest_error : std_logic;
 
-  -- tiny activity counter for the probe bus
-  signal r_probe_cnt : unsigned(3 downto 0) := (others => '0');
-
 begin
 
-  -- Small free-running counter (and exported status bits) so synthesis can't trivially
-  -- prune internal logic when used as a closed box.
-  process (ACLK)
-  begin
-    if rising_edge(ACLK) then
-      if ARESETn = '0' then
-        r_probe_cnt <= (others => '0');
-      else
-        r_probe_cnt <= r_probe_cnt + 1;
-      end if;
-    end if;
-  end process;
-
-  -- [7] error latch from controller
-  -- [6] TM mismatch from TM
-  -- [5] TG done pulse
-  -- [4] TM done pulse
-  -- [3:0] activity counter
-  o_probe <= selftest_error & tm_mismatch & tg_done & tm_done & std_logic_vector(r_probe_cnt);
-
-  u_ctrl: entity work.tg_tm_lb_selftest_ctrl
+  u_ctrl: entity work.tg_tm_lb_selftest_observation_block
     port map (
       ACLK    => ACLK,
       ARESETn => ARESETn,
