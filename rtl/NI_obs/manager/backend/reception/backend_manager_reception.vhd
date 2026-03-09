@@ -45,6 +45,8 @@ entity backend_manager_reception is
         o_OBS_RX_HAM_BUFFER_SINGLE_ERR    : out std_logic;
         o_OBS_RX_HAM_BUFFER_DOUBLE_ERR    : out std_logic;
         o_OBS_RX_HAM_BUFFER_ENC_DATA      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, DETECT_DOUBLE) - 1 downto 0);
+        i_OBS_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR : in  std_logic := '1';
+        o_OBS_RX_TMR_HAM_BUFFER_CTRL_ERROR         : out std_logic := '0';
         -- Hamming (interface header register) - EXTERNAL
         i_OBS_RX_HAM_INTERFACE_HDR_CORRECT_ERROR : in  std_logic := '1';
         o_OBS_RX_HAM_INTERFACE_HDR_SINGLE_ERR    : out std_logic := '0';
@@ -222,7 +224,9 @@ begin
                 correct_error_i => i_OBS_RX_HAM_BUFFER_CORRECT_ERROR,
                 single_err_o    => o_OBS_RX_HAM_BUFFER_SINGLE_ERR,
                 double_err_o    => o_OBS_RX_HAM_BUFFER_DOUBLE_ERR,
-                o_enc_stage_data => o_OBS_RX_HAM_BUFFER_ENC_DATA
+                o_enc_stage_data => o_OBS_RX_HAM_BUFFER_ENC_DATA,
+                i_OBS_HAM_FIFO_CTRL_TMR_CORRECT_ERROR => i_OBS_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR,
+                o_OBS_HAM_FIFO_CTRL_TMR_ERROR         => o_OBS_RX_TMR_HAM_BUFFER_CTRL_ERROR
             );
     else generate
         u_BUFFER_FIFO_NORMAL: entity work.buffer_fifo
@@ -244,6 +248,7 @@ begin
             );
 
         o_OBS_RX_HAM_BUFFER_ENC_DATA <= (others => '0');
+        o_OBS_RX_TMR_HAM_BUFFER_CTRL_ERROR <= '0';
     end generate;
 
     u_RECEIVE_CONTROL:

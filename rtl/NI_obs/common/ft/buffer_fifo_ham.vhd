@@ -1,14 +1,17 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use ieee.math_real.all;
 
 use work.hamming_pkg.all;
+use work.xina_ni_ft_pkg.all;
 
 entity buffer_fifo_ham is
   generic (
     p_DATA_WIDTH   : positive := 32;
     p_BUFFER_DEPTH : positive := 4;
-    DETECT_DOUBLE  : boolean  := TRUE
+    DETECT_DOUBLE  : boolean  := TRUE;
+    p_USE_HAM_FIFO_CTRL_TMR : boolean := c_ENABLE_HAM_FIFO_CTRL_TMR
   );
   port (
     ACLK   : in std_logic;
@@ -28,7 +31,11 @@ entity buffer_fifo_ham is
     correct_error_i : in  std_logic := '1';  -- default: correct if possible
     single_err_o    : out std_logic;
     double_err_o    : out std_logic;
-    o_enc_stage_data : out std_logic_vector(p_DATA_WIDTH + get_ecc_size(p_DATA_WIDTH, DETECT_DOUBLE) - 1 downto 0)
+    o_enc_stage_data : out std_logic_vector(p_DATA_WIDTH + get_ecc_size(p_DATA_WIDTH, DETECT_DOUBLE) - 1 downto 0);
+
+    -- TMR control/observation for FIFO control-state block (stage_valid + fifo_count)
+    i_OBS_HAM_FIFO_CTRL_TMR_CORRECT_ERROR : in  std_logic := '1';
+    o_OBS_HAM_FIFO_CTRL_TMR_ERROR         : out std_logic
   );
 end buffer_fifo_ham;
 
@@ -37,44 +44,95 @@ architecture rtl of buffer_fifo_ham is
   constant c_PARITY_WIDTH : integer := get_ecc_size(p_DATA_WIDTH, DETECT_DOUBLE);
   constant c_ENC_WIDTH    : integer := p_DATA_WIDTH + c_PARITY_WIDTH;
 
-  -- FIFO-side signals
-  signal fifo_write_ok  : std_logic;
-  signal fifo_read_ok   : std_logic;
+  -- FIFO storage
+  type fifo_type_t is array (p_BUFFER_DEPTH - 1 downto 0) of std_logic_vector(c_ENC_WIDTH - 1 downto 0);
+  signal fifo_mem_r     : fifo_type_t := (others => (others => '0'));
   signal fifo_data_out  : std_logic_vector(c_ENC_WIDTH - 1 downto 0);
 
-  -- Write staging (encoded word produced by hamming_register)
-  signal stage_valid    : std_logic := '0';
-  signal stage_push     : std_logic;
-  signal stage_load     : std_logic;
+  -- Control block outputs
+  signal stage_valid_w   : std_logic;
+  signal stage_push_w    : std_logic;
+  signal stage_load_w    : std_logic;
+  signal fifo_do_write_w : std_logic;
+  signal fifo_do_read_w  : std_logic;
+  signal fifo_write_ok_w : std_logic;
+  signal fifo_read_ok_w  : std_logic;
+  signal fifo_count_w    : unsigned(integer(ceil(log2(real(p_BUFFER_DEPTH)))) downto 0);
+  signal ctrl_tmr_err_w  : std_logic;
 
   signal enc_reg_word   : std_logic_vector(c_ENC_WIDTH - 1 downto 0);
   signal enc_word_w     : std_logic_vector(c_ENC_WIDTH - 1 downto 0);
 
 begin
 
-  -----------------------------------------------------------------------------
-  -- FIFO storing ENCODED words
-  -----------------------------------------------------------------------------
-  u_fifo : entity work.buffer_fifo
-    generic map (
-      p_DATA_WIDTH   => c_ENC_WIDTH,
-      p_BUFFER_DEPTH => p_BUFFER_DEPTH
-    )
-    port map (
-      ACLK       => ACLK,
-      ARESET     => ARESET,
+  gen_ctrl_plain : if not p_USE_HAM_FIFO_CTRL_TMR generate
+  begin
+    u_ctrl : entity work.buffer_fifo_ham_ctrl
+      generic map(
+        p_BUFFER_DEPTH => p_BUFFER_DEPTH
+      )
+      port map(
+        ACLK   => ACLK,
+        ARESET => ARESET,
+        i_WRITE_REQ => i_WRITE,
+        i_READ_REQ  => i_READ,
+        o_STAGE_VALID   => stage_valid_w,
+        o_STAGE_LOAD    => stage_load_w,
+        o_STAGE_PUSH    => stage_push_w,
+        o_FIFO_DO_WRITE => fifo_do_write_w,
+        o_FIFO_DO_READ  => fifo_do_read_w,
+        o_FIFO_WRITE_OK => fifo_write_ok_w,
+        o_FIFO_READ_OK  => fifo_read_ok_w,
+        o_FIFO_COUNT    => fifo_count_w
+      );
+    ctrl_tmr_err_w <= '0';
+  end generate;
 
-      o_READ_OK  => fifo_read_ok,
-      i_READ     => i_READ,
-      o_DATA     => fifo_data_out,
+  gen_ctrl_tmr : if p_USE_HAM_FIFO_CTRL_TMR generate
+  begin
+    u_ctrl_tmr : entity work.buffer_fifo_ham_ctrl_tmr
+      generic map(
+        p_BUFFER_DEPTH => p_BUFFER_DEPTH
+      )
+      port map(
+        ACLK   => ACLK,
+        ARESET => ARESET,
+        i_WRITE_REQ => i_WRITE,
+        i_READ_REQ  => i_READ,
+        o_STAGE_VALID   => stage_valid_w,
+        o_STAGE_LOAD    => stage_load_w,
+        o_STAGE_PUSH    => stage_push_w,
+        o_FIFO_DO_WRITE => fifo_do_write_w,
+        o_FIFO_DO_READ  => fifo_do_read_w,
+        o_FIFO_WRITE_OK => fifo_write_ok_w,
+        o_FIFO_READ_OK  => fifo_read_ok_w,
+        o_FIFO_COUNT    => fifo_count_w,
+        i_correct_enable => i_OBS_HAM_FIFO_CTRL_TMR_CORRECT_ERROR,
+        error_o          => ctrl_tmr_err_w
+      );
+  end generate;
 
-      o_WRITE_OK => fifo_write_ok,
-      i_WRITE    => stage_push,
-      i_DATA     => enc_reg_word
-    );
+  o_OBS_HAM_FIFO_CTRL_TMR_ERROR <= ctrl_tmr_err_w;
+
+  p_fifo_mem : process (ACLK, ARESET)
+  begin
+    if ARESET = '1' then
+      fifo_mem_r <= (others => (others => '0'));
+    elsif rising_edge(ACLK) then
+      if fifo_do_write_w = '1' then
+        fifo_mem_r(0) <= enc_reg_word;
+        for i in 1 to p_BUFFER_DEPTH - 1 loop
+          fifo_mem_r(i) <= fifo_mem_r(i - 1);
+        end loop;
+      end if;
+    end if;
+  end process;
+
+  fifo_data_out <= fifo_mem_r(0) when (to_integer(fifo_count_w) = 0) else
+                   fifo_mem_r(to_integer(fifo_count_w - 1));
 
   -- propagate read OK outward (read path unchanged)
-  o_READ_OK <= fifo_read_ok;
+  o_READ_OK <= fifo_read_ok_w;
 
   -----------------------------------------------------------------------------
   -- Hamming decode (combinational) of FIFO output
@@ -97,12 +155,9 @@ begin
   --  * Accept i_WRITE when stage is empty
   --  * Push encoded word into FIFO when FIFO has space
   -----------------------------------------------------------------------------
-  stage_load <= i_WRITE and (not stage_valid);
-  stage_push <= stage_valid and fifo_write_ok;
-
   -- External "write ok" now means: you can load the staging register this cycle.
   -- (This makes the design simpler and avoids tying acceptance directly to FIFO.)
-  o_WRITE_OK <= not stage_valid;
+  o_WRITE_OK <= not stage_valid_w;
 
   u_ham_enc : entity work.hamming_encoder
     generic map (
@@ -120,23 +175,8 @@ begin
     if ARESET = '1' then
       enc_reg_word <= (others => '0');
     elsif rising_edge(ACLK) then
-      if stage_load = '1' then
+      if stage_load_w = '1' then
         enc_reg_word <= enc_word_w;
-      end if;
-    end if;
-  end process;
-
-  -- Stage valid flag
-  p_stage : process (ACLK, ARESET)
-  begin
-    if ARESET = '1' then
-      stage_valid <= '0';
-    elsif rising_edge(ACLK) then
-      -- once loaded, remain valid until pushed into FIFO
-      if stage_load = '1' then
-        stage_valid <= '1';
-      elsif stage_push = '1' then
-        stage_valid <= '0';
       end if;
     end if;
   end process;

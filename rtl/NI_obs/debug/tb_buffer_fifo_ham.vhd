@@ -63,7 +63,9 @@ begin
       correct_error_i => correct_error_i,
       single_err_o    => single_err_o,
       double_err_o    => double_err_o,
-      o_enc_stage_data => open
+      o_enc_stage_data => open,
+      i_OBS_HAM_FIFO_CTRL_TMR_CORRECT_ERROR => '1',
+      o_OBS_HAM_FIFO_CTRL_TMR_ERROR         => open
     );
 
   --------------------------------------------------------------------------

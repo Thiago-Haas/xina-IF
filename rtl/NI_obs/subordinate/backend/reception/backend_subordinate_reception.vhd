@@ -201,7 +201,9 @@ begin
                 o_WRITE_OK => w_WRITE_OK_BUFFER,
                 i_WRITE    => w_WRITE_BUFFER,
                 i_DATA     => l_out_data_o,
-                o_enc_stage_data => open
+                o_enc_stage_data => open,
+                i_OBS_HAM_FIFO_CTRL_TMR_CORRECT_ERROR => '1',
+                o_OBS_HAM_FIFO_CTRL_TMR_ERROR         => open
             );
     else generate
         u_BUFFER_FIFO_NORMAL: entity work.buffer_fifo

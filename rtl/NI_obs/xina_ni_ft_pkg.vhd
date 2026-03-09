@@ -60,6 +60,9 @@ package xina_ni_ft_pkg is
     constant c_ENABLE_LB_HAMMING_PROTECTION      : boolean := true;
     constant c_ENABLE_LB_HAMMING_DOUBLE_DETECT   : boolean := true;
     constant c_ENABLE_LB_HAMMING_INJECT_ERROR    : boolean := false;
+
+    -- Hamming FIFO control-state TMR toggle (stage_valid + fifo_count in buffer_fifo_ham).
+    constant c_ENABLE_HAM_FIFO_CTRL_TMR          : boolean := true;
     
     -- XINA SETTINGS
     constant flow_ft_c          : natural  := 1; -- 1 for TMR, 0 for Standard
