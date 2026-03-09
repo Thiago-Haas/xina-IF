@@ -28,13 +28,11 @@ entity tb_tg_tm_lb_top is
 
     -- NI backend correction enables
     i_obs_be_inj_ham_buffer_correct_error    : in std_logic := '1';
-    i_obs_be_inj_tmr_integrity_correct_error : in std_logic := '1';
     i_obs_be_inj_ham_integrity_correct_error : in std_logic := '1';
     i_obs_be_inj_tmr_flow_ctrl_correct_error : in std_logic := '1';
     i_obs_be_inj_tmr_pktz_ctrl_correct_error : in std_logic := '1';
     i_obs_be_rx_ham_buffer_correct_error     : in std_logic := '1';
     i_obs_be_rx_ham_interface_hdr_correct_error : in std_logic := '1';
-    i_obs_be_rx_tmr_integrity_correct_error  : in std_logic := '1';
     i_obs_be_rx_tmr_flow_ctrl_correct_error  : in std_logic := '1'
   );
 end entity;
@@ -303,12 +301,10 @@ begin
       o_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR    => inj_single_err,
       o_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR    => inj_double_err,
       o_OBS_BE_INJ_HAM_BUFFER_ENC_DATA      => open,
-      i_OBS_BE_INJ_TMR_INTEGRITY_CORRECT_ERROR => i_obs_be_inj_tmr_integrity_correct_error,
       i_OBS_BE_INJ_HAM_INTEGRITY_CORRECT_ERROR => i_obs_be_inj_ham_integrity_correct_error,
       i_OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR => i_obs_be_inj_tmr_flow_ctrl_correct_error,
       i_OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR => i_obs_be_inj_tmr_pktz_ctrl_correct_error,
 
-      o_OBS_BE_INJ_TMR_INTEGRITY_ERROR => open,
       o_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR => open,
       o_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR => open,
       o_OBS_BE_INJ_HAM_INTEGRITY_ENC_DATA   => open,
@@ -323,11 +319,9 @@ begin
       o_OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR    => open,
       o_OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR    => open,
       o_OBS_BE_RX_HAM_INTERFACE_HDR_ENC_DATA      => open,
-      i_OBS_BE_RX_TMR_INTEGRITY_CORRECT_ERROR => i_obs_be_rx_tmr_integrity_correct_error,
       i_OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR => '1',
       i_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR => i_obs_be_rx_tmr_flow_ctrl_correct_error,
 
-      o_OBS_BE_RX_TMR_INTEGRITY_ERROR => open,
       o_OBS_BE_RX_INTEGRITY_CORRUPT   => open,
       o_OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR => open,
       o_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR => open,

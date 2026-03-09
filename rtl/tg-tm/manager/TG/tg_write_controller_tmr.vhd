@@ -29,7 +29,6 @@ entity tg_write_controller_tmr is
     BREADY  : out std_logic;
 
     -- datapath control
-    o_txn_start_pulse : out std_logic;
     o_seed_pulse      : out std_logic;
     o_wbeat_pulse     : out std_logic;
 
@@ -47,7 +46,6 @@ architecture rtl of tg_write_controller_tmr is
   signal awvalid_w         : tmr_sl_t;
   signal wvalid_w          : tmr_sl_t;
   signal bready_w          : tmr_sl_t;
-  signal txn_start_pulse_w : tmr_sl_t;
   signal seed_pulse_w      : tmr_sl_t;
   signal wbeat_pulse_w     : tmr_sl_t;
 
@@ -55,7 +53,6 @@ architecture rtl of tg_write_controller_tmr is
   signal corr_awvalid_w         : std_logic;
   signal corr_wvalid_w          : std_logic;
   signal corr_bready_w          : std_logic;
-  signal corr_txn_start_pulse_w : std_logic;
   signal corr_seed_pulse_w      : std_logic;
   signal corr_wbeat_pulse_w     : std_logic;
 
@@ -63,7 +60,6 @@ architecture rtl of tg_write_controller_tmr is
   signal err_awvalid_w         : std_logic;
   signal err_wvalid_w          : std_logic;
   signal err_bready_w          : std_logic;
-  signal err_txn_start_pulse_w : std_logic;
   signal err_seed_pulse_w      : std_logic;
   signal err_wbeat_pulse_w     : std_logic;
 
@@ -99,7 +95,6 @@ begin
         WVALID  => wvalid_w(i),
         BREADY  => bready_w(i),
 
-        o_txn_start_pulse => txn_start_pulse_w(i),
         o_seed_pulse      => seed_pulse_w(i),
         o_wbeat_pulse     => wbeat_pulse_w(i)
       );
@@ -110,7 +105,6 @@ begin
   corr_awvalid_w         <= maj3(awvalid_w(2),         awvalid_w(1),         awvalid_w(0));
   corr_wvalid_w          <= maj3(wvalid_w(2),          wvalid_w(1),          wvalid_w(0));
   corr_bready_w          <= maj3(bready_w(2),          bready_w(1),          bready_w(0));
-  corr_txn_start_pulse_w <= maj3(txn_start_pulse_w(2), txn_start_pulse_w(1), txn_start_pulse_w(0));
   corr_seed_pulse_w      <= maj3(seed_pulse_w(2),      seed_pulse_w(1),      seed_pulse_w(0));
   corr_wbeat_pulse_w     <= maj3(wbeat_pulse_w(2),     wbeat_pulse_w(1),     wbeat_pulse_w(0));
 
@@ -119,19 +113,17 @@ begin
   err_awvalid_w         <= dis3(awvalid_w(2),         awvalid_w(1),         awvalid_w(0));
   err_wvalid_w          <= dis3(wvalid_w(2),          wvalid_w(1),          wvalid_w(0));
   err_bready_w          <= dis3(bready_w(2),          bready_w(1),          bready_w(0));
-  err_txn_start_pulse_w <= dis3(txn_start_pulse_w(2), txn_start_pulse_w(1), txn_start_pulse_w(0));
   err_seed_pulse_w      <= dis3(seed_pulse_w(2),      seed_pulse_w(1),      seed_pulse_w(0));
   err_wbeat_pulse_w     <= dis3(wbeat_pulse_w(2),     wbeat_pulse_w(1),     wbeat_pulse_w(0));
 
   error_o <= err_done_w or err_awvalid_w or err_wvalid_w or err_bready_w or
-             err_txn_start_pulse_w or err_seed_pulse_w or err_wbeat_pulse_w;
+             err_seed_pulse_w or err_wbeat_pulse_w;
 
   -- output selection
   o_done            <= corr_done_w            when i_correct_enable = '1' else done_w(0);
   AWVALID           <= corr_awvalid_w         when i_correct_enable = '1' else awvalid_w(0);
   WVALID            <= corr_wvalid_w          when i_correct_enable = '1' else wvalid_w(0);
   BREADY            <= corr_bready_w          when i_correct_enable = '1' else bready_w(0);
-  o_txn_start_pulse <= corr_txn_start_pulse_w when i_correct_enable = '1' else txn_start_pulse_w(0);
   o_seed_pulse      <= corr_seed_pulse_w      when i_correct_enable = '1' else seed_pulse_w(0);
   o_wbeat_pulse     <= corr_wbeat_pulse_w     when i_correct_enable = '1' else wbeat_pulse_w(0);
 

@@ -13,7 +13,6 @@ entity backend_manager_injection is
         p_USE_INJ_PKTZ_CTRL_TMR  : boolean;
         p_USE_INJ_FLOW_CTRL_TMR  : boolean;
         p_USE_INJ_INTEGRITY_CHECK: boolean;
-        p_USE_INJ_INTEGRITY_TMR  : boolean;
         p_USE_INJ_BUFFER_HAMMING : boolean;
 
         DETECT_DOUBLE : boolean
@@ -50,9 +49,6 @@ entity backend_manager_injection is
         o_OBS_INJ_HAM_BUFFER_DOUBLE_ERR    : out std_logic;
         o_OBS_INJ_HAM_BUFFER_ENC_DATA      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, DETECT_DOUBLE) - 1 downto 0);
 
-        -- Injection integrity legacy TMR status/control (kept for compatibility).
-        i_OBS_INJ_TMR_INTEGRITY_CORRECT_ERROR : in  std_logic := '0';
-        o_OBS_INJ_TMR_INTEGRITY_ERROR       : out std_logic := '0';
         -- Injection integrity (checksum) Hamming.
         i_OBS_INJ_HAM_INTEGRITY_CORRECT_ERROR : in  std_logic := '1';
         o_OBS_INJ_HAM_INTEGRITY_SINGLE_ERR    : out std_logic := '0';
@@ -87,7 +83,6 @@ architecture rtl of backend_manager_injection is
     signal w_ADD: std_logic;
     signal w_CHECKSUM: std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
     signal w_INTEGRITY_RESETn: std_logic;
-    signal w_OBS_INJ_TMR_INTEGRITY_ERROR: std_logic;
     signal w_OBS_INJ_TMR_PKTZ_CTRL_ERROR: std_logic;
 
     -- FIFO.
@@ -156,7 +151,6 @@ begin
                 o_INTEGRITY_RESETn => w_INTEGRITY_RESETn
             );
 
-        w_OBS_INJ_TMR_INTEGRITY_ERROR <= '0';
         w_OBS_INJ_TMR_PKTZ_CTRL_ERROR   <= '0';
     end generate;
 
@@ -197,7 +191,7 @@ begin
                 o_CHECKSUM      => w_CHECKSUM,
 
                 correct_error_i => '0',
-                error_o         => w_OBS_INJ_TMR_INTEGRITY_ERROR,
+                error_o         => open,
 
                 i_OBS_HAM_INTEGRITY_CORRECT_ERROR => i_OBS_INJ_HAM_INTEGRITY_CORRECT_ERROR,
                 o_OBS_HAM_INTEGRITY_SINGLE_ERR    => o_OBS_INJ_HAM_INTEGRITY_SINGLE_ERR,
@@ -208,7 +202,6 @@ begin
 
     u_INTEGRITY_CONTROL_SEND_DISABLE:
     if (not p_USE_INJ_INTEGRITY_CHECK) generate
-        w_OBS_INJ_TMR_INTEGRITY_ERROR <= '0';
         o_OBS_INJ_HAM_INTEGRITY_SINGLE_ERR <= '0';
         o_OBS_INJ_HAM_INTEGRITY_DOUBLE_ERR <= '0';
         o_OBS_INJ_HAM_INTEGRITY_ENC_DATA   <= (others => '0');
@@ -299,7 +292,6 @@ begin
 
     w_ARESET <= not ARESETn;
 
-    o_OBS_INJ_TMR_INTEGRITY_ERROR <= w_OBS_INJ_TMR_INTEGRITY_ERROR;
     o_OBS_INJ_TMR_PKTZ_CTRL_ERROR   <= w_OBS_INJ_TMR_PKTZ_CTRL_ERROR;
 
 end rtl;

@@ -3,7 +3,6 @@ use IEEE.std_logic_1164.all;
 
 -- Write-phase controller (AW -> W -> B).
 -- Generates datapath control pulses:
---  * o_txn_start_pulse: asserted for 1 cycle when a new transaction starts (IDLE->AW)
 --  * o_seed_pulse:      asserted for 1 cycle ONLY for the first transaction after reset
 --  * o_wbeat_pulse:     asserted for 1 cycle when W handshake completes (WVALID&WREADY)
 entity tg_write_controller is
@@ -26,7 +25,6 @@ entity tg_write_controller is
     BREADY  : out std_logic;
 
     -- datapath control
-    o_txn_start_pulse : out std_logic;
     o_seed_pulse      : out std_logic;
     o_wbeat_pulse     : out std_logic
   );
@@ -43,7 +41,6 @@ architecture rtl of tg_write_controller is
   signal aw_hs, w_hs, b_hs : std_logic;
 
   signal done_pulse  : std_logic := '0';
-  signal start_pulse : std_logic := '0';
   signal seed_pulse  : std_logic := '0';
   signal wbeat_pulse : std_logic := '0';
 begin
@@ -61,7 +58,6 @@ begin
   b_hs  <= bready_i  and BVALID;
 
   o_done            <= done_pulse;
-  o_txn_start_pulse <= start_pulse;
   o_seed_pulse      <= seed_pulse;
   o_wbeat_pulse     <= wbeat_pulse;
 
@@ -69,7 +65,6 @@ begin
   begin
     if rising_edge(ACLK) then
       done_pulse  <= '0';
-      start_pulse <= '0';
       seed_pulse  <= '0';
       wbeat_pulse <= '0';
 
@@ -80,7 +75,6 @@ begin
         case r_state is
           when s_idle =>
             if i_start = '1' then
-              start_pulse <= '1';
               -- Seed only on the very first transaction after reset.
               if r_seeded = '0' then
                 seed_pulse <= '1';

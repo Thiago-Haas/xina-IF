@@ -13,12 +13,10 @@ entity backend_manager is
         p_USE_INJ_PKTZ_CTRL_TMR  : boolean;
         p_USE_INJ_FLOW_CTRL_TMR  : boolean;
         p_USE_INJ_INTEGRITY_CHECK: boolean;
-        p_USE_INJ_INTEGRITY_TMR  : boolean;
         p_USE_INJ_BUFFER_HAMMING : boolean;
         p_USE_RX_DEPKTZ_CTRL_TMR : boolean;
         p_USE_RX_FLOW_CTRL_TMR   : boolean;
         p_USE_RX_INTEGRITY_CHECK : boolean;
-        p_USE_RX_INTEGRITY_TMR   : boolean;
         p_USE_RX_INTERFACE_HDR_HAMMING : boolean;
         p_USE_RX_BUFFER_HAMMING  : boolean;
 
@@ -74,8 +72,6 @@ entity backend_manager is
         o_OBS_BE_INJ_HAM_BUFFER_ENC_DATA      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, DETECT_DOUBLE) - 1 downto 0);
 
         -- Injection integrity checker (integrity_control_send_hamming)
-        i_OBS_BE_INJ_TMR_INTEGRITY_CORRECT_ERROR : in  std_logic := '0';
-        o_OBS_BE_INJ_TMR_INTEGRITY_ERROR         : out std_logic;
         i_OBS_BE_INJ_HAM_INTEGRITY_CORRECT_ERROR : in  std_logic := '1';
         o_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR    : out std_logic;
         o_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR    : out std_logic;
@@ -101,8 +97,6 @@ entity backend_manager is
         o_OBS_BE_RX_HAM_INTERFACE_HDR_ENC_DATA      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, DETECT_DOUBLE) - 1 downto 0);
 
         -- Reception integrity checker (integrity_control_receive_hamming)
-        i_OBS_BE_RX_TMR_INTEGRITY_CORRECT_ERROR : in  std_logic := '0';
-        o_OBS_BE_RX_TMR_INTEGRITY_ERROR         : out std_logic;
         o_OBS_BE_RX_INTEGRITY_CORRUPT           : out std_logic;
         i_OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR : in  std_logic := '1';
         o_OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR    : out std_logic;
@@ -126,7 +120,6 @@ begin
             p_USE_INJ_PKTZ_CTRL_TMR  => p_USE_INJ_PKTZ_CTRL_TMR,
             p_USE_INJ_FLOW_CTRL_TMR  => p_USE_INJ_FLOW_CTRL_TMR,
             p_USE_INJ_INTEGRITY_CHECK=> p_USE_INJ_INTEGRITY_CHECK,
-            p_USE_INJ_INTEGRITY_TMR  => p_USE_INJ_INTEGRITY_TMR,
             p_USE_INJ_BUFFER_HAMMING => p_USE_INJ_BUFFER_HAMMING,
 
             DETECT_DOUBLE        => DETECT_DOUBLE
@@ -158,8 +151,6 @@ begin
             o_OBS_INJ_HAM_BUFFER_DOUBLE_ERR    => o_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR,
             o_OBS_INJ_HAM_BUFFER_ENC_DATA      => o_OBS_BE_INJ_HAM_BUFFER_ENC_DATA,
 
-            i_OBS_INJ_TMR_INTEGRITY_CORRECT_ERROR => i_OBS_BE_INJ_TMR_INTEGRITY_CORRECT_ERROR,
-            o_OBS_INJ_TMR_INTEGRITY_ERROR         => o_OBS_BE_INJ_TMR_INTEGRITY_ERROR,
             i_OBS_INJ_HAM_INTEGRITY_CORRECT_ERROR => i_OBS_BE_INJ_HAM_INTEGRITY_CORRECT_ERROR,
             o_OBS_INJ_HAM_INTEGRITY_SINGLE_ERR    => o_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR,
             o_OBS_INJ_HAM_INTEGRITY_DOUBLE_ERR    => o_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR,
@@ -178,7 +169,6 @@ begin
             p_USE_RX_DEPKTZ_CTRL_TMR=> p_USE_RX_DEPKTZ_CTRL_TMR,
             p_USE_RX_FLOW_CTRL_TMR  => p_USE_RX_FLOW_CTRL_TMR,
             p_USE_RX_INTEGRITY_CHECK=> p_USE_RX_INTEGRITY_CHECK,
-            p_USE_RX_INTEGRITY_TMR  => p_USE_RX_INTEGRITY_TMR,
             p_USE_RX_INTERFACE_HDR_HAMMING => p_USE_RX_INTERFACE_HDR_HAMMING,
             p_USE_RX_BUFFER_HAMMING => p_USE_RX_BUFFER_HAMMING,
 
@@ -216,8 +206,6 @@ begin
             o_OBS_RX_HAM_INTERFACE_HDR_ENC_DATA      => o_OBS_BE_RX_HAM_INTERFACE_HDR_ENC_DATA,
 
             o_OBS_RX_INTEGRITY_CORRUPT            => o_OBS_BE_RX_INTEGRITY_CORRUPT,
-            i_OBS_RX_TMR_INTEGRITY_CORRECT_ERROR  => i_OBS_BE_RX_TMR_INTEGRITY_CORRECT_ERROR,
-            o_OBS_RX_TMR_INTEGRITY_ERROR          => o_OBS_BE_RX_TMR_INTEGRITY_ERROR,
             i_OBS_RX_HAM_INTEGRITY_CORRECT_ERROR  => i_OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR,
             o_OBS_RX_HAM_INTEGRITY_SINGLE_ERR     => o_OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR,
             o_OBS_RX_HAM_INTEGRITY_DOUBLE_ERR     => o_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR,

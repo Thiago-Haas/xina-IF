@@ -10,7 +10,6 @@ entity backend_manager_reception is
         p_USE_RX_DEPKTZ_CTRL_TMR: boolean;
         p_USE_RX_FLOW_CTRL_TMR  : boolean;
         p_USE_RX_INTEGRITY_CHECK: boolean;
-        p_USE_RX_INTEGRITY_TMR  : boolean;
         p_USE_RX_INTERFACE_HDR_HAMMING: boolean;
         p_USE_RX_BUFFER_HAMMING : boolean;
 
@@ -52,12 +51,9 @@ entity backend_manager_reception is
         o_OBS_RX_HAM_INTERFACE_HDR_DOUBLE_ERR    : out std_logic := '0';
         o_OBS_RX_HAM_INTERFACE_HDR_ENC_DATA      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, DETECT_DOUBLE) - 1 downto 0);
 
-        -- Integrity receive checker (integrity_control_receive[_tmr]) - EXTERNAL
+        -- Integrity receive checker (integrity_control_receive_hamming) - EXTERNAL
         -- Meaningful when p_USE_RX_INTEGRITY_CHECK = TRUE.
         o_OBS_RX_INTEGRITY_CORRUPT        : out std_logic := '0';
-        -- TMR path removed for this checker (kept for interface compatibility).
-        i_OBS_RX_TMR_INTEGRITY_CORRECT_ERROR  : in  std_logic := '0';
-        o_OBS_RX_TMR_INTEGRITY_ERROR        : out std_logic := '0';
         -- Meaningful when p_USE_RX_INTEGRITY_CHECK = TRUE.
         i_OBS_RX_HAM_INTEGRITY_CORRECT_ERROR : in  std_logic := '1';
         o_OBS_RX_HAM_INTEGRITY_SINGLE_ERR    : out std_logic := '0';
@@ -181,7 +177,7 @@ begin
                 o_CORRUPT       => w_OBS_RX_INTEGRITY_CORRUPT,
 
                 correct_error_i => '0',
-                error_o         => o_OBS_RX_TMR_INTEGRITY_ERROR,
+                error_o         => open,
 
                 i_OBS_HAM_INTEGRITY_CORRECT_ERROR => i_OBS_RX_HAM_INTEGRITY_CORRECT_ERROR,
                 o_OBS_HAM_INTEGRITY_SINGLE_ERR    => o_OBS_RX_HAM_INTEGRITY_SINGLE_ERR,
@@ -191,7 +187,6 @@ begin
     else generate
         -- Integrity disabled.
         w_OBS_RX_INTEGRITY_CORRUPT  <= '0';
-        o_OBS_RX_TMR_INTEGRITY_ERROR  <= '0';
         o_OBS_RX_HAM_INTEGRITY_SINGLE_ERR <= '0';
         o_OBS_RX_HAM_INTEGRITY_DOUBLE_ERR <= '0';
         o_OBS_RX_HAM_INTEGRITY_ENC_DATA   <= (others => '0');
