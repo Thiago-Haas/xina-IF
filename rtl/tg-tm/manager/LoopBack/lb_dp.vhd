@@ -17,14 +17,12 @@ entity lb_dp is
 
     i_cap_en    : in  std_logic;
     i_cap_flit  : in  std_logic_vector(c_FLIT_WIDTH-1 downto 0);
-    i_cap_idx   : in  unsigned(5 downto 0);
     i_cap_last  : in  std_logic;
 
     o_req_ready     : out std_logic;
     o_req_is_write  : out std_logic;
     o_req_is_read   : out std_logic;
     o_req_len       : out unsigned(7 downto 0);
-    o_req_id        : out std_logic_vector(4 downto 0);
     o_req_burst     : out std_logic_vector(1 downto 0);
     o_req_base_idx  : out unsigned(p_MEM_ADDR_BITS-1 downto 0);
 
@@ -49,6 +47,7 @@ end entity;
 
 architecture rtl of lb_dp is
 
+  signal r_cap_idx : unsigned(5 downto 0) := (others => '0');
   signal w_payload_cap : std_logic;
   signal w_payload     : std_logic_vector(31 downto 0);
 
@@ -70,7 +69,6 @@ begin
   o_req_is_write <= '0';
   o_req_is_read  <= '0';
   o_req_len      <= (others => '0');
-  o_req_id       <= (others => '0');
   o_req_burst    <= (others => '0');
   o_req_base_idx <= (others => '0');
 
@@ -82,11 +80,27 @@ begin
   -- Capture condition: payload at fixed flit index 4 when ctrl=0
   ------------------------------------------------------------------------------
   w_payload_cap <= '1' when (i_cap_en = '1') and
-                          (i_cap_idx = to_unsigned(4, i_cap_idx'length)) and
+                          (r_cap_idx = to_unsigned(4, r_cap_idx'length)) and
                           (i_cap_flit(i_cap_flit'left) = '0')
                    else '0';
 
   w_payload <= i_cap_flit(31 downto 0);
+
+  -- Local capture-index counter (kept inside datapath to avoid wide control outputs).
+  p_cap_idx: process(ACLK)
+  begin
+    if rising_edge(ACLK) then
+      if ARESETn = '0' then
+        r_cap_idx <= (others => '0');
+      elsif i_cap_en = '1' then
+        if (i_cap_flit(i_cap_flit'left) = '1') and (r_cap_idx /= to_unsigned(0, r_cap_idx'length)) then
+          r_cap_idx <= (others => '0');
+        else
+          r_cap_idx <= r_cap_idx + 1;
+        end if;
+      end if;
+    end if;
+  end process;
 
   -- pulse to controller (no reg here)
   o_hold_valid <= w_payload_cap;

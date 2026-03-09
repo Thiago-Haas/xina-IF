@@ -46,16 +46,14 @@ architecture rtl of lb_top is
   signal cap_en   : std_logic;
   signal cap_flit_ctrl : std_logic;
   signal cap_flit : std_logic_vector(c_FLIT_WIDTH-1 downto 0);
-  signal cap_idx  : unsigned(5 downto 0);
 
   signal rd_payload_idx : unsigned(7 downto 0);
   signal rd_payload     : std_logic_vector(31 downto 0);
 
   signal hold_valid_pulse : std_logic; -- DP pulse when payload captured
   signal hold_clr         : std_logic;
-  signal tx_idx           : unsigned(3 downto 0);
-  signal tx_last          : unsigned(3 downto 0);
   signal tx_next_is_read  : std_logic;
+  signal tx_has_payload   : std_logic;
 
   signal w_ctrl_tmr_err   : std_logic;
   signal w_ham_single_err : std_logic;
@@ -67,11 +65,14 @@ begin
 
   u_ctrl_adapter: entity work.lb_ctrl_adapter
     port map(
+      ACLK             => ACLK,
+      ARESETn          => ARESETn,
       i_lin_data       => lin_data_i,
       i_cap_flit_ctrl  => cap_flit_ctrl,
-      i_tx_idx         => tx_idx,
-      i_tx_last        => tx_last,
+      i_lout_val       => lout_val_o,
+      i_lout_ack       => lout_ack_i,
       i_tx_next_is_read=> tx_next_is_read,
+      i_tx_has_payload => tx_has_payload,
       i_rd_payload     => rd_payload,
       o_cap_flit       => cap_flit,
       o_lout_data      => lout_data_o
@@ -90,14 +91,12 @@ begin
 
       i_cap_en   => cap_en,
       i_cap_flit => cap_flit,
-      i_cap_idx  => cap_idx,
       i_cap_last => '0',
 
       o_req_ready    => open,
       o_req_is_write => open,
       o_req_is_read  => open,
       o_req_len      => open,
-      o_req_id       => open,
       o_req_burst    => open,
       o_req_base_idx => open,
 
@@ -134,13 +133,11 @@ begin
 
         o_lout_val  => lout_val_o,
         i_lout_ack  => lout_ack_i,
-        o_tx_idx    => tx_idx,
-        o_tx_last   => tx_last,
         o_tx_next_is_read => tx_next_is_read,
+        o_tx_has_payload  => tx_has_payload,
 
         o_cap_en   => cap_en,
         o_cap_flit_ctrl => cap_flit_ctrl,
-        o_cap_idx  => cap_idx,
 
         i_hold_valid => hold_valid_pulse,
         o_hold_clr   => hold_clr
@@ -160,13 +157,11 @@ begin
 
         o_lout_val  => lout_val_o,
         i_lout_ack  => lout_ack_i,
-        o_tx_idx    => tx_idx,
-        o_tx_last   => tx_last,
         o_tx_next_is_read => tx_next_is_read,
+        o_tx_has_payload  => tx_has_payload,
 
         o_cap_en   => cap_en,
         o_cap_flit_ctrl => cap_flit_ctrl,
-        o_cap_idx  => cap_idx,
 
         i_hold_valid => hold_valid_pulse,
         o_hold_clr   => hold_clr,

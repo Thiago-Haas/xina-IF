@@ -15,13 +15,11 @@ entity lb_ctrl is
 
     o_lout_val  : out std_logic;
     i_lout_ack  : in  std_logic;
-    o_tx_idx    : out unsigned(3 downto 0);
-    o_tx_last   : out unsigned(3 downto 0);
     o_tx_next_is_read : out std_logic;
+    o_tx_has_payload  : out std_logic;
 
     o_cap_en   : out std_logic;
     o_cap_flit_ctrl : out std_logic;
-    o_cap_idx  : out unsigned(5 downto 0);
 
     i_hold_valid : in  std_logic;   -- DP pulse (payload captured)
     o_hold_clr   : out std_logic    -- clear "stored payload valid" in controller
@@ -65,10 +63,8 @@ begin
 
   o_cap_en   <= p_cap_en;
   o_cap_flit_ctrl <= i_lin_ctrl;
-  o_cap_idx  <= r_cap_idx;
-  o_tx_idx <= r_tx_idx;
-  o_tx_last <= tx_last;
   o_tx_next_is_read <= r_next_is_read;
+  o_tx_has_payload <= r_payload_words(0);
 
   tx_last <= to_unsigned(3,4) + resize(r_payload_words, 4);
 

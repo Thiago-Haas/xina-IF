@@ -15,13 +15,11 @@ entity lb_ctrl_tmr is
 
     o_lout_val  : out std_logic;
     i_lout_ack  : in  std_logic;
-    o_tx_idx    : out unsigned(3 downto 0);
-    o_tx_last   : out unsigned(3 downto 0);
     o_tx_next_is_read : out std_logic;
+    o_tx_has_payload  : out std_logic;
 
     o_cap_en   : out std_logic;
     o_cap_flit_ctrl : out std_logic;
-    o_cap_idx  : out unsigned(5 downto 0);
 
     i_hold_valid : in  std_logic;
     o_hold_clr   : out std_logic;
@@ -62,30 +60,25 @@ architecture rtl of lb_ctrl_tmr is
   end function;
 
   type tmr_sl is array (0 to 2) of std_logic;
-  type tmr_u4  is array (0 to 2) of unsigned(3 downto 0);
   type tmr_u6  is array (0 to 2) of unsigned(5 downto 0);
 
   signal lin_ack_w  : tmr_sl;
   signal lout_val_w : tmr_sl;
   signal tx_next_is_read_w : tmr_sl;
+  signal tx_has_payload_w : tmr_sl;
   signal cap_en_w   : tmr_sl;
   signal hold_clr_w : tmr_sl;
 
   signal cap_flit_ctrl_w : tmr_sl;
-  signal tx_idx_w    : tmr_u4;
-  signal tx_last_w   : tmr_u4;
-  signal cap_idx_w   : tmr_u6;
 
   signal corr_lin_ack  : std_logic;
   signal corr_lout_val : std_logic;
   signal corr_tx_next_is_read : std_logic;
+  signal corr_tx_has_payload : std_logic;
   signal corr_cap_en   : std_logic;
   signal corr_hold_clr : std_logic;
 
   signal corr_cap_flit_ctrl  : std_logic;
-  signal corr_tx_idx    : unsigned(3 downto 0);
-  signal corr_tx_last   : unsigned(3 downto 0);
-  signal corr_cap_idx   : unsigned(5 downto 0);
 
   signal err_any : std_logic;
 
@@ -104,13 +97,11 @@ begin
 
         o_lout_val  => lout_val_w(i),
         i_lout_ack  => i_lout_ack,
-        o_tx_idx    => tx_idx_w(i),
-        o_tx_last   => tx_last_w(i),
         o_tx_next_is_read => tx_next_is_read_w(i),
+        o_tx_has_payload  => tx_has_payload_w(i),
 
         o_cap_en   => cap_en_w(i),
         o_cap_flit_ctrl => cap_flit_ctrl_w(i),
-        o_cap_idx  => cap_idx_w(i),
 
         i_hold_valid => i_hold_valid,
         o_hold_clr   => hold_clr_w(i)
@@ -121,24 +112,19 @@ begin
   corr_lin_ack  <= maj3(lin_ack_w(2),  lin_ack_w(1),  lin_ack_w(0));
   corr_lout_val <= maj3(lout_val_w(2), lout_val_w(1), lout_val_w(0));
   corr_tx_next_is_read <= maj3(tx_next_is_read_w(2), tx_next_is_read_w(1), tx_next_is_read_w(0));
+  corr_tx_has_payload  <= maj3(tx_has_payload_w(2), tx_has_payload_w(1), tx_has_payload_w(0));
   corr_cap_en   <= maj3(cap_en_w(2),   cap_en_w(1),   cap_en_w(0));
   corr_hold_clr <= maj3(hold_clr_w(2), hold_clr_w(1), hold_clr_w(0));
   corr_cap_flit_ctrl <= maj3(cap_flit_ctrl_w(2), cap_flit_ctrl_w(1), cap_flit_ctrl_w(0));
-
-  corr_tx_idx   <= maj3_uns(tx_idx_w(2), tx_idx_w(1), tx_idx_w(0));
-  corr_tx_last  <= maj3_uns(tx_last_w(2), tx_last_w(1), tx_last_w(0));
-  corr_cap_idx   <= maj3_uns(cap_idx_w(2),   cap_idx_w(1),   cap_idx_w(0));
 
   -- disagreement detection
   err_any <= dis3(lin_ack_w(2),  lin_ack_w(1),  lin_ack_w(0)) or
              dis3(lout_val_w(2), lout_val_w(1), lout_val_w(0)) or
              dis3(tx_next_is_read_w(2), tx_next_is_read_w(1), tx_next_is_read_w(0)) or
+             dis3(tx_has_payload_w(2), tx_has_payload_w(1), tx_has_payload_w(0)) or
              dis3(cap_en_w(2),   cap_en_w(1),   cap_en_w(0)) or
              dis3(cap_flit_ctrl_w(2), cap_flit_ctrl_w(1), cap_flit_ctrl_w(0)) or
              dis3(hold_clr_w(2), hold_clr_w(1), hold_clr_w(0)) or
-             dis3_uns(tx_idx_w(2), tx_idx_w(1), tx_idx_w(0)) or
-             dis3_uns(tx_last_w(2), tx_last_w(1), tx_last_w(0)) or
-             dis3_uns(cap_idx_w(2),   cap_idx_w(1),   cap_idx_w(0)) or
              '0';
 
   error_o <= err_any;
@@ -147,12 +133,9 @@ begin
   o_lin_ack  <= corr_lin_ack  when i_correct_enable='1' else lin_ack_w(0);
   o_lout_val <= corr_lout_val when i_correct_enable='1' else lout_val_w(0);
   o_tx_next_is_read <= corr_tx_next_is_read when i_correct_enable='1' else tx_next_is_read_w(0);
+  o_tx_has_payload <= corr_tx_has_payload when i_correct_enable='1' else tx_has_payload_w(0);
   o_cap_en   <= corr_cap_en   when i_correct_enable='1' else cap_en_w(0);
   o_cap_flit_ctrl <= corr_cap_flit_ctrl when i_correct_enable='1' else cap_flit_ctrl_w(0);
   o_hold_clr <= corr_hold_clr when i_correct_enable='1' else hold_clr_w(0);
-
-  o_tx_idx   <= corr_tx_idx   when i_correct_enable='1' else tx_idx_w(0);
-  o_tx_last  <= corr_tx_last  when i_correct_enable='1' else tx_last_w(0);
-  o_cap_idx   <= corr_cap_idx   when i_correct_enable='1' else cap_idx_w(0);
 
 end architecture;
