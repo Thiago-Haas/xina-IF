@@ -79,7 +79,6 @@ architecture rtl of tm_read_top is
   signal w_ham_single_err  : std_logic := '0';
   signal w_ham_double_err  : std_logic := '0';
   signal w_ham_buffer_enc_data : std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
-  signal w_txn_count_data_in  : std_logic_vector(p_TM_TXN_COUNTER_WIDTH - 1 downto 0);
   signal w_txn_count_data_out : std_logic_vector(p_TM_TXN_COUNTER_WIDTH - 1 downto 0);
   signal w_txn_count_enc_data : std_logic_vector(p_TM_TXN_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(p_TM_TXN_COUNTER_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
   signal w_txn_count_single_err : std_logic := '0';
@@ -171,26 +170,21 @@ begin
       o_ham_buffer_enc_data => w_ham_buffer_enc_data
     );
 
-  w_txn_count_data_in <= std_logic_vector(unsigned(w_txn_count_data_out) + 1);
-
-  u_TM_TXN_COUNTER: entity work.hamming_register
+  u_TM_TXN_COUNTER: entity work.tm_read_transaction_counter_hamming
     generic map(
-      DATA_WIDTH     => p_TM_TXN_COUNTER_WIDTH,
-      HAMMING_ENABLE => p_USE_TM_TXN_COUNTER_HAMMING,
-      DETECT_DOUBLE  => p_USE_TM_HAMMING_DOUBLE_DETECT,
-      RESET_VALUE    => (p_TM_TXN_COUNTER_WIDTH - 1 downto 0 => '0'),
-      INJECT_ERROR   => false
+      p_TM_TXN_COUNTER_WIDTH         => p_TM_TXN_COUNTER_WIDTH,
+      p_USE_TM_COUNTER_HAMMING       => p_USE_TM_TXN_COUNTER_HAMMING,
+      p_USE_TM_HAMMING_DOUBLE_DETECT => p_USE_TM_HAMMING_DOUBLE_DETECT
     )
     port map(
-      correct_en_i => i_OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR,
-      write_en_i   => w_read_done,
-      data_i       => w_txn_count_data_in,
-      rstn_i       => ARESETn,
-      clk_i        => ACLK,
-      single_err_o => w_txn_count_single_err,
-      double_err_o => w_txn_count_double_err,
-      enc_data_o   => w_txn_count_enc_data,
-      data_o       => w_txn_count_data_out
+      ACLK    => ACLK,
+      ARESETn => ARESETn,
+      i_increment_en => w_read_done,
+      i_OBS_TM_HAM_COUNTER_CORRECT_ERROR => i_OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR,
+      o_TM_TRANSACTION_COUNT => w_txn_count_data_out,
+      o_OBS_TM_HAM_COUNTER_SINGLE_ERR => w_txn_count_single_err,
+      o_OBS_TM_HAM_COUNTER_DOUBLE_ERR => w_txn_count_double_err,
+      o_OBS_TM_HAM_COUNTER_ENC_DATA   => w_txn_count_enc_data
     );
 
   o_done <= w_read_done;
