@@ -10,7 +10,7 @@ entity tg_tm_lb_selftest_obs_datapath is
     ARESETn : in  std_logic;
 
     i_sample_mismatch : in  std_logic;
-    i_tm_mismatch     : in  std_logic;
+    i_tm_lfsr_comparison_mismatch : in  std_logic;
 
     o_tg_addr : out std_logic_vector(63 downto 0);
     o_tg_seed : out std_logic_vector(31 downto 0);
@@ -36,11 +36,10 @@ begin
       if ARESETn = '0' then
         r_error <= '0';
       else
-        if (i_sample_mismatch = '1') and (i_tm_mismatch = '1') then
+        if (i_sample_mismatch = '1') and (i_tm_lfsr_comparison_mismatch = '1') then
           r_error <= '1';
         end if;
       end if;
     end if;
   end process;
 end architecture;
-

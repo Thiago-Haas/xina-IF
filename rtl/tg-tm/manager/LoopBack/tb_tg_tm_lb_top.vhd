@@ -68,7 +68,7 @@ architecture tb of tb_tg_tm_lb_top is
   signal tg_seed  : std_logic_vector(31 downto 0) := c_SEED_INIT;
   signal tm_seed  : std_logic_vector(31 downto 0) := c_SEED_INIT;
 
-  signal tm_mismatch : std_logic;
+  signal tm_lfsr_comparison_mismatch : std_logic;
   signal tm_expected : std_logic_vector(c_AXI_DATA_WIDTH-1 downto 0);
 
   -- TG/TM observation + correction enables (wired at TB top)
@@ -217,7 +217,7 @@ begin
       RRESP  => rresp,
 
       -- compare/debug
-      o_mismatch       => tm_mismatch,
+      o_tm_lfsr_comparison_mismatch => tm_lfsr_comparison_mismatch,
       o_expected_value => tm_expected,
 
       -- observation

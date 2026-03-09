@@ -54,7 +54,7 @@ entity tg_tm_lb_top is
     TM_STARTING_SEED : in  std_logic_vector(31 downto 0);
 
     -- TM observability
-    o_tm_mismatch       : out std_logic;
+    o_tm_lfsr_comparison_mismatch : out std_logic;
     o_tm_expected_value : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
     i_OBS_TM_HAM_BUFFER_CORRECT_ERROR : in  std_logic := '1';
     i_OBS_TM_TMR_CTRL_CORRECT_ERROR   : in  std_logic := '1';
@@ -258,7 +258,7 @@ begin
       RID    => rid,
       RRESP  => rresp,
 
-      o_mismatch       => o_tm_mismatch,
+      o_tm_lfsr_comparison_mismatch => o_tm_lfsr_comparison_mismatch,
       o_expected_value => o_tm_expected_value,
 
       i_OBS_TM_HAM_BUFFER_CORRECT_ERROR => i_OBS_TM_HAM_BUFFER_CORRECT_ERROR,

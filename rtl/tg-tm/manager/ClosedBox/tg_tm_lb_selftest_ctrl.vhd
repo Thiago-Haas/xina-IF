@@ -23,7 +23,7 @@ entity tg_tm_lb_selftest_ctrl is
     o_tm_seed  : out std_logic_vector(31 downto 0);
 
     -- TM result
-    i_tm_mismatch : in  std_logic;
+    i_tm_lfsr_comparison_mismatch : in  std_logic;
     o_error       : out std_logic
   );
 end entity;
@@ -42,7 +42,7 @@ begin
       i_tm_done  => i_tm_done,
       o_tm_addr  => o_tm_addr,
       o_tm_seed  => o_tm_seed,
-      i_tm_mismatch => i_tm_mismatch,
+      i_tm_lfsr_comparison_mismatch => i_tm_lfsr_comparison_mismatch,
       o_error       => o_error
     );
 end architecture;

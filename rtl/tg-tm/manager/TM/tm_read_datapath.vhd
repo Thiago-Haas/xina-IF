@@ -9,7 +9,7 @@ use work.xina_ni_ft_pkg.all;
 --  * Single state register = expected word (optionally protected with Hamming)
 --  * LFSR is purely combinational: next = f(curr)
 --  * Feedback uses expected value (curr) to compute next expected
---  * Comparator is encapsulated in tm_read_compare and outputs ONLY a sticky mismatch flag
+--  * Comparator is encapsulated in tm_read_compare and outputs mismatch per checked beat
 --
 -- Initialization (mirrors TG):
 --  expected is precomputed as next_lfsr(init_value) so it is ready when the first R beat arrives.
@@ -45,8 +45,8 @@ entity tm_read_datapath is
     ARLEN   : out std_logic_vector(7 downto 0);
     ARBURST : out std_logic_vector(1 downto 0);
 
-    -- minimal comparator output
-    o_mismatch : out std_logic;
+    -- comparator output
+    o_lfsr_comparison_mismatch : out std_logic;
 
     -- debug (post-LFSR reg = expected value)
     o_expected_value : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
@@ -128,22 +128,18 @@ begin
       o_next  => w_lfsr_next
     );
 
-  -- Encapsulated minimal comparison (single sticky mismatch register)
+  -- Encapsulated minimal comparison
   u_CMP: entity work.tm_read_compare
     generic map(
       p_WIDTH => c_AXI_DATA_WIDTH
     )
     port map(
-      ACLK    => ACLK,
-      ARESETn => ARESETn,
-
-      i_init_pulse  => w_do_init,
       i_check_pulse => w_do_step,
 
       i_expected => w_expected_r,
       i_rdata    => RDATA,
 
-      o_mismatch => o_mismatch
+      o_lfsr_comparison_mismatch => o_lfsr_comparison_mismatch
     );
 
   -- Expected-word next value + write-enable

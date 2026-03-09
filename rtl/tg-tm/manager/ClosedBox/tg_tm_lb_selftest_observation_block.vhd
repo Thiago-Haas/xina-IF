@@ -21,7 +21,7 @@ entity tg_tm_lb_selftest_observation_block is
     o_tm_seed  : out std_logic_vector(31 downto 0);
 
     -- TM result
-    i_tm_mismatch : in  std_logic;
+    i_tm_lfsr_comparison_mismatch : in  std_logic;
     o_error       : out std_logic
   );
 end entity;
@@ -45,7 +45,7 @@ begin
       ACLK    => ACLK,
       ARESETn => ARESETn,
       i_sample_mismatch => w_sample_mismatch,
-      i_tm_mismatch     => i_tm_mismatch,
+      i_tm_lfsr_comparison_mismatch => i_tm_lfsr_comparison_mismatch,
       o_tg_addr => o_tg_addr,
       o_tg_seed => o_tg_seed,
       o_tm_addr => o_tm_addr,
@@ -53,4 +53,3 @@ begin
       o_error   => o_error
     );
 end architecture;
-

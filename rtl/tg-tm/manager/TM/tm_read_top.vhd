@@ -47,8 +47,8 @@ entity tm_read_top is
     RID    : in  std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0) := (others => '0');
     RRESP  : in  std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0) := (others => '0');
 
-    -- minimal compare output
-    o_mismatch : out std_logic;
+    -- comparator output
+    o_tm_lfsr_comparison_mismatch : out std_logic;
 
     -- debug
     o_expected_value : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
@@ -155,7 +155,7 @@ begin
       ARLEN   => ARLEN,
       ARBURST => ARBURST,
 
-      o_mismatch       => o_mismatch,
+      o_lfsr_comparison_mismatch => o_tm_lfsr_comparison_mismatch,
       o_expected_value => o_expected_value,
 
       i_OBS_TM_HAM_BUFFER_CORRECT_ERROR => i_OBS_TM_HAM_BUFFER_CORRECT_ERROR,

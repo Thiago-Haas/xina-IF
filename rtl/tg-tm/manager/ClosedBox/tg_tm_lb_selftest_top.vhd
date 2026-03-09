@@ -30,7 +30,7 @@ architecture rtl of tg_tm_lb_selftest_top is
   signal tm_seed  : std_logic_vector(31 downto 0);
 
   -- TM observability (kept internal; view in waves if needed)
-  signal tm_mismatch : std_logic;
+  signal tm_lfsr_comparison_mismatch : std_logic;
 
   -- self-test status (kept internal)
   signal selftest_error : std_logic;
@@ -52,7 +52,7 @@ begin
       o_tm_addr  => tm_addr,
       o_tm_seed  => tm_seed,
 
-      i_tm_mismatch => tm_mismatch,
+      i_tm_lfsr_comparison_mismatch => tm_lfsr_comparison_mismatch,
       o_error       => selftest_error
     );
 
@@ -71,7 +71,7 @@ begin
       TM_INPUT_ADDRESS => tm_addr,
       TM_STARTING_SEED => tm_seed,
 
-      o_tm_mismatch       => tm_mismatch,
+      o_tm_lfsr_comparison_mismatch => tm_lfsr_comparison_mismatch,
       o_tm_expected_value => open,
       o_OBS_TM_TMR_CTRL_ERROR        => open,
       o_OBS_TM_HAM_BUFFER_SINGLE_ERR => open,
