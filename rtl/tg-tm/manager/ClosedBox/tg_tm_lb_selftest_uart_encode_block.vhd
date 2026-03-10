@@ -8,6 +8,9 @@ use work.xina_ni_ft_pkg.all;
 -- * encodes fault/status vector as ASCII hex + LF
 -- * decodes UART RX commands to control experiment and OBS enables
 entity tg_tm_lb_selftest_uart_encode_block is
+  generic (
+    G_REPORT_PERIOD_PACKETS : positive := 100
+  );
   port (
     ACLK    : in  std_logic;
     ARESETn : in  std_logic;
@@ -23,33 +26,48 @@ entity tg_tm_lb_selftest_uart_encode_block is
     i_OBS_TM_TMR_CTRL_ERROR : in std_logic;
     i_OBS_TM_HAM_BUFFER_SINGLE_ERR : in std_logic;
     i_OBS_TM_HAM_BUFFER_DOUBLE_ERR : in std_logic;
+    i_OBS_TM_HAM_BUFFER_ENC_DATA : in std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
     i_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR : in std_logic;
     i_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR : in std_logic;
+    i_OBS_TM_HAM_TXN_COUNTER_ENC_DATA : in std_logic_vector(c_TM_TRANSACTION_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(c_TM_TRANSACTION_COUNTER_WIDTH, c_ENABLE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
     i_OBS_LB_TMR_CTRL_ERROR : in std_logic;
     i_OBS_LB_HAM_BUFFER_SINGLE_ERR : in std_logic;
     i_OBS_LB_HAM_BUFFER_DOUBLE_ERR : in std_logic;
+    i_OBS_LB_HAM_BUFFER_ENC_DATA : in std_logic_vector(32 + work.hamming_pkg.get_ecc_size(32, c_ENABLE_LB_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
     i_OBS_TG_TMR_CTRL_ERROR : in std_logic;
     i_OBS_TG_HAM_BUFFER_SINGLE_ERR : in std_logic;
     i_OBS_TG_HAM_BUFFER_DOUBLE_ERR : in std_logic;
+    i_OBS_TG_HAM_BUFFER_ENC_DATA : in std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_TG_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
     i_OBS_FE_INJ_META_HDR_SINGLE_ERR : in std_logic;
     i_OBS_FE_INJ_META_HDR_DOUBLE_ERR : in std_logic;
     i_OBS_FE_INJ_ADDR_SINGLE_ERR : in std_logic;
     i_OBS_FE_INJ_ADDR_DOUBLE_ERR : in std_logic;
+    i_OBS_FE_INJ_HAM_META_HDR_ENC_DATA : in std_logic_vector((1 + c_AXI_ID_WIDTH + 8 + 2) + work.hamming_pkg.get_ecc_size((1 + c_AXI_ID_WIDTH + 8 + 2), c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+    i_OBS_FE_INJ_HAM_ADDR_ENC_DATA : in std_logic_vector(c_AXI_ADDR_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_ADDR_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
     i_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR : in std_logic;
     i_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR : in std_logic;
+    i_OBS_BE_INJ_HAM_BUFFER_ENC_DATA : in std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
     i_OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_ERROR : in std_logic;
     i_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR : in std_logic;
     i_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR : in std_logic;
+    i_OBS_BE_INJ_HAM_INTEGRITY_ENC_DATA : in std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
     i_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR : in std_logic;
     i_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR : in std_logic;
 
     i_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR : in std_logic;
     i_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR : in std_logic;
+    i_OBS_BE_RX_HAM_BUFFER_ENC_DATA : in std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+    i_OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR : in std_logic;
+    i_OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR : in std_logic;
+    i_OBS_BE_RX_HAM_INTERFACE_HDR_ENC_DATA : in std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
     i_OBS_BE_RX_INTEGRITY_CORRUPT : in std_logic;
+    i_OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR : in std_logic;
+    i_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR : in std_logic;
+    i_OBS_BE_RX_HAM_INTEGRITY_ENC_DATA : in std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
     i_OBS_BE_RX_TMR_FLOW_CTRL_ERROR : in std_logic;
 
     -- OBS enables (to DUT), controlled from UART commands
@@ -123,6 +141,24 @@ architecture rtl of tg_tm_lb_selftest_uart_encode_block is
 
   signal r_tm_done_d       : std_logic := '0';
   signal w_tm_done_rise    : std_logic;
+  signal w_any_error       : std_logic;
+  signal r_pending_enc_line : std_logic := '0';
+  signal r_enc_line_data    : std_logic_vector(83 downto 0) := (others => '0');
+  signal r_report_counter   : integer range 0 to G_REPORT_PERIOD_PACKETS - 1 := 0;
+  signal r_period_report_due : std_logic := '0';
+
+  function f_pack80(src : std_logic_vector) return std_logic_vector is
+    variable v : std_logic_vector(79 downto 0) := (others => '0');
+    variable n : natural;
+  begin
+    if src'length >= 80 then
+      v := src(79 downto 0);
+    else
+      n := src'length;
+      v(n - 1 downto 0) := src;
+    end if;
+    return v;
+  end function;
 begin
   -- static UART configuration
   o_uart_baud_div <= x"0001";
@@ -159,6 +195,24 @@ begin
   o_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR <= r_obs_enable;
 
   w_tm_done_rise <= i_tm_done and (not r_tm_done_d);
+  w_any_error <=
+    i_tm_comparison_mismatch or i_NI_CORRUPT_PACKET or
+    i_OBS_TM_TMR_CTRL_ERROR or
+    i_OBS_TM_HAM_BUFFER_SINGLE_ERR or i_OBS_TM_HAM_BUFFER_DOUBLE_ERR or
+    i_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR or i_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR or
+    i_OBS_LB_TMR_CTRL_ERROR or i_OBS_LB_HAM_BUFFER_SINGLE_ERR or i_OBS_LB_HAM_BUFFER_DOUBLE_ERR or
+    i_OBS_TG_TMR_CTRL_ERROR or i_OBS_TG_HAM_BUFFER_SINGLE_ERR or i_OBS_TG_HAM_BUFFER_DOUBLE_ERR or
+    i_OBS_FE_INJ_META_HDR_SINGLE_ERR or i_OBS_FE_INJ_META_HDR_DOUBLE_ERR or
+    i_OBS_FE_INJ_ADDR_SINGLE_ERR or i_OBS_FE_INJ_ADDR_DOUBLE_ERR or
+    i_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR or i_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR or
+    i_OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_ERROR or
+    i_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR or i_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR or
+    i_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR or i_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR or
+    i_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR or i_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR or
+    i_OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR or i_OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR or
+    i_OBS_BE_RX_INTEGRITY_CORRUPT or
+    i_OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR or i_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR or
+    i_OBS_BE_RX_TMR_FLOW_CTRL_ERROR;
 
   -- nibble mux (MS nibble first)
   with to_integer(r_nibble_index) select
@@ -193,6 +247,7 @@ begin
     );
 
   process(ACLK)
+    variable v_do_report  : boolean;
   begin
     if rising_edge(ACLK) then
       if ARESETn = '0' then
@@ -207,11 +262,26 @@ begin
         r_obs_enable   <= '1';
         r_reset_pulse  <= '0';
         r_tm_done_d    <= '0';
+        r_pending_enc_line <= '0';
+        r_enc_line_data    <= (others => '0');
+        r_report_counter   <= 0;
+        r_period_report_due <= '0';
       else
         r_tm_done_d    <= i_tm_done;
         r_reset_pulse  <= '0';
         r_uart_tstart  <= '0';
         r_ctl_writelf  <= '0';
+
+        -- Count TM completed packets continuously, regardless of TX FSM state.
+        -- Latch periodic-report request so it is not lost while UART is busy.
+        if w_tm_done_rise = '1' then
+          if r_report_counter = G_REPORT_PERIOD_PACKETS - 1 then
+            r_report_counter    <= 0;
+            r_period_report_due <= '1';
+          else
+            r_report_counter <= r_report_counter + 1;
+          end if;
+        end if;
 
         -- RX command parser (ASCII)
         -- 'S' start/run, 'P' pause/stop, 'R' reset sequence,
@@ -229,8 +299,13 @@ begin
 
         case r_tx_state is
           when S_IDLE =>
-            -- log one line on TM done edge
-            if w_tm_done_rise = '1' then
+            -- log on:
+            -- 1) any error occurrence, or
+            -- 2) periodic packet milestone (G_REPORT_PERIOD_PACKETS)
+            v_do_report := (r_period_report_due = '1') or ((w_tm_done_rise = '1') and (w_any_error = '1'));
+              if v_do_report then
+              r_period_report_due <= '0';
+              -- base status/fault line
               r_fault_data(83 downto 60) <= i_TM_TRANSACTION_COUNT(23 downto 0);
               r_fault_data(59 downto 28) <= i_TM_EXPECTED_VALUE;
               r_fault_data(27) <= i_tm_comparison_mismatch;
@@ -262,9 +337,59 @@ begin
               r_fault_data(1)  <= i_OBS_BE_RX_INTEGRITY_CORRUPT;
               r_fault_data(0)  <= i_OBS_BE_RX_TMR_FLOW_CTRL_ERROR;
 
+              -- optional ENC_DATA line when an error flag is active.
+              -- line format: [83:80]=source_id, [79:0]=enc_data payload (LSB aligned)
+              r_pending_enc_line <= '0';
+              r_enc_line_data    <= (others => '0');
+              if (i_OBS_TM_HAM_BUFFER_SINGLE_ERR = '1') or (i_OBS_TM_HAM_BUFFER_DOUBLE_ERR = '1') then
+                r_pending_enc_line <= '1';
+                r_enc_line_data(83 downto 80) <= x"1";
+                r_enc_line_data(79 downto 0)  <= f_pack80(i_OBS_TM_HAM_BUFFER_ENC_DATA);
+              elsif (i_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR = '1') or (i_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR = '1') then
+                r_pending_enc_line <= '1';
+                r_enc_line_data(83 downto 80) <= x"2";
+                r_enc_line_data(79 downto 0)  <= f_pack80(i_OBS_TM_HAM_TXN_COUNTER_ENC_DATA);
+              elsif (i_OBS_LB_HAM_BUFFER_SINGLE_ERR = '1') or (i_OBS_LB_HAM_BUFFER_DOUBLE_ERR = '1') then
+                r_pending_enc_line <= '1';
+                r_enc_line_data(83 downto 80) <= x"3";
+                r_enc_line_data(79 downto 0)  <= f_pack80(i_OBS_LB_HAM_BUFFER_ENC_DATA);
+              elsif (i_OBS_TG_HAM_BUFFER_SINGLE_ERR = '1') or (i_OBS_TG_HAM_BUFFER_DOUBLE_ERR = '1') then
+                r_pending_enc_line <= '1';
+                r_enc_line_data(83 downto 80) <= x"4";
+                r_enc_line_data(79 downto 0)  <= f_pack80(i_OBS_TG_HAM_BUFFER_ENC_DATA);
+              elsif (i_OBS_FE_INJ_META_HDR_SINGLE_ERR = '1') or (i_OBS_FE_INJ_META_HDR_DOUBLE_ERR = '1') then
+                r_pending_enc_line <= '1';
+                r_enc_line_data(83 downto 80) <= x"5";
+                r_enc_line_data(79 downto 0)  <= f_pack80(i_OBS_FE_INJ_HAM_META_HDR_ENC_DATA);
+              elsif (i_OBS_FE_INJ_ADDR_SINGLE_ERR = '1') or (i_OBS_FE_INJ_ADDR_DOUBLE_ERR = '1') then
+                r_pending_enc_line <= '1';
+                r_enc_line_data(83 downto 80) <= x"6";
+                r_enc_line_data(79 downto 0)  <= f_pack80(i_OBS_FE_INJ_HAM_ADDR_ENC_DATA);
+              elsif (i_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR = '1') or (i_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR = '1') then
+                r_pending_enc_line <= '1';
+                r_enc_line_data(83 downto 80) <= x"7";
+                r_enc_line_data(79 downto 0)  <= f_pack80(i_OBS_BE_INJ_HAM_BUFFER_ENC_DATA);
+              elsif (i_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR = '1') or (i_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR = '1') then
+                r_pending_enc_line <= '1';
+                r_enc_line_data(83 downto 80) <= x"8";
+                r_enc_line_data(79 downto 0)  <= f_pack80(i_OBS_BE_INJ_HAM_INTEGRITY_ENC_DATA);
+              elsif (i_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR = '1') or (i_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR = '1') then
+                r_pending_enc_line <= '1';
+                r_enc_line_data(83 downto 80) <= x"9";
+                r_enc_line_data(79 downto 0)  <= f_pack80(i_OBS_BE_RX_HAM_BUFFER_ENC_DATA);
+              elsif (i_OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR = '1') or (i_OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR = '1') then
+                r_pending_enc_line <= '1';
+                r_enc_line_data(83 downto 80) <= x"A";
+                r_enc_line_data(79 downto 0)  <= f_pack80(i_OBS_BE_RX_HAM_INTERFACE_HDR_ENC_DATA);
+              elsif (i_OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR = '1') or (i_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR = '1') then
+                r_pending_enc_line <= '1';
+                r_enc_line_data(83 downto 80) <= x"B";
+                r_enc_line_data(79 downto 0)  <= f_pack80(i_OBS_BE_RX_HAM_INTEGRITY_ENC_DATA);
+              end if;
+
               r_nibble_index <= to_unsigned(C_LAST_NIBBLE_INDEX, 5);
               r_tx_state     <= S_SEND_HEX;
-            end if;
+              end if;
 
           when S_SEND_HEX =>
             if i_uart_tready = '1' then
@@ -291,7 +416,14 @@ begin
                 r_tx_state     <= S_SEND_HEX;
               else
                 if r_sent_lf = '1' then
-                  r_tx_state <= S_IDLE;
+                  if r_pending_enc_line = '1' then
+                    r_fault_data <= r_enc_line_data;
+                    r_nibble_index <= to_unsigned(C_LAST_NIBBLE_INDEX, 5);
+                    r_pending_enc_line <= '0';
+                    r_tx_state <= S_SEND_HEX;
+                  else
+                    r_tx_state <= S_IDLE;
+                  end if;
                 else
                   r_tx_state <= S_SEND_LF;
                 end if;
