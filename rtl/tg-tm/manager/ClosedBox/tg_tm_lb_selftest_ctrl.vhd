@@ -29,20 +29,29 @@ entity tg_tm_lb_selftest_ctrl is
 end entity;
 
 architecture rtl of tg_tm_lb_selftest_ctrl is
+  signal w_sample_mismatch : std_logic;
 begin
-  u_observation_block: entity work.tg_tm_lb_selftest_observation_block
+  u_legacy_obs_control: entity work.tg_tm_lb_selftest_obs_control
     port map(
       ACLK    => ACLK,
       ARESETn => ARESETn,
+      i_tg_done => i_tg_done,
+      i_tm_done => i_tm_done,
       o_tg_start => o_tg_start,
-      i_tg_done  => i_tg_done,
+      o_tm_start => o_tm_start,
+      o_sample_mismatch => w_sample_mismatch
+    );
+
+  u_legacy_obs_datapath: entity work.tg_tm_lb_selftest_obs_datapath
+    port map(
+      ACLK    => ACLK,
+      ARESETn => ARESETn,
       o_tg_addr  => o_tg_addr,
       o_tg_seed  => o_tg_seed,
-      o_tm_start => o_tm_start,
-      i_tm_done  => i_tm_done,
       o_tm_addr  => o_tm_addr,
       o_tm_seed  => o_tm_seed,
+      i_sample_mismatch => w_sample_mismatch,
       i_tm_lfsr_comparison_mismatch => i_tm_lfsr_comparison_mismatch,
-      o_error       => o_error
+      o_error   => o_error
     );
 end architecture;
