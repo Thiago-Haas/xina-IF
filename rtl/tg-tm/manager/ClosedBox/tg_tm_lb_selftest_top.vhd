@@ -28,7 +28,7 @@ architecture rtl of tg_tm_lb_selftest_top is
   signal w_tm_addr  : std_logic_vector(63 downto 0);
   signal w_tm_seed  : std_logic_vector(31 downto 0);
 
-  signal w_tm_lfsr_comparison_mismatch : std_logic;
+  signal w_tm_comparison_mismatch : std_logic;
 
   -- OBS enable wires (obs block -> DUT)
   signal w_OBS_TM_HAM_BUFFER_CORRECT_ERROR : std_logic;
@@ -110,9 +110,6 @@ architecture rtl of tg_tm_lb_selftest_top is
   signal w_tm_transaction_count : std_logic_vector(c_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
   signal w_ni_corrupt_packet : std_logic;
 
-  -- self-test status (kept internal)
-  signal w_selftest_error : std_logic;
-
   -- UART local wires (UART is at top level)
   signal w_uart_tready : std_logic;
   signal w_uart_tdone  : std_logic;
@@ -160,7 +157,7 @@ begin
       o_tm_addr  => w_tm_addr,
       o_tm_seed  => w_tm_seed,
 
-      i_tm_lfsr_comparison_mismatch => w_tm_lfsr_comparison_mismatch,
+      i_tm_comparison_mismatch => w_tm_comparison_mismatch,
       i_TM_TRANSACTION_COUNT => w_tm_transaction_count,
       i_TM_EXPECTED_VALUE    => w_tm_expected_value,
       i_NI_CORRUPT_PACKET    => w_ni_corrupt_packet,
@@ -236,9 +233,7 @@ begin
       i_OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR => w_OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR,
       i_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR => w_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR,
       i_OBS_BE_RX_HAM_INTEGRITY_ENC_DATA => w_OBS_BE_RX_HAM_INTEGRITY_ENC_DATA,
-      i_OBS_BE_RX_TMR_FLOW_CTRL_ERROR => w_OBS_BE_RX_TMR_FLOW_CTRL_ERROR,
-
-      o_error => w_selftest_error
+      i_OBS_BE_RX_TMR_FLOW_CTRL_ERROR => w_OBS_BE_RX_TMR_FLOW_CTRL_ERROR
     );
 
   u_tg_tm_lb_system_dut: entity work.tg_tm_lb_top
@@ -256,7 +251,7 @@ begin
       TM_INPUT_ADDRESS => w_tm_addr,
       TM_STARTING_SEED => w_tm_seed,
 
-      o_tm_lfsr_comparison_mismatch => w_tm_lfsr_comparison_mismatch,
+      o_tm_lfsr_comparison_mismatch => w_tm_comparison_mismatch,
       o_tm_expected_value => w_tm_expected_value,
       i_OBS_TM_HAM_BUFFER_CORRECT_ERROR => w_OBS_TM_HAM_BUFFER_CORRECT_ERROR,
       i_OBS_TM_TMR_CTRL_CORRECT_ERROR   => w_OBS_TM_TMR_CTRL_CORRECT_ERROR,

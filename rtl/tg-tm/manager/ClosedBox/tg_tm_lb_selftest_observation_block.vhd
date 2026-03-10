@@ -23,7 +23,7 @@ entity tg_tm_lb_selftest_observation_block is
     o_tm_addr  : out std_logic_vector(63 downto 0);
     o_tm_seed  : out std_logic_vector(31 downto 0);
 
-    i_tm_lfsr_comparison_mismatch : in  std_logic;
+    i_tm_comparison_mismatch : in  std_logic;
     i_TM_TRANSACTION_COUNT : in std_logic_vector(c_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
     i_TM_EXPECTED_VALUE    : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
     i_NI_CORRUPT_PACKET    : in std_logic;
@@ -101,62 +101,98 @@ entity tg_tm_lb_selftest_observation_block is
     i_OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR : in std_logic;
     i_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR : in std_logic;
     i_OBS_BE_RX_HAM_INTEGRITY_ENC_DATA : in std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
-    i_OBS_BE_RX_TMR_FLOW_CTRL_ERROR : in std_logic;
-
-    o_error : out std_logic
+    i_OBS_BE_RX_TMR_FLOW_CTRL_ERROR : in std_logic
   );
 end entity;
 
 architecture rtl of tg_tm_lb_selftest_observation_block is
-  signal w_sample_mismatch : std_logic;
 begin
-  -- All observation enables default ON in self-test mode.
-  o_OBS_TM_HAM_BUFFER_CORRECT_ERROR <= '1';
-  o_OBS_TM_TMR_CTRL_CORRECT_ERROR <= '1';
-  o_OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR <= '1';
-
-  o_OBS_LB_HAM_BUFFER_CORRECT_ERROR <= '1';
-  o_OBS_LB_TMR_CTRL_CORRECT_ERROR <= '1';
-
-  o_OBS_TG_HAM_BUFFER_CORRECT_ERROR <= '1';
-  o_OBS_TG_TMR_CTRL_CORRECT_ERROR <= '1';
-
-  o_OBS_FE_INJ_META_HDR_CORRECT_ERROR <= '1';
-  o_OBS_FE_INJ_ADDR_CORRECT_ERROR <= '1';
-
-  o_OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR <= '1';
-  o_OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR <= '1';
-  o_OBS_BE_INJ_HAM_INTEGRITY_CORRECT_ERROR <= '1';
-  o_OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR <= '1';
-  o_OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR <= '1';
-
-  o_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR <= '1';
-  o_OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR <= '1';
-  o_OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR <= '1';
-  o_OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR <= '1';
-  o_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR <= '1';
-
-  u_obs_control_fsm: entity work.tg_tm_lb_selftest_obs_control
+  u_obs_wiring_block: entity work.tg_tm_lb_selftest_obs_wiring_block
     port map(
-      ACLK    => ACLK,
-      ARESETn => ARESETn,
-      i_tg_done => i_tg_done,
-      i_tm_done => i_tm_done,
-      o_tg_start => o_tg_start,
-      o_tm_start => o_tm_start,
-      o_sample_mismatch => w_sample_mismatch
+      i_TM_TRANSACTION_COUNT => i_TM_TRANSACTION_COUNT,
+      i_TM_EXPECTED_VALUE    => i_TM_EXPECTED_VALUE,
+      o_OBS_TM_HAM_BUFFER_CORRECT_ERROR => o_OBS_TM_HAM_BUFFER_CORRECT_ERROR,
+      o_OBS_TM_TMR_CTRL_CORRECT_ERROR => o_OBS_TM_TMR_CTRL_CORRECT_ERROR,
+      o_OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR => o_OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR,
+      o_OBS_LB_HAM_BUFFER_CORRECT_ERROR => o_OBS_LB_HAM_BUFFER_CORRECT_ERROR,
+      o_OBS_LB_TMR_CTRL_CORRECT_ERROR => o_OBS_LB_TMR_CTRL_CORRECT_ERROR,
+      o_OBS_TG_HAM_BUFFER_CORRECT_ERROR => o_OBS_TG_HAM_BUFFER_CORRECT_ERROR,
+      o_OBS_TG_TMR_CTRL_CORRECT_ERROR => o_OBS_TG_TMR_CTRL_CORRECT_ERROR,
+      o_OBS_FE_INJ_META_HDR_CORRECT_ERROR => o_OBS_FE_INJ_META_HDR_CORRECT_ERROR,
+      o_OBS_FE_INJ_ADDR_CORRECT_ERROR => o_OBS_FE_INJ_ADDR_CORRECT_ERROR,
+      o_OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR => o_OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR,
+      o_OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR => o_OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR,
+      o_OBS_BE_INJ_HAM_INTEGRITY_CORRECT_ERROR => o_OBS_BE_INJ_HAM_INTEGRITY_CORRECT_ERROR,
+      o_OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR => o_OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR,
+      o_OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR => o_OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR,
+      o_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR => o_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR,
+      o_OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR => o_OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR,
+      o_OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR => o_OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR,
+      o_OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR => o_OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR,
+      o_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR => o_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR,
+      i_OBS_TM_TMR_CTRL_ERROR => i_OBS_TM_TMR_CTRL_ERROR,
+      i_OBS_TM_HAM_BUFFER_SINGLE_ERR => i_OBS_TM_HAM_BUFFER_SINGLE_ERR,
+      i_OBS_TM_HAM_BUFFER_DOUBLE_ERR => i_OBS_TM_HAM_BUFFER_DOUBLE_ERR,
+      i_OBS_TM_HAM_BUFFER_ENC_DATA => i_OBS_TM_HAM_BUFFER_ENC_DATA,
+      i_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR => i_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR,
+      i_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR => i_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR,
+      i_OBS_TM_HAM_TXN_COUNTER_ENC_DATA => i_OBS_TM_HAM_TXN_COUNTER_ENC_DATA,
+      i_OBS_LB_TMR_CTRL_ERROR => i_OBS_LB_TMR_CTRL_ERROR,
+      i_OBS_LB_HAM_BUFFER_SINGLE_ERR => i_OBS_LB_HAM_BUFFER_SINGLE_ERR,
+      i_OBS_LB_HAM_BUFFER_DOUBLE_ERR => i_OBS_LB_HAM_BUFFER_DOUBLE_ERR,
+      i_OBS_LB_HAM_BUFFER_ENC_DATA => i_OBS_LB_HAM_BUFFER_ENC_DATA,
+      i_OBS_TG_TMR_CTRL_ERROR => i_OBS_TG_TMR_CTRL_ERROR,
+      i_OBS_TG_HAM_BUFFER_SINGLE_ERR => i_OBS_TG_HAM_BUFFER_SINGLE_ERR,
+      i_OBS_TG_HAM_BUFFER_DOUBLE_ERR => i_OBS_TG_HAM_BUFFER_DOUBLE_ERR,
+      i_OBS_TG_HAM_BUFFER_ENC_DATA => i_OBS_TG_HAM_BUFFER_ENC_DATA,
+      i_OBS_FE_INJ_META_HDR_SINGLE_ERR => i_OBS_FE_INJ_META_HDR_SINGLE_ERR,
+      i_OBS_FE_INJ_META_HDR_DOUBLE_ERR => i_OBS_FE_INJ_META_HDR_DOUBLE_ERR,
+      i_OBS_FE_INJ_ADDR_SINGLE_ERR => i_OBS_FE_INJ_ADDR_SINGLE_ERR,
+      i_OBS_FE_INJ_ADDR_DOUBLE_ERR => i_OBS_FE_INJ_ADDR_DOUBLE_ERR,
+      i_OBS_FE_INJ_HAM_META_HDR_ENC_DATA => i_OBS_FE_INJ_HAM_META_HDR_ENC_DATA,
+      i_OBS_FE_INJ_HAM_ADDR_ENC_DATA => i_OBS_FE_INJ_HAM_ADDR_ENC_DATA,
+      i_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR => i_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR,
+      i_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR => i_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR,
+      i_OBS_BE_INJ_HAM_BUFFER_ENC_DATA => i_OBS_BE_INJ_HAM_BUFFER_ENC_DATA,
+      i_OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_ERROR => i_OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_ERROR,
+      i_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR => i_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR,
+      i_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR => i_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR,
+      i_OBS_BE_INJ_HAM_INTEGRITY_ENC_DATA => i_OBS_BE_INJ_HAM_INTEGRITY_ENC_DATA,
+      i_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR => i_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR,
+      i_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR => i_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR,
+      i_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR => i_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR,
+      i_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR => i_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR,
+      i_OBS_BE_RX_HAM_BUFFER_ENC_DATA => i_OBS_BE_RX_HAM_BUFFER_ENC_DATA,
+      i_OBS_BE_RX_TMR_HAM_BUFFER_CTRL_ERROR => i_OBS_BE_RX_TMR_HAM_BUFFER_CTRL_ERROR,
+      i_OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR => i_OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR,
+      i_OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR => i_OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR,
+      i_OBS_BE_RX_HAM_INTERFACE_HDR_ENC_DATA => i_OBS_BE_RX_HAM_INTERFACE_HDR_ENC_DATA,
+      i_OBS_BE_RX_INTEGRITY_CORRUPT => i_OBS_BE_RX_INTEGRITY_CORRUPT,
+      i_OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR => i_OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR,
+      i_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR => i_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR,
+      i_OBS_BE_RX_HAM_INTEGRITY_ENC_DATA => i_OBS_BE_RX_HAM_INTEGRITY_ENC_DATA,
+      i_OBS_BE_RX_TMR_FLOW_CTRL_ERROR => i_OBS_BE_RX_TMR_FLOW_CTRL_ERROR
     );
 
-  u_obs_datapath_gen: entity work.tg_tm_lb_selftest_obs_datapath
-    port map(
-      ACLK    => ACLK,
-      ARESETn => ARESETn,
-      i_sample_mismatch => w_sample_mismatch,
-      i_tm_lfsr_comparison_mismatch => i_tm_lfsr_comparison_mismatch,
-      o_tg_addr => o_tg_addr,
-      o_tg_seed => o_tg_seed,
-      o_tm_addr => o_tm_addr,
-      o_tm_seed => o_tm_seed,
-      o_error   => o_error
-    );
+  -- TG/TM sequencer+constants block: controls start/done handshake and provides constant addr/seed.
+  b_tg_tm_sequencer_and_constants: block
+  begin
+    u_tg_tm_start_done_controller: entity work.tg_tm_lb_selftest_obs_control
+      port map(
+        ACLK    => ACLK,
+        ARESETn => ARESETn,
+        i_tg_done => i_tg_done,
+        i_tm_done => i_tm_done,
+        o_tg_start => o_tg_start,
+        o_tm_start => o_tm_start
+      );
+
+    u_tg_tm_seed_and_addr_constants: entity work.tg_tm_lb_selftest_obs_datapath
+      port map(
+        o_tg_addr => o_tg_addr,
+        o_tg_seed => o_tg_seed,
+        o_tm_addr => o_tm_addr,
+        o_tm_seed => o_tm_seed
+      );
+  end block;
 end architecture;

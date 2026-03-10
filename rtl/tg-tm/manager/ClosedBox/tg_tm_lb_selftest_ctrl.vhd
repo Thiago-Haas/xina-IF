@@ -20,16 +20,11 @@ entity tg_tm_lb_selftest_ctrl is
     o_tm_start : out std_logic;
     i_tm_done  : in  std_logic;
     o_tm_addr  : out std_logic_vector(63 downto 0);
-    o_tm_seed  : out std_logic_vector(31 downto 0);
-
-    -- TM result
-    i_tm_lfsr_comparison_mismatch : in  std_logic;
-    o_error       : out std_logic
+    o_tm_seed  : out std_logic_vector(31 downto 0)
   );
 end entity;
 
 architecture rtl of tg_tm_lb_selftest_ctrl is
-  signal w_sample_mismatch : std_logic;
 begin
   u_legacy_obs_control: entity work.tg_tm_lb_selftest_obs_control
     port map(
@@ -38,20 +33,14 @@ begin
       i_tg_done => i_tg_done,
       i_tm_done => i_tm_done,
       o_tg_start => o_tg_start,
-      o_tm_start => o_tm_start,
-      o_sample_mismatch => w_sample_mismatch
+      o_tm_start => o_tm_start
     );
 
   u_legacy_obs_datapath: entity work.tg_tm_lb_selftest_obs_datapath
     port map(
-      ACLK    => ACLK,
-      ARESETn => ARESETn,
       o_tg_addr  => o_tg_addr,
       o_tg_seed  => o_tg_seed,
       o_tm_addr  => o_tm_addr,
-      o_tm_seed  => o_tm_seed,
-      i_sample_mismatch => w_sample_mismatch,
-      i_tm_lfsr_comparison_mismatch => i_tm_lfsr_comparison_mismatch,
-      o_error   => o_error
+      o_tm_seed  => o_tm_seed
     );
 end architecture;
