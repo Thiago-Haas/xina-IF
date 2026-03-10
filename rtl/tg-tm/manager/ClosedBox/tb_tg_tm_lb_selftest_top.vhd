@@ -49,6 +49,64 @@ architecture tb of tb_tg_tm_lb_selftest_top is
     end if;
   end function;
 
+  function f_hex_char_to_int(c : character) return integer is
+  begin
+    if (c >= '0') and (c <= '9') then
+      return character'pos(c) - character'pos('0');
+    elsif (c >= 'a') and (c <= 'f') then
+      return 10 + character'pos(c) - character'pos('a');
+    elsif (c >= 'A') and (c <= 'F') then
+      return 10 + character'pos(c) - character'pos('A');
+    else
+      return -1;
+    end if;
+  end function;
+
+  function f_hex_to_integer(s : string) return integer is
+    variable v : integer := 0;
+    variable d : integer;
+  begin
+    for i in s'range loop
+      d := f_hex_char_to_int(s(i));
+      if d < 0 then
+        return 0;
+      end if;
+      v := (v * 16) + d;
+    end loop;
+    return v;
+  end function;
+
+  function f_is_hex_string(s : string) return boolean is
+  begin
+    for i in s'range loop
+      if f_hex_char_to_int(s(i)) < 0 then
+        return false;
+      end if;
+    end loop;
+    return true;
+  end function;
+
+  function f_hex_to_bin_string(s : string) return string is
+    variable v : string(1 to s'length * 4);
+    variable p : integer := 1;
+    variable d : integer;
+  begin
+    for i in s'range loop
+      d := f_hex_char_to_int(s(i));
+      if d < 0 then
+        d := 0;
+      end if;
+      if (d / 8) = 1 then v(p) := '1'; else v(p) := '0'; end if; p := p + 1;
+      d := d mod 8;
+      if (d / 4) = 1 then v(p) := '1'; else v(p) := '0'; end if; p := p + 1;
+      d := d mod 4;
+      if (d / 2) = 1 then v(p) := '1'; else v(p) := '0'; end if; p := p + 1;
+      d := d mod 2;
+      if d = 1 then v(p) := '1'; else v(p) := '0'; end if; p := p + 1;
+    end loop;
+    return v;
+  end function;
+
 begin
 
   -- clock
@@ -96,6 +154,8 @@ begin
     variable v_len  : integer range 0 to 256 := 0;
     variable v_byte : integer;
     variable v_log  : line;
+    variable v_tm_dec : integer;
+    variable v_flags_bin : string(1 to 28);
   begin
     if rising_edge(ACLK) then
       if ARESETn = '0' then
@@ -112,6 +172,24 @@ begin
               write(v_log, string'("UART RX: "));
               write(v_log, v_line(1 to v_len));
               writeline(f_tb_uart_log, v_log);
+
+              -- Decode base line format from DUT:
+              -- TM=<6 hex> FLAGS=<7 hex>
+              if (v_len = 23) and
+                 (v_line(1 to 3) = "TM=") and
+                 (v_line(10 to 16) = " FLAGS=") and
+                 f_is_hex_string(v_line(4 to 9)) and
+                 f_is_hex_string(v_line(17 to 23)) then
+                v_tm_dec := f_hex_to_integer(v_line(4 to 9));
+                v_flags_bin := f_hex_to_bin_string(v_line(17 to 23));
+                report "UART RX DECODED: TM_DEC=" & integer'image(v_tm_dec) &
+                       " FLAGS_BIN=" & v_flags_bin severity warning;
+                write(v_log, string'("UART RX DECODED: TM_DEC="));
+                write(v_log, integer'image(v_tm_dec));
+                write(v_log, string'(" FLAGS_BIN="));
+                write(v_log, v_flags_bin);
+                writeline(f_tb_uart_log, v_log);
+              end if;
             else
               report "UART RX: <LF>" severity warning;
               write(v_log, string'("UART RX: <LF>"));

@@ -5,7 +5,7 @@ use IEEE.numeric_std.all;
 use work.xina_ni_ft_pkg.all;
 
 -- UART manager for closed-box self-test:
--- * encodes fault/status vector as ASCII hex + LF
+-- * encodes fault/status vector as labeled ASCII text + LF
 -- * decodes UART RX commands to control experiment and OBS enables
 entity tg_tm_lb_selftest_uart_encode_block is
   generic (
@@ -120,18 +120,44 @@ entity tg_tm_lb_selftest_uart_encode_block is
 end entity;
 
 architecture rtl of tg_tm_lb_selftest_uart_encode_block is
-  constant C_LAST_NIBBLE_INDEX : natural := 20; -- 84 bits -> 21 hex chars
+  constant C_BASE_TM_NIBBLE_START    : natural := 12;
+  constant C_BASE_TM_NIBBLE_STOP     : natural := 7;
+  constant C_BASE_FLAGS_NIBBLE_START : natural := 6;
+  constant C_BASE_FLAGS_NIBBLE_STOP  : natural := 0;
+  constant C_ENC_SRC_NIBBLE_START    : natural := 20;
+  constant C_ENC_SRC_NIBBLE_STOP     : natural := 20;
+  constant C_ENC_DATA_NIBBLE_START   : natural := 19;
+  constant C_ENC_DATA_NIBBLE_STOP    : natural := 0;
 
-  type t_tx_state is (S_IDLE, S_SEND_HEX, S_SEND_LF, S_WAIT_DONE);
-  signal r_tx_state : t_tx_state := S_IDLE;
+  constant C_LABEL_TM    : string := "TM=";
+  constant C_LABEL_FLAGS : string := " FLAGS=";
+  constant C_LABEL_ENC   : string := "ENC SRC=";
+  constant C_LABEL_DATA  : string := " DATA=";
+
+  type t_tx_state is (S_IDLE, S_SEND_LABEL, S_SEND_HEX, S_SEND_LF, S_WAIT_DONE);
+  type t_tx_phase is (
+    PH_BASE_TM_LABEL,
+    PH_BASE_TM_HEX,
+    PH_BASE_FLAGS_LABEL,
+    PH_BASE_FLAGS_HEX,
+    PH_ENC_LABEL,
+    PH_ENC_SRC_HEX,
+    PH_ENC_DATA_LABEL,
+    PH_ENC_DATA_HEX
+  );
+  type t_wait_source is (WS_LABEL, WS_HEX, WS_LF);
+
+  signal r_tx_state      : t_tx_state := S_IDLE;
+  signal r_tx_phase      : t_tx_phase := PH_BASE_TM_LABEL;
+  signal r_wait_source   : t_wait_source := WS_LABEL;
 
   signal r_fault_data      : std_logic_vector(83 downto 0) := (others => '0');
-  signal r_nibble_index    : unsigned(4 downto 0) := to_unsigned(C_LAST_NIBBLE_INDEX, 5);
+  signal r_nibble_index    : unsigned(4 downto 0) := to_unsigned(C_BASE_TM_NIBBLE_START, 5);
+  signal r_nibble_stop     : unsigned(4 downto 0) := to_unsigned(C_BASE_TM_NIBBLE_STOP, 5);
+  signal r_label_index     : natural range 1 to 8 := 1;
 
   signal w_nibble_data     : std_logic_vector(3 downto 0);
   signal w_utf_data        : std_logic_vector(7 downto 0);
-  signal r_ctl_writelf     : std_logic := '0';
-  signal r_sent_lf         : std_logic := '0';
   signal r_uart_tstart     : std_logic := '0';
   signal r_uart_tdata      : std_logic_vector(7 downto 0) := (others => '0');
 
@@ -158,6 +184,11 @@ architecture rtl of tg_tm_lb_selftest_uart_encode_block is
       v(n - 1 downto 0) := src;
     end if;
     return v;
+  end function;
+
+  function f_char_to_slv8(c : character) return std_logic_vector is
+  begin
+    return std_logic_vector(to_unsigned(character'pos(c), 8));
   end function;
 begin
   -- static UART configuration
@@ -241,21 +272,23 @@ begin
 
   u_utf8_hex: entity work.utf8_hex
     port map(
-      ctl_writelf_i => r_ctl_writelf,
+      ctl_writelf_i => '0',
       data_i        => w_nibble_data,
       utf_data_o    => w_utf_data
     );
 
   process(ACLK)
-    variable v_do_report  : boolean;
+    variable v_do_report : boolean;
   begin
     if rising_edge(ACLK) then
       if ARESETn = '0' then
         r_tx_state     <= S_IDLE;
+        r_tx_phase     <= PH_BASE_TM_LABEL;
+        r_wait_source  <= WS_LABEL;
         r_fault_data   <= (others => '0');
-        r_nibble_index <= to_unsigned(C_LAST_NIBBLE_INDEX, 5);
-        r_ctl_writelf  <= '0';
-        r_sent_lf      <= '0';
+        r_nibble_index <= to_unsigned(C_BASE_TM_NIBBLE_START, 5);
+        r_nibble_stop  <= to_unsigned(C_BASE_TM_NIBBLE_STOP, 5);
+        r_label_index  <= 1;
         r_uart_tstart  <= '0';
         r_uart_tdata   <= (others => '0');
         r_run_enable   <= '1';
@@ -270,10 +303,7 @@ begin
         r_tm_done_d    <= i_tm_done;
         r_reset_pulse  <= '0';
         r_uart_tstart  <= '0';
-        r_ctl_writelf  <= '0';
 
-        -- Count TM completed packets continuously, regardless of TX FSM state.
-        -- Latch periodic-report request so it is not lost while UART is busy.
         if w_tm_done_rise = '1' then
           if r_report_counter = G_REPORT_PERIOD_PACKETS - 1 then
             r_report_counter    <= 0;
@@ -283,9 +313,6 @@ begin
           end if;
         end if;
 
-        -- RX command parser (ASCII)
-        -- 'S' start/run, 'P' pause/stop, 'R' reset sequence,
-        -- 'E' enable OBS, 'D' disable OBS
         if (i_uart_rdone = '1') and (i_uart_rerr = '0') then
           case i_uart_rdata is
             when x"53" => r_run_enable  <= '1'; -- S
@@ -299,15 +326,13 @@ begin
 
         case r_tx_state is
           when S_IDLE =>
-            -- log on:
-            -- 1) any error occurrence, or
-            -- 2) periodic packet milestone (G_REPORT_PERIOD_PACKETS)
             v_do_report := (r_period_report_due = '1') or ((w_tm_done_rise = '1') and (w_any_error = '1'));
-              if v_do_report then
+            if v_do_report then
               r_period_report_due <= '0';
-              -- base status/fault line
-              r_fault_data(83 downto 60) <= i_TM_TRANSACTION_COUNT(23 downto 0);
-              r_fault_data(59 downto 28) <= i_TM_EXPECTED_VALUE;
+
+              -- base status/fault frame (TM expected value intentionally removed)
+              r_fault_data(83 downto 52) <= (others => '0');
+              r_fault_data(51 downto 28) <= i_TM_TRANSACTION_COUNT(23 downto 0);
               r_fault_data(27) <= i_tm_comparison_mismatch;
               r_fault_data(26) <= i_NI_CORRUPT_PACKET;
               r_fault_data(25) <= i_OBS_TM_TMR_CTRL_ERROR;
@@ -337,8 +362,6 @@ begin
               r_fault_data(1)  <= i_OBS_BE_RX_INTEGRITY_CORRUPT;
               r_fault_data(0)  <= i_OBS_BE_RX_TMR_FLOW_CTRL_ERROR;
 
-              -- optional ENC_DATA line when an error flag is active.
-              -- line format: [83:80]=source_id, [79:0]=enc_data payload (LSB aligned)
               r_pending_enc_line <= '0';
               r_enc_line_data    <= (others => '0');
               if (i_OBS_TM_HAM_BUFFER_SINGLE_ERR = '1') or (i_OBS_TM_HAM_BUFFER_DOUBLE_ERR = '1') then
@@ -387,47 +410,133 @@ begin
                 r_enc_line_data(79 downto 0)  <= f_pack80(i_OBS_BE_RX_HAM_INTEGRITY_ENC_DATA);
               end if;
 
-              r_nibble_index <= to_unsigned(C_LAST_NIBBLE_INDEX, 5);
-              r_tx_state     <= S_SEND_HEX;
-              end if;
+              r_tx_phase    <= PH_BASE_TM_LABEL;
+              r_label_index <= 1;
+              r_tx_state    <= S_SEND_LABEL;
+            end if;
+
+          when S_SEND_LABEL =>
+            if i_uart_tready = '1' then
+              case r_tx_phase is
+                when PH_BASE_TM_LABEL =>
+                  r_uart_tdata <= f_char_to_slv8(C_LABEL_TM(r_label_index));
+                when PH_BASE_FLAGS_LABEL =>
+                  r_uart_tdata <= f_char_to_slv8(C_LABEL_FLAGS(r_label_index));
+                when PH_ENC_LABEL =>
+                  r_uart_tdata <= f_char_to_slv8(C_LABEL_ENC(r_label_index));
+                when PH_ENC_DATA_LABEL =>
+                  r_uart_tdata <= f_char_to_slv8(C_LABEL_DATA(r_label_index));
+                when others =>
+                  r_uart_tdata <= x"3F"; -- '?'
+              end case;
+              r_uart_tstart <= '1';
+              r_wait_source <= WS_LABEL;
+              r_tx_state    <= S_WAIT_DONE;
+            end if;
 
           when S_SEND_HEX =>
             if i_uart_tready = '1' then
-              r_ctl_writelf <= '0';
               r_uart_tdata  <= w_utf_data;
               r_uart_tstart <= '1';
-              r_sent_lf     <= '0';
+              r_wait_source <= WS_HEX;
               r_tx_state    <= S_WAIT_DONE;
             end if;
 
           when S_SEND_LF =>
             if i_uart_tready = '1' then
-              -- Drive LF directly to avoid one-cycle lag from ctl_writelf path.
               r_uart_tdata  <= x"0A";
               r_uart_tstart <= '1';
-              r_sent_lf     <= '1';
+              r_wait_source <= WS_LF;
               r_tx_state    <= S_WAIT_DONE;
             end if;
 
           when S_WAIT_DONE =>
             if i_uart_tdone = '1' then
-              if r_nibble_index /= 0 then
-                r_nibble_index <= r_nibble_index - 1;
-                r_tx_state     <= S_SEND_HEX;
-              else
-                if r_sent_lf = '1' then
-                  if r_pending_enc_line = '1' then
-                    r_fault_data <= r_enc_line_data;
-                    r_nibble_index <= to_unsigned(C_LAST_NIBBLE_INDEX, 5);
-                    r_pending_enc_line <= '0';
-                    r_tx_state <= S_SEND_HEX;
+              case r_wait_source is
+                when WS_LABEL =>
+                  case r_tx_phase is
+                    when PH_BASE_TM_LABEL =>
+                      if r_label_index < C_LABEL_TM'length then
+                        r_label_index <= r_label_index + 1;
+                        r_tx_state    <= S_SEND_LABEL;
+                      else
+                        r_tx_phase    <= PH_BASE_TM_HEX;
+                        r_nibble_index <= to_unsigned(C_BASE_TM_NIBBLE_START, 5);
+                        r_nibble_stop  <= to_unsigned(C_BASE_TM_NIBBLE_STOP, 5);
+                        r_tx_state    <= S_SEND_HEX;
+                      end if;
+                    when PH_BASE_FLAGS_LABEL =>
+                      if r_label_index < C_LABEL_FLAGS'length then
+                        r_label_index <= r_label_index + 1;
+                        r_tx_state    <= S_SEND_LABEL;
+                      else
+                        r_tx_phase     <= PH_BASE_FLAGS_HEX;
+                        r_nibble_index <= to_unsigned(C_BASE_FLAGS_NIBBLE_START, 5);
+                        r_nibble_stop  <= to_unsigned(C_BASE_FLAGS_NIBBLE_STOP, 5);
+                        r_tx_state     <= S_SEND_HEX;
+                      end if;
+                    when PH_ENC_LABEL =>
+                      if r_label_index < C_LABEL_ENC'length then
+                        r_label_index <= r_label_index + 1;
+                        r_tx_state    <= S_SEND_LABEL;
+                      else
+                        r_tx_phase     <= PH_ENC_SRC_HEX;
+                        r_nibble_index <= to_unsigned(C_ENC_SRC_NIBBLE_START, 5);
+                        r_nibble_stop  <= to_unsigned(C_ENC_SRC_NIBBLE_STOP, 5);
+                        r_tx_state     <= S_SEND_HEX;
+                      end if;
+                    when PH_ENC_DATA_LABEL =>
+                      if r_label_index < C_LABEL_DATA'length then
+                        r_label_index <= r_label_index + 1;
+                        r_tx_state    <= S_SEND_LABEL;
+                      else
+                        r_tx_phase     <= PH_ENC_DATA_HEX;
+                        r_nibble_index <= to_unsigned(C_ENC_DATA_NIBBLE_START, 5);
+                        r_nibble_stop  <= to_unsigned(C_ENC_DATA_NIBBLE_STOP, 5);
+                        r_tx_state     <= S_SEND_HEX;
+                      end if;
+                    when others =>
+                      r_tx_state <= S_IDLE;
+                  end case;
+
+                when WS_HEX =>
+                  if r_nibble_index /= r_nibble_stop then
+                    r_nibble_index <= r_nibble_index - 1;
+                    r_tx_state     <= S_SEND_HEX;
+                  else
+                    case r_tx_phase is
+                      when PH_BASE_TM_HEX =>
+                        r_tx_phase    <= PH_BASE_FLAGS_LABEL;
+                        r_label_index <= 1;
+                        r_tx_state    <= S_SEND_LABEL;
+                      when PH_BASE_FLAGS_HEX =>
+                        r_tx_state <= S_SEND_LF;
+                      when PH_ENC_SRC_HEX =>
+                        r_tx_phase    <= PH_ENC_DATA_LABEL;
+                        r_label_index <= 1;
+                        r_tx_state    <= S_SEND_LABEL;
+                      when PH_ENC_DATA_HEX =>
+                        r_tx_state <= S_SEND_LF;
+                      when others =>
+                        r_tx_state <= S_IDLE;
+                    end case;
+                  end if;
+
+                when WS_LF =>
+                  if r_tx_phase = PH_BASE_FLAGS_HEX then
+                    if r_pending_enc_line = '1' then
+                      r_fault_data       <= r_enc_line_data;
+                      r_pending_enc_line <= '0';
+                      r_tx_phase         <= PH_ENC_LABEL;
+                      r_label_index      <= 1;
+                      r_tx_state         <= S_SEND_LABEL;
+                    else
+                      r_tx_state <= S_IDLE;
+                    end if;
                   else
                     r_tx_state <= S_IDLE;
                   end if;
-                else
-                  r_tx_state <= S_SEND_LF;
-                end if;
-              end if;
+              end case;
             end if;
         end case;
       end if;
