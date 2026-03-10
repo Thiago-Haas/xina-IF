@@ -16,6 +16,10 @@ architecture tb of tb_tg_tm_lb_selftest_top is
 
   signal ACLK    : std_logic := '0';
   signal ARESETn : std_logic := '0';
+  signal uart_rx_i  : std_logic := '1';
+  signal uart_tx_o  : std_logic;
+  signal uart_cts_i : std_logic := '0';
+  signal uart_rts_o : std_logic;
 
 begin
 
@@ -26,7 +30,11 @@ begin
   dut: entity work.tg_tm_lb_selftest_top
     port map (
       ACLK    => ACLK,
-      ARESETn => ARESETn
+      ARESETn => ARESETn,
+      uart_rx_i  => uart_rx_i,
+      uart_tx_o  => uart_tx_o,
+      uart_cts_i => uart_cts_i,
+      uart_rts_o => uart_rts_o
     );
 
   -- reset + run

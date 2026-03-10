@@ -30,6 +30,8 @@ begin
     port map(
       ACLK    => ACLK,
       ARESETn => ARESETn,
+      i_experiment_run_enable  => '1',
+      i_experiment_reset_pulse => '0',
       i_tg_done => i_tg_done,
       i_tm_done => i_tm_done,
       o_tg_start => o_tg_start,

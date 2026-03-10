@@ -12,6 +12,19 @@ entity tg_tm_lb_selftest_observation_block is
     ACLK    : in  std_logic;
     ARESETn : in  std_logic;
 
+    -- UART interface (to top-level UART)
+    o_uart_baud_div : out std_logic_vector(15 downto 0);
+    o_uart_parity   : out std_logic;
+    o_uart_rtscts   : out std_logic;
+    i_uart_tready   : in  std_logic;
+    i_uart_tdone    : in  std_logic;
+    o_uart_tstart   : out std_logic;
+    o_uart_tdata    : out std_logic_vector(7 downto 0);
+    o_uart_rready   : out std_logic;
+    i_uart_rdone    : in  std_logic;
+    i_uart_rdata    : in  std_logic_vector(7 downto 0);
+    i_uart_rerr     : in  std_logic;
+
     -- TG/TM control interface to DUT
     o_tg_start : out std_logic;
     i_tg_done  : in  std_logic;
@@ -106,12 +119,69 @@ entity tg_tm_lb_selftest_observation_block is
 end entity;
 
 architecture rtl of tg_tm_lb_selftest_observation_block is
+  signal w_experiment_run_enable  : std_logic;
+  signal w_experiment_reset_pulse : std_logic;
 begin
-  u_obs_wiring_block: entity work.tg_tm_lb_selftest_obs_wiring_block
+  -- TG/TM sequencer+constants block: controls start/done handshake and provides constant addr/seed.
+  b_tg_tm_sequencer_and_constants: block
+  begin
+    u_tg_tm_start_done_controller: entity work.tg_tm_lb_selftest_obs_control
+      port map(
+        ACLK    => ACLK,
+        ARESETn => ARESETn,
+        i_experiment_run_enable  => w_experiment_run_enable,
+        i_experiment_reset_pulse => w_experiment_reset_pulse,
+        i_tg_done => i_tg_done,
+        i_tm_done => i_tm_done,
+        o_tg_start => o_tg_start,
+        o_tm_start => o_tm_start
+      );
+
+    u_tg_tm_seed_and_addr_constants: entity work.tg_tm_lb_selftest_obs_datapath
+      port map(
+        o_tg_addr => o_tg_addr,
+        o_tg_seed => o_tg_seed,
+        o_tm_addr => o_tm_addr,
+        o_tm_seed => o_tm_seed
+      );
+  end block;
+
+  -- UART coding block
+  u_obs_uart_encode_block: entity work.tg_tm_lb_selftest_uart_encode_block
     port map(
-      i_TM_TRANSACTION_COUNT => i_TM_TRANSACTION_COUNT,
-      i_TM_EXPECTED_VALUE    => i_TM_EXPECTED_VALUE,
-      i_NI_CORRUPT_PACKET    => i_NI_CORRUPT_PACKET,
+      ACLK                    => ACLK,
+      ARESETn                 => ARESETn,
+      i_tm_done               => i_tm_done,
+      i_tm_comparison_mismatch => i_tm_comparison_mismatch,
+      i_TM_TRANSACTION_COUNT   => i_TM_TRANSACTION_COUNT,
+      i_TM_EXPECTED_VALUE      => i_TM_EXPECTED_VALUE,
+      i_NI_CORRUPT_PACKET      => i_NI_CORRUPT_PACKET,
+      i_OBS_TM_TMR_CTRL_ERROR => i_OBS_TM_TMR_CTRL_ERROR,
+      i_OBS_TM_HAM_BUFFER_SINGLE_ERR => i_OBS_TM_HAM_BUFFER_SINGLE_ERR,
+      i_OBS_TM_HAM_BUFFER_DOUBLE_ERR => i_OBS_TM_HAM_BUFFER_DOUBLE_ERR,
+      i_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR => i_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR,
+      i_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR => i_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR,
+      i_OBS_LB_TMR_CTRL_ERROR => i_OBS_LB_TMR_CTRL_ERROR,
+      i_OBS_LB_HAM_BUFFER_SINGLE_ERR => i_OBS_LB_HAM_BUFFER_SINGLE_ERR,
+      i_OBS_LB_HAM_BUFFER_DOUBLE_ERR => i_OBS_LB_HAM_BUFFER_DOUBLE_ERR,
+      i_OBS_TG_TMR_CTRL_ERROR => i_OBS_TG_TMR_CTRL_ERROR,
+      i_OBS_TG_HAM_BUFFER_SINGLE_ERR => i_OBS_TG_HAM_BUFFER_SINGLE_ERR,
+      i_OBS_TG_HAM_BUFFER_DOUBLE_ERR => i_OBS_TG_HAM_BUFFER_DOUBLE_ERR,
+      i_OBS_FE_INJ_META_HDR_SINGLE_ERR => i_OBS_FE_INJ_META_HDR_SINGLE_ERR,
+      i_OBS_FE_INJ_META_HDR_DOUBLE_ERR => i_OBS_FE_INJ_META_HDR_DOUBLE_ERR,
+      i_OBS_FE_INJ_ADDR_SINGLE_ERR => i_OBS_FE_INJ_ADDR_SINGLE_ERR,
+      i_OBS_FE_INJ_ADDR_DOUBLE_ERR => i_OBS_FE_INJ_ADDR_DOUBLE_ERR,
+      i_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR => i_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR,
+      i_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR => i_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR,
+      i_OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_ERROR => i_OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_ERROR,
+      i_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR => i_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR,
+      i_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR => i_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR,
+      i_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR => i_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR,
+      i_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR => i_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR,
+      i_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR => i_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR,
+      i_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR => i_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR,
+      i_OBS_BE_RX_INTEGRITY_CORRUPT => i_OBS_BE_RX_INTEGRITY_CORRUPT,
+      i_OBS_BE_RX_TMR_FLOW_CTRL_ERROR => i_OBS_BE_RX_TMR_FLOW_CTRL_ERROR,
       o_OBS_TM_HAM_BUFFER_CORRECT_ERROR => o_OBS_TM_HAM_BUFFER_CORRECT_ERROR,
       o_OBS_TM_TMR_CTRL_CORRECT_ERROR => o_OBS_TM_TMR_CTRL_CORRECT_ERROR,
       o_OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR => o_OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR,
@@ -131,69 +201,18 @@ begin
       o_OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR => o_OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR,
       o_OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR => o_OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR,
       o_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR => o_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR,
-      i_OBS_TM_TMR_CTRL_ERROR => i_OBS_TM_TMR_CTRL_ERROR,
-      i_OBS_TM_HAM_BUFFER_SINGLE_ERR => i_OBS_TM_HAM_BUFFER_SINGLE_ERR,
-      i_OBS_TM_HAM_BUFFER_DOUBLE_ERR => i_OBS_TM_HAM_BUFFER_DOUBLE_ERR,
-      i_OBS_TM_HAM_BUFFER_ENC_DATA => i_OBS_TM_HAM_BUFFER_ENC_DATA,
-      i_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR => i_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR,
-      i_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR => i_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR,
-      i_OBS_TM_HAM_TXN_COUNTER_ENC_DATA => i_OBS_TM_HAM_TXN_COUNTER_ENC_DATA,
-      i_OBS_LB_TMR_CTRL_ERROR => i_OBS_LB_TMR_CTRL_ERROR,
-      i_OBS_LB_HAM_BUFFER_SINGLE_ERR => i_OBS_LB_HAM_BUFFER_SINGLE_ERR,
-      i_OBS_LB_HAM_BUFFER_DOUBLE_ERR => i_OBS_LB_HAM_BUFFER_DOUBLE_ERR,
-      i_OBS_LB_HAM_BUFFER_ENC_DATA => i_OBS_LB_HAM_BUFFER_ENC_DATA,
-      i_OBS_TG_TMR_CTRL_ERROR => i_OBS_TG_TMR_CTRL_ERROR,
-      i_OBS_TG_HAM_BUFFER_SINGLE_ERR => i_OBS_TG_HAM_BUFFER_SINGLE_ERR,
-      i_OBS_TG_HAM_BUFFER_DOUBLE_ERR => i_OBS_TG_HAM_BUFFER_DOUBLE_ERR,
-      i_OBS_TG_HAM_BUFFER_ENC_DATA => i_OBS_TG_HAM_BUFFER_ENC_DATA,
-      i_OBS_FE_INJ_META_HDR_SINGLE_ERR => i_OBS_FE_INJ_META_HDR_SINGLE_ERR,
-      i_OBS_FE_INJ_META_HDR_DOUBLE_ERR => i_OBS_FE_INJ_META_HDR_DOUBLE_ERR,
-      i_OBS_FE_INJ_ADDR_SINGLE_ERR => i_OBS_FE_INJ_ADDR_SINGLE_ERR,
-      i_OBS_FE_INJ_ADDR_DOUBLE_ERR => i_OBS_FE_INJ_ADDR_DOUBLE_ERR,
-      i_OBS_FE_INJ_HAM_META_HDR_ENC_DATA => i_OBS_FE_INJ_HAM_META_HDR_ENC_DATA,
-      i_OBS_FE_INJ_HAM_ADDR_ENC_DATA => i_OBS_FE_INJ_HAM_ADDR_ENC_DATA,
-      i_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR => i_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR,
-      i_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR => i_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR,
-      i_OBS_BE_INJ_HAM_BUFFER_ENC_DATA => i_OBS_BE_INJ_HAM_BUFFER_ENC_DATA,
-      i_OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_ERROR => i_OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_ERROR,
-      i_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR => i_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR,
-      i_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR => i_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR,
-      i_OBS_BE_INJ_HAM_INTEGRITY_ENC_DATA => i_OBS_BE_INJ_HAM_INTEGRITY_ENC_DATA,
-      i_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR => i_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR,
-      i_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR => i_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR,
-      i_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR => i_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR,
-      i_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR => i_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR,
-      i_OBS_BE_RX_HAM_BUFFER_ENC_DATA => i_OBS_BE_RX_HAM_BUFFER_ENC_DATA,
-      i_OBS_BE_RX_TMR_HAM_BUFFER_CTRL_ERROR => i_OBS_BE_RX_TMR_HAM_BUFFER_CTRL_ERROR,
-      i_OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR => i_OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR,
-      i_OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR => i_OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR,
-      i_OBS_BE_RX_HAM_INTERFACE_HDR_ENC_DATA => i_OBS_BE_RX_HAM_INTERFACE_HDR_ENC_DATA,
-      i_OBS_BE_RX_INTEGRITY_CORRUPT => i_OBS_BE_RX_INTEGRITY_CORRUPT,
-      i_OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR => i_OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR,
-      i_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR => i_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR,
-      i_OBS_BE_RX_HAM_INTEGRITY_ENC_DATA => i_OBS_BE_RX_HAM_INTEGRITY_ENC_DATA,
-      i_OBS_BE_RX_TMR_FLOW_CTRL_ERROR => i_OBS_BE_RX_TMR_FLOW_CTRL_ERROR
+      o_experiment_run_enable => w_experiment_run_enable,
+      o_experiment_reset_pulse => w_experiment_reset_pulse,
+      o_uart_baud_div => o_uart_baud_div,
+      o_uart_parity   => o_uart_parity,
+      o_uart_rtscts   => o_uart_rtscts,
+      i_uart_tready => i_uart_tready,
+      i_uart_tdone  => i_uart_tdone,
+      o_uart_tstart => o_uart_tstart,
+      o_uart_tdata  => o_uart_tdata,
+      o_uart_rready => o_uart_rready,
+      i_uart_rdone  => i_uart_rdone,
+      i_uart_rdata  => i_uart_rdata,
+      i_uart_rerr   => i_uart_rerr
     );
-
-  -- TG/TM sequencer+constants block: controls start/done handshake and provides constant addr/seed.
-  b_tg_tm_sequencer_and_constants: block
-  begin
-    u_tg_tm_start_done_controller: entity work.tg_tm_lb_selftest_obs_control
-      port map(
-        ACLK    => ACLK,
-        ARESETn => ARESETn,
-        i_tg_done => i_tg_done,
-        i_tm_done => i_tm_done,
-        o_tg_start => o_tg_start,
-        o_tm_start => o_tm_start
-      );
-
-    u_tg_tm_seed_and_addr_constants: entity work.tg_tm_lb_selftest_obs_datapath
-      port map(
-        o_tg_addr => o_tg_addr,
-        o_tg_seed => o_tg_seed,
-        o_tm_addr => o_tm_addr,
-        o_tm_seed => o_tm_seed
-      );
-  end block;
 end architecture;

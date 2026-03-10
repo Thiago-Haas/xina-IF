@@ -11,7 +11,11 @@ use work.xina_ni_ft_pkg.all;
 entity tg_tm_lb_selftest_top is
   port (
     ACLK    : in std_logic;
-    ARESETn : in std_logic
+    ARESETn : in std_logic;
+    uart_rx_i  : in  std_logic;
+    uart_tx_o  : out std_logic;
+    uart_cts_i : in  std_logic;
+    uart_rts_o : out std_logic
   );
 end entity;
 
@@ -111,41 +115,56 @@ architecture rtl of tg_tm_lb_selftest_top is
   signal w_ni_corrupt_packet : std_logic;
 
   -- UART local wires (UART is at top level)
+  signal w_uart_baud_div : std_logic_vector(15 downto 0);
+  signal w_uart_parity   : std_logic;
+  signal w_uart_rtscts   : std_logic;
   signal w_uart_tready : std_logic;
+  signal w_uart_tstart : std_logic;
+  signal w_uart_tdata  : std_logic_vector(7 downto 0);
   signal w_uart_tdone  : std_logic;
+  signal w_uart_rready : std_logic;
   signal w_uart_rdone  : std_logic;
   signal w_uart_rdata  : std_logic_vector(7 downto 0);
   signal w_uart_rerr   : std_logic;
-  signal w_uart_tx     : std_logic;
-  signal w_uart_rts    : std_logic;
 
 begin
 
   u_top_uart: entity work.uart
     port map(
-      baud_div_i => x"0001",
-      parity_i   => '0',
-      rtscts_i   => '0',
+      baud_div_i => w_uart_baud_div,
+      parity_i   => w_uart_parity,
+      rtscts_i   => w_uart_rtscts,
       tready_o   => w_uart_tready,
-      tstart_i   => '0',
-      tdata_i    => (others => '0'),
+      tstart_i   => w_uart_tstart,
+      tdata_i    => w_uart_tdata,
       tdone_o    => w_uart_tdone,
-      rready_i   => '1',
+      rready_i   => w_uart_rready,
       rdone_o    => w_uart_rdone,
       rdata_o    => w_uart_rdata,
       rerr_o     => w_uart_rerr,
       rstn_i     => ARESETn,
       clk_i      => ACLK,
-      uart_rx_i  => '1',
-      uart_tx_o  => w_uart_tx,
-      uart_cts_i => '0',
-      uart_rts_o => w_uart_rts
+      uart_rx_i  => uart_rx_i,
+      uart_tx_o  => uart_tx_o,
+      uart_cts_i => uart_cts_i,
+      uart_rts_o => uart_rts_o
     );
 
   u_obs_block_controller: entity work.tg_tm_lb_selftest_observation_block
     port map (
       ACLK    => ACLK,
       ARESETn => ARESETn,
+      o_uart_baud_div => w_uart_baud_div,
+      o_uart_parity   => w_uart_parity,
+      o_uart_rtscts   => w_uart_rtscts,
+      i_uart_tready => w_uart_tready,
+      i_uart_tdone  => w_uart_tdone,
+      o_uart_tstart => w_uart_tstart,
+      o_uart_tdata  => w_uart_tdata,
+      o_uart_rready => w_uart_rready,
+      i_uart_rdone  => w_uart_rdone,
+      i_uart_rdata  => w_uart_rdata,
+      i_uart_rerr   => w_uart_rerr,
 
       o_tg_start => w_tg_start,
       i_tg_done  => w_tg_done,

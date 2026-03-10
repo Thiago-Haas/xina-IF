@@ -7,6 +7,8 @@ entity tg_tm_lb_selftest_obs_control is
   port (
     ACLK    : in  std_logic;
     ARESETn : in  std_logic;
+    i_experiment_run_enable  : in  std_logic;
+    i_experiment_reset_pulse : in  std_logic;
 
     i_tg_done : in  std_logic;
     i_tm_done : in  std_logic;
@@ -37,25 +39,31 @@ begin
         r_tg_start <= '0';
         r_tm_start <= '0';
 
-        case r_state is
-          when S_TG_PULSE =>
-            r_tg_start <= '1';
-            r_state    <= S_WAIT_TG;
+        if i_experiment_reset_pulse = '1' then
+          r_state <= S_TG_PULSE;
+        elsif i_experiment_run_enable = '0' then
+          r_state <= S_TG_PULSE;
+        else
+          case r_state is
+            when S_TG_PULSE =>
+              r_tg_start <= '1';
+              r_state    <= S_WAIT_TG;
 
-          when S_WAIT_TG =>
-            if i_tg_done = '1' then
-              r_state <= S_TM_PULSE;
-            end if;
+            when S_WAIT_TG =>
+              if i_tg_done = '1' then
+                r_state <= S_TM_PULSE;
+              end if;
 
-          when S_TM_PULSE =>
-            r_tm_start <= '1';
-            r_state    <= S_WAIT_TM;
+            when S_TM_PULSE =>
+              r_tm_start <= '1';
+              r_state    <= S_WAIT_TM;
 
-          when S_WAIT_TM =>
-            if i_tm_done = '1' then
-              r_state <= S_TG_PULSE;
-            end if;
-        end case;
+            when S_WAIT_TM =>
+              if i_tm_done = '1' then
+                r_state <= S_TG_PULSE;
+              end if;
+          end case;
+        end if;
       end if;
     end if;
   end process;
