@@ -10,6 +10,7 @@ entity tg_tm_lb_selftest_obs_wiring_block is
     -- Additional TM observability signals
     i_TM_TRANSACTION_COUNT : in std_logic_vector(c_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
     i_TM_EXPECTED_VALUE    : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+    i_NI_CORRUPT_PACKET    : in std_logic;
 
     -- OBS enables (to DUT)
     o_OBS_TM_HAM_BUFFER_CORRECT_ERROR : out std_logic;
