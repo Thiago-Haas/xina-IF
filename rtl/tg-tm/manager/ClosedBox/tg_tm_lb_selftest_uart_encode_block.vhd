@@ -9,7 +9,7 @@ use work.xina_ni_ft_pkg.all;
 -- * decodes UART RX commands to control experiment and OBS enables
 entity tg_tm_lb_selftest_uart_encode_block is
   generic (
-    G_REPORT_PERIOD_PACKETS : positive := 100
+    G_REPORT_PERIOD_PACKETS : positive := c_TM_UART_REPORT_PERIOD_PACKETS
   );
   port (
     ACLK    : in  std_logic;
@@ -402,8 +402,8 @@ begin
 
           when S_SEND_LF =>
             if i_uart_tready = '1' then
-              r_ctl_writelf <= '1';
-              r_uart_tdata  <= w_utf_data;
+              -- Drive LF directly to avoid one-cycle lag from ctl_writelf path.
+              r_uart_tdata  <= x"0A";
               r_uart_tstart <= '1';
               r_sent_lf     <= '1';
               r_tx_state    <= S_WAIT_DONE;
