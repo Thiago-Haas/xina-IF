@@ -189,6 +189,14 @@ begin
                 write(v_log, string'(" FLAGS_BIN="));
                 write(v_log, v_flags_bin);
                 writeline(f_tb_uart_log, v_log);
+              elsif (v_len = 9) and
+                    (v_line(1 to 3) = "TM=") and
+                    f_is_hex_string(v_line(4 to 9)) then
+                v_tm_dec := f_hex_to_integer(v_line(4 to 9));
+                report "UART RX DECODED: TM_DEC=" & integer'image(v_tm_dec) severity warning;
+                write(v_log, string'("UART RX DECODED: TM_DEC="));
+                write(v_log, integer'image(v_tm_dec));
+                writeline(f_tb_uart_log, v_log);
               end if;
             else
               report "UART RX: <LF>" severity warning;

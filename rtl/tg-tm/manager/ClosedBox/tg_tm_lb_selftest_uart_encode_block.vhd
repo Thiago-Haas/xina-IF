@@ -170,6 +170,7 @@ architecture rtl of tg_tm_lb_selftest_uart_encode_block is
   signal w_any_error       : std_logic;
   signal r_pending_enc_line : std_logic := '0';
   signal r_enc_line_data    : std_logic_vector(83 downto 0) := (others => '0');
+  signal r_report_has_flags : std_logic := '0';
   signal r_report_counter   : integer range 0 to G_REPORT_PERIOD_PACKETS - 1 := 0;
   signal r_period_report_due : std_logic := '0';
 
@@ -279,6 +280,7 @@ begin
 
   process(ACLK)
     variable v_do_report : boolean;
+    variable v_is_event  : boolean;
   begin
     if rising_edge(ACLK) then
       if ARESETn = '0' then
@@ -297,6 +299,7 @@ begin
         r_tm_done_d    <= '0';
         r_pending_enc_line <= '0';
         r_enc_line_data    <= (others => '0');
+        r_report_has_flags <= '0';
         r_report_counter   <= 0;
         r_period_report_due <= '0';
       else
@@ -326,85 +329,92 @@ begin
 
         case r_tx_state is
           when S_IDLE =>
-            v_do_report := (r_period_report_due = '1') or ((w_tm_done_rise = '1') and (w_any_error = '1'));
+            v_is_event  := ((w_tm_done_rise = '1') and (w_any_error = '1'));
+            v_do_report := (r_period_report_due = '1') or v_is_event;
             if v_do_report then
               r_period_report_due <= '0';
 
               -- base status/fault frame (TM expected value intentionally removed)
               r_fault_data(83 downto 52) <= (others => '0');
               r_fault_data(51 downto 28) <= i_TM_TRANSACTION_COUNT(23 downto 0);
-              r_fault_data(27) <= i_tm_comparison_mismatch;
-              r_fault_data(26) <= i_NI_CORRUPT_PACKET;
-              r_fault_data(25) <= i_OBS_TM_TMR_CTRL_ERROR;
-              r_fault_data(24) <= i_OBS_TM_HAM_BUFFER_SINGLE_ERR;
-              r_fault_data(23) <= i_OBS_TM_HAM_BUFFER_DOUBLE_ERR;
-              r_fault_data(22) <= i_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR;
-              r_fault_data(21) <= i_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR;
-              r_fault_data(20) <= i_OBS_LB_TMR_CTRL_ERROR;
-              r_fault_data(19) <= i_OBS_LB_HAM_BUFFER_SINGLE_ERR;
-              r_fault_data(18) <= i_OBS_LB_HAM_BUFFER_DOUBLE_ERR;
-              r_fault_data(17) <= i_OBS_TG_TMR_CTRL_ERROR;
-              r_fault_data(16) <= i_OBS_TG_HAM_BUFFER_SINGLE_ERR;
-              r_fault_data(15) <= i_OBS_TG_HAM_BUFFER_DOUBLE_ERR;
-              r_fault_data(14) <= i_OBS_FE_INJ_META_HDR_SINGLE_ERR;
-              r_fault_data(13) <= i_OBS_FE_INJ_META_HDR_DOUBLE_ERR;
-              r_fault_data(12) <= i_OBS_FE_INJ_ADDR_SINGLE_ERR;
-              r_fault_data(11) <= i_OBS_FE_INJ_ADDR_DOUBLE_ERR;
-              r_fault_data(10) <= i_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR;
-              r_fault_data(9)  <= i_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR;
-              r_fault_data(8)  <= i_OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_ERROR;
-              r_fault_data(7)  <= i_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR;
-              r_fault_data(6)  <= i_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR;
-              r_fault_data(5)  <= i_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR;
-              r_fault_data(4)  <= i_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR;
-              r_fault_data(3)  <= i_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR;
-              r_fault_data(2)  <= i_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR;
-              r_fault_data(1)  <= i_OBS_BE_RX_INTEGRITY_CORRUPT;
-              r_fault_data(0)  <= i_OBS_BE_RX_TMR_FLOW_CTRL_ERROR;
+              r_fault_data(27 downto 0) <= (others => '0');
+              if v_is_event then
+                r_report_has_flags <= '1';
+                r_fault_data(27) <= i_tm_comparison_mismatch;
+                r_fault_data(26) <= i_NI_CORRUPT_PACKET;
+                r_fault_data(25) <= i_OBS_TM_TMR_CTRL_ERROR;
+                r_fault_data(24) <= i_OBS_TM_HAM_BUFFER_SINGLE_ERR;
+                r_fault_data(23) <= i_OBS_TM_HAM_BUFFER_DOUBLE_ERR;
+                r_fault_data(22) <= i_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR;
+                r_fault_data(21) <= i_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR;
+                r_fault_data(20) <= i_OBS_LB_TMR_CTRL_ERROR;
+                r_fault_data(19) <= i_OBS_LB_HAM_BUFFER_SINGLE_ERR;
+                r_fault_data(18) <= i_OBS_LB_HAM_BUFFER_DOUBLE_ERR;
+                r_fault_data(17) <= i_OBS_TG_TMR_CTRL_ERROR;
+                r_fault_data(16) <= i_OBS_TG_HAM_BUFFER_SINGLE_ERR;
+                r_fault_data(15) <= i_OBS_TG_HAM_BUFFER_DOUBLE_ERR;
+                r_fault_data(14) <= i_OBS_FE_INJ_META_HDR_SINGLE_ERR;
+                r_fault_data(13) <= i_OBS_FE_INJ_META_HDR_DOUBLE_ERR;
+                r_fault_data(12) <= i_OBS_FE_INJ_ADDR_SINGLE_ERR;
+                r_fault_data(11) <= i_OBS_FE_INJ_ADDR_DOUBLE_ERR;
+                r_fault_data(10) <= i_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR;
+                r_fault_data(9)  <= i_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR;
+                r_fault_data(8)  <= i_OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_ERROR;
+                r_fault_data(7)  <= i_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR;
+                r_fault_data(6)  <= i_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR;
+                r_fault_data(5)  <= i_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR;
+                r_fault_data(4)  <= i_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR;
+                r_fault_data(3)  <= i_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR;
+                r_fault_data(2)  <= i_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR;
+                r_fault_data(1)  <= i_OBS_BE_RX_INTEGRITY_CORRUPT;
+                r_fault_data(0)  <= i_OBS_BE_RX_TMR_FLOW_CTRL_ERROR;
+              else
+                r_report_has_flags <= '0';
+              end if;
 
               r_pending_enc_line <= '0';
               r_enc_line_data    <= (others => '0');
-              if (i_OBS_TM_HAM_BUFFER_SINGLE_ERR = '1') or (i_OBS_TM_HAM_BUFFER_DOUBLE_ERR = '1') then
+              if v_is_event and ((i_OBS_TM_HAM_BUFFER_SINGLE_ERR = '1') or (i_OBS_TM_HAM_BUFFER_DOUBLE_ERR = '1')) then
                 r_pending_enc_line <= '1';
                 r_enc_line_data(83 downto 80) <= x"1";
                 r_enc_line_data(79 downto 0)  <= f_pack80(i_OBS_TM_HAM_BUFFER_ENC_DATA);
-              elsif (i_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR = '1') or (i_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR = '1') then
+              elsif v_is_event and ((i_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR = '1') or (i_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR = '1')) then
                 r_pending_enc_line <= '1';
                 r_enc_line_data(83 downto 80) <= x"2";
                 r_enc_line_data(79 downto 0)  <= f_pack80(i_OBS_TM_HAM_TXN_COUNTER_ENC_DATA);
-              elsif (i_OBS_LB_HAM_BUFFER_SINGLE_ERR = '1') or (i_OBS_LB_HAM_BUFFER_DOUBLE_ERR = '1') then
+              elsif v_is_event and ((i_OBS_LB_HAM_BUFFER_SINGLE_ERR = '1') or (i_OBS_LB_HAM_BUFFER_DOUBLE_ERR = '1')) then
                 r_pending_enc_line <= '1';
                 r_enc_line_data(83 downto 80) <= x"3";
                 r_enc_line_data(79 downto 0)  <= f_pack80(i_OBS_LB_HAM_BUFFER_ENC_DATA);
-              elsif (i_OBS_TG_HAM_BUFFER_SINGLE_ERR = '1') or (i_OBS_TG_HAM_BUFFER_DOUBLE_ERR = '1') then
+              elsif v_is_event and ((i_OBS_TG_HAM_BUFFER_SINGLE_ERR = '1') or (i_OBS_TG_HAM_BUFFER_DOUBLE_ERR = '1')) then
                 r_pending_enc_line <= '1';
                 r_enc_line_data(83 downto 80) <= x"4";
                 r_enc_line_data(79 downto 0)  <= f_pack80(i_OBS_TG_HAM_BUFFER_ENC_DATA);
-              elsif (i_OBS_FE_INJ_META_HDR_SINGLE_ERR = '1') or (i_OBS_FE_INJ_META_HDR_DOUBLE_ERR = '1') then
+              elsif v_is_event and ((i_OBS_FE_INJ_META_HDR_SINGLE_ERR = '1') or (i_OBS_FE_INJ_META_HDR_DOUBLE_ERR = '1')) then
                 r_pending_enc_line <= '1';
                 r_enc_line_data(83 downto 80) <= x"5";
                 r_enc_line_data(79 downto 0)  <= f_pack80(i_OBS_FE_INJ_HAM_META_HDR_ENC_DATA);
-              elsif (i_OBS_FE_INJ_ADDR_SINGLE_ERR = '1') or (i_OBS_FE_INJ_ADDR_DOUBLE_ERR = '1') then
+              elsif v_is_event and ((i_OBS_FE_INJ_ADDR_SINGLE_ERR = '1') or (i_OBS_FE_INJ_ADDR_DOUBLE_ERR = '1')) then
                 r_pending_enc_line <= '1';
                 r_enc_line_data(83 downto 80) <= x"6";
                 r_enc_line_data(79 downto 0)  <= f_pack80(i_OBS_FE_INJ_HAM_ADDR_ENC_DATA);
-              elsif (i_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR = '1') or (i_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR = '1') then
+              elsif v_is_event and ((i_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR = '1') or (i_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR = '1')) then
                 r_pending_enc_line <= '1';
                 r_enc_line_data(83 downto 80) <= x"7";
                 r_enc_line_data(79 downto 0)  <= f_pack80(i_OBS_BE_INJ_HAM_BUFFER_ENC_DATA);
-              elsif (i_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR = '1') or (i_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR = '1') then
+              elsif v_is_event and ((i_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR = '1') or (i_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR = '1')) then
                 r_pending_enc_line <= '1';
                 r_enc_line_data(83 downto 80) <= x"8";
                 r_enc_line_data(79 downto 0)  <= f_pack80(i_OBS_BE_INJ_HAM_INTEGRITY_ENC_DATA);
-              elsif (i_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR = '1') or (i_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR = '1') then
+              elsif v_is_event and ((i_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR = '1') or (i_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR = '1')) then
                 r_pending_enc_line <= '1';
                 r_enc_line_data(83 downto 80) <= x"9";
                 r_enc_line_data(79 downto 0)  <= f_pack80(i_OBS_BE_RX_HAM_BUFFER_ENC_DATA);
-              elsif (i_OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR = '1') or (i_OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR = '1') then
+              elsif v_is_event and ((i_OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR = '1') or (i_OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR = '1')) then
                 r_pending_enc_line <= '1';
                 r_enc_line_data(83 downto 80) <= x"A";
                 r_enc_line_data(79 downto 0)  <= f_pack80(i_OBS_BE_RX_HAM_INTERFACE_HDR_ENC_DATA);
-              elsif (i_OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR = '1') or (i_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR = '1') then
+              elsif v_is_event and ((i_OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR = '1') or (i_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR = '1')) then
                 r_pending_enc_line <= '1';
                 r_enc_line_data(83 downto 80) <= x"B";
                 r_enc_line_data(79 downto 0)  <= f_pack80(i_OBS_BE_RX_HAM_INTEGRITY_ENC_DATA);
@@ -506,9 +516,13 @@ begin
                   else
                     case r_tx_phase is
                       when PH_BASE_TM_HEX =>
-                        r_tx_phase    <= PH_BASE_FLAGS_LABEL;
-                        r_label_index <= 1;
-                        r_tx_state    <= S_SEND_LABEL;
+                        if r_report_has_flags = '1' then
+                          r_tx_phase    <= PH_BASE_FLAGS_LABEL;
+                          r_label_index <= 1;
+                          r_tx_state    <= S_SEND_LABEL;
+                        else
+                          r_tx_state <= S_SEND_LF;
+                        end if;
                       when PH_BASE_FLAGS_HEX =>
                         r_tx_state <= S_SEND_LF;
                       when PH_ENC_SRC_HEX =>
