@@ -68,6 +68,8 @@ package xina_ni_ft_pkg is
   constant c_TM_TRANSACTION_COUNTER_WIDTH     : natural := 32;
   -- Number of TM completed packets between periodic UART reports.
   constant c_TM_UART_REPORT_PERIOD_PACKETS    : positive := 10000;
+  -- UART FLAGS field width (must stay nibble-aligned to keep TM hex formatting aligned).
+  constant c_TM_UART_FLAGS_WIDTH              : natural := 32;
 
   -- Loopback.
   constant c_ENABLE_LB_CTRL_TMR              : boolean := true;
@@ -77,6 +79,9 @@ package xina_ni_ft_pkg is
 
   -- Hamming FIFO control-state TMR (stage_valid + fifo_count in buffer_fifo_ham).
   constant c_ENABLE_HAM_FIFO_CTRL_TMR : boolean := true;
+
+  -- Closed-box observation start/done sequencer TMR.
+  constant c_ENABLE_OBS_START_DONE_CTRL_TMR : boolean := true;
 
   ------------------------------------------------------------------------------
   -- XINA Configuration

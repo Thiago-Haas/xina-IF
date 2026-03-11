@@ -20,7 +20,7 @@ architecture tb of tb_tg_tm_lb_selftest_top is
   constant C_TM_PAYLOAD_BYTES      : natural := c_AXI_DATA_WIDTH / 8;
   constant C_TM_STOP_TOTAL_BYTES   : natural := C_TM_PAYLOAD_STOP_COUNT * C_TM_PAYLOAD_BYTES;
   constant C_TM_HEX_DIGITS      : natural := (c_TM_TRANSACTION_COUNTER_WIDTH + 3) / 4;
-  constant C_FLAGS_HEX_DIGITS   : natural := 7;
+  constant C_FLAGS_HEX_DIGITS   : natural := c_TM_UART_FLAGS_WIDTH / 4;
   constant C_LABEL_TM_LEN       : natural := 3; -- "TM="
   constant C_LABEL_FLAGS_LEN    : natural := 7; -- " FLAGS="
   constant C_TM_ONLY_LINE_LEN   : natural := C_LABEL_TM_LEN + C_TM_HEX_DIGITS;
@@ -172,7 +172,7 @@ begin
     variable v_byte : integer;
     variable v_log  : line;
     variable v_tm_dec : integer;
-    variable v_flags_bin : string(1 to 28);
+    variable v_flags_bin : string(1 to C_FLAGS_HEX_DIGITS * 4);
   begin
     if rising_edge(ACLK) then
       if ARESETn = '0' then

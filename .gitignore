@@ -12,3 +12,4 @@ quartus_project/simulation
 /ModelSim
 /Libero
 *.cf
+*.vdb

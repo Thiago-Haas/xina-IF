@@ -8,6 +8,9 @@ use work.xina_ni_ft_pkg.all;
 -- * generates TG/TM control vectors
 -- * centralizes all DUT observation enables and observation outputs
 entity tg_tm_lb_selftest_observation_block is
+  generic (
+    p_USE_OBS_START_DONE_CTRL_TMR : boolean := c_ENABLE_OBS_START_DONE_CTRL_TMR
+  );
   port (
     ACLK    : in  std_logic;
     ARESETn : in  std_logic;
@@ -121,21 +124,42 @@ end entity;
 architecture rtl of tg_tm_lb_selftest_observation_block is
   signal w_experiment_run_enable  : std_logic;
   signal w_experiment_reset_pulse : std_logic;
+  signal w_obs_start_done_ctrl_tmr_error : std_logic;
+  signal w_obs_start_done_ctrl_tmr_correct_error : std_logic;
 begin
   -- TG/TM sequencer+constants block: controls start/done handshake and provides constant addr/seed.
   b_tg_tm_sequencer_and_constants: block
   begin
-    u_tg_tm_start_done_controller: entity work.tg_tm_lb_selftest_obs_control
-      port map(
-        ACLK    => ACLK,
-        ARESETn => ARESETn,
-        i_experiment_run_enable  => w_experiment_run_enable,
-        i_experiment_reset_pulse => w_experiment_reset_pulse,
-        i_tg_done => i_tg_done,
-        i_tm_done => i_tm_done,
-        o_tg_start => o_tg_start,
-        o_tm_start => o_tm_start
-      );
+    gen_obs_start_done_ctrl_plain : if not p_USE_OBS_START_DONE_CTRL_TMR generate
+      u_tg_tm_start_done_controller: entity work.tg_tm_lb_selftest_obs_control
+        port map(
+          ACLK    => ACLK,
+          ARESETn => ARESETn,
+          i_experiment_run_enable  => w_experiment_run_enable,
+          i_experiment_reset_pulse => w_experiment_reset_pulse,
+          i_tg_done => i_tg_done,
+          i_tm_done => i_tm_done,
+          o_tg_start => o_tg_start,
+          o_tm_start => o_tm_start
+        );
+      w_obs_start_done_ctrl_tmr_error <= '0';
+    end generate;
+
+    gen_obs_start_done_ctrl_tmr : if p_USE_OBS_START_DONE_CTRL_TMR generate
+      u_tg_tm_start_done_controller_tmr: entity work.tg_tm_lb_selftest_obs_control_tmr
+        port map(
+          ACLK    => ACLK,
+          ARESETn => ARESETn,
+          i_experiment_run_enable  => w_experiment_run_enable,
+          i_experiment_reset_pulse => w_experiment_reset_pulse,
+          i_tg_done => i_tg_done,
+          i_tm_done => i_tm_done,
+          o_tg_start => o_tg_start,
+          o_tm_start => o_tm_start,
+          i_correct_enable => w_obs_start_done_ctrl_tmr_correct_error,
+          error_o          => w_obs_start_done_ctrl_tmr_error
+        );
+    end generate;
 
     u_tg_tm_seed_and_addr_constants: entity work.tg_tm_lb_selftest_obs_datapath
       port map(
@@ -197,6 +221,7 @@ begin
       i_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR => i_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR,
       i_OBS_BE_RX_HAM_INTEGRITY_ENC_DATA => i_OBS_BE_RX_HAM_INTEGRITY_ENC_DATA,
       i_OBS_BE_RX_TMR_FLOW_CTRL_ERROR => i_OBS_BE_RX_TMR_FLOW_CTRL_ERROR,
+      i_OBS_START_DONE_CTRL_TMR_ERROR => w_obs_start_done_ctrl_tmr_error,
       o_OBS_TM_HAM_BUFFER_CORRECT_ERROR => o_OBS_TM_HAM_BUFFER_CORRECT_ERROR,
       o_OBS_TM_TMR_CTRL_CORRECT_ERROR => o_OBS_TM_TMR_CTRL_CORRECT_ERROR,
       o_OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR => o_OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR,
@@ -216,6 +241,7 @@ begin
       o_OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR => o_OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR,
       o_OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR => o_OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR,
       o_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR => o_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR,
+      o_OBS_START_DONE_CTRL_TMR_CORRECT_ERROR => w_obs_start_done_ctrl_tmr_correct_error,
       o_experiment_run_enable => w_experiment_run_enable,
       o_experiment_reset_pulse => w_experiment_reset_pulse,
       o_uart_baud_div => o_uart_baud_div,

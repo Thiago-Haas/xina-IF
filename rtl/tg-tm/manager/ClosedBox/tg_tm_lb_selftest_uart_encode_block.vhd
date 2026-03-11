@@ -69,6 +69,7 @@ entity tg_tm_lb_selftest_uart_encode_block is
     i_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR : in std_logic;
     i_OBS_BE_RX_HAM_INTEGRITY_ENC_DATA : in std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
     i_OBS_BE_RX_TMR_FLOW_CTRL_ERROR : in std_logic;
+    i_OBS_START_DONE_CTRL_TMR_ERROR : in std_logic;
 
     -- OBS enables (to DUT), controlled from UART commands
     o_OBS_TM_HAM_BUFFER_CORRECT_ERROR : out std_logic;
@@ -95,6 +96,7 @@ entity tg_tm_lb_selftest_uart_encode_block is
     o_OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR : out std_logic;
     o_OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR : out std_logic;
     o_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR : out std_logic;
+    o_OBS_START_DONE_CTRL_TMR_CORRECT_ERROR : out std_logic;
 
     -- Experiment control outputs
     o_experiment_run_enable  : out std_logic;
@@ -120,7 +122,12 @@ entity tg_tm_lb_selftest_uart_encode_block is
 end entity;
 
 architecture rtl of tg_tm_lb_selftest_uart_encode_block is
-  signal w_dp_fault_data  : std_logic_vector(83 downto 0);
+  signal w_dp_load_base  : std_logic;
+  signal w_dp_load_enc   : std_logic;
+  signal w_dp_tm_count   : std_logic_vector(c_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
+  signal w_dp_flags      : std_logic_vector(c_TM_UART_FLAGS_WIDTH - 1 downto 0);
+  signal w_dp_enc_src    : std_logic_vector(3 downto 0);
+  signal w_dp_enc_data   : std_logic_vector(79 downto 0);
   signal w_dp_nibble_index : unsigned(4 downto 0);
   signal w_dp_label_sel   : std_logic_vector(2 downto 0);
   signal w_dp_label_index : natural range 1 to 8;
@@ -182,6 +189,7 @@ begin
         i_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR => i_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR,
         i_OBS_BE_RX_HAM_INTEGRITY_ENC_DATA => i_OBS_BE_RX_HAM_INTEGRITY_ENC_DATA,
         i_OBS_BE_RX_TMR_FLOW_CTRL_ERROR => i_OBS_BE_RX_TMR_FLOW_CTRL_ERROR,
+        i_OBS_START_DONE_CTRL_TMR_ERROR => i_OBS_START_DONE_CTRL_TMR_ERROR,
         o_OBS_TM_HAM_BUFFER_CORRECT_ERROR => o_OBS_TM_HAM_BUFFER_CORRECT_ERROR,
         o_OBS_TM_TMR_CTRL_CORRECT_ERROR => o_OBS_TM_TMR_CTRL_CORRECT_ERROR,
         o_OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR => o_OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR,
@@ -201,6 +209,7 @@ begin
         o_OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR => o_OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR,
         o_OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR => o_OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR,
         o_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR => o_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR,
+        o_OBS_START_DONE_CTRL_TMR_CORRECT_ERROR => o_OBS_START_DONE_CTRL_TMR_CORRECT_ERROR,
         o_experiment_run_enable => o_experiment_run_enable,
         o_experiment_reset_pulse => o_experiment_reset_pulse,
         o_uart_baud_div => o_uart_baud_div,
@@ -216,7 +225,12 @@ begin
         i_uart_rerr   => i_uart_rerr,
         i_dp_hex_char   => w_dp_hex_char,
         i_dp_label_char => w_dp_label_char,
-        o_dp_fault_data => w_dp_fault_data,
+        o_dp_load_base  => w_dp_load_base,
+        o_dp_load_enc   => w_dp_load_enc,
+        o_dp_tm_count   => w_dp_tm_count,
+        o_dp_flags      => w_dp_flags,
+        o_dp_enc_src    => w_dp_enc_src,
+        o_dp_enc_data   => w_dp_enc_data,
         o_dp_nibble_index => w_dp_nibble_index,
         o_dp_label_sel  => w_dp_label_sel,
         o_dp_label_index => w_dp_label_index
@@ -227,7 +241,14 @@ begin
   begin
     u_uart_encode_dp: entity work.tg_tm_lb_selftest_uart_encode_dp
       port map(
-        i_fault_data   => w_dp_fault_data,
+        ACLK    => ACLK,
+        ARESETn => ARESETn,
+        i_load_base  => w_dp_load_base,
+        i_load_enc   => w_dp_load_enc,
+        i_tm_count   => w_dp_tm_count,
+        i_flags      => w_dp_flags,
+        i_enc_src    => w_dp_enc_src,
+        i_enc_data   => w_dp_enc_data,
         i_nibble_index => w_dp_nibble_index,
         i_label_sel    => w_dp_label_sel,
         i_label_index  => w_dp_label_index,

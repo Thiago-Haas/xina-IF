@@ -32,7 +32,7 @@ TM=00002710
 
 ### Event base line
 ```text
-TM=<TM_HEX> FLAGS=<7_HEX>\n
+TM=<TM_HEX> FLAGS=<8_HEX>\n
 ```
 Example:
 ```text
@@ -51,19 +51,24 @@ Base internal frame in UART encode control:
 ```text
 bit [83:0] fault_data
 
- [83 ....................... 56][55 ................. 28][27 ............ 0]
+ [83 ....................... 64][63 ................. 32][31 ............ 0]
  +----------------------------+-------------------------+------------------+
- | reserved (zeros)           | TM transaction count    | FLAGS[27:0]      |
+ | reserved (zeros)           | TM transaction count    | FLAGS[31:0]      |
  +----------------------------+-------------------------+------------------+
 ```
 
 `TM` is placed in `fault_data(C_BASE_TM_MSB downto C_BASE_TM_LSB)`, where:
-- `C_BASE_TM_LSB = 28`
-- `C_BASE_TM_MSB = 28 + c_TM_TRANSACTION_COUNTER_WIDTH - 1`
+- `C_BASE_TM_LSB = c_TM_UART_FLAGS_WIDTH` (currently `32`)
+- `C_BASE_TM_MSB = C_BASE_TM_LSB + c_TM_TRANSACTION_COUNTER_WIDTH - 1`
 
 ## 4) FLAGS Bit Map (28 bits)
 
-`FLAGS` is printed as 7 hex chars (28 bits). Bit mapping:
+`FLAGS` is printed as 8 hex chars (32 bits). Bit mapping:
+
+| FLAG bit | Signal |
+|---|---|
+| 31..29 | Reserved (0) |
+| 28 | `i_OBS_START_DONE_CTRL_TMR_ERROR` |
 
 | FLAG bit | Signal |
 |---|---|
