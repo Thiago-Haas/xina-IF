@@ -241,23 +241,6 @@ begin
     end if;
   end process;
 
-  -- Heartbeat to confirm monitor visibility in transcript/terminal.
-  p_tb_heartbeat: process
-    variable v_log : line;
-  begin
-    wait for 1 ms;
-    loop
-      report "TB heartbeat: rx_count=" & integer'image(rx_count) &
-             " tx_toggle_count=" & integer'image(tx_toggle_count) severity warning;
-      write(v_log, string'("TB heartbeat: rx_count="));
-      write(v_log, integer'image(rx_count));
-      write(v_log, string'(" tx_toggle_count="));
-      write(v_log, integer'image(tx_toggle_count));
-      writeline(f_tb_uart_log, v_log);
-      wait for 1 ms;
-    end loop;
-  end process;
-
   -- reset + run
   process
     procedure uart_send(constant b : std_logic_vector(7 downto 0)) is
