@@ -1,0 +1,127 @@
+# Closed-Box UART Observability Protocol
+
+This document describes how observability messages are encoded by hardware in the `tg_tm_lb_selftest_*` closed-box flow.
+
+## 1) Message Types (same encoding path)
+
+Both periodic and event reports use the same UART encoding path:
+- Nibble extraction from `fault_data`
+- Hex-to-ASCII conversion (`utf8_hex`)
+- Label + hex text framing
+- LF (`\n`) line termination
+
+So the console can use the same byte decoding logic for both.
+
+## 2) UART Line Formats
+
+`TM` width is parameterized by:
+- `c_TM_TRANSACTION_COUNTER_WIDTH` in [`NI_obs/xina_ni_ft_pkg.vhd`](../../NI_obs/xina_ni_ft_pkg.vhd)
+- Current value: `32`, so `TM` is 8 hex digits.
+
+Hex digits used for `TM`:
+- `TM_HEX_DIGITS = ceil(c_TM_TRANSACTION_COUNTER_WIDTH / 4)`
+
+### Periodic line
+```text
+TM=<TM_HEX>\n
+```
+Example (32-bit):
+```text
+TM=00002710
+```
+
+### Event base line
+```text
+TM=<TM_HEX> FLAGS=<7_HEX>\n
+```
+Example:
+```text
+TM=000000fe FLAGS=1010000
+```
+
+### Optional event encoded-data line (only if a Hamming source is selected)
+```text
+ENC SRC=<1_HEX> DATA=<20_HEX>\n
+```
+
+## 3) Visual Frame Layout
+
+Base internal frame in UART encode control:
+
+```text
+bit [83:0] fault_data
+
+ [83 ....................... 56][55 ................. 28][27 ............ 0]
+ +----------------------------+-------------------------+------------------+
+ | reserved (zeros)           | TM transaction count    | FLAGS[27:0]      |
+ +----------------------------+-------------------------+------------------+
+```
+
+`TM` is placed in `fault_data(C_BASE_TM_MSB downto C_BASE_TM_LSB)`, where:
+- `C_BASE_TM_LSB = 28`
+- `C_BASE_TM_MSB = 28 + c_TM_TRANSACTION_COUNTER_WIDTH - 1`
+
+## 4) FLAGS Bit Map (28 bits)
+
+`FLAGS` is printed as 7 hex chars (28 bits). Bit mapping:
+
+| FLAG bit | Signal |
+|---|---|
+| 27 | `i_tm_comparison_mismatch` |
+| 26 | `i_NI_CORRUPT_PACKET` |
+| 25 | `i_OBS_TM_TMR_CTRL_ERROR` |
+| 24 | `i_OBS_TM_HAM_BUFFER_SINGLE_ERR` |
+| 23 | `i_OBS_TM_HAM_BUFFER_DOUBLE_ERR` |
+| 22 | `i_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR` |
+| 21 | `i_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR` |
+| 20 | `i_OBS_LB_TMR_CTRL_ERROR` |
+| 19 | `i_OBS_LB_HAM_BUFFER_SINGLE_ERR` |
+| 18 | `i_OBS_LB_HAM_BUFFER_DOUBLE_ERR` |
+| 17 | `i_OBS_TG_TMR_CTRL_ERROR` |
+| 16 | `i_OBS_TG_HAM_BUFFER_SINGLE_ERR` |
+| 15 | `i_OBS_TG_HAM_BUFFER_DOUBLE_ERR` |
+| 14 | `i_OBS_FE_INJ_META_HDR_SINGLE_ERR` |
+| 13 | `i_OBS_FE_INJ_META_HDR_DOUBLE_ERR` |
+| 12 | `i_OBS_FE_INJ_ADDR_SINGLE_ERR` |
+| 11 | `i_OBS_FE_INJ_ADDR_DOUBLE_ERR` |
+| 10 | `i_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR` |
+| 9  | `i_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR` |
+| 8  | `i_OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_ERROR` |
+| 7  | `i_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR` |
+| 6  | `i_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR` |
+| 5  | `i_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR` |
+| 4  | `i_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR` |
+| 3  | `i_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR` |
+| 2  | `i_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR` |
+| 1  | `i_OBS_BE_RX_INTEGRITY_CORRUPT` |
+| 0  | `i_OBS_BE_RX_TMR_FLOW_CTRL_ERROR` |
+
+## 5) ENC Source (`SRC`) Map
+
+When an event matches one of these sources, one extra line may be emitted:
+
+| SRC hex | Encoded data source |
+|---|---|
+| `1` | TM buffer Hamming `ENC_DATA` |
+| `2` | TM transaction-counter Hamming `ENC_DATA` |
+| `3` | LB buffer Hamming `ENC_DATA` |
+| `4` | TG buffer Hamming `ENC_DATA` |
+| `5` | FE INJ meta/header Hamming `ENC_DATA` |
+| `6` | FE INJ address Hamming `ENC_DATA` |
+| `7` | BE INJ buffer Hamming `ENC_DATA` |
+| `8` | BE INJ integrity Hamming `ENC_DATA` |
+| `9` | BE RX buffer Hamming `ENC_DATA` |
+| `A` | BE RX interface-header Hamming `ENC_DATA` |
+| `B` | BE RX integrity Hamming `ENC_DATA` |
+
+## 6) Console Decoder Guidance
+
+Recommended parser strategy:
+- Decode bytes to text by lines (split on LF).
+- Parse labels, not fixed positions:
+  - `TM=...`
+  - optional `FLAGS=...`
+  - optional `ENC SRC=... DATA=...`
+- Treat `TM` length as variable (`TM_HEX_DIGITS`), driven by hardware parameter.
+
+This keeps the same console decoder working across 24-bit, 32-bit, or other TM counter widths.

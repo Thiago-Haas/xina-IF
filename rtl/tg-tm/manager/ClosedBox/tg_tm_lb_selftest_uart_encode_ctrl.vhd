@@ -128,8 +128,11 @@ entity tg_tm_lb_selftest_uart_encode_ctrl is
 end entity;
 
 architecture rtl of tg_tm_lb_selftest_uart_encode_ctrl is
-  constant C_BASE_TM_NIBBLE_START    : natural := 12;
-  constant C_BASE_TM_NIBBLE_STOP     : natural := 7;
+  constant C_FLAGS_WIDTH             : natural := 28;
+  constant C_BASE_TM_LSB             : natural := C_FLAGS_WIDTH;
+  constant C_BASE_TM_MSB             : natural := C_BASE_TM_LSB + c_TM_TRANSACTION_COUNTER_WIDTH - 1;
+  constant C_BASE_TM_NIBBLE_START    : natural := C_BASE_TM_MSB / 4;
+  constant C_BASE_TM_NIBBLE_STOP     : natural := C_BASE_TM_LSB / 4;
   constant C_BASE_FLAGS_NIBBLE_START : natural := 6;
   constant C_BASE_FLAGS_NIBBLE_STOP  : natural := 0;
   constant C_ENC_SRC_NIBBLE_START    : natural := 20;
@@ -321,9 +324,8 @@ begin
               r_period_report_due <= '0';
 
               -- base status/fault frame (TM expected value intentionally removed)
-              r_fault_data(83 downto 52) <= (others => '0');
-              r_fault_data(51 downto 28) <= i_TM_TRANSACTION_COUNT(23 downto 0);
-              r_fault_data(27 downto 0) <= (others => '0');
+              r_fault_data <= (others => '0');
+              r_fault_data(C_BASE_TM_MSB downto C_BASE_TM_LSB) <= i_TM_TRANSACTION_COUNT;
               if v_is_event then
                 r_report_has_flags <= '1';
                 r_fault_data(27) <= i_tm_comparison_mismatch;

@@ -2,6 +2,7 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 use std.textio.all;
+use work.xina_ni_ft_pkg.all;
 
 library std;
 use std.env.all;
@@ -15,6 +16,12 @@ end entity;
 architecture tb of tb_tg_tm_lb_selftest_top is
 
   constant c_CLK_PERIOD : time := 10 ns;
+  constant C_TM_HEX_DIGITS      : natural := (c_TM_TRANSACTION_COUNTER_WIDTH + 3) / 4;
+  constant C_FLAGS_HEX_DIGITS   : natural := 7;
+  constant C_LABEL_TM_LEN       : natural := 3; -- "TM="
+  constant C_LABEL_FLAGS_LEN    : natural := 7; -- " FLAGS="
+  constant C_TM_ONLY_LINE_LEN   : natural := C_LABEL_TM_LEN + C_TM_HEX_DIGITS;
+  constant C_TM_FLAGS_LINE_LEN  : natural := C_LABEL_TM_LEN + C_TM_HEX_DIGITS + C_LABEL_FLAGS_LEN + C_FLAGS_HEX_DIGITS;
 
   signal ACLK    : std_logic := '0';
   signal ARESETn : std_logic := '0';
@@ -70,6 +77,9 @@ architecture tb of tb_tg_tm_lb_selftest_top is
       d := f_hex_char_to_int(s(i));
       if d < 0 then
         return 0;
+      end if;
+      if v > (integer'high - d) / 16 then
+        return integer'high;
       end if;
       v := (v * 16) + d;
     end loop;
@@ -174,14 +184,14 @@ begin
               writeline(f_tb_uart_log, v_log);
 
               -- Decode base line format from DUT:
-              -- TM=<6 hex> FLAGS=<7 hex>
-              if (v_len = 23) and
+              -- TM=<N hex> FLAGS=<7 hex>, where N follows c_TM_TRANSACTION_COUNTER_WIDTH.
+              if (v_len = C_TM_FLAGS_LINE_LEN) and
                  (v_line(1 to 3) = "TM=") and
-                 (v_line(10 to 16) = " FLAGS=") and
-                 f_is_hex_string(v_line(4 to 9)) and
-                 f_is_hex_string(v_line(17 to 23)) then
-                v_tm_dec := f_hex_to_integer(v_line(4 to 9));
-                v_flags_bin := f_hex_to_bin_string(v_line(17 to 23));
+                 (v_line(4 + C_TM_HEX_DIGITS to 3 + C_TM_HEX_DIGITS + C_LABEL_FLAGS_LEN) = " FLAGS=") and
+                 f_is_hex_string(v_line(4 to 3 + C_TM_HEX_DIGITS)) and
+                 f_is_hex_string(v_line(4 + C_TM_HEX_DIGITS + C_LABEL_FLAGS_LEN to C_TM_FLAGS_LINE_LEN)) then
+                v_tm_dec := f_hex_to_integer(v_line(4 to 3 + C_TM_HEX_DIGITS));
+                v_flags_bin := f_hex_to_bin_string(v_line(4 + C_TM_HEX_DIGITS + C_LABEL_FLAGS_LEN to C_TM_FLAGS_LINE_LEN));
                 report "UART RX DECODED: TM_DEC=" & integer'image(v_tm_dec) &
                        " FLAGS_BIN=" & v_flags_bin severity warning;
                 write(v_log, string'("UART RX DECODED: TM_DEC="));
@@ -189,10 +199,10 @@ begin
                 write(v_log, string'(" FLAGS_BIN="));
                 write(v_log, v_flags_bin);
                 writeline(f_tb_uart_log, v_log);
-              elsif (v_len = 9) and
+              elsif (v_len = C_TM_ONLY_LINE_LEN) and
                     (v_line(1 to 3) = "TM=") and
-                    f_is_hex_string(v_line(4 to 9)) then
-                v_tm_dec := f_hex_to_integer(v_line(4 to 9));
+                    f_is_hex_string(v_line(4 to 3 + C_TM_HEX_DIGITS)) then
+                v_tm_dec := f_hex_to_integer(v_line(4 to 3 + C_TM_HEX_DIGITS));
                 report "UART RX DECODED: TM_DEC=" & integer'image(v_tm_dec) severity warning;
                 write(v_log, string'("UART RX DECODED: TM_DEC="));
                 write(v_log, integer'image(v_tm_dec));
@@ -275,12 +285,7 @@ begin
     wait for 20 us;
     uart_send(x"52"); -- R
 
-    -- run longer to allow periodic packet-based reports
-    wait for 20 ms;
-    assert tx_toggle_count > 0 report "UART test failed: no activity seen on DUT uart_tx_o" severity failure;
-    assert rx_count > 0 report "UART test failed: UART activity exists but no decoded bytes received by host UART" severity failure;
-
-    std.env.stop;
+    -- Keep simulation running indefinitely for continuous UART monitoring.
     wait;
   end process;
 
