@@ -16,6 +16,9 @@ end entity;
 architecture tb of tb_tg_tm_lb_selftest_top is
 
   constant c_CLK_PERIOD : time := 10 ns;
+  constant C_TM_PAYLOAD_STOP_COUNT : natural := 262144; -- 1 MiB / 4 B
+  constant C_TM_PAYLOAD_BYTES      : natural := c_AXI_DATA_WIDTH / 8;
+  constant C_TM_STOP_TOTAL_BYTES   : natural := C_TM_PAYLOAD_STOP_COUNT * C_TM_PAYLOAD_BYTES;
   constant C_TM_HEX_DIGITS      : natural := (c_TM_TRANSACTION_COUNTER_WIDTH + 3) / 4;
   constant C_FLAGS_HEX_DIGITS   : natural := 7;
   constant C_LABEL_TM_LEN       : natural := 3; -- "TM="
@@ -39,10 +42,14 @@ architecture tb of tb_tg_tm_lb_selftest_top is
   signal host_rdata  : std_logic_vector(7 downto 0);
   signal host_rerr   : std_logic;
   signal host_uart_tx : std_logic;
+  signal stop_issued : std_logic := '0';
 
   signal rx_count : integer := 0;
   signal tx_toggle_count : integer := 0;
   file f_tb_uart_log : text open write_mode is "tb_uart_console.log";
+
+  alias mon_tm_transaction_count is
+    << signal .tb_tg_tm_lb_selftest_top.dut.w_tm_transaction_count : std_logic_vector(c_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0) >>;
 
   function f_byte_to_char(b : std_logic_vector(7 downto 0)) return character is
     variable n : integer := to_integer(unsigned(b));
@@ -246,6 +253,26 @@ begin
         if uart_tx_o /= v_last_tx then
           tx_toggle_count <= tx_toggle_count + 1;
           v_last_tx := uart_tx_o;
+        end if;
+      end if;
+    end if;
+  end process;
+
+  -- Stop simulation exactly when TM payload count reaches 262,144 (1 MiB for 32-bit payloads).
+  p_stop_at_target_payload_count: process(ACLK)
+    constant C_TARGET_TM_COUNT_U : unsigned(c_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0) :=
+      to_unsigned(C_TM_PAYLOAD_STOP_COUNT, c_TM_TRANSACTION_COUNTER_WIDTH);
+  begin
+    if rising_edge(ACLK) then
+      if ARESETn = '0' then
+        stop_issued <= '0';
+      elsif stop_issued = '0' then
+        if unsigned(mon_tm_transaction_count) >= C_TARGET_TM_COUNT_U then
+          stop_issued <= '1';
+          report "TB stop condition reached: TM payload count=" &
+                 integer'image(C_TM_PAYLOAD_STOP_COUNT) &
+                 " (" & integer'image(C_TM_STOP_TOTAL_BYTES) & " bytes, 1 MiB)." severity warning;
+          std.env.stop;
         end if;
       end if;
     end if;
