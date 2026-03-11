@@ -55,25 +55,22 @@ package xina_ni_ft_pkg is
   ------------------------------------------------------------------------------
   -- TG.
   constant c_ENABLE_TG_CTRL_TMR              : boolean := true;
-  constant c_ENABLE_TG_CTRL_TMR_INJECT_ERROR : boolean := true; -- INJECTION
   constant c_ENABLE_TG_HAMMING_PROTECTION    : boolean := true;
   constant c_ENABLE_TG_HAMMING_DOUBLE_DETECT : boolean := true;
   constant c_ENABLE_TG_HAMMING_INJECT_ERROR  : boolean := true; -- INJECTION
 
   -- TM.
   constant c_ENABLE_TM_CTRL_TMR              : boolean := true;
-  constant c_ENABLE_TM_CTRL_TMR_INJECT_ERROR : boolean := true; -- INJECTION
   constant c_ENABLE_TM_HAMMING_PROTECTION    : boolean := true;
   constant c_ENABLE_TM_HAMMING_DOUBLE_DETECT : boolean := true;
   constant c_ENABLE_TM_HAMMING_INJECT_ERROR  : boolean := true; -- INJECTION
   constant c_ENABLE_TM_TXN_COUNTER_HAMMING   : boolean := true;
-  constant c_TM_TRANSACTION_COUNTER_WIDTH     : natural := 32;
+  constant c_TM_TRANSACTION_COUNTER_WIDTH     : natural := 24;
   -- Number of TM completed packets between periodic UART reports.
   constant c_TM_UART_REPORT_PERIOD_PACKETS    : positive := 10000;
 
   -- Loopback.
   constant c_ENABLE_LB_CTRL_TMR              : boolean := true;
-  constant c_ENABLE_LB_CTRL_TMR_INJECT_ERROR : boolean := true; -- INJECTION
   constant c_ENABLE_LB_HAMMING_PROTECTION    : boolean := true;
   constant c_ENABLE_LB_HAMMING_DOUBLE_DETECT : boolean := true;
   constant c_ENABLE_LB_HAMMING_INJECT_ERROR  : boolean := true; -- INJECTION

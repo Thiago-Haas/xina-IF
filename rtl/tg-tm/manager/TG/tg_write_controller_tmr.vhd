@@ -1,7 +1,5 @@
 library IEEE;
 use IEEE.std_logic_1164.all;
-use IEEE.numeric_std.all;
-use work.xina_ni_ft_pkg.all;
 
 -- TMR wrapper for tg_write_controller.
 --
@@ -12,9 +10,6 @@ use work.xina_ni_ft_pkg.all;
 --   * when correct_error_i='1', output is the voted value; otherwise replica 0 is passed through
 
 entity tg_write_controller_tmr is
-  generic(
-    p_USE_TMR_INJECT_ERROR : boolean := c_ENABLE_TG_CTRL_TMR_INJECT_ERROR
-  );
   port(
     ACLK    : in  std_logic;
     ARESETn : in  std_logic := '1';
@@ -53,13 +48,6 @@ architecture rtl of tg_write_controller_tmr is
   signal bready_w          : tmr_sl_t;
   signal seed_pulse_w      : tmr_sl_t;
   signal wbeat_pulse_w     : tmr_sl_t;
-  signal done_vote_w       : tmr_sl_t;
-  signal awvalid_vote_w    : tmr_sl_t;
-  signal wvalid_vote_w     : tmr_sl_t;
-  signal bready_vote_w     : tmr_sl_t;
-  signal seed_pulse_vote_w : tmr_sl_t;
-  signal wbeat_pulse_vote_w: tmr_sl_t;
-  signal inj_fire_w        : std_logic := '0';
 
   signal corr_done_w            : std_logic;
   signal corr_awvalid_w         : std_logic;
@@ -89,55 +77,6 @@ architecture rtl of tg_write_controller_tmr is
 
 begin
 
-  gen_no_inject : if (not p_USE_TMR_INJECT_ERROR) generate
-  begin
-    inj_fire_w <= '0';
-    done_vote_w        <= done_w;
-    awvalid_vote_w     <= awvalid_w;
-    wvalid_vote_w      <= wvalid_w;
-    bready_vote_w      <= bready_w;
-    seed_pulse_vote_w  <= seed_pulse_w;
-    wbeat_pulse_vote_w <= wbeat_pulse_w;
-  end generate;
-
-  gen_inject : if p_USE_TMR_INJECT_ERROR generate
-    signal inj_counter_r : std_logic_vector(15 downto 0) := (others => '0');
-  begin
-    p_inj_counter : process(ACLK, ARESETn)
-    begin
-      if ARESETn = '0' then
-        inj_counter_r <= (others => '0');
-      elsif rising_edge(ACLK) then
-        if i_start = '1' then
-          if inj_counter_r(inj_counter_r'high) = '0' then
-            inj_counter_r <= std_logic_vector(unsigned(inj_counter_r) + 1);
-          end if;
-        end if;
-      end if;
-    end process;
-
-    inj_fire_w <= '1' when inj_counter_r = ("00" & (inj_counter_r'length-3 downto 0 => '1')) else '0';
-
-    done_vote_w(2)        <= done_w(2);
-    done_vote_w(1)        <= done_w(1);
-    done_vote_w(0)        <= not done_w(0) when inj_fire_w = '1' else done_w(0);
-    awvalid_vote_w(2)     <= awvalid_w(2);
-    awvalid_vote_w(1)     <= awvalid_w(1);
-    awvalid_vote_w(0)     <= not awvalid_w(0) when inj_fire_w = '1' else awvalid_w(0);
-    wvalid_vote_w(2)      <= wvalid_w(2);
-    wvalid_vote_w(1)      <= wvalid_w(1);
-    wvalid_vote_w(0)      <= not wvalid_w(0) when inj_fire_w = '1' else wvalid_w(0);
-    bready_vote_w(2)      <= bready_w(2);
-    bready_vote_w(1)      <= bready_w(1);
-    bready_vote_w(0)      <= not bready_w(0) when inj_fire_w = '1' else bready_w(0);
-    seed_pulse_vote_w(2)  <= seed_pulse_w(2);
-    seed_pulse_vote_w(1)  <= seed_pulse_w(1);
-    seed_pulse_vote_w(0)  <= not seed_pulse_w(0) when inj_fire_w = '1' else seed_pulse_w(0);
-    wbeat_pulse_vote_w(2) <= wbeat_pulse_w(2);
-    wbeat_pulse_vote_w(1) <= wbeat_pulse_w(1);
-    wbeat_pulse_vote_w(0) <= not wbeat_pulse_w(0) when inj_fire_w = '1' else wbeat_pulse_w(0);
-  end generate;
-
   -- 3 replicated controllers
   gen_ctrl : for i in 0 to 2 generate
     u_CTRL : entity work.tg_write_controller
@@ -162,30 +101,30 @@ begin
   end generate;
 
   -- majority vote for each output
-  corr_done_w            <= maj3(done_vote_w(2),            done_vote_w(1),            done_vote_w(0));
-  corr_awvalid_w         <= maj3(awvalid_vote_w(2),         awvalid_vote_w(1),         awvalid_vote_w(0));
-  corr_wvalid_w          <= maj3(wvalid_vote_w(2),          wvalid_vote_w(1),          wvalid_vote_w(0));
-  corr_bready_w          <= maj3(bready_vote_w(2),          bready_vote_w(1),          bready_vote_w(0));
-  corr_seed_pulse_w      <= maj3(seed_pulse_vote_w(2),      seed_pulse_vote_w(1),      seed_pulse_vote_w(0));
-  corr_wbeat_pulse_w     <= maj3(wbeat_pulse_vote_w(2),     wbeat_pulse_vote_w(1),     wbeat_pulse_vote_w(0));
+  corr_done_w            <= maj3(done_w(2),            done_w(1),            done_w(0));
+  corr_awvalid_w         <= maj3(awvalid_w(2),         awvalid_w(1),         awvalid_w(0));
+  corr_wvalid_w          <= maj3(wvalid_w(2),          wvalid_w(1),          wvalid_w(0));
+  corr_bready_w          <= maj3(bready_w(2),          bready_w(1),          bready_w(0));
+  corr_seed_pulse_w      <= maj3(seed_pulse_w(2),      seed_pulse_w(1),      seed_pulse_w(0));
+  corr_wbeat_pulse_w     <= maj3(wbeat_pulse_w(2),     wbeat_pulse_w(1),     wbeat_pulse_w(0));
 
   -- disagreement detect
-  err_done_w            <= dis3(done_vote_w(2),            done_vote_w(1),            done_vote_w(0));
-  err_awvalid_w         <= dis3(awvalid_vote_w(2),         awvalid_vote_w(1),         awvalid_vote_w(0));
-  err_wvalid_w          <= dis3(wvalid_vote_w(2),          wvalid_vote_w(1),          wvalid_vote_w(0));
-  err_bready_w          <= dis3(bready_vote_w(2),          bready_vote_w(1),          bready_vote_w(0));
-  err_seed_pulse_w      <= dis3(seed_pulse_vote_w(2),      seed_pulse_vote_w(1),      seed_pulse_vote_w(0));
-  err_wbeat_pulse_w     <= dis3(wbeat_pulse_vote_w(2),     wbeat_pulse_vote_w(1),     wbeat_pulse_vote_w(0));
+  err_done_w            <= dis3(done_w(2),            done_w(1),            done_w(0));
+  err_awvalid_w         <= dis3(awvalid_w(2),         awvalid_w(1),         awvalid_w(0));
+  err_wvalid_w          <= dis3(wvalid_w(2),          wvalid_w(1),          wvalid_w(0));
+  err_bready_w          <= dis3(bready_w(2),          bready_w(1),          bready_w(0));
+  err_seed_pulse_w      <= dis3(seed_pulse_w(2),      seed_pulse_w(1),      seed_pulse_w(0));
+  err_wbeat_pulse_w     <= dis3(wbeat_pulse_w(2),     wbeat_pulse_w(1),     wbeat_pulse_w(0));
 
   error_o <= err_done_w or err_awvalid_w or err_wvalid_w or err_bready_w or
              err_seed_pulse_w or err_wbeat_pulse_w;
 
   -- output selection
-  o_done            <= corr_done_w            when i_correct_enable = '1' else done_vote_w(0);
-  AWVALID           <= corr_awvalid_w         when i_correct_enable = '1' else awvalid_vote_w(0);
-  WVALID            <= corr_wvalid_w          when i_correct_enable = '1' else wvalid_vote_w(0);
-  BREADY            <= corr_bready_w          when i_correct_enable = '1' else bready_vote_w(0);
-  o_seed_pulse      <= corr_seed_pulse_w      when i_correct_enable = '1' else seed_pulse_vote_w(0);
-  o_wbeat_pulse     <= corr_wbeat_pulse_w     when i_correct_enable = '1' else wbeat_pulse_vote_w(0);
+  o_done            <= corr_done_w            when i_correct_enable = '1' else done_w(0);
+  AWVALID           <= corr_awvalid_w         when i_correct_enable = '1' else awvalid_w(0);
+  WVALID            <= corr_wvalid_w          when i_correct_enable = '1' else wvalid_w(0);
+  BREADY            <= corr_bready_w          when i_correct_enable = '1' else bready_w(0);
+  o_seed_pulse      <= corr_seed_pulse_w      when i_correct_enable = '1' else seed_pulse_w(0);
+  o_wbeat_pulse     <= corr_wbeat_pulse_w     when i_correct_enable = '1' else wbeat_pulse_w(0);
 
 end architecture;

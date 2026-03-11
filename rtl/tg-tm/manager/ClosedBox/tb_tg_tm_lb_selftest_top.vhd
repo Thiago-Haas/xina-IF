@@ -280,8 +280,8 @@ begin
     assert tx_toggle_count > 0 report "UART test failed: no activity seen on DUT uart_tx_o" severity failure;
     assert rx_count > 0 report "UART test failed: UART activity exists but no decoded bytes received by host UART" severity failure;
 
-    --std.env.stop;
-   -- wait;
+    std.env.stop;
+    wait;
   end process;
 
 end architecture;

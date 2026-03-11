@@ -12,7 +12,6 @@ entity tm_read_top is
 
     -- optional hardening (mirrors TG)
     p_USE_TM_CTRL_TMR              : boolean := c_ENABLE_TM_CTRL_TMR;
-    p_USE_TM_CTRL_TMR_INJECT_ERROR : boolean := c_ENABLE_TM_CTRL_TMR_INJECT_ERROR;
     p_USE_TM_HAMMING               : boolean := c_ENABLE_TM_HAMMING_PROTECTION;
     p_USE_TM_HAMMING_DOUBLE_DETECT : boolean := c_ENABLE_TM_HAMMING_DOUBLE_DETECT;
     p_USE_TM_HAMMING_INJECT_ERROR  : boolean := c_ENABLE_TM_HAMMING_INJECT_ERROR;
@@ -109,9 +108,6 @@ begin
 
   gen_ctrl_tmr : if p_USE_TM_CTRL_TMR generate
     u_CTRL_TMR: entity work.tm_read_controller_tmr
-      generic map(
-        p_USE_TMR_INJECT_ERROR => p_USE_TM_CTRL_TMR_INJECT_ERROR
-      )
       port map(
         ACLK    => ACLK,
         ARESETn => ARESETn,

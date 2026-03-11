@@ -5,9 +5,6 @@ use ieee.numeric_std.all;
 use work.xina_ni_ft_pkg.all;
 
 entity lb_ctrl_tmr is
-  generic(
-    p_USE_TMR_INJECT_ERROR : boolean := c_ENABLE_LB_CTRL_TMR_INJECT_ERROR
-  );
   port (
     ACLK    : in  std_logic;
     ARESETn : in  std_logic;
@@ -90,16 +87,8 @@ architecture rtl of lb_ctrl_tmr is
   signal tx_flit_sel_w : tmr_sel;
   signal cap_en_w   : tmr_sl;
   signal cap_idx_w  : tmr_u6;
-  signal lin_ack_vote_w         : tmr_sl;
-  signal lout_val_vote_w        : tmr_sl;
-  signal tx_next_is_read_vote_w : tmr_sl;
-  signal tx_flit_sel_vote_w     : tmr_sel;
-  signal cap_en_vote_w          : tmr_sl;
-  signal cap_idx_vote_w         : tmr_u6;
 
   signal cap_flit_ctrl_w : tmr_sl;
-  signal cap_flit_ctrl_vote_w : tmr_sl;
-  signal inj_fire_w : std_logic := '0';
 
   signal corr_lin_ack  : std_logic;
   signal corr_lout_val : std_logic;
@@ -113,59 +102,6 @@ architecture rtl of lb_ctrl_tmr is
   signal err_any : std_logic;
 
 begin
-
-  gen_no_inject : if (not p_USE_TMR_INJECT_ERROR) generate
-  begin
-    inj_fire_w <= '0';
-    lin_ack_vote_w         <= lin_ack_w;
-    lout_val_vote_w        <= lout_val_w;
-    tx_next_is_read_vote_w <= tx_next_is_read_w;
-    tx_flit_sel_vote_w     <= tx_flit_sel_w;
-    cap_en_vote_w          <= cap_en_w;
-    cap_idx_vote_w         <= cap_idx_w;
-    cap_flit_ctrl_vote_w   <= cap_flit_ctrl_w;
-  end generate;
-
-  gen_inject : if p_USE_TMR_INJECT_ERROR generate
-    signal inj_counter_r : std_logic_vector(15 downto 0) := (others => '0');
-  begin
-    p_inj_counter : process(ACLK, ARESETn)
-    begin
-      if ARESETn = '0' then
-        inj_counter_r <= (others => '0');
-      elsif rising_edge(ACLK) then
-        if i_lin_val = '1' then
-          if inj_counter_r(inj_counter_r'high) = '0' then
-            inj_counter_r <= std_logic_vector(unsigned(inj_counter_r) + 1);
-          end if;
-        end if;
-      end if;
-    end process;
-
-    inj_fire_w <= '1' when inj_counter_r = ("00" & (inj_counter_r'length-3 downto 0 => '1')) else '0';
-
-    lin_ack_vote_w(2) <= lin_ack_w(2);
-    lin_ack_vote_w(1) <= lin_ack_w(1);
-    lin_ack_vote_w(0) <= not lin_ack_w(0) when inj_fire_w = '1' else lin_ack_w(0);
-    lout_val_vote_w(2) <= lout_val_w(2);
-    lout_val_vote_w(1) <= lout_val_w(1);
-    lout_val_vote_w(0) <= not lout_val_w(0) when inj_fire_w = '1' else lout_val_w(0);
-    tx_next_is_read_vote_w(2) <= tx_next_is_read_w(2);
-    tx_next_is_read_vote_w(1) <= tx_next_is_read_w(1);
-    tx_next_is_read_vote_w(0) <= not tx_next_is_read_w(0) when inj_fire_w = '1' else tx_next_is_read_w(0);
-    tx_flit_sel_vote_w(2) <= tx_flit_sel_w(2);
-    tx_flit_sel_vote_w(1) <= tx_flit_sel_w(1);
-    tx_flit_sel_vote_w(0) <= not tx_flit_sel_w(0) when inj_fire_w = '1' else tx_flit_sel_w(0);
-    cap_en_vote_w(2) <= cap_en_w(2);
-    cap_en_vote_w(1) <= cap_en_w(1);
-    cap_en_vote_w(0) <= not cap_en_w(0) when inj_fire_w = '1' else cap_en_w(0);
-    cap_idx_vote_w(2) <= cap_idx_w(2);
-    cap_idx_vote_w(1) <= cap_idx_w(1);
-    cap_idx_vote_w(0) <= not cap_idx_w(0) when inj_fire_w = '1' else cap_idx_w(0);
-    cap_flit_ctrl_vote_w(2) <= cap_flit_ctrl_w(2);
-    cap_flit_ctrl_vote_w(1) <= cap_flit_ctrl_w(1);
-    cap_flit_ctrl_vote_w(0) <= not cap_flit_ctrl_w(0) when inj_fire_w = '1' else cap_flit_ctrl_w(0);
-  end generate;
 
   gen_rep : for i in 0 to 2 generate
   begin
@@ -192,33 +128,33 @@ begin
   end generate;
 
   -- votes
-  corr_lin_ack  <= maj3(lin_ack_vote_w(2),  lin_ack_vote_w(1),  lin_ack_vote_w(0));
-  corr_lout_val <= maj3(lout_val_vote_w(2), lout_val_vote_w(1), lout_val_vote_w(0));
-  corr_tx_next_is_read <= maj3(tx_next_is_read_vote_w(2), tx_next_is_read_vote_w(1), tx_next_is_read_vote_w(0));
-  corr_tx_flit_sel <= maj3_vec(tx_flit_sel_vote_w(2), tx_flit_sel_vote_w(1), tx_flit_sel_vote_w(0));
-  corr_cap_en   <= maj3(cap_en_vote_w(2),   cap_en_vote_w(1),   cap_en_vote_w(0));
-  corr_cap_idx  <= maj3_uns(cap_idx_vote_w(2), cap_idx_vote_w(1), cap_idx_vote_w(0));
-  corr_cap_flit_ctrl <= maj3(cap_flit_ctrl_vote_w(2), cap_flit_ctrl_vote_w(1), cap_flit_ctrl_vote_w(0));
+  corr_lin_ack  <= maj3(lin_ack_w(2),  lin_ack_w(1),  lin_ack_w(0));
+  corr_lout_val <= maj3(lout_val_w(2), lout_val_w(1), lout_val_w(0));
+  corr_tx_next_is_read <= maj3(tx_next_is_read_w(2), tx_next_is_read_w(1), tx_next_is_read_w(0));
+  corr_tx_flit_sel <= maj3_vec(tx_flit_sel_w(2), tx_flit_sel_w(1), tx_flit_sel_w(0));
+  corr_cap_en   <= maj3(cap_en_w(2),   cap_en_w(1),   cap_en_w(0));
+  corr_cap_idx  <= maj3_uns(cap_idx_w(2), cap_idx_w(1), cap_idx_w(0));
+  corr_cap_flit_ctrl <= maj3(cap_flit_ctrl_w(2), cap_flit_ctrl_w(1), cap_flit_ctrl_w(0));
 
   -- disagreement detection
-  err_any <= dis3(lin_ack_vote_w(2),  lin_ack_vote_w(1),  lin_ack_vote_w(0)) or
-             dis3(lout_val_vote_w(2), lout_val_vote_w(1), lout_val_vote_w(0)) or
-             dis3(tx_next_is_read_vote_w(2), tx_next_is_read_vote_w(1), tx_next_is_read_vote_w(0)) or
-             dis3_vec(tx_flit_sel_vote_w(2), tx_flit_sel_vote_w(1), tx_flit_sel_vote_w(0)) or
-             dis3(cap_en_vote_w(2),   cap_en_vote_w(1),   cap_en_vote_w(0)) or
-             dis3_uns(cap_idx_vote_w(2), cap_idx_vote_w(1), cap_idx_vote_w(0)) or
-             dis3(cap_flit_ctrl_vote_w(2), cap_flit_ctrl_vote_w(1), cap_flit_ctrl_vote_w(0)) or
+  err_any <= dis3(lin_ack_w(2),  lin_ack_w(1),  lin_ack_w(0)) or
+             dis3(lout_val_w(2), lout_val_w(1), lout_val_w(0)) or
+             dis3(tx_next_is_read_w(2), tx_next_is_read_w(1), tx_next_is_read_w(0)) or
+             dis3_vec(tx_flit_sel_w(2), tx_flit_sel_w(1), tx_flit_sel_w(0)) or
+             dis3(cap_en_w(2),   cap_en_w(1),   cap_en_w(0)) or
+             dis3_uns(cap_idx_w(2), cap_idx_w(1), cap_idx_w(0)) or
+             dis3(cap_flit_ctrl_w(2), cap_flit_ctrl_w(1), cap_flit_ctrl_w(0)) or
              '0';
 
   error_o <= err_any;
 
   -- selection (same as TG controller_tmr style)
-  o_lin_ack  <= corr_lin_ack  when i_correct_enable='1' else lin_ack_vote_w(0);
-  o_lout_val <= corr_lout_val when i_correct_enable='1' else lout_val_vote_w(0);
-  o_tx_next_is_read <= corr_tx_next_is_read when i_correct_enable='1' else tx_next_is_read_vote_w(0);
-  o_tx_flit_sel <= corr_tx_flit_sel when i_correct_enable='1' else tx_flit_sel_vote_w(0);
-  o_cap_en   <= corr_cap_en   when i_correct_enable='1' else cap_en_vote_w(0);
-  o_cap_idx  <= corr_cap_idx  when i_correct_enable='1' else cap_idx_vote_w(0);
-  o_cap_flit_ctrl <= corr_cap_flit_ctrl when i_correct_enable='1' else cap_flit_ctrl_vote_w(0);
+  o_lin_ack  <= corr_lin_ack  when i_correct_enable='1' else lin_ack_w(0);
+  o_lout_val <= corr_lout_val when i_correct_enable='1' else lout_val_w(0);
+  o_tx_next_is_read <= corr_tx_next_is_read when i_correct_enable='1' else tx_next_is_read_w(0);
+  o_tx_flit_sel <= corr_tx_flit_sel when i_correct_enable='1' else tx_flit_sel_w(0);
+  o_cap_en   <= corr_cap_en   when i_correct_enable='1' else cap_en_w(0);
+  o_cap_idx  <= corr_cap_idx  when i_correct_enable='1' else cap_idx_w(0);
+  o_cap_flit_ctrl <= corr_cap_flit_ctrl when i_correct_enable='1' else cap_flit_ctrl_w(0);
 
 end architecture;
