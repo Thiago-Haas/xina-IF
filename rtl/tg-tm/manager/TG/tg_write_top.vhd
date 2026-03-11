@@ -9,6 +9,7 @@ use work.xina_ni_ft_pkg.all;
 entity tg_write_top is
   generic (
     p_USE_TG_CTRL_TMR              : boolean := c_ENABLE_TG_CTRL_TMR;
+    p_USE_TG_CTRL_TMR_INJECT_ERROR : boolean := c_ENABLE_TG_CTRL_TMR_INJECT_ERROR;
     p_USE_TG_HAMMING               : boolean := c_ENABLE_TG_HAMMING_PROTECTION;
     p_USE_TG_HAMMING_DOUBLE_DETECT : boolean := c_ENABLE_TG_HAMMING_DOUBLE_DETECT;
     p_USE_TG_HAMMING_INJECT_ERROR  : boolean := c_ENABLE_TG_HAMMING_INJECT_ERROR
@@ -74,6 +75,9 @@ begin
   gen_ctrl_tmr : if p_USE_TG_CTRL_TMR generate
   begin
     u_CTRL_TMR: entity work.tg_write_controller_tmr
+      generic map(
+        p_USE_TMR_INJECT_ERROR => p_USE_TG_CTRL_TMR_INJECT_ERROR
+      )
       port map(
         ACLK    => ACLK,
         ARESETn => ARESETn,

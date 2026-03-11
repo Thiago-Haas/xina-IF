@@ -11,6 +11,7 @@ entity lb_top is
     p_MEM_ADDR_BITS        : natural := 10;
 
     p_USE_LB_CTRL_TMR              : boolean := c_ENABLE_LB_CTRL_TMR;
+    p_USE_LB_CTRL_TMR_INJECT_ERROR : boolean := c_ENABLE_LB_CTRL_TMR_INJECT_ERROR;
     p_USE_LB_HAMMING               : boolean := c_ENABLE_LB_HAMMING_PROTECTION;
     p_USE_LB_HAMMING_DOUBLE_DETECT : boolean := c_ENABLE_LB_HAMMING_DOUBLE_DETECT;
     p_USE_LB_HAMMING_INJECT_ERROR  : boolean := c_ENABLE_LB_HAMMING_INJECT_ERROR
@@ -126,6 +127,9 @@ begin
   gen_ctrl_tmr : if p_USE_LB_CTRL_TMR generate
   begin
     u_ctrl_tmr: entity work.lb_ctrl_tmr
+      generic map(
+        p_USE_TMR_INJECT_ERROR => p_USE_LB_CTRL_TMR_INJECT_ERROR
+      )
       port map(
         ACLK    => ACLK,
         ARESETn => ARESETn,

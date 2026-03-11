@@ -19,12 +19,14 @@ entity tg_tm_lb_top is
 
     -- TG ECC/TMR enables (follows NI p_USE_* scheme)
     p_USE_TG_CTRL_TMR              : boolean := c_ENABLE_TG_CTRL_TMR;
+    p_USE_TG_CTRL_TMR_INJECT_ERROR : boolean := c_ENABLE_TG_CTRL_TMR_INJECT_ERROR;
     p_USE_TG_HAMMING               : boolean := c_ENABLE_TG_HAMMING_PROTECTION;
     p_USE_TG_HAMMING_DOUBLE_DETECT : boolean := c_ENABLE_TG_HAMMING_DOUBLE_DETECT;
     p_USE_TG_HAMMING_INJECT_ERROR  : boolean := c_ENABLE_TG_HAMMING_INJECT_ERROR;
 
     -- TM ECC/TMR enables (follows NI p_USE_* scheme)
     p_USE_TM_CTRL_TMR              : boolean := c_ENABLE_TM_CTRL_TMR;
+    p_USE_TM_CTRL_TMR_INJECT_ERROR : boolean := c_ENABLE_TM_CTRL_TMR_INJECT_ERROR;
     p_USE_TM_HAMMING               : boolean := c_ENABLE_TM_HAMMING_PROTECTION;
     p_USE_TM_HAMMING_DOUBLE_DETECT : boolean := c_ENABLE_TM_HAMMING_DOUBLE_DETECT;
     p_USE_TM_HAMMING_INJECT_ERROR  : boolean := c_ENABLE_TM_HAMMING_INJECT_ERROR;
@@ -33,6 +35,7 @@ entity tg_tm_lb_top is
 
     -- LB ECC/TMR enables (follows NI p_USE_* scheme)
     p_USE_LB_CTRL_TMR              : boolean := c_ENABLE_LB_CTRL_TMR;
+    p_USE_LB_CTRL_TMR_INJECT_ERROR : boolean := c_ENABLE_LB_CTRL_TMR_INJECT_ERROR;
     p_USE_LB_HAMMING               : boolean := c_ENABLE_LB_HAMMING_PROTECTION;
     p_USE_LB_HAMMING_DOUBLE_DETECT : boolean := c_ENABLE_LB_HAMMING_DOUBLE_DETECT;
     p_USE_LB_HAMMING_INJECT_ERROR  : boolean := c_ENABLE_LB_HAMMING_INJECT_ERROR
@@ -183,6 +186,7 @@ begin
   u_tg: entity work.tg_write_top
     generic map(
       p_USE_TG_CTRL_TMR              => p_USE_TG_CTRL_TMR,
+      p_USE_TG_CTRL_TMR_INJECT_ERROR => p_USE_TG_CTRL_TMR_INJECT_ERROR,
       p_USE_TG_HAMMING               => p_USE_TG_HAMMING,
       p_USE_TG_HAMMING_DOUBLE_DETECT => p_USE_TG_HAMMING_DOUBLE_DETECT,
       p_USE_TG_HAMMING_INJECT_ERROR  => p_USE_TG_HAMMING_INJECT_ERROR
@@ -232,6 +236,7 @@ begin
   u_tm: entity work.tm_read_top
     generic map(
       p_USE_TM_CTRL_TMR              => p_USE_TM_CTRL_TMR,
+      p_USE_TM_CTRL_TMR_INJECT_ERROR => p_USE_TM_CTRL_TMR_INJECT_ERROR,
       p_USE_TM_HAMMING               => p_USE_TM_HAMMING,
       p_USE_TM_HAMMING_DOUBLE_DETECT => p_USE_TM_HAMMING_DOUBLE_DETECT,
       p_USE_TM_HAMMING_INJECT_ERROR  => p_USE_TM_HAMMING_INJECT_ERROR,
@@ -380,6 +385,7 @@ begin
     generic map(
       p_MEM_ADDR_BITS              => p_MEM_ADDR_BITS,
       p_USE_LB_CTRL_TMR            => p_USE_LB_CTRL_TMR,
+      p_USE_LB_CTRL_TMR_INJECT_ERROR => p_USE_LB_CTRL_TMR_INJECT_ERROR,
       p_USE_LB_HAMMING             => p_USE_LB_HAMMING,
       p_USE_LB_HAMMING_DOUBLE_DETECT => p_USE_LB_HAMMING_DOUBLE_DETECT,
       p_USE_LB_HAMMING_INJECT_ERROR  => p_USE_LB_HAMMING_INJECT_ERROR
