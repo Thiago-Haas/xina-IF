@@ -37,9 +37,9 @@ architecture rtl of backend_manager_depacketizer_control is
     signal state_w_r    : std_logic_vector(2 downto 0);
     signal next_state_w : std_logic_vector(2 downto 0);
 
-    signal r_PAYLOAD_COUNTER: unsigned(7 downto 0) := to_unsigned(255, 8);
-    signal r_SET_PAYLOAD_COUNTER: std_logic := '0';
-    signal r_SUBTRACT_PAYLOAD_COUNTER: std_logic := '0';
+    signal payload_counter_r: unsigned(7 downto 0) := to_unsigned(255, 8);
+    signal set_payload_counter_r: std_logic := '0';
+    signal subtract_payload_counter_r: std_logic := '0';
 
 begin
     ---------------------------------------------------------------------------------------------
@@ -72,7 +72,7 @@ begin
                             next_state_w <= "010";
                           end if;
 
-            when "011" => if (r_PAYLOAD_COUNTER = to_unsigned(0, 8) and i_READY_RECEIVE_DATA = '1' and i_READ_OK_BUFFER = '1') then
+            when "011" => if (payload_counter_r = to_unsigned(0, 8) and i_READY_RECEIVE_DATA = '1' and i_READ_OK_BUFFER = '1') then
                             next_state_w <= "101";
                           else
                             next_state_w <= "011";
@@ -93,20 +93,20 @@ begin
     process (all)
     begin
       if (ARESETn = '0') then
-        r_PAYLOAD_COUNTER <= to_unsigned(255, 8);
+        payload_counter_r <= to_unsigned(255, 8);
       elsif (rising_edge(ACLK)) then
-        if (r_SET_PAYLOAD_COUNTER = '1') then
-          r_PAYLOAD_COUNTER <= unsigned(i_FLIT(14 downto 7));
-        elsif (r_SUBTRACT_PAYLOAD_COUNTER = '1') then
-          r_PAYLOAD_COUNTER <= r_PAYLOAD_COUNTER - 1;
+        if (set_payload_counter_r = '1') then
+          payload_counter_r <= unsigned(i_FLIT(14 downto 7));
+        elsif (subtract_payload_counter_r = '1') then
+          payload_counter_r <= payload_counter_r - 1;
         end if;
       end if;
     end process;
 
     ---------------------------------------------------------------------------------------------
     -- Internal signals.
-    r_SET_PAYLOAD_COUNTER      <= '1' when (state_w_r = "010") else '0';
-    r_SUBTRACT_PAYLOAD_COUNTER <= '1' when (state_w_r = "011" and i_READ_OK_BUFFER = '1' and i_READY_RECEIVE_DATA = '1') else '0';
+    set_payload_counter_r      <= '1' when (state_w_r = "010") else '0';
+    subtract_payload_counter_r <= '1' when (state_w_r = "011" and i_READ_OK_BUFFER = '1' and i_READY_RECEIVE_DATA = '1') else '0';
 
     ---------------------------------------------------------------------------------------------
     -- Output values.
@@ -115,7 +115,7 @@ begin
                                      (state_w_r = "011" and i_READ_OK_BUFFER = '1')
                                      else '0';
 
-    o_LAST_RECEIVE_DATA  <= '1' when (state_w_r = "011" and i_READ_OK_BUFFER = '1' and r_PAYLOAD_COUNTER = to_unsigned(0, 8)) else '0';
+    o_LAST_RECEIVE_DATA  <= '1' when (state_w_r = "011" and i_READ_OK_BUFFER = '1' and payload_counter_r = to_unsigned(0, 8)) else '0';
 
     o_READ_BUFFER <= '1' when (state_w_r = "000") or
                               (state_w_r = "001") or

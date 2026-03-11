@@ -46,10 +46,8 @@ architecture tb of tb_tg_tm_lb_selftest_top is
 
   signal rx_count : integer := 0;
   signal tx_toggle_count : integer := 0;
+  signal tm_decoded_count_r : integer := 0;
   file f_tb_uart_log : text open write_mode is "tb_uart_console.log";
-
-  alias mon_tm_transaction_count is
-    << signal .tb_tg_tm_lb_selftest_top.dut.w_tm_transaction_count : std_logic_vector(c_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0) >>;
 
   function f_byte_to_char(b : std_logic_vector(7 downto 0)) return character is
     variable n : integer := to_integer(unsigned(b));
@@ -177,6 +175,7 @@ begin
     if rising_edge(ACLK) then
       if ARESETn = '0' then
         rx_count <= 0;
+        tm_decoded_count_r <= 0;
         v_len := 0;
       else
         if (host_rdone = '1') and (host_rerr = '0') then
@@ -198,6 +197,7 @@ begin
                  f_is_hex_string(v_line(4 to 3 + C_TM_HEX_DIGITS)) and
                  f_is_hex_string(v_line(4 + C_TM_HEX_DIGITS + C_LABEL_FLAGS_LEN to C_TM_FLAGS_LINE_LEN)) then
                 v_tm_dec := f_hex_to_integer(v_line(4 to 3 + C_TM_HEX_DIGITS));
+                tm_decoded_count_r <= v_tm_dec;
                 v_flags_bin := f_hex_to_bin_string(v_line(4 + C_TM_HEX_DIGITS + C_LABEL_FLAGS_LEN to C_TM_FLAGS_LINE_LEN));
                 report "UART RX DECODED: TM_DEC=" & integer'image(v_tm_dec) &
                        " FLAGS_BIN=" & v_flags_bin severity warning;
@@ -210,6 +210,7 @@ begin
                     (v_line(1 to 3) = "TM=") and
                     f_is_hex_string(v_line(4 to 3 + C_TM_HEX_DIGITS)) then
                 v_tm_dec := f_hex_to_integer(v_line(4 to 3 + C_TM_HEX_DIGITS));
+                tm_decoded_count_r <= v_tm_dec;
                 report "UART RX DECODED: TM_DEC=" & integer'image(v_tm_dec) severity warning;
                 write(v_log, string'("UART RX DECODED: TM_DEC="));
                 write(v_log, integer'image(v_tm_dec));
@@ -260,14 +261,12 @@ begin
 
   -- Stop simulation exactly when TM payload count reaches 262,144 (1 MiB for 32-bit payloads).
   p_stop_at_target_payload_count: process(ACLK)
-    constant C_TARGET_TM_COUNT_U : unsigned(c_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0) :=
-      to_unsigned(C_TM_PAYLOAD_STOP_COUNT, c_TM_TRANSACTION_COUNTER_WIDTH);
   begin
     if rising_edge(ACLK) then
       if ARESETn = '0' then
         stop_issued <= '0';
       elsif stop_issued = '0' then
-        if unsigned(mon_tm_transaction_count) >= C_TARGET_TM_COUNT_U then
+        if tm_decoded_count_r >= C_TM_PAYLOAD_STOP_COUNT then
           stop_issued <= '1';
           report "TB stop condition reached: TM payload count=" &
                  integer'image(C_TM_PAYLOAD_STOP_COUNT) &

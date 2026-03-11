@@ -47,8 +47,8 @@ architecture rtl of backend_subordinate_depacketizer_control is
     signal next_state_w : std_logic_vector(3 downto 0);
 
     signal PAYLOAD_COUNTER_r: unsigned(7 downto 0) := to_unsigned(255, 8);
-    signal r_SET_PAYLOAD_COUNTER: std_logic := '0';
-    signal r_SUBTRACT_PAYLOAD_COUNTER: std_logic := '0';
+    signal set_payload_counter_w: std_logic := '0';
+    signal subtract_payload_counter_w: std_logic := '0';
 
 begin
     ---------------------------------------------------------------------------------------------
@@ -109,9 +109,9 @@ begin
         if (ARESETn = '0') then
             PAYLOAD_COUNTER_r <= to_unsigned(255, 8);
         elsif (rising_edge(ACLK)) then
-            if (r_SET_PAYLOAD_COUNTER = '1') then
+            if (set_payload_counter_w = '1') then
                 PAYLOAD_COUNTER_r <= unsigned(i_H_INTERFACE(14 downto 7));
-            elsif (r_SUBTRACT_PAYLOAD_COUNTER = '1') then
+            elsif (subtract_payload_counter_w = '1') then
                 PAYLOAD_COUNTER_r <= PAYLOAD_COUNTER_r - 1;
             end if;
         end if;
@@ -119,8 +119,8 @@ begin
 
     ---------------------------------------------------------------------------------------------
     -- Internal signals.
-    r_SET_PAYLOAD_COUNTER      <= '1' when (state_w_r = "0011") else '0';
-    r_SUBTRACT_PAYLOAD_COUNTER <= '1' when (state_w_r = "0101" and i_READ_OK_BUFFER = '1' and i_READY_RECEIVE_DATA = '1') else '0';
+    set_payload_counter_w      <= '1' when (state_w_r = "0011") else '0';
+    subtract_payload_counter_w <= '1' when (state_w_r = "0101" and i_READ_OK_BUFFER = '1' and i_READY_RECEIVE_DATA = '1') else '0';
 
     ---------------------------------------------------------------------------------------------
     -- Output values.

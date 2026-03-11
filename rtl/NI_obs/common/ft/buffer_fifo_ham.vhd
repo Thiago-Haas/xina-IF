@@ -60,7 +60,7 @@ architecture rtl of buffer_fifo_ham is
   signal fifo_count_w    : unsigned(integer(ceil(log2(real(p_BUFFER_DEPTH)))) downto 0);
   signal ctrl_tmr_err_w  : std_logic;
 
-  signal enc_reg_word   : std_logic_vector(c_ENC_WIDTH - 1 downto 0);
+  signal enc_reg_word_r   : std_logic_vector(c_ENC_WIDTH - 1 downto 0);
   signal enc_word_w     : std_logic_vector(c_ENC_WIDTH - 1 downto 0);
 
 begin
@@ -120,7 +120,7 @@ begin
       fifo_mem_r <= (others => (others => '0'));
     elsif rising_edge(ACLK) then
       if fifo_do_write_w = '1' then
-        fifo_mem_r(0) <= enc_reg_word;
+        fifo_mem_r(0) <= enc_reg_word_r;
         for i in 1 to p_BUFFER_DEPTH - 1 loop
           fifo_mem_r(i) <= fifo_mem_r(i - 1);
         end loop;
@@ -173,10 +173,10 @@ begin
   p_stage_data : process (ACLK, ARESET)
   begin
     if ARESET = '1' then
-      enc_reg_word <= (others => '0');
+      enc_reg_word_r <= (others => '0');
     elsif rising_edge(ACLK) then
       if stage_load_w = '1' then
-        enc_reg_word <= enc_word_w;
+        enc_reg_word_r <= enc_word_w;
       end if;
     end if;
   end process;

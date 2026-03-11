@@ -31,23 +31,26 @@ entity tg_write_controller is
 end entity;
 
 architecture rtl of tg_write_controller is
-  type t_state is (s_idle, s_aw, s_w, s_b);
-  signal r_state : t_state := s_idle;
+  constant C_STATE_IDLE : std_logic_vector(1 downto 0) := "00";
+  constant C_STATE_AW   : std_logic_vector(1 downto 0) := "01";
+  constant C_STATE_W    : std_logic_vector(1 downto 0) := "10";
+  constant C_STATE_B    : std_logic_vector(1 downto 0) := "11";
+  signal state_r : std_logic_vector(1 downto 0) := C_STATE_IDLE;
 
   -- Seed gating (only once after reset)
-  signal r_seeded : std_logic := '0';
+  signal seeded_r : std_logic := '0';
 
   signal awvalid_i, wvalid_i, bready_i : std_logic;
   signal aw_hs, w_hs, b_hs : std_logic;
 
-  signal done_pulse  : std_logic := '0';
-  signal seed_pulse  : std_logic := '0';
-  signal wbeat_pulse : std_logic := '0';
+  signal done_pulse_r  : std_logic := '0';
+  signal seed_pulse_r  : std_logic := '0';
+  signal wbeat_pulse_r : std_logic := '0';
 begin
-  awvalid_i <= '1' when (r_state = s_aw) else '0';
-  wvalid_i  <= '1' when (r_state = s_w)  else '0';
+  awvalid_i <= '1' when (state_r = C_STATE_AW) else '0';
+  wvalid_i  <= '1' when (state_r = C_STATE_W)  else '0';
   -- Keep BREADY high during the whole active transaction (not only in s_b)
-  bready_i  <= '0' when (r_state = s_idle) else '1';
+  bready_i  <= '0' when (state_r = C_STATE_IDLE) else '1';
 
   AWVALID <= awvalid_i;
   WVALID  <= wvalid_i;
@@ -57,52 +60,54 @@ begin
   w_hs  <= wvalid_i  and WREADY;
   b_hs  <= bready_i  and BVALID;
 
-  o_done            <= done_pulse;
-  o_seed_pulse      <= seed_pulse;
-  o_wbeat_pulse     <= wbeat_pulse;
+  o_done            <= done_pulse_r;
+  o_seed_pulse      <= seed_pulse_r;
+  o_wbeat_pulse     <= wbeat_pulse_r;
 
   process(ACLK)
   begin
     if rising_edge(ACLK) then
-      done_pulse  <= '0';
-      seed_pulse  <= '0';
-      wbeat_pulse <= '0';
+      done_pulse_r  <= '0';
+      seed_pulse_r  <= '0';
+      wbeat_pulse_r <= '0';
 
       if ARESETn = '0' then
-        r_state <= s_idle;
-        r_seeded <= '0';
+        state_r <= C_STATE_IDLE;
+        seeded_r <= '0';
       else
-        case r_state is
-          when s_idle =>
+        case state_r is
+          when C_STATE_IDLE =>
             if i_start = '1' then
               -- Seed only on the very first transaction after reset.
-              if r_seeded = '0' then
-                seed_pulse <= '1';
-                r_seeded <= '1';
+              if seeded_r = '0' then
+                seed_pulse_r <= '1';
+                seeded_r <= '1';
               end if;
-              r_state <= s_aw;
+              state_r <= C_STATE_AW;
             end if;
 
-          when s_aw =>
+          when C_STATE_AW =>
             if aw_hs = '1' then
-              r_state <= s_w;
+              state_r <= C_STATE_W;
             end if;
 
-          when s_w =>
+          when C_STATE_W =>
             if w_hs = '1' then
-              wbeat_pulse <= '1';
+              wbeat_pulse_r <= '1';
 
               -- AXI-compliant slaves must keep BVALID asserted until BREADY is high
               -- and the handshake occurs. Since we keep BREADY high for the whole
               -- active transaction, we can simply wait for B in s_b.
-              r_state <= s_b;
+              state_r <= C_STATE_B;
             end if;
 
-          when s_b =>
+          when C_STATE_B =>
             if b_hs = '1' then
-              done_pulse <= '1';
-              r_state <= s_idle;
+              done_pulse_r <= '1';
+              state_r <= C_STATE_IDLE;
             end if;
+          when others =>
+            state_r <= C_STATE_IDLE;
         end case;
       end if;
     end if;

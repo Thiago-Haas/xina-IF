@@ -13,3 +13,6 @@ quartus_project/simulation
 /Libero
 *.cf
 *.vdb
+/rtl/reports
+/rtl/tools
+/rtl/xsim.dir

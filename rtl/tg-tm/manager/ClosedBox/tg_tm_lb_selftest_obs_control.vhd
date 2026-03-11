@@ -19,49 +19,54 @@ entity tg_tm_lb_selftest_obs_control is
 end entity;
 
 architecture rtl of tg_tm_lb_selftest_obs_control is
-  type t_state is (S_TG_PULSE, S_WAIT_TG, S_TM_PULSE, S_WAIT_TM);
-  signal r_state : t_state := S_TG_PULSE;
+  constant C_STATE_TG_PULSE : std_logic_vector(1 downto 0) := "00";
+  constant C_STATE_WAIT_TG  : std_logic_vector(1 downto 0) := "01";
+  constant C_STATE_TM_PULSE : std_logic_vector(1 downto 0) := "10";
+  constant C_STATE_WAIT_TM  : std_logic_vector(1 downto 0) := "11";
+  signal state_r : std_logic_vector(1 downto 0) := C_STATE_TG_PULSE;
 
-  signal r_tg_start : std_logic := '0';
-  signal r_tm_start : std_logic := '0';
+  signal tg_start_r : std_logic := '0';
+  signal tm_start_r : std_logic := '0';
 begin
-  o_tg_start <= r_tg_start;
-  o_tm_start <= r_tm_start;
+  o_tg_start <= tg_start_r;
+  o_tm_start <= tm_start_r;
 
   process(ACLK)
   begin
     if rising_edge(ACLK) then
       if ARESETn = '0' then
-        r_state    <= S_TG_PULSE;
-        r_tg_start <= '0';
-        r_tm_start <= '0';
+        state_r    <= C_STATE_TG_PULSE;
+        tg_start_r <= '0';
+        tm_start_r <= '0';
       else
-        r_tg_start <= '0';
-        r_tm_start <= '0';
+        tg_start_r <= '0';
+        tm_start_r <= '0';
 
         if i_experiment_reset_pulse = '1' then
-          r_state <= S_TG_PULSE;
+          state_r <= C_STATE_TG_PULSE;
         elsif i_experiment_run_enable = '0' then
-          r_state <= S_TG_PULSE;
+          state_r <= C_STATE_TG_PULSE;
         else
-          case r_state is
-            when S_TG_PULSE =>
-              r_tg_start <= '1';
-              r_state    <= S_WAIT_TG;
+          case state_r is
+            when C_STATE_TG_PULSE =>
+              tg_start_r <= '1';
+              state_r    <= C_STATE_WAIT_TG;
 
-            when S_WAIT_TG =>
+            when C_STATE_WAIT_TG =>
               if i_tg_done = '1' then
-                r_state <= S_TM_PULSE;
+                state_r <= C_STATE_TM_PULSE;
               end if;
 
-            when S_TM_PULSE =>
-              r_tm_start <= '1';
-              r_state    <= S_WAIT_TM;
+            when C_STATE_TM_PULSE =>
+              tm_start_r <= '1';
+              state_r    <= C_STATE_WAIT_TM;
 
-            when S_WAIT_TM =>
+            when C_STATE_WAIT_TM =>
               if i_tm_done = '1' then
-                r_state <= S_TG_PULSE;
+                state_r <= C_STATE_TG_PULSE;
               end if;
+            when others =>
+              state_r <= C_STATE_TG_PULSE;
           end case;
         end if;
       end if;

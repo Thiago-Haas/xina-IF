@@ -35,18 +35,20 @@ entity tm_read_controller is
 end entity;
 
 architecture rtl of tm_read_controller is
-  type t_state is (s_idle, s_ar, s_r);
-  signal r_state : t_state := s_idle;
+  constant C_STATE_IDLE : std_logic_vector(1 downto 0) := "00";
+  constant C_STATE_AR   : std_logic_vector(1 downto 0) := "01";
+  constant C_STATE_R    : std_logic_vector(1 downto 0) := "10";
+  signal state_r : std_logic_vector(1 downto 0) := C_STATE_IDLE;
 
   signal arvalid_i, rready_i : std_logic;
   signal ar_hs, r_hs : std_logic;
 
-  signal done_pulse  : std_logic := '0';
-  signal seed_pulse  : std_logic := '0';
-  signal r_seeded    : std_logic := '0';
+  signal done_pulse_r  : std_logic := '0';
+  signal seed_pulse_r  : std_logic := '0';
+  signal seeded_r    : std_logic := '0';
 begin
-  arvalid_i <= '1' when (r_state = s_ar) else '0';
-  rready_i  <= '1' when (r_state = s_r)  else '0';
+  arvalid_i <= '1' when (state_r = C_STATE_AR) else '0';
+  rready_i  <= '1' when (state_r = C_STATE_R)  else '0';
 
   ARVALID <= arvalid_i;
   RREADY  <= rready_i;
@@ -57,41 +59,43 @@ begin
   -- Expose same-cycle read-data handshake (combinational)
   o_rbeat_hs_comb <= r_hs;
 
-  o_done            <= done_pulse;
-  o_seed_pulse      <= seed_pulse;
+  o_done            <= done_pulse_r;
+  o_seed_pulse      <= seed_pulse_r;
 
   process(ACLK)
   begin
     if rising_edge(ACLK) then
-      done_pulse  <= '0';
-      seed_pulse  <= '0';
+      done_pulse_r  <= '0';
+      seed_pulse_r  <= '0';
 
       if ARESETn = '0' then
-        r_state <= s_idle;
-        r_seeded <= '0';
+        state_r <= C_STATE_IDLE;
+        seeded_r <= '0';
       else
-        case r_state is
-          when s_idle =>
+        case state_r is
+          when C_STATE_IDLE =>
             if i_start = '1' then
-              if r_seeded = '0' then
-                seed_pulse <= '1';
-                r_seeded   <= '1';
+              if seeded_r = '0' then
+                seed_pulse_r <= '1';
+                seeded_r   <= '1';
               end if;
-              r_state <= s_ar;
+              state_r <= C_STATE_AR;
             end if;
 
-          when s_ar =>
+          when C_STATE_AR =>
             if ar_hs = '1' then
-              r_state <= s_r;
+              state_r <= C_STATE_R;
             end if;
 
-          when s_r =>
+          when C_STATE_R =>
             if r_hs = '1' then
               if RLAST = '1' then
-                done_pulse <= '1';
-                r_state <= s_idle;
+                done_pulse_r <= '1';
+                state_r <= C_STATE_IDLE;
               end if;
             end if;
+          when others =>
+            state_r <= C_STATE_IDLE;
         end case;
       end if;
     end if;

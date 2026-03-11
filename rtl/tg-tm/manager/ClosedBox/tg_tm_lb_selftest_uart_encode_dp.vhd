@@ -38,7 +38,7 @@ architecture rtl of tg_tm_lb_selftest_uart_encode_dp is
   constant C_LABEL_ENC   : string := "ENC SRC=";
   constant C_LABEL_DATA  : string := " DATA=";
 
-  signal r_fault_data  : std_logic_vector(83 downto 0) := (others => '0');
+  signal fault_data_r  : std_logic_vector(83 downto 0) := (others => '0');
   signal w_nibble_data : std_logic_vector(3 downto 0);
 
   function f_char_to_slv8(c : character) return std_logic_vector is
@@ -54,17 +54,17 @@ begin
   begin
     if rising_edge(ACLK) then
       if ARESETn = '0' then
-        r_fault_data <= (others => '0');
+        fault_data_r <= (others => '0');
       else
         if i_load_base = '1' then
-          r_fault_data <= (others => '0');
-          r_fault_data(C_BASE_TM_MSB downto C_BASE_TM_LSB) <= i_tm_count;
-          r_fault_data(c_TM_UART_FLAGS_WIDTH - 1 downto 0) <= i_flags;
+          fault_data_r <= (others => '0');
+          fault_data_r(C_BASE_TM_MSB downto C_BASE_TM_LSB) <= i_tm_count;
+          fault_data_r(c_TM_UART_FLAGS_WIDTH - 1 downto 0) <= i_flags;
         end if;
 
         if i_load_enc = '1' then
-          r_fault_data(83 downto 80) <= i_enc_src;
-          r_fault_data(79 downto 0)  <= i_enc_data;
+          fault_data_r(83 downto 80) <= i_enc_src;
+          fault_data_r(79 downto 0)  <= i_enc_data;
         end if;
       end if;
     end if;
@@ -72,27 +72,27 @@ begin
 
   with to_integer(i_nibble_index) select
     w_nibble_data <=
-      r_fault_data(83 downto 80) when 20,
-      r_fault_data(79 downto 76) when 19,
-      r_fault_data(75 downto 72) when 18,
-      r_fault_data(71 downto 68) when 17,
-      r_fault_data(67 downto 64) when 16,
-      r_fault_data(63 downto 60) when 15,
-      r_fault_data(59 downto 56) when 14,
-      r_fault_data(55 downto 52) when 13,
-      r_fault_data(51 downto 48) when 12,
-      r_fault_data(47 downto 44) when 11,
-      r_fault_data(43 downto 40) when 10,
-      r_fault_data(39 downto 36) when 9,
-      r_fault_data(35 downto 32) when 8,
-      r_fault_data(31 downto 28) when 7,
-      r_fault_data(27 downto 24) when 6,
-      r_fault_data(23 downto 20) when 5,
-      r_fault_data(19 downto 16) when 4,
-      r_fault_data(15 downto 12) when 3,
-      r_fault_data(11 downto 8)  when 2,
-      r_fault_data(7 downto 4)   when 1,
-      r_fault_data(3 downto 0)   when others;
+      fault_data_r(83 downto 80) when 20,
+      fault_data_r(79 downto 76) when 19,
+      fault_data_r(75 downto 72) when 18,
+      fault_data_r(71 downto 68) when 17,
+      fault_data_r(67 downto 64) when 16,
+      fault_data_r(63 downto 60) when 15,
+      fault_data_r(59 downto 56) when 14,
+      fault_data_r(55 downto 52) when 13,
+      fault_data_r(51 downto 48) when 12,
+      fault_data_r(47 downto 44) when 11,
+      fault_data_r(43 downto 40) when 10,
+      fault_data_r(39 downto 36) when 9,
+      fault_data_r(35 downto 32) when 8,
+      fault_data_r(31 downto 28) when 7,
+      fault_data_r(27 downto 24) when 6,
+      fault_data_r(23 downto 20) when 5,
+      fault_data_r(19 downto 16) when 4,
+      fault_data_r(15 downto 12) when 3,
+      fault_data_r(11 downto 8)  when 2,
+      fault_data_r(7 downto 4)   when 1,
+      fault_data_r(3 downto 0)   when others;
 
   u_utf8_hex: entity work.utf8_hex
     port map(

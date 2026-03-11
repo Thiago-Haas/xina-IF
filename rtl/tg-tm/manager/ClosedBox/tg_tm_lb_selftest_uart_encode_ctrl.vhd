@@ -152,50 +152,56 @@ architecture rtl of tg_tm_lb_selftest_uart_encode_ctrl is
   constant C_LABEL_ENC   : string := "ENC SRC=";
   constant C_LABEL_DATA  : string := " DATA=";
 
-  type t_tx_state is (S_IDLE, S_SEND_LABEL, S_SEND_HEX, S_SEND_LF, S_WAIT_DONE);
-  type t_tx_phase is (
-    PH_BASE_TM_LABEL,
-    PH_BASE_TM_HEX,
-    PH_BASE_FLAGS_LABEL,
-    PH_BASE_FLAGS_HEX,
-    PH_ENC_LABEL,
-    PH_ENC_SRC_HEX,
-    PH_ENC_DATA_LABEL,
-    PH_ENC_DATA_HEX
-  );
-  type t_wait_source is (WS_LABEL, WS_HEX, WS_LF);
+  constant S_IDLE       : std_logic_vector(2 downto 0) := "000";
+  constant S_SEND_LABEL : std_logic_vector(2 downto 0) := "001";
+  constant S_SEND_HEX   : std_logic_vector(2 downto 0) := "010";
+  constant S_SEND_LF    : std_logic_vector(2 downto 0) := "011";
+  constant S_WAIT_DONE  : std_logic_vector(2 downto 0) := "100";
 
-  signal r_tx_state      : t_tx_state := S_IDLE;
-  signal r_tx_phase      : t_tx_phase := PH_BASE_TM_LABEL;
-  signal r_wait_source   : t_wait_source := WS_LABEL;
+  constant PH_BASE_TM_LABEL    : std_logic_vector(2 downto 0) := "000";
+  constant PH_BASE_TM_HEX      : std_logic_vector(2 downto 0) := "001";
+  constant PH_BASE_FLAGS_LABEL : std_logic_vector(2 downto 0) := "010";
+  constant PH_BASE_FLAGS_HEX   : std_logic_vector(2 downto 0) := "011";
+  constant PH_ENC_LABEL        : std_logic_vector(2 downto 0) := "100";
+  constant PH_ENC_SRC_HEX      : std_logic_vector(2 downto 0) := "101";
+  constant PH_ENC_DATA_LABEL   : std_logic_vector(2 downto 0) := "110";
+  constant PH_ENC_DATA_HEX     : std_logic_vector(2 downto 0) := "111";
 
-  signal r_nibble_index    : unsigned(4 downto 0) := to_unsigned(C_BASE_TM_NIBBLE_START, 5);
-  signal r_nibble_stop     : unsigned(4 downto 0) := to_unsigned(C_BASE_TM_NIBBLE_STOP, 5);
-  signal r_label_index     : natural range 1 to 8 := 1;
+  constant WS_LABEL : std_logic_vector(1 downto 0) := "00";
+  constant WS_HEX   : std_logic_vector(1 downto 0) := "01";
+  constant WS_LF    : std_logic_vector(1 downto 0) := "10";
+
+  signal tx_state_r      : std_logic_vector(2 downto 0) := S_IDLE;
+  signal tx_phase_r      : std_logic_vector(2 downto 0) := PH_BASE_TM_LABEL;
+  signal wait_source_r   : std_logic_vector(1 downto 0) := WS_LABEL;
+
+  signal nibble_index_r    : unsigned(4 downto 0) := to_unsigned(C_BASE_TM_NIBBLE_START, 5);
+  signal nibble_stop_r     : unsigned(4 downto 0) := to_unsigned(C_BASE_TM_NIBBLE_STOP, 5);
+  signal label_index_r     : natural range 1 to 8 := 1;
 
   signal w_dp_label_sel    : std_logic_vector(2 downto 0);
-  signal r_uart_tstart     : std_logic := '0';
-  signal r_uart_tdata      : std_logic_vector(7 downto 0) := (others => '0');
+  signal uart_tstart_r     : std_logic := '0';
+  signal uart_tdata_r      : std_logic_vector(7 downto 0) := (others => '0');
 
-  signal r_run_enable      : std_logic := '1';
-  signal r_obs_enable      : std_logic := '1';
-  signal r_reset_pulse     : std_logic := '0';
+  signal run_enable_r      : std_logic := '1';
+  signal obs_enable_r      : std_logic := '1';
+  signal reset_pulse_r     : std_logic := '0';
 
-  signal r_tm_done_d       : std_logic := '0';
+  signal tm_done_d_r       : std_logic := '0';
   signal w_tm_done_rise    : std_logic;
   signal w_any_error       : std_logic;
-  signal r_pending_enc_line : std_logic := '0';
-  signal r_dp_load_base    : std_logic := '0';
-  signal r_dp_load_enc     : std_logic := '0';
-  signal r_tm_count_payload : std_logic_vector(c_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0) := (others => '0');
-  signal r_flags_payload    : std_logic_vector(c_TM_UART_FLAGS_WIDTH - 1 downto 0) := (others => '0');
-  signal r_enc_src_payload  : std_logic_vector(3 downto 0) := (others => '0');
-  signal r_enc_data_payload : std_logic_vector(79 downto 0) := (others => '0');
-  signal r_enc_src_pending  : std_logic_vector(3 downto 0) := (others => '0');
-  signal r_enc_data_pending : std_logic_vector(79 downto 0) := (others => '0');
-  signal r_report_has_flags : std_logic := '0';
-  signal r_report_counter   : integer range 0 to G_REPORT_PERIOD_PACKETS - 1 := 0;
-  signal r_period_report_due : std_logic := '0';
+  signal pending_enc_line_r : std_logic := '0';
+  signal dp_load_base_r    : std_logic := '0';
+  signal dp_load_enc_r     : std_logic := '0';
+  signal tm_count_payload_r : std_logic_vector(c_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0) := (others => '0');
+  signal flags_payload_r    : std_logic_vector(c_TM_UART_FLAGS_WIDTH - 1 downto 0) := (others => '0');
+  signal enc_src_payload_r  : std_logic_vector(3 downto 0) := (others => '0');
+  signal enc_data_payload_r : std_logic_vector(79 downto 0) := (others => '0');
+  signal enc_src_pending_r  : std_logic_vector(3 downto 0) := (others => '0');
+  signal enc_data_pending_r : std_logic_vector(79 downto 0) := (others => '0');
+  signal report_has_flags_r : std_logic := '0';
+  signal report_counter_r   : integer range 0 to G_REPORT_PERIOD_PACKETS - 1 := 0;
+  signal period_report_due_r : std_logic := '0';
 
   function f_pack80(src : std_logic_vector) return std_logic_vector is
     variable v : std_logic_vector(79 downto 0) := (others => '0');
@@ -219,43 +225,43 @@ begin
   -- always ready to receive commands
   o_uart_rready <= '1';
 
-  o_uart_tstart <= r_uart_tstart;
-  o_uart_tdata  <= r_uart_tdata;
-  o_dp_load_base    <= r_dp_load_base;
-  o_dp_load_enc     <= r_dp_load_enc;
-  o_dp_tm_count     <= r_tm_count_payload;
-  o_dp_flags        <= r_flags_payload;
-  o_dp_enc_src      <= r_enc_src_payload;
-  o_dp_enc_data     <= r_enc_data_payload;
-  o_dp_nibble_index <= r_nibble_index;
+  o_uart_tstart <= uart_tstart_r;
+  o_uart_tdata  <= uart_tdata_r;
+  o_dp_load_base    <= dp_load_base_r;
+  o_dp_load_enc     <= dp_load_enc_r;
+  o_dp_tm_count     <= tm_count_payload_r;
+  o_dp_flags        <= flags_payload_r;
+  o_dp_enc_src      <= enc_src_payload_r;
+  o_dp_enc_data     <= enc_data_payload_r;
+  o_dp_nibble_index <= nibble_index_r;
   o_dp_label_sel    <= w_dp_label_sel;
-  o_dp_label_index  <= r_label_index;
+  o_dp_label_index  <= label_index_r;
 
-  o_experiment_run_enable  <= r_run_enable;
-  o_experiment_reset_pulse <= r_reset_pulse;
+  o_experiment_run_enable  <= run_enable_r;
+  o_experiment_reset_pulse <= reset_pulse_r;
 
-  o_OBS_TM_HAM_BUFFER_CORRECT_ERROR <= r_obs_enable;
-  o_OBS_TM_TMR_CTRL_CORRECT_ERROR <= r_obs_enable;
-  o_OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR <= r_obs_enable;
-  o_OBS_LB_HAM_BUFFER_CORRECT_ERROR <= r_obs_enable;
-  o_OBS_LB_TMR_CTRL_CORRECT_ERROR <= r_obs_enable;
-  o_OBS_TG_HAM_BUFFER_CORRECT_ERROR <= r_obs_enable;
-  o_OBS_TG_TMR_CTRL_CORRECT_ERROR <= r_obs_enable;
-  o_OBS_FE_INJ_META_HDR_CORRECT_ERROR <= r_obs_enable;
-  o_OBS_FE_INJ_ADDR_CORRECT_ERROR <= r_obs_enable;
-  o_OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR <= r_obs_enable;
-  o_OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR <= r_obs_enable;
-  o_OBS_BE_INJ_HAM_INTEGRITY_CORRECT_ERROR <= r_obs_enable;
-  o_OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR <= r_obs_enable;
-  o_OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR <= r_obs_enable;
-  o_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR <= r_obs_enable;
-  o_OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR <= r_obs_enable;
-  o_OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR <= r_obs_enable;
-  o_OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR <= r_obs_enable;
-  o_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR <= r_obs_enable;
-  o_OBS_START_DONE_CTRL_TMR_CORRECT_ERROR <= r_obs_enable;
+  o_OBS_TM_HAM_BUFFER_CORRECT_ERROR <= obs_enable_r;
+  o_OBS_TM_TMR_CTRL_CORRECT_ERROR <= obs_enable_r;
+  o_OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR <= obs_enable_r;
+  o_OBS_LB_HAM_BUFFER_CORRECT_ERROR <= obs_enable_r;
+  o_OBS_LB_TMR_CTRL_CORRECT_ERROR <= obs_enable_r;
+  o_OBS_TG_HAM_BUFFER_CORRECT_ERROR <= obs_enable_r;
+  o_OBS_TG_TMR_CTRL_CORRECT_ERROR <= obs_enable_r;
+  o_OBS_FE_INJ_META_HDR_CORRECT_ERROR <= obs_enable_r;
+  o_OBS_FE_INJ_ADDR_CORRECT_ERROR <= obs_enable_r;
+  o_OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR <= obs_enable_r;
+  o_OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR <= obs_enable_r;
+  o_OBS_BE_INJ_HAM_INTEGRITY_CORRECT_ERROR <= obs_enable_r;
+  o_OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR <= obs_enable_r;
+  o_OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR <= obs_enable_r;
+  o_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR <= obs_enable_r;
+  o_OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR <= obs_enable_r;
+  o_OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR <= obs_enable_r;
+  o_OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR <= obs_enable_r;
+  o_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR <= obs_enable_r;
+  o_OBS_START_DONE_CTRL_TMR_CORRECT_ERROR <= obs_enable_r;
 
-  w_tm_done_rise <= i_tm_done and (not r_tm_done_d);
+  w_tm_done_rise <= i_tm_done and (not tm_done_d_r);
   w_any_error <=
     i_tm_comparison_mismatch or i_NI_CORRUPT_PACKET or
     i_OBS_TM_TMR_CTRL_ERROR or
@@ -279,7 +285,7 @@ begin
   -- Datapath/control split:
   -- * this module keeps controller FSM
   -- * datapath module generates label and hex bytes
-  with r_tx_phase select
+  with tx_phase_r select
     w_dp_label_sel <=
       "001" when PH_BASE_TM_LABEL,
       "010" when PH_BASE_FLAGS_LABEL,
@@ -294,69 +300,69 @@ begin
   begin
     if rising_edge(ACLK) then
       if ARESETn = '0' then
-        r_tx_state     <= S_IDLE;
-        r_tx_phase     <= PH_BASE_TM_LABEL;
-        r_wait_source  <= WS_LABEL;
-        r_dp_load_base <= '0';
-        r_dp_load_enc  <= '0';
-        r_tm_count_payload <= (others => '0');
-        r_flags_payload <= (others => '0');
-        r_enc_src_payload <= (others => '0');
-        r_enc_data_payload <= (others => '0');
-        r_enc_src_pending <= (others => '0');
-        r_enc_data_pending <= (others => '0');
-        r_nibble_index <= to_unsigned(C_BASE_TM_NIBBLE_START, 5);
-        r_nibble_stop  <= to_unsigned(C_BASE_TM_NIBBLE_STOP, 5);
-        r_label_index  <= 1;
-        r_uart_tstart  <= '0';
-        r_uart_tdata   <= (others => '0');
-        r_run_enable   <= '1';
-        r_obs_enable   <= '1';
-        r_reset_pulse  <= '0';
-        r_tm_done_d    <= '0';
-        r_pending_enc_line <= '0';
-        r_report_has_flags <= '0';
-        r_report_counter   <= 0;
-        r_period_report_due <= '0';
+        tx_state_r     <= S_IDLE;
+        tx_phase_r     <= PH_BASE_TM_LABEL;
+        wait_source_r  <= WS_LABEL;
+        dp_load_base_r <= '0';
+        dp_load_enc_r  <= '0';
+        tm_count_payload_r <= (others => '0');
+        flags_payload_r <= (others => '0');
+        enc_src_payload_r <= (others => '0');
+        enc_data_payload_r <= (others => '0');
+        enc_src_pending_r <= (others => '0');
+        enc_data_pending_r <= (others => '0');
+        nibble_index_r <= to_unsigned(C_BASE_TM_NIBBLE_START, 5);
+        nibble_stop_r  <= to_unsigned(C_BASE_TM_NIBBLE_STOP, 5);
+        label_index_r  <= 1;
+        uart_tstart_r  <= '0';
+        uart_tdata_r   <= (others => '0');
+        run_enable_r   <= '1';
+        obs_enable_r   <= '1';
+        reset_pulse_r  <= '0';
+        tm_done_d_r    <= '0';
+        pending_enc_line_r <= '0';
+        report_has_flags_r <= '0';
+        report_counter_r   <= 0;
+        period_report_due_r <= '0';
       else
-        r_tm_done_d    <= i_tm_done;
-        r_reset_pulse  <= '0';
-        r_uart_tstart  <= '0';
-        r_dp_load_base <= '0';
-        r_dp_load_enc  <= '0';
+        tm_done_d_r    <= i_tm_done;
+        reset_pulse_r  <= '0';
+        uart_tstart_r  <= '0';
+        dp_load_base_r <= '0';
+        dp_load_enc_r  <= '0';
 
         if w_tm_done_rise = '1' then
-          if r_report_counter = G_REPORT_PERIOD_PACKETS - 1 then
-            r_report_counter    <= 0;
-            r_period_report_due <= '1';
+          if report_counter_r = G_REPORT_PERIOD_PACKETS - 1 then
+            report_counter_r    <= 0;
+            period_report_due_r <= '1';
           else
-            r_report_counter <= r_report_counter + 1;
+            report_counter_r <= report_counter_r + 1;
           end if;
         end if;
 
         if (i_uart_rdone = '1') and (i_uart_rerr = '0') then
           case i_uart_rdata is
-            when x"53" => r_run_enable  <= '1'; -- S
-            when x"50" => r_run_enable  <= '0'; -- P
-            when x"52" => r_reset_pulse <= '1'; -- R
-            when x"45" => r_obs_enable  <= '1'; -- E
-            when x"44" => r_obs_enable  <= '0'; -- D
+            when x"53" => run_enable_r  <= '1'; -- S
+            when x"50" => run_enable_r  <= '0'; -- P
+            when x"52" => reset_pulse_r <= '1'; -- R
+            when x"45" => obs_enable_r  <= '1'; -- E
+            when x"44" => obs_enable_r  <= '0'; -- D
             when others => null;
           end case;
         end if;
 
-        case r_tx_state is
+        case tx_state_r is
           when S_IDLE =>
             v_is_event  := ((w_tm_done_rise = '1') and (w_any_error = '1'));
-            v_do_report := (r_period_report_due = '1') or v_is_event;
+            v_do_report := (period_report_due_r = '1') or v_is_event;
             if v_do_report then
-              r_period_report_due <= '0';
+              period_report_due_r <= '0';
 
               -- Base status frame payload (assembled in datapath).
-              r_tm_count_payload <= i_TM_TRANSACTION_COUNT;
+              tm_count_payload_r <= i_TM_TRANSACTION_COUNT;
               v_flags := (others => '0');
               if v_is_event then
-                r_report_has_flags <= '1';
+                report_has_flags_r <= '1';
                 v_flags(27) := i_tm_comparison_mismatch;
                 v_flags(26) := i_NI_CORRUPT_PACKET;
                 v_flags(25) := i_OBS_TM_TMR_CTRL_ERROR;
@@ -387,192 +393,196 @@ begin
                 v_flags(0)  := i_OBS_BE_RX_TMR_FLOW_CTRL_ERROR;
                 v_flags(28) := i_OBS_START_DONE_CTRL_TMR_ERROR;
               else
-                r_report_has_flags <= '0';
+                report_has_flags_r <= '0';
               end if;
-              r_flags_payload <= v_flags;
-              r_dp_load_base <= '1';
+              flags_payload_r <= v_flags;
+              dp_load_base_r <= '1';
 
-              r_pending_enc_line <= '0';
+              pending_enc_line_r <= '0';
               if v_is_event and ((i_OBS_TM_HAM_BUFFER_SINGLE_ERR = '1') or (i_OBS_TM_HAM_BUFFER_DOUBLE_ERR = '1')) then
-                r_pending_enc_line <= '1';
-                r_enc_src_pending  <= x"1";
-                r_enc_data_pending <= f_pack80(i_OBS_TM_HAM_BUFFER_ENC_DATA);
+                pending_enc_line_r <= '1';
+                enc_src_pending_r  <= x"1";
+                enc_data_pending_r <= f_pack80(i_OBS_TM_HAM_BUFFER_ENC_DATA);
               elsif v_is_event and ((i_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR = '1') or (i_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR = '1')) then
-                r_pending_enc_line <= '1';
-                r_enc_src_pending  <= x"2";
-                r_enc_data_pending <= f_pack80(i_OBS_TM_HAM_TXN_COUNTER_ENC_DATA);
+                pending_enc_line_r <= '1';
+                enc_src_pending_r  <= x"2";
+                enc_data_pending_r <= f_pack80(i_OBS_TM_HAM_TXN_COUNTER_ENC_DATA);
               elsif v_is_event and ((i_OBS_LB_HAM_BUFFER_SINGLE_ERR = '1') or (i_OBS_LB_HAM_BUFFER_DOUBLE_ERR = '1')) then
-                r_pending_enc_line <= '1';
-                r_enc_src_pending  <= x"3";
-                r_enc_data_pending <= f_pack80(i_OBS_LB_HAM_BUFFER_ENC_DATA);
+                pending_enc_line_r <= '1';
+                enc_src_pending_r  <= x"3";
+                enc_data_pending_r <= f_pack80(i_OBS_LB_HAM_BUFFER_ENC_DATA);
               elsif v_is_event and ((i_OBS_TG_HAM_BUFFER_SINGLE_ERR = '1') or (i_OBS_TG_HAM_BUFFER_DOUBLE_ERR = '1')) then
-                r_pending_enc_line <= '1';
-                r_enc_src_pending  <= x"4";
-                r_enc_data_pending <= f_pack80(i_OBS_TG_HAM_BUFFER_ENC_DATA);
+                pending_enc_line_r <= '1';
+                enc_src_pending_r  <= x"4";
+                enc_data_pending_r <= f_pack80(i_OBS_TG_HAM_BUFFER_ENC_DATA);
               elsif v_is_event and ((i_OBS_FE_INJ_META_HDR_SINGLE_ERR = '1') or (i_OBS_FE_INJ_META_HDR_DOUBLE_ERR = '1')) then
-                r_pending_enc_line <= '1';
-                r_enc_src_pending  <= x"5";
-                r_enc_data_pending <= f_pack80(i_OBS_FE_INJ_HAM_META_HDR_ENC_DATA);
+                pending_enc_line_r <= '1';
+                enc_src_pending_r  <= x"5";
+                enc_data_pending_r <= f_pack80(i_OBS_FE_INJ_HAM_META_HDR_ENC_DATA);
               elsif v_is_event and ((i_OBS_FE_INJ_ADDR_SINGLE_ERR = '1') or (i_OBS_FE_INJ_ADDR_DOUBLE_ERR = '1')) then
-                r_pending_enc_line <= '1';
-                r_enc_src_pending  <= x"6";
-                r_enc_data_pending <= f_pack80(i_OBS_FE_INJ_HAM_ADDR_ENC_DATA);
+                pending_enc_line_r <= '1';
+                enc_src_pending_r  <= x"6";
+                enc_data_pending_r <= f_pack80(i_OBS_FE_INJ_HAM_ADDR_ENC_DATA);
               elsif v_is_event and ((i_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR = '1') or (i_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR = '1')) then
-                r_pending_enc_line <= '1';
-                r_enc_src_pending  <= x"7";
-                r_enc_data_pending <= f_pack80(i_OBS_BE_INJ_HAM_BUFFER_ENC_DATA);
+                pending_enc_line_r <= '1';
+                enc_src_pending_r  <= x"7";
+                enc_data_pending_r <= f_pack80(i_OBS_BE_INJ_HAM_BUFFER_ENC_DATA);
               elsif v_is_event and ((i_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR = '1') or (i_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR = '1')) then
-                r_pending_enc_line <= '1';
-                r_enc_src_pending  <= x"8";
-                r_enc_data_pending <= f_pack80(i_OBS_BE_INJ_HAM_INTEGRITY_ENC_DATA);
+                pending_enc_line_r <= '1';
+                enc_src_pending_r  <= x"8";
+                enc_data_pending_r <= f_pack80(i_OBS_BE_INJ_HAM_INTEGRITY_ENC_DATA);
               elsif v_is_event and ((i_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR = '1') or (i_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR = '1')) then
-                r_pending_enc_line <= '1';
-                r_enc_src_pending  <= x"9";
-                r_enc_data_pending <= f_pack80(i_OBS_BE_RX_HAM_BUFFER_ENC_DATA);
+                pending_enc_line_r <= '1';
+                enc_src_pending_r  <= x"9";
+                enc_data_pending_r <= f_pack80(i_OBS_BE_RX_HAM_BUFFER_ENC_DATA);
               elsif v_is_event and ((i_OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR = '1') or (i_OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR = '1')) then
-                r_pending_enc_line <= '1';
-                r_enc_src_pending  <= x"A";
-                r_enc_data_pending <= f_pack80(i_OBS_BE_RX_HAM_INTERFACE_HDR_ENC_DATA);
+                pending_enc_line_r <= '1';
+                enc_src_pending_r  <= x"A";
+                enc_data_pending_r <= f_pack80(i_OBS_BE_RX_HAM_INTERFACE_HDR_ENC_DATA);
               elsif v_is_event and ((i_OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR = '1') or (i_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR = '1')) then
-                r_pending_enc_line <= '1';
-                r_enc_src_pending  <= x"B";
-                r_enc_data_pending <= f_pack80(i_OBS_BE_RX_HAM_INTEGRITY_ENC_DATA);
+                pending_enc_line_r <= '1';
+                enc_src_pending_r  <= x"B";
+                enc_data_pending_r <= f_pack80(i_OBS_BE_RX_HAM_INTEGRITY_ENC_DATA);
               end if;
 
-              r_tx_phase    <= PH_BASE_TM_LABEL;
-              r_label_index <= 1;
-              r_tx_state    <= S_SEND_LABEL;
+              tx_phase_r    <= PH_BASE_TM_LABEL;
+              label_index_r <= 1;
+              tx_state_r    <= S_SEND_LABEL;
             end if;
 
           when S_SEND_LABEL =>
             if i_uart_tready = '1' then
-              case r_tx_phase is
+              case tx_phase_r is
                 when PH_BASE_TM_LABEL =>
-                  r_uart_tdata <= i_dp_label_char;
+                  uart_tdata_r <= i_dp_label_char;
                 when PH_BASE_FLAGS_LABEL =>
-                  r_uart_tdata <= i_dp_label_char;
+                  uart_tdata_r <= i_dp_label_char;
                 when PH_ENC_LABEL =>
-                  r_uart_tdata <= i_dp_label_char;
+                  uart_tdata_r <= i_dp_label_char;
                 when PH_ENC_DATA_LABEL =>
-                  r_uart_tdata <= i_dp_label_char;
+                  uart_tdata_r <= i_dp_label_char;
                 when others =>
-                  r_uart_tdata <= x"3F"; -- '?'
+                  uart_tdata_r <= x"3F"; -- '?'
               end case;
-              r_uart_tstart <= '1';
-              r_wait_source <= WS_LABEL;
-              r_tx_state    <= S_WAIT_DONE;
+              uart_tstart_r <= '1';
+              wait_source_r <= WS_LABEL;
+              tx_state_r    <= S_WAIT_DONE;
             end if;
 
           when S_SEND_HEX =>
             if i_uart_tready = '1' then
-              r_uart_tdata  <= i_dp_hex_char;
-              r_uart_tstart <= '1';
-              r_wait_source <= WS_HEX;
-              r_tx_state    <= S_WAIT_DONE;
+              uart_tdata_r  <= i_dp_hex_char;
+              uart_tstart_r <= '1';
+              wait_source_r <= WS_HEX;
+              tx_state_r    <= S_WAIT_DONE;
             end if;
 
           when S_SEND_LF =>
             if i_uart_tready = '1' then
-              r_uart_tdata  <= x"0A";
-              r_uart_tstart <= '1';
-              r_wait_source <= WS_LF;
-              r_tx_state    <= S_WAIT_DONE;
+              uart_tdata_r  <= x"0A";
+              uart_tstart_r <= '1';
+              wait_source_r <= WS_LF;
+              tx_state_r    <= S_WAIT_DONE;
             end if;
 
           when S_WAIT_DONE =>
             if i_uart_tdone = '1' then
-              case r_wait_source is
+              case wait_source_r is
                 when WS_LABEL =>
-                  case r_tx_phase is
+                  case tx_phase_r is
                     when PH_BASE_TM_LABEL =>
-                      if r_label_index < C_LABEL_TM'length then
-                        r_label_index <= r_label_index + 1;
-                        r_tx_state    <= S_SEND_LABEL;
+                      if label_index_r < C_LABEL_TM'length then
+                        label_index_r <= label_index_r + 1;
+                        tx_state_r    <= S_SEND_LABEL;
                       else
-                        r_tx_phase    <= PH_BASE_TM_HEX;
-                        r_nibble_index <= to_unsigned(C_BASE_TM_NIBBLE_START, 5);
-                        r_nibble_stop  <= to_unsigned(C_BASE_TM_NIBBLE_STOP, 5);
-                        r_tx_state    <= S_SEND_HEX;
+                        tx_phase_r    <= PH_BASE_TM_HEX;
+                        nibble_index_r <= to_unsigned(C_BASE_TM_NIBBLE_START, 5);
+                        nibble_stop_r  <= to_unsigned(C_BASE_TM_NIBBLE_STOP, 5);
+                        tx_state_r    <= S_SEND_HEX;
                       end if;
                     when PH_BASE_FLAGS_LABEL =>
-                      if r_label_index < C_LABEL_FLAGS'length then
-                        r_label_index <= r_label_index + 1;
-                        r_tx_state    <= S_SEND_LABEL;
+                      if label_index_r < C_LABEL_FLAGS'length then
+                        label_index_r <= label_index_r + 1;
+                        tx_state_r    <= S_SEND_LABEL;
                       else
-                        r_tx_phase     <= PH_BASE_FLAGS_HEX;
-                        r_nibble_index <= to_unsigned(C_BASE_FLAGS_NIBBLE_START, 5);
-                        r_nibble_stop  <= to_unsigned(C_BASE_FLAGS_NIBBLE_STOP, 5);
-                        r_tx_state     <= S_SEND_HEX;
+                        tx_phase_r     <= PH_BASE_FLAGS_HEX;
+                        nibble_index_r <= to_unsigned(C_BASE_FLAGS_NIBBLE_START, 5);
+                        nibble_stop_r  <= to_unsigned(C_BASE_FLAGS_NIBBLE_STOP, 5);
+                        tx_state_r     <= S_SEND_HEX;
                       end if;
                     when PH_ENC_LABEL =>
-                      if r_label_index < C_LABEL_ENC'length then
-                        r_label_index <= r_label_index + 1;
-                        r_tx_state    <= S_SEND_LABEL;
+                      if label_index_r < C_LABEL_ENC'length then
+                        label_index_r <= label_index_r + 1;
+                        tx_state_r    <= S_SEND_LABEL;
                       else
-                        r_tx_phase     <= PH_ENC_SRC_HEX;
-                        r_nibble_index <= to_unsigned(C_ENC_SRC_NIBBLE_START, 5);
-                        r_nibble_stop  <= to_unsigned(C_ENC_SRC_NIBBLE_STOP, 5);
-                        r_tx_state     <= S_SEND_HEX;
+                        tx_phase_r     <= PH_ENC_SRC_HEX;
+                        nibble_index_r <= to_unsigned(C_ENC_SRC_NIBBLE_START, 5);
+                        nibble_stop_r  <= to_unsigned(C_ENC_SRC_NIBBLE_STOP, 5);
+                        tx_state_r     <= S_SEND_HEX;
                       end if;
                     when PH_ENC_DATA_LABEL =>
-                      if r_label_index < C_LABEL_DATA'length then
-                        r_label_index <= r_label_index + 1;
-                        r_tx_state    <= S_SEND_LABEL;
+                      if label_index_r < C_LABEL_DATA'length then
+                        label_index_r <= label_index_r + 1;
+                        tx_state_r    <= S_SEND_LABEL;
                       else
-                        r_tx_phase     <= PH_ENC_DATA_HEX;
-                        r_nibble_index <= to_unsigned(C_ENC_DATA_NIBBLE_START, 5);
-                        r_nibble_stop  <= to_unsigned(C_ENC_DATA_NIBBLE_STOP, 5);
-                        r_tx_state     <= S_SEND_HEX;
+                        tx_phase_r     <= PH_ENC_DATA_HEX;
+                        nibble_index_r <= to_unsigned(C_ENC_DATA_NIBBLE_START, 5);
+                        nibble_stop_r  <= to_unsigned(C_ENC_DATA_NIBBLE_STOP, 5);
+                        tx_state_r     <= S_SEND_HEX;
                       end if;
                     when others =>
-                      r_tx_state <= S_IDLE;
+                      tx_state_r <= S_IDLE;
                   end case;
 
                 when WS_HEX =>
-                  if r_nibble_index /= r_nibble_stop then
-                    r_nibble_index <= r_nibble_index - 1;
-                    r_tx_state     <= S_SEND_HEX;
+                  if nibble_index_r /= nibble_stop_r then
+                    nibble_index_r <= nibble_index_r - 1;
+                    tx_state_r     <= S_SEND_HEX;
                   else
-                    case r_tx_phase is
+                    case tx_phase_r is
                       when PH_BASE_TM_HEX =>
-                        if r_report_has_flags = '1' then
-                          r_tx_phase    <= PH_BASE_FLAGS_LABEL;
-                          r_label_index <= 1;
-                          r_tx_state    <= S_SEND_LABEL;
+                        if report_has_flags_r = '1' then
+                          tx_phase_r    <= PH_BASE_FLAGS_LABEL;
+                          label_index_r <= 1;
+                          tx_state_r    <= S_SEND_LABEL;
                         else
-                          r_tx_state <= S_SEND_LF;
+                          tx_state_r <= S_SEND_LF;
                         end if;
                       when PH_BASE_FLAGS_HEX =>
-                        r_tx_state <= S_SEND_LF;
+                        tx_state_r <= S_SEND_LF;
                       when PH_ENC_SRC_HEX =>
-                        r_tx_phase    <= PH_ENC_DATA_LABEL;
-                        r_label_index <= 1;
-                        r_tx_state    <= S_SEND_LABEL;
+                        tx_phase_r    <= PH_ENC_DATA_LABEL;
+                        label_index_r <= 1;
+                        tx_state_r    <= S_SEND_LABEL;
                       when PH_ENC_DATA_HEX =>
-                        r_tx_state <= S_SEND_LF;
+                        tx_state_r <= S_SEND_LF;
                       when others =>
-                        r_tx_state <= S_IDLE;
+                        tx_state_r <= S_IDLE;
                     end case;
                   end if;
 
                 when WS_LF =>
-                  if r_tx_phase = PH_BASE_FLAGS_HEX then
-                    if r_pending_enc_line = '1' then
-                      r_enc_src_payload  <= r_enc_src_pending;
-                      r_enc_data_payload <= r_enc_data_pending;
-                      r_dp_load_enc      <= '1';
-                      r_pending_enc_line <= '0';
-                      r_tx_phase         <= PH_ENC_LABEL;
-                      r_label_index      <= 1;
-                      r_tx_state         <= S_SEND_LABEL;
+                  if tx_phase_r = PH_BASE_FLAGS_HEX then
+                    if pending_enc_line_r = '1' then
+                      enc_src_payload_r  <= enc_src_pending_r;
+                      enc_data_payload_r <= enc_data_pending_r;
+                      dp_load_enc_r      <= '1';
+                      pending_enc_line_r <= '0';
+                      tx_phase_r         <= PH_ENC_LABEL;
+                      label_index_r      <= 1;
+                      tx_state_r         <= S_SEND_LABEL;
                     else
-                      r_tx_state <= S_IDLE;
+                      tx_state_r <= S_IDLE;
                     end if;
                   else
-                    r_tx_state <= S_IDLE;
+                    tx_state_r <= S_IDLE;
                   end if;
+                when others =>
+                  tx_state_r <= S_IDLE;
               end case;
             end if;
+          when others =>
+            tx_state_r <= S_IDLE;
         end case;
       end if;
     end if;

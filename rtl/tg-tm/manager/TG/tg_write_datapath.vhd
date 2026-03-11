@@ -9,7 +9,7 @@ use work.xina_ni_ft_pkg.all;
 --  * NO external override ports
 --  * NO init-value generic / no helper functions
 --  * AW fields are constants (single-beat INCR burst)
---  * ONE data register (r_wdata) acts as both WDATA output and LFSR state
+--  * ONE data register (wdata_r) acts as both WDATA output and LFSR state
 --  * Seed is inserted into LSBs of an all-zero init word
 entity tg_write_datapath is
   generic (
@@ -48,7 +48,7 @@ end tg_write_datapath;
 
 architecture rtl of tg_write_datapath is
   -- Stored payload/LFSR state (optionally protected by Hamming register)
-  signal r_wdata  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
+  signal wdata_r  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
   signal w_single_err : std_logic;
   signal w_double_err : std_logic;
   -- Not used externally; handy for debug visibility if you ever need it.
@@ -70,7 +70,7 @@ begin
   WLAST <= '1';
 
   -- Payload comes from the state register
-  WDATA <= r_wdata;
+  WDATA <= wdata_r;
 
   -- Controller provides a single-cycle seed pulse (only once after reset)
   w_do_step <= i_wbeat_pulse;
@@ -89,7 +89,7 @@ begin
   end process;
 
   -- Feed init value only when seeding; otherwise feed the current (decoded) state.
-  w_lfsr_input <= w_init_value when (i_seed_pulse = '1') else r_wdata;
+  w_lfsr_input <= w_init_value when (i_seed_pulse = '1') else wdata_r;
 
   u_LFSR: entity work.tg_write_lfsr
     generic map(
@@ -119,7 +119,7 @@ begin
       single_err_o => w_single_err,
       double_err_o => w_double_err,
       enc_data_o   => w_enc_state,
-      data_o       => r_wdata
+      data_o       => wdata_r
     );
 
   -- observation outputs

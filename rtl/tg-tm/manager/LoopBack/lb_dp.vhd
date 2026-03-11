@@ -42,7 +42,7 @@ architecture rtl of lb_dp is
   -- width = 32 + get_ecc_size(32, p_USE_LB_HAMMING_DOUBLE_DETECT)
   signal w_enc_payload : std_logic_vector(32 + work.hamming_pkg.get_ecc_size(32, p_USE_LB_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
-  signal r_payload_dec : std_logic_vector(31 downto 0);
+  signal payload_dec_r : std_logic_vector(31 downto 0);
 
 begin
   ------------------------------------------------------------------------------
@@ -78,7 +78,7 @@ begin
       single_err_o => w_single_err,
       double_err_o => w_double_err,
       enc_data_o   => w_enc_payload,
-      data_o       => r_payload_dec
+      data_o       => payload_dec_r
     );
 
   -- outputs
@@ -87,6 +87,6 @@ begin
   o_ham_buffer_enc_data <= w_enc_payload;
 
   -- for READ responses, always drive the (decoded) payload
-  o_rd_payload <= r_payload_dec;
+  o_rd_payload <= payload_dec_r;
 
 end architecture;
