@@ -15,6 +15,8 @@ entity tg_tm_lb_selftest_uart_encode_dp is
 
     load_base_i  : in  std_logic;
     load_enc_i   : in  std_logic;
+    event_report_i : in std_logic;
+    event_enc_valid_i : in std_logic;
     tm_count_i   : in  std_logic_vector(c_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
     flags_i      : in  std_logic_vector(c_TM_UART_FLAGS_WIDTH - 1 downto 0);
     enc_src_i    : in  std_logic_vector(3 downto 0);
@@ -23,6 +25,8 @@ entity tg_tm_lb_selftest_uart_encode_dp is
     nibble_index_i : in  unsigned(4 downto 0);
     label_sel_i    : in  std_logic_vector(2 downto 0);
     label_index_i  : in  natural range 1 to 8;
+    pending_enc_line_o : out std_logic;
+    report_has_flags_o : out std_logic;
     hex_char_o     : out std_logic_vector(7 downto 0);
     label_char_o   : out std_logic_vector(7 downto 0)
   );
@@ -39,6 +43,10 @@ architecture rtl of tg_tm_lb_selftest_uart_encode_dp is
   constant C_LABEL_DATA  : string := " DATA=";
 
   signal fault_data_r  : std_logic_vector(83 downto 0) := (others => '0');
+  signal pending_enc_src_r  : std_logic_vector(3 downto 0) := (others => '0');
+  signal pending_enc_data_r : std_logic_vector(79 downto 0) := (others => '0');
+  signal pending_enc_line_r : std_logic := '0';
+  signal report_has_flags_r : std_logic := '0';
   signal nibble_data_w : std_logic_vector(3 downto 0);
 
   function f_char_to_slv8(c : character) return std_logic_vector is
@@ -51,9 +59,17 @@ architecture rtl of tg_tm_lb_selftest_uart_encode_dp is
   -- Xilinx attributes to prevent optimization of TMR
   attribute DONT_TOUCH : string;
   attribute DONT_TOUCH of fault_data_r : signal is "TRUE";
+  attribute DONT_TOUCH of pending_enc_src_r : signal is "TRUE";
+  attribute DONT_TOUCH of pending_enc_data_r : signal is "TRUE";
+  attribute DONT_TOUCH of pending_enc_line_r : signal is "TRUE";
+  attribute DONT_TOUCH of report_has_flags_r : signal is "TRUE";
   -- Synplify attributes to prevent optimization of TMR
   attribute syn_preserve : boolean;
   attribute syn_preserve of fault_data_r : signal is true;
+  attribute syn_preserve of pending_enc_src_r : signal is true;
+  attribute syn_preserve of pending_enc_data_r : signal is true;
+  attribute syn_preserve of pending_enc_line_r : signal is true;
+  attribute syn_preserve of report_has_flags_r : signal is true;
 begin
   assert (C_BASE_TM_MSB <= 83)
     report "TM+FLAGS payload width exceeds datapath storage width"
@@ -64,20 +80,41 @@ begin
     if rising_edge(ACLK) then
       if ARESETn = '0' then
         fault_data_r <= (others => '0');
+        pending_enc_src_r <= (others => '0');
+        pending_enc_data_r <= (others => '0');
+        pending_enc_line_r <= '0';
+        report_has_flags_r <= '0';
       else
         if load_base_i = '1' then
           fault_data_r <= (others => '0');
           fault_data_r(C_BASE_TM_MSB downto C_BASE_TM_LSB) <= tm_count_i;
-          fault_data_r(c_TM_UART_FLAGS_WIDTH - 1 downto 0) <= flags_i;
+          if event_report_i = '1' then
+            fault_data_r(c_TM_UART_FLAGS_WIDTH - 1 downto 0) <= flags_i;
+            report_has_flags_r <= '1';
+            if event_enc_valid_i = '1' then
+              pending_enc_src_r  <= enc_src_i;
+              pending_enc_data_r <= enc_data_i;
+              pending_enc_line_r <= '1';
+            else
+              pending_enc_line_r <= '0';
+            end if;
+          else
+            report_has_flags_r <= '0';
+            pending_enc_line_r <= '0';
+          end if;
         end if;
 
         if load_enc_i = '1' then
-          fault_data_r(83 downto 80) <= enc_src_i;
-          fault_data_r(79 downto 0)  <= enc_data_i;
+          fault_data_r(83 downto 80) <= pending_enc_src_r;
+          fault_data_r(79 downto 0)  <= pending_enc_data_r;
+          pending_enc_line_r <= '0';
         end if;
       end if;
     end if;
   end process;
+
+  pending_enc_line_o <= pending_enc_line_r;
+  report_has_flags_o <= report_has_flags_r;
 
   with to_integer(nibble_index_i) select
     nibble_data_w <=

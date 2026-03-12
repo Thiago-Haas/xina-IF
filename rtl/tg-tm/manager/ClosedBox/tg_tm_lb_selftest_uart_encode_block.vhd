@@ -124,6 +124,10 @@ end entity;
 architecture rtl of tg_tm_lb_selftest_uart_encode_block is
   signal dp_load_base_w  : std_logic;
   signal dp_load_enc_w   : std_logic;
+  signal dp_event_report_w : std_logic;
+  signal dp_event_enc_valid_w : std_logic;
+  signal dp_pending_enc_line_w : std_logic;
+  signal dp_report_has_flags_w : std_logic;
   signal dp_tm_count_w   : std_logic_vector(c_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
   signal dp_flags_w      : std_logic_vector(c_TM_UART_FLAGS_WIDTH - 1 downto 0);
   signal dp_enc_src_w    : std_logic_vector(3 downto 0);
@@ -134,6 +138,42 @@ architecture rtl of tg_tm_lb_selftest_uart_encode_block is
   signal dp_hex_char_w    : std_logic_vector(7 downto 0);
   signal dp_label_char_w  : std_logic_vector(7 downto 0);
 begin
+  uart_rready_o <= '1';
+
+  b_obs_enable_block: block
+  begin
+    u_obs_enable_block: entity work.tg_tm_lb_selftest_obs_enable_block
+      port map(
+        ACLK    => ACLK,
+        ARESETn => ARESETn,
+        uart_rdone_i => uart_rdone_i,
+        uart_rdata_i => uart_rdata_i,
+        uart_rerr_i  => uart_rerr_i,
+        experiment_run_enable_o  => experiment_run_enable_o,
+        experiment_reset_pulse_o => experiment_reset_pulse_o,
+        OBS_TM_HAM_BUFFER_CORRECT_ERROR_o => OBS_TM_HAM_BUFFER_CORRECT_ERROR_o,
+        OBS_TM_TMR_CTRL_CORRECT_ERROR_o   => OBS_TM_TMR_CTRL_CORRECT_ERROR_o,
+        OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_o => OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_o,
+        OBS_LB_HAM_BUFFER_CORRECT_ERROR_o => OBS_LB_HAM_BUFFER_CORRECT_ERROR_o,
+        OBS_LB_TMR_CTRL_CORRECT_ERROR_o   => OBS_LB_TMR_CTRL_CORRECT_ERROR_o,
+        OBS_TG_HAM_BUFFER_CORRECT_ERROR_o => OBS_TG_HAM_BUFFER_CORRECT_ERROR_o,
+        OBS_TG_TMR_CTRL_CORRECT_ERROR_o   => OBS_TG_TMR_CTRL_CORRECT_ERROR_o,
+        OBS_FE_INJ_META_HDR_CORRECT_ERROR_o => OBS_FE_INJ_META_HDR_CORRECT_ERROR_o,
+        OBS_FE_INJ_ADDR_CORRECT_ERROR_o     => OBS_FE_INJ_ADDR_CORRECT_ERROR_o,
+        OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR_o => OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR_o,
+        OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_o => OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_o,
+        OBS_BE_INJ_HAM_INTEGRITY_CORRECT_ERROR_o => OBS_BE_INJ_HAM_INTEGRITY_CORRECT_ERROR_o,
+        OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR_o => OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR_o,
+        OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR_o => OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR_o,
+        OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR_o => OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR_o,
+        OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_o => OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_o,
+        OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR_o => OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR_o,
+        OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR_o => OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR_o,
+        OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR_o => OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR_o,
+        OBS_START_DONE_CTRL_TMR_CORRECT_ERROR_o => OBS_START_DONE_CTRL_TMR_CORRECT_ERROR_o
+      );
+  end block;
+
   b_uart_encode_control: block
   begin
     u_uart_encode_ctrl: entity work.tg_tm_lb_selftest_uart_encode_ctrl
@@ -190,28 +230,6 @@ begin
         OBS_BE_RX_HAM_INTEGRITY_ENC_DATA_i => OBS_BE_RX_HAM_INTEGRITY_ENC_DATA_i,
         OBS_BE_RX_TMR_FLOW_CTRL_ERROR_i => OBS_BE_RX_TMR_FLOW_CTRL_ERROR_i,
         OBS_START_DONE_CTRL_TMR_ERROR_i => OBS_START_DONE_CTRL_TMR_ERROR_i,
-        OBS_TM_HAM_BUFFER_CORRECT_ERROR_o => OBS_TM_HAM_BUFFER_CORRECT_ERROR_o,
-        OBS_TM_TMR_CTRL_CORRECT_ERROR_o => OBS_TM_TMR_CTRL_CORRECT_ERROR_o,
-        OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_o => OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_o,
-        OBS_LB_HAM_BUFFER_CORRECT_ERROR_o => OBS_LB_HAM_BUFFER_CORRECT_ERROR_o,
-        OBS_LB_TMR_CTRL_CORRECT_ERROR_o => OBS_LB_TMR_CTRL_CORRECT_ERROR_o,
-        OBS_TG_HAM_BUFFER_CORRECT_ERROR_o => OBS_TG_HAM_BUFFER_CORRECT_ERROR_o,
-        OBS_TG_TMR_CTRL_CORRECT_ERROR_o => OBS_TG_TMR_CTRL_CORRECT_ERROR_o,
-        OBS_FE_INJ_META_HDR_CORRECT_ERROR_o => OBS_FE_INJ_META_HDR_CORRECT_ERROR_o,
-        OBS_FE_INJ_ADDR_CORRECT_ERROR_o => OBS_FE_INJ_ADDR_CORRECT_ERROR_o,
-        OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR_o => OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR_o,
-        OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_o => OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_o,
-        OBS_BE_INJ_HAM_INTEGRITY_CORRECT_ERROR_o => OBS_BE_INJ_HAM_INTEGRITY_CORRECT_ERROR_o,
-        OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR_o => OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR_o,
-        OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR_o => OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR_o,
-        OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR_o => OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR_o,
-        OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_o => OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_o,
-        OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR_o => OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR_o,
-        OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR_o => OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR_o,
-        OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR_o => OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR_o,
-        OBS_START_DONE_CTRL_TMR_CORRECT_ERROR_o => OBS_START_DONE_CTRL_TMR_CORRECT_ERROR_o,
-        experiment_run_enable_o => experiment_run_enable_o,
-        experiment_reset_pulse_o => experiment_reset_pulse_o,
         uart_baud_div_o => uart_baud_div_o,
         uart_parity_o   => uart_parity_o,
         uart_rtscts_o   => uart_rtscts_o,
@@ -219,14 +237,14 @@ begin
         uart_tdone_i  => uart_tdone_i,
         uart_tstart_o => uart_tstart_o,
         uart_tdata_o  => uart_tdata_o,
-        uart_rready_o => uart_rready_o,
-        uart_rdone_i  => uart_rdone_i,
-        uart_rdata_i  => uart_rdata_i,
-        uart_rerr_i   => uart_rerr_i,
         dp_hex_char_i   => dp_hex_char_w,
         dp_label_char_i => dp_label_char_w,
         dp_load_base_o  => dp_load_base_w,
         dp_load_enc_o   => dp_load_enc_w,
+        dp_event_report_o => dp_event_report_w,
+        dp_event_enc_valid_o => dp_event_enc_valid_w,
+        dp_pending_enc_line_i => dp_pending_enc_line_w,
+        dp_report_has_flags_i => dp_report_has_flags_w,
         dp_tm_count_o   => dp_tm_count_w,
         dp_flags_o      => dp_flags_w,
         dp_enc_src_o    => dp_enc_src_w,
@@ -245,6 +263,8 @@ begin
         ARESETn => ARESETn,
         load_base_i  => dp_load_base_w,
         load_enc_i   => dp_load_enc_w,
+        event_report_i => dp_event_report_w,
+        event_enc_valid_i => dp_event_enc_valid_w,
         tm_count_i   => dp_tm_count_w,
         flags_i      => dp_flags_w,
         enc_src_i    => dp_enc_src_w,
@@ -252,6 +272,8 @@ begin
         nibble_index_i => dp_nibble_index_w,
         label_sel_i    => dp_label_sel_w,
         label_index_i  => dp_label_index_w,
+        pending_enc_line_o => dp_pending_enc_line_w,
+        report_has_flags_o => dp_report_has_flags_w,
         hex_char_o     => dp_hex_char_w,
         label_char_o   => dp_label_char_w
       );
