@@ -33,8 +33,8 @@ entity tm_read_datapath is
     STARTING_SEED : in  std_logic_vector(31 downto 0);
 
     -- from controller
-    i_seed_pulse  : in std_logic;
-    i_rbeat_pulse : in std_logic;
+    seed_pulse_i  : in std_logic;
+    rbeat_pulse_i : in std_logic;
 
     -- from AXI read data channel
     RDATA : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
@@ -46,34 +46,34 @@ entity tm_read_datapath is
     ARBURST : out std_logic_vector(1 downto 0);
 
     -- comparator output
-    o_lfsr_comparison_mismatch : out std_logic;
+    lfsr_comparison_mismatch_o : out std_logic;
 
     -- debug (post-LFSR reg = expected value)
-    o_expected_value : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+    expected_value_o : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
     -- observation (only meaningful when HAMMING_ENABLE=true)
-    i_OBS_TM_HAM_BUFFER_CORRECT_ERROR : in  std_logic := '1';
-    o_ham_single_err : out std_logic;
-    o_ham_double_err : out std_logic;
-    o_ham_buffer_enc_data : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0)
+    OBS_TM_HAM_BUFFER_CORRECT_ERROR_i : in  std_logic := '1';
+    ham_single_err_o : out std_logic;
+    ham_double_err_o : out std_logic;
+    ham_buffer_enc_data_o : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0)
   );
 end tm_read_datapath;
 
 architecture rtl of tm_read_datapath is
   -- expected word register (optionally protected)
-  signal w_expected_r : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
-  signal w_expected_d : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
-  signal w_exp_we     : std_logic := '0';
-  signal w_ham_single : std_logic := '0';
-  signal w_ham_double : std_logic := '0';
-  signal w_expected_enc : std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
+  signal expected_r_w : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
+  signal expected_d_w : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
+  signal exp_we_w     : std_logic := '0';
+  signal ham_single_w : std_logic := '0';
+  signal ham_double_w : std_logic := '0';
+  signal expected_enc_w : std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
 
-  signal w_init_value : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
-  signal w_lfsr_input : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
-  signal w_lfsr_next  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+  signal init_value_w : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+  signal lfsr_input_w : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+  signal lfsr_next_w  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
-  signal w_do_init : std_logic;
-  signal w_do_step : std_logic;
+  signal do_init_w : std_logic;
+  signal do_step_w : std_logic;
 
   function apply_seed(base : std_logic_vector; seed : std_logic_vector(31 downto 0)) return std_logic_vector is
     variable v : std_logic_vector(base'range) := base;
@@ -100,32 +100,32 @@ begin
   ARBURST <= p_BURST;
 
   -- debug
-  o_expected_value <= w_expected_r;
-  o_ham_single_err <= w_ham_single;
-  o_ham_double_err <= w_ham_double;
-  o_ham_buffer_enc_data <= w_expected_enc;
+  expected_value_o <= expected_r_w;
+  ham_single_err_o <= ham_single_w;
+  ham_double_err_o <= ham_double_w;
+  ham_buffer_enc_data_o <= expected_enc_w;
 
   -- Build init value = base/random generic + seed in lower bits
-  w_init_value <= apply_seed(p_INIT_VALUE, STARTING_SEED);
+  init_value_w <= apply_seed(p_INIT_VALUE, STARTING_SEED);
 
   -- Seed-only-once decision is handled by the controller (mirrors TG)
-  w_do_init <= i_seed_pulse;
-  w_do_step <= i_rbeat_pulse;
+  do_init_w <= seed_pulse_i;
+  do_step_w <= rbeat_pulse_i;
 
   -- LFSR input:
   --  * init: feed init value, compute expected = next(init)
   --  * step: feed current expected, compute next expected = next(expected)
   --  * idle: feed current expected (no state update)
-  w_lfsr_input <= w_init_value when (w_do_init = '1') else
-                  w_expected_r;
+  lfsr_input_w <= init_value_w when (do_init_w = '1') else
+                  expected_r_w;
 
   u_LFSR: entity work.tm_read_lfsr
     generic map(
       p_WIDTH => c_AXI_DATA_WIDTH
     )
     port map(
-      i_value => w_lfsr_input,
-      o_next  => w_lfsr_next
+      value_i => lfsr_input_w,
+      next_o  => lfsr_next_w
     );
 
   -- Encapsulated minimal comparison
@@ -134,17 +134,17 @@ begin
       p_WIDTH => c_AXI_DATA_WIDTH
     )
     port map(
-      i_check_pulse => w_do_step,
+      check_pulse_i => do_step_w,
 
-      i_expected => w_expected_r,
-      i_rdata    => RDATA,
+      expected_i => expected_r_w,
+      rdata_i    => RDATA,
 
-      o_lfsr_comparison_mismatch => o_lfsr_comparison_mismatch
+      lfsr_comparison_mismatch_o => lfsr_comparison_mismatch_o
     );
 
   -- Expected-word next value + write-enable
-  w_exp_we     <= '1' when (w_do_init = '1' or w_do_step = '1') else '0';
-  w_expected_d <= w_lfsr_next;
+  exp_we_w     <= '1' when (do_init_w = '1' or do_step_w = '1') else '0';
+  expected_d_w <= lfsr_next_w;
 
   -- Optional Hamming register for the expected word
   gen_ham : if p_USE_TM_HAMMING generate
@@ -157,30 +157,30 @@ begin
         INJECT_ERROR   => p_USE_TM_HAMMING_INJECT_ERROR
       )
       port map(
-        correct_en_i => i_OBS_TM_HAM_BUFFER_CORRECT_ERROR,
-        write_en_i   => w_exp_we,
-        data_i       => w_expected_d,
+        correct_en_i => OBS_TM_HAM_BUFFER_CORRECT_ERROR_i,
+        write_en_i   => exp_we_w,
+        data_i       => expected_d_w,
         rstn_i       => ARESETn,
         clk_i        => ACLK,
-        single_err_o => w_ham_single,
-        double_err_o => w_ham_double,
-        enc_data_o   => w_expected_enc,
-        data_o       => w_expected_r
+        single_err_o => ham_single_w,
+        double_err_o => ham_double_w,
+        enc_data_o   => expected_enc_w,
+        data_o       => expected_r_w
       );
   end generate;
 
   gen_no_ham : if not p_USE_TM_HAMMING generate
-    w_ham_single <= '0';
-    w_ham_double <= '0';
-    w_expected_enc <= (w_expected_enc'left downto c_AXI_DATA_WIDTH => '0') & w_expected_r;
+    ham_single_w <= '0';
+    ham_double_w <= '0';
+    expected_enc_w <= (expected_enc_w'left downto c_AXI_DATA_WIDTH => '0') & expected_r_w;
     process(ACLK)
     begin
       if rising_edge(ACLK) then
         if ARESETn = '0' then
-          w_expected_r <= (others => '0');
+          expected_r_w <= (others => '0');
         else
-          if w_exp_we = '1' then
-            w_expected_r <= w_expected_d;
+          if exp_we_w = '1' then
+            expected_r_w <= expected_d_w;
           end if;
         end if;
       end if;

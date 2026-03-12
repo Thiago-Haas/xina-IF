@@ -18,24 +18,24 @@ entity buffer_fifo_ham is
     ARESET : in std_logic;
 
     -- Read
-    i_READ    : in  std_logic;
-    o_READ_OK : out std_logic;
-    o_DATA    : out std_logic_vector(p_DATA_WIDTH - 1 downto 0);
+    READ_i    : in  std_logic;
+    READ_OK_o : out std_logic;
+    DATA_o    : out std_logic_vector(p_DATA_WIDTH - 1 downto 0);
 
     -- Write
-    i_WRITE    : in  std_logic;
-    i_DATA     : in  std_logic_vector(p_DATA_WIDTH - 1 downto 0);
-    o_WRITE_OK : out std_logic;
+    WRITE_i    : in  std_logic;
+    DATA_i     : in  std_logic_vector(p_DATA_WIDTH - 1 downto 0);
+    WRITE_OK_o : out std_logic;
 
     -- Hamming decoder control/status
     correct_error_i : in  std_logic := '1';  -- default: correct if possible
     single_err_o    : out std_logic;
     double_err_o    : out std_logic;
-    o_enc_stage_data : out std_logic_vector(p_DATA_WIDTH + get_ecc_size(p_DATA_WIDTH, DETECT_DOUBLE) - 1 downto 0);
+    enc_stage_data_o : out std_logic_vector(p_DATA_WIDTH + get_ecc_size(p_DATA_WIDTH, DETECT_DOUBLE) - 1 downto 0);
 
     -- TMR control/observation for FIFO control-state block (stage_valid + fifo_count)
-    i_OBS_HAM_FIFO_CTRL_TMR_CORRECT_ERROR : in  std_logic := '1';
-    o_OBS_HAM_FIFO_CTRL_TMR_ERROR         : out std_logic
+    OBS_HAM_FIFO_CTRL_TMR_CORRECT_ERROR_i : in  std_logic := '1';
+    OBS_HAM_FIFO_CTRL_TMR_ERROR_o         : out std_logic
   );
 end buffer_fifo_ham;
 
@@ -74,16 +74,16 @@ begin
       port map(
         ACLK   => ACLK,
         ARESET => ARESET,
-        i_WRITE_REQ => i_WRITE,
-        i_READ_REQ  => i_READ,
-        o_STAGE_VALID   => stage_valid_w,
-        o_STAGE_LOAD    => stage_load_w,
-        o_STAGE_PUSH    => stage_push_w,
-        o_FIFO_DO_WRITE => fifo_do_write_w,
-        o_FIFO_DO_READ  => fifo_do_read_w,
-        o_FIFO_WRITE_OK => fifo_write_ok_w,
-        o_FIFO_READ_OK  => fifo_read_ok_w,
-        o_FIFO_COUNT    => fifo_count_w
+        WRITE_REQ_i => WRITE_i,
+        READ_REQ_i  => READ_i,
+        STAGE_VALID_o   => stage_valid_w,
+        STAGE_LOAD_o    => stage_load_w,
+        STAGE_PUSH_o    => stage_push_w,
+        FIFO_DO_WRITE_o => fifo_do_write_w,
+        FIFO_DO_READ_o  => fifo_do_read_w,
+        FIFO_WRITE_OK_o => fifo_write_ok_w,
+        FIFO_READ_OK_o  => fifo_read_ok_w,
+        FIFO_COUNT_o    => fifo_count_w
       );
     ctrl_tmr_err_w <= '0';
   end generate;
@@ -97,22 +97,22 @@ begin
       port map(
         ACLK   => ACLK,
         ARESET => ARESET,
-        i_WRITE_REQ => i_WRITE,
-        i_READ_REQ  => i_READ,
-        o_STAGE_VALID   => stage_valid_w,
-        o_STAGE_LOAD    => stage_load_w,
-        o_STAGE_PUSH    => stage_push_w,
-        o_FIFO_DO_WRITE => fifo_do_write_w,
-        o_FIFO_DO_READ  => fifo_do_read_w,
-        o_FIFO_WRITE_OK => fifo_write_ok_w,
-        o_FIFO_READ_OK  => fifo_read_ok_w,
-        o_FIFO_COUNT    => fifo_count_w,
-        i_correct_enable => i_OBS_HAM_FIFO_CTRL_TMR_CORRECT_ERROR,
+        WRITE_REQ_i => WRITE_i,
+        READ_REQ_i  => READ_i,
+        STAGE_VALID_o   => stage_valid_w,
+        STAGE_LOAD_o    => stage_load_w,
+        STAGE_PUSH_o    => stage_push_w,
+        FIFO_DO_WRITE_o => fifo_do_write_w,
+        FIFO_DO_READ_o  => fifo_do_read_w,
+        FIFO_WRITE_OK_o => fifo_write_ok_w,
+        FIFO_READ_OK_o  => fifo_read_ok_w,
+        FIFO_COUNT_o    => fifo_count_w,
+        correct_enable_i => OBS_HAM_FIFO_CTRL_TMR_CORRECT_ERROR_i,
         error_o          => ctrl_tmr_err_w
       );
   end generate;
 
-  o_OBS_HAM_FIFO_CTRL_TMR_ERROR <= ctrl_tmr_err_w;
+  OBS_HAM_FIFO_CTRL_TMR_ERROR_o <= ctrl_tmr_err_w;
 
   p_fifo_mem : process (ACLK, ARESET)
   begin
@@ -132,7 +132,7 @@ begin
                    fifo_mem_r(to_integer(fifo_count_w - 1));
 
   -- propagate read OK outward (read path unchanged)
-  o_READ_OK <= fifo_read_ok_w;
+  READ_OK_o <= fifo_read_ok_w;
 
   -----------------------------------------------------------------------------
   -- Hamming decode (combinational) of FIFO output
@@ -147,17 +147,17 @@ begin
       correct_error_i => correct_error_i,
       single_err_o    => single_err_o,
       double_err_o    => double_err_o,
-      data_o          => o_DATA
+      data_o          => DATA_o
     );
 
   -----------------------------------------------------------------------------
   -- Write path: use hamming_register as a clean "encode staging register"
-  --  * Accept i_WRITE when stage is empty
+  --  * Accept WRITE_i when stage is empty
   --  * Push encoded word into FIFO when FIFO has space
   -----------------------------------------------------------------------------
   -- External "write ok" now means: you can load the staging register this cycle.
   -- (This makes the design simpler and avoids tying acceptance directly to FIFO.)
-  o_WRITE_OK <= not stage_valid_w;
+  WRITE_OK_o <= not stage_valid_w;
 
   u_ham_enc : entity work.hamming_encoder
     generic map (
@@ -165,7 +165,7 @@ begin
       DETECT_DOUBLE => DETECT_DOUBLE
     )
     port map (
-      data_i    => i_DATA,
+      data_i    => DATA_i,
       encoded_o => enc_word_w
     );
 
@@ -182,6 +182,6 @@ begin
   end process;
 
   -- Expose the encoded word as seen by the decoder input.
-  o_enc_stage_data <= fifo_data_out;
+  enc_stage_data_o <= fifo_data_out;
 
 end rtl;

@@ -13,22 +13,22 @@ entity backend_manager_packetizer_control_tmr is
         ARESETn: in std_logic;
 
         -- Backend signals.
-        i_OPC_SEND         : in std_logic;
-        i_START_SEND_PACKET: in std_logic;
-        i_VALID_SEND_DATA  : in std_logic;
-        i_LAST_SEND_DATA   : in std_logic;
+        OPC_SEND_i         : in std_logic;
+        START_SEND_PACKET_i: in std_logic;
+        VALID_SEND_DATA_i  : in std_logic;
+        LAST_SEND_DATA_i   : in std_logic;
 
-        o_READY_SEND_PACKET: out std_logic;
-        o_READY_SEND_DATA  : out std_logic;
-        o_FLIT_SELECTOR    : out std_logic_vector(2 downto 0);
+        READY_SEND_PACKET_o: out std_logic;
+        READY_SEND_DATA_o  : out std_logic;
+        FLIT_SELECTOR_o    : out std_logic_vector(2 downto 0);
 
         -- Buffer.
-        i_WRITE_OK_BUFFER: in std_logic;
-        o_WRITE_BUFFER   : out std_logic;
+        WRITE_OK_BUFFER_i: in std_logic;
+        WRITE_BUFFER_o   : out std_logic;
 
         -- Integrity control.
-        o_ADD            : out std_logic;
-        o_INTEGRITY_RESETn: out std_logic;
+        ADD_o            : out std_logic;
+        INTEGRITY_RESETn_o: out std_logic;
 
         -- Hardening
         correct_error_i : in  std_logic;
@@ -41,12 +41,12 @@ architecture rtl of backend_manager_packetizer_control_tmr is
     type t_BIT_VECTOR is array (2 downto 0) of std_logic;
     type t_BIT_VECTOR_FLIT_SELECTOR is array (2 downto 0) of std_logic_vector(2 downto 0);
 
-    signal w_READY_SEND_PACKET  : t_BIT_VECTOR;
-    signal w_READY_SEND_DATA    : t_BIT_VECTOR;
-    signal w_FLIT_SELECTOR      : t_BIT_VECTOR_FLIT_SELECTOR;
-    signal w_WRITE_BUFFER       : t_BIT_VECTOR;
-    signal w_ADD                : t_BIT_VECTOR;
-    signal w_INTEGRITY_RESETn   : t_BIT_VECTOR;
+    signal READY_SEND_PACKET_w  : t_BIT_VECTOR;
+    signal READY_SEND_DATA_w    : t_BIT_VECTOR;
+    signal FLIT_SELECTOR_w      : t_BIT_VECTOR_FLIT_SELECTOR;
+    signal WRITE_BUFFER_w       : t_BIT_VECTOR;
+    signal ADD_w                : t_BIT_VECTOR;
+    signal INTEGRITY_RESETn_w   : t_BIT_VECTOR;
 
     -- Majority (corrected) outputs
     signal corr_READY_SEND_PACKET_w : std_logic;
@@ -86,81 +86,81 @@ begin
                 ACLK    => ACLK,
                 ARESETn => ARESETn,
 
-                i_OPC_SEND          => i_OPC_SEND,
-                i_START_SEND_PACKET => i_START_SEND_PACKET,
-                i_VALID_SEND_DATA   => i_VALID_SEND_DATA,
-                i_LAST_SEND_DATA    => i_LAST_SEND_DATA,
+                OPC_SEND_i          => OPC_SEND_i,
+                START_SEND_PACKET_i => START_SEND_PACKET_i,
+                VALID_SEND_DATA_i   => VALID_SEND_DATA_i,
+                LAST_SEND_DATA_i    => LAST_SEND_DATA_i,
 
-                o_READY_SEND_PACKET => w_READY_SEND_PACKET(i),
-                o_READY_SEND_DATA   => w_READY_SEND_DATA(i),
-                o_FLIT_SELECTOR     => w_FLIT_SELECTOR(i),
+                READY_SEND_PACKET_o => READY_SEND_PACKET_w(i),
+                READY_SEND_DATA_o   => READY_SEND_DATA_w(i),
+                FLIT_SELECTOR_o     => FLIT_SELECTOR_w(i),
 
-                i_WRITE_OK_BUFFER   => i_WRITE_OK_BUFFER,
-                o_WRITE_BUFFER      => w_WRITE_BUFFER(i),
+                WRITE_OK_BUFFER_i   => WRITE_OK_BUFFER_i,
+                WRITE_BUFFER_o      => WRITE_BUFFER_w(i),
 
-                o_ADD               => w_ADD(i),
-                o_INTEGRITY_RESETn  => w_INTEGRITY_RESETn(i)
+                ADD_o               => ADD_w(i),
+                INTEGRITY_RESETn_o  => INTEGRITY_RESETn_w(i)
             );
     end generate;
 
     -----------------------------------------------------------------------------
     -- Majority vote (corrected)
     -----------------------------------------------------------------------------
-    corr_READY_SEND_PACKET_w <= (w_READY_SEND_PACKET(2) and w_READY_SEND_PACKET(1)) or
-                                (w_READY_SEND_PACKET(2) and w_READY_SEND_PACKET(0)) or
-                                (w_READY_SEND_PACKET(1) and w_READY_SEND_PACKET(0));
+    corr_READY_SEND_PACKET_w <= (READY_SEND_PACKET_w(2) and READY_SEND_PACKET_w(1)) or
+                                (READY_SEND_PACKET_w(2) and READY_SEND_PACKET_w(0)) or
+                                (READY_SEND_PACKET_w(1) and READY_SEND_PACKET_w(0));
 
-    corr_READY_SEND_DATA_w   <= (w_READY_SEND_DATA(2) and w_READY_SEND_DATA(1)) or
-                                (w_READY_SEND_DATA(2) and w_READY_SEND_DATA(0)) or
-                                (w_READY_SEND_DATA(1) and w_READY_SEND_DATA(0));
+    corr_READY_SEND_DATA_w   <= (READY_SEND_DATA_w(2) and READY_SEND_DATA_w(1)) or
+                                (READY_SEND_DATA_w(2) and READY_SEND_DATA_w(0)) or
+                                (READY_SEND_DATA_w(1) and READY_SEND_DATA_w(0));
 
-    corr_WRITE_BUFFER_w      <= (w_WRITE_BUFFER(2) and w_WRITE_BUFFER(1)) or
-                                (w_WRITE_BUFFER(2) and w_WRITE_BUFFER(0)) or
-                                (w_WRITE_BUFFER(1) and w_WRITE_BUFFER(0));
+    corr_WRITE_BUFFER_w      <= (WRITE_BUFFER_w(2) and WRITE_BUFFER_w(1)) or
+                                (WRITE_BUFFER_w(2) and WRITE_BUFFER_w(0)) or
+                                (WRITE_BUFFER_w(1) and WRITE_BUFFER_w(0));
 
-    corr_ADD_w               <= (w_ADD(2) and w_ADD(1)) or
-                                (w_ADD(2) and w_ADD(0)) or
-                                (w_ADD(1) and w_ADD(0));
+    corr_ADD_w               <= (ADD_w(2) and ADD_w(1)) or
+                                (ADD_w(2) and ADD_w(0)) or
+                                (ADD_w(1) and ADD_w(0));
 
-    corr_INTEGRITY_RESETn_w  <= (w_INTEGRITY_RESETn(2) and w_INTEGRITY_RESETn(1)) or
-                                (w_INTEGRITY_RESETn(2) and w_INTEGRITY_RESETn(0)) or
-                                (w_INTEGRITY_RESETn(1) and w_INTEGRITY_RESETn(0));
+    corr_INTEGRITY_RESETn_w  <= (INTEGRITY_RESETn_w(2) and INTEGRITY_RESETn_w(1)) or
+                                (INTEGRITY_RESETn_w(2) and INTEGRITY_RESETn_w(0)) or
+                                (INTEGRITY_RESETn_w(1) and INTEGRITY_RESETn_w(0));
 
     gen_FLIT_SEL_MAJ : for b in 2 downto 0 generate
     begin
-        corr_FLIT_SELECTOR_w(b) <= (w_FLIT_SELECTOR(2)(b) and w_FLIT_SELECTOR(1)(b)) or
-                                   (w_FLIT_SELECTOR(2)(b) and w_FLIT_SELECTOR(0)(b)) or
-                                   (w_FLIT_SELECTOR(1)(b) and w_FLIT_SELECTOR(0)(b));
+        corr_FLIT_SELECTOR_w(b) <= (FLIT_SELECTOR_w(2)(b) and FLIT_SELECTOR_w(1)(b)) or
+                                   (FLIT_SELECTOR_w(2)(b) and FLIT_SELECTOR_w(0)(b)) or
+                                   (FLIT_SELECTOR_w(1)(b) and FLIT_SELECTOR_w(0)(b));
     end generate;
 
     -----------------------------------------------------------------------------
     -- Error detection (mismatch)
     -----------------------------------------------------------------------------
-    error_READY_SEND_PACKET_w <= (w_READY_SEND_PACKET(2) xor w_READY_SEND_PACKET(1)) or
-                                 (w_READY_SEND_PACKET(2) xor w_READY_SEND_PACKET(0)) or
-                                 (w_READY_SEND_PACKET(1) xor w_READY_SEND_PACKET(0));
+    error_READY_SEND_PACKET_w <= (READY_SEND_PACKET_w(2) xor READY_SEND_PACKET_w(1)) or
+                                 (READY_SEND_PACKET_w(2) xor READY_SEND_PACKET_w(0)) or
+                                 (READY_SEND_PACKET_w(1) xor READY_SEND_PACKET_w(0));
 
-    error_READY_SEND_DATA_w   <= (w_READY_SEND_DATA(2) xor w_READY_SEND_DATA(1)) or
-                                 (w_READY_SEND_DATA(2) xor w_READY_SEND_DATA(0)) or
-                                 (w_READY_SEND_DATA(1) xor w_READY_SEND_DATA(0));
+    error_READY_SEND_DATA_w   <= (READY_SEND_DATA_w(2) xor READY_SEND_DATA_w(1)) or
+                                 (READY_SEND_DATA_w(2) xor READY_SEND_DATA_w(0)) or
+                                 (READY_SEND_DATA_w(1) xor READY_SEND_DATA_w(0));
 
-    error_WRITE_BUFFER_w      <= (w_WRITE_BUFFER(2) xor w_WRITE_BUFFER(1)) or
-                                 (w_WRITE_BUFFER(2) xor w_WRITE_BUFFER(0)) or
-                                 (w_WRITE_BUFFER(1) xor w_WRITE_BUFFER(0));
+    error_WRITE_BUFFER_w      <= (WRITE_BUFFER_w(2) xor WRITE_BUFFER_w(1)) or
+                                 (WRITE_BUFFER_w(2) xor WRITE_BUFFER_w(0)) or
+                                 (WRITE_BUFFER_w(1) xor WRITE_BUFFER_w(0));
 
-    error_ADD_w               <= (w_ADD(2) xor w_ADD(1)) or
-                                 (w_ADD(2) xor w_ADD(0)) or
-                                 (w_ADD(1) xor w_ADD(0));
+    error_ADD_w               <= (ADD_w(2) xor ADD_w(1)) or
+                                 (ADD_w(2) xor ADD_w(0)) or
+                                 (ADD_w(1) xor ADD_w(0));
 
-    error_INTEGRITY_RESETn_w  <= (w_INTEGRITY_RESETn(2) xor w_INTEGRITY_RESETn(1)) or
-                                 (w_INTEGRITY_RESETn(2) xor w_INTEGRITY_RESETn(0)) or
-                                 (w_INTEGRITY_RESETn(1) xor w_INTEGRITY_RESETn(0));
+    error_INTEGRITY_RESETn_w  <= (INTEGRITY_RESETn_w(2) xor INTEGRITY_RESETn_w(1)) or
+                                 (INTEGRITY_RESETn_w(2) xor INTEGRITY_RESETn_w(0)) or
+                                 (INTEGRITY_RESETn_w(1) xor INTEGRITY_RESETn_w(0));
 
     gen_FLIT_SEL_ERR : for b in 2 downto 0 generate
     begin
-        error_FLIT_SELECTOR_vec_w(b) <= (w_FLIT_SELECTOR(2)(b) xor w_FLIT_SELECTOR(1)(b)) or
-                                        (w_FLIT_SELECTOR(2)(b) xor w_FLIT_SELECTOR(0)(b)) or
-                                        (w_FLIT_SELECTOR(1)(b) xor w_FLIT_SELECTOR(0)(b));
+        error_FLIT_SELECTOR_vec_w(b) <= (FLIT_SELECTOR_w(2)(b) xor FLIT_SELECTOR_w(1)(b)) or
+                                        (FLIT_SELECTOR_w(2)(b) xor FLIT_SELECTOR_w(0)(b)) or
+                                        (FLIT_SELECTOR_w(1)(b) xor FLIT_SELECTOR_w(0)(b));
     end generate;
 
     error_FLIT_SELECTOR_w <= or_reduce(error_FLIT_SELECTOR_vec_w);
@@ -176,11 +176,11 @@ begin
     -----------------------------------------------------------------------------
     -- Output selection (majority when correction enabled, else replica 0)
     -----------------------------------------------------------------------------
-    o_READY_SEND_PACKET  <= corr_READY_SEND_PACKET_w when correct_error_i = '1' else w_READY_SEND_PACKET(0);
-    o_READY_SEND_DATA    <= corr_READY_SEND_DATA_w   when correct_error_i = '1' else w_READY_SEND_DATA(0);
-    o_WRITE_BUFFER       <= corr_WRITE_BUFFER_w      when correct_error_i = '1' else w_WRITE_BUFFER(0);
-    o_ADD                <= corr_ADD_w               when correct_error_i = '1' else w_ADD(0);
-    o_INTEGRITY_RESETn   <= corr_INTEGRITY_RESETn_w  when correct_error_i = '1' else w_INTEGRITY_RESETn(0);
-    o_FLIT_SELECTOR      <= corr_FLIT_SELECTOR_w     when correct_error_i = '1' else w_FLIT_SELECTOR(0);
+    READY_SEND_PACKET_o  <= corr_READY_SEND_PACKET_w when correct_error_i = '1' else READY_SEND_PACKET_w(0);
+    READY_SEND_DATA_o    <= corr_READY_SEND_DATA_w   when correct_error_i = '1' else READY_SEND_DATA_w(0);
+    WRITE_BUFFER_o       <= corr_WRITE_BUFFER_w      when correct_error_i = '1' else WRITE_BUFFER_w(0);
+    ADD_o                <= corr_ADD_w               when correct_error_i = '1' else ADD_w(0);
+    INTEGRITY_RESETn_o   <= corr_INTEGRITY_RESETn_w  when correct_error_i = '1' else INTEGRITY_RESETn_w(0);
+    FLIT_SELECTOR_o      <= corr_FLIT_SELECTOR_w     when correct_error_i = '1' else FLIT_SELECTOR_w(0);
 
 end rtl;

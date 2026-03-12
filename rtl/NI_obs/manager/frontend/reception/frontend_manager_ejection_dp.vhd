@@ -10,15 +10,15 @@ use work.xina_ni_ft_pkg.all;
 entity frontend_manager_ejection_dp is
   port(
     -- Backend receive fields.
-    i_LAST_RECEIVE_DATA : in std_logic;
-    i_ID_RECEIVE        : in std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
-    i_STATUS_RECEIVE    : in std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
-    i_DATA_RECEIVE      : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
-    i_CORRUPT_RECEIVE   : in std_logic;
+    LAST_RECEIVE_DATA_i : in std_logic;
+    ID_RECEIVE_i        : in std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
+    STATUS_RECEIVE_i    : in std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
+    DATA_RECEIVE_i      : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+    CORRUPT_RECEIVE_i   : in std_logic;
 
     -- From controller.
-    i_BVALID_EN : in std_logic;
-    i_RVALID_EN : in std_logic;
+    BVALID_EN_i : in std_logic;
+    RVALID_EN_i : in std_logic;
 
     -- AXI outputs.
     BVALID : out std_logic;
@@ -41,22 +41,22 @@ begin
   ---------------------------------------------------------------------------------------------
   -- Corrupt flag mirrors backend
 
-  CORRUPT_PACKET <= i_CORRUPT_RECEIVE;
+  CORRUPT_PACKET <= CORRUPT_RECEIVE_i;
 
   ---------------------------------------------------------------------------------------------
   -- Write response (B channel)
 
-  BVALID <= i_BVALID_EN;
-  BID    <= i_ID_RECEIVE     when (i_BVALID_EN = '1') else (others => '0');
-  BRESP  <= i_STATUS_RECEIVE when (i_BVALID_EN = '1') else (others => '0');
+  BVALID <= BVALID_EN_i;
+  BID    <= ID_RECEIVE_i     when (BVALID_EN_i = '1') else (others => '0');
+  BRESP  <= STATUS_RECEIVE_i when (BVALID_EN_i = '1') else (others => '0');
 
   ---------------------------------------------------------------------------------------------
   -- Read response (R channel)
 
-  RVALID <= i_RVALID_EN;
-  RDATA  <= i_DATA_RECEIVE   when (i_RVALID_EN = '1') else (others => '0');
-  RLAST  <= i_LAST_RECEIVE_DATA;
-  RID    <= i_ID_RECEIVE     when (i_RVALID_EN = '1') else (others => '0');
-  RRESP  <= i_STATUS_RECEIVE when (i_RVALID_EN = '1') else (others => '0');
+  RVALID <= RVALID_EN_i;
+  RDATA  <= DATA_RECEIVE_i   when (RVALID_EN_i = '1') else (others => '0');
+  RLAST  <= LAST_RECEIVE_DATA_i;
+  RID    <= ID_RECEIVE_i     when (RVALID_EN_i = '1') else (others => '0');
+  RRESP  <= STATUS_RECEIVE_i when (RVALID_EN_i = '1') else (others => '0');
 
 end architecture;

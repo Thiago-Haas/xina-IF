@@ -11,8 +11,8 @@ entity receive_control_tmr is
         ARESETn: in std_logic;
 
         -- Buffer signals.
-        i_WRITE_OK_BUFFER: in std_logic;
-        o_WRITE_BUFFER   : out std_logic;
+        WRITE_OK_BUFFER_i: in std_logic;
+        WRITE_BUFFER_o   : out std_logic;
 
         -- XINA signals.
         l_out_val_o: in std_logic;
@@ -27,8 +27,8 @@ end receive_control_tmr;
 architecture rtl of receive_control_tmr is
     type t_BIT_VECTOR is array (2 downto 0) of std_logic;
 
-    signal w_WRITE_BUFFER : t_BIT_VECTOR;
-    signal w_l_out_ack_i  : t_BIT_VECTOR;
+    signal WRITE_BUFFER_w : t_BIT_VECTOR;
+    signal l_out_ack_i_w  : t_BIT_VECTOR;
 
     signal corr_WRITE_BUFFER_w : std_logic;
     signal corr_l_out_ack_i_w  : std_logic;
@@ -57,38 +57,38 @@ begin
                 ACLK    => ACLK,
                 ARESETn => ARESETn,
 
-                i_WRITE_OK_BUFFER => i_WRITE_OK_BUFFER,
-                o_WRITE_BUFFER    => w_WRITE_BUFFER(i),
+                WRITE_OK_BUFFER_i => WRITE_OK_BUFFER_i,
+                WRITE_BUFFER_o    => WRITE_BUFFER_w(i),
 
                 l_out_val_o => l_out_val_o,
-                l_out_ack_i => w_l_out_ack_i(i)
+                l_out_ack_i => l_out_ack_i_w(i)
             );
     end generate;
 
     -- Majority vote (corrected outputs)
-    corr_WRITE_BUFFER_w <= (w_WRITE_BUFFER(2) and w_WRITE_BUFFER(1)) or
-                           (w_WRITE_BUFFER(2) and w_WRITE_BUFFER(0)) or
-                           (w_WRITE_BUFFER(1) and w_WRITE_BUFFER(0));
+    corr_WRITE_BUFFER_w <= (WRITE_BUFFER_w(2) and WRITE_BUFFER_w(1)) or
+                           (WRITE_BUFFER_w(2) and WRITE_BUFFER_w(0)) or
+                           (WRITE_BUFFER_w(1) and WRITE_BUFFER_w(0));
 
-    corr_l_out_ack_i_w  <= (w_l_out_ack_i(2) and w_l_out_ack_i(1)) or
-                           (w_l_out_ack_i(2) and w_l_out_ack_i(0)) or
-                           (w_l_out_ack_i(1) and w_l_out_ack_i(0));
+    corr_l_out_ack_i_w  <= (l_out_ack_i_w(2) and l_out_ack_i_w(1)) or
+                           (l_out_ack_i_w(2) and l_out_ack_i_w(0)) or
+                           (l_out_ack_i_w(1) and l_out_ack_i_w(0));
 
     -- Error detection: any mismatch among replicas
-    error_WRITE_BUFFER_w <= (w_WRITE_BUFFER(2) xor w_WRITE_BUFFER(1)) or
-                            (w_WRITE_BUFFER(2) xor w_WRITE_BUFFER(0)) or
-                            (w_WRITE_BUFFER(1) xor w_WRITE_BUFFER(0));
+    error_WRITE_BUFFER_w <= (WRITE_BUFFER_w(2) xor WRITE_BUFFER_w(1)) or
+                            (WRITE_BUFFER_w(2) xor WRITE_BUFFER_w(0)) or
+                            (WRITE_BUFFER_w(1) xor WRITE_BUFFER_w(0));
 
-    error_l_out_ack_i_w  <= (w_l_out_ack_i(2) xor w_l_out_ack_i(1)) or
-                            (w_l_out_ack_i(2) xor w_l_out_ack_i(0)) or
-                            (w_l_out_ack_i(1) xor w_l_out_ack_i(0));
+    error_l_out_ack_i_w  <= (l_out_ack_i_w(2) xor l_out_ack_i_w(1)) or
+                            (l_out_ack_i_w(2) xor l_out_ack_i_w(0)) or
+                            (l_out_ack_i_w(1) xor l_out_ack_i_w(0));
 
     -- Aggregate error flag
     error_o <= error_WRITE_BUFFER_w or error_l_out_ack_i_w;
 
     -- Output selection matches control_tmr pattern:
     -- if correction enabled -> majority, else -> replica 0.
-    o_WRITE_BUFFER <= corr_WRITE_BUFFER_w when correct_error_i = '1' else w_WRITE_BUFFER(0);
-    l_out_ack_i    <= corr_l_out_ack_i_w  when correct_error_i = '1' else w_l_out_ack_i(0);
+    WRITE_BUFFER_o <= corr_WRITE_BUFFER_w when correct_error_i = '1' else WRITE_BUFFER_w(0);
+    l_out_ack_i    <= corr_l_out_ack_i_w  when correct_error_i = '1' else l_out_ack_i_w(0);
 
 end rtl;

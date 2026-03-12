@@ -7,15 +7,15 @@ use IEEE.std_logic_1164.all;
 --   s1_R : assert RREADY until RVALID handshake; finish when RLAST=1
 --
 -- Pulses:
---  * o_done            : 1 cycle when last R beat is accepted (RVALID&RREADY&RLAST)
+--  * done_o            : 1 cycle when last R beat is accepted (RVALID&RREADY&RLAST)
 entity tm_read_controller is
   port(
     ACLK    : in  std_logic;
     ARESETn : in  std_logic := '1';
 
     -- sequencing
-    i_start : in  std_logic := '1';  -- pulse or level; if held '1' it will restart immediately after done
-    o_done  : out std_logic;
+    start_i : in  std_logic := '1';  -- pulse or level; if held '1' it will restart immediately after done
+    done_o  : out std_logic;
 
     -- Handshake inputs (from AXI slave)
     ARREADY : in  std_logic;
@@ -28,9 +28,9 @@ entity tm_read_controller is
 
     -- datapath control
     -- combinational same-cycle handshake (use this to step datapath with no 1-cycle delay)
-    o_rbeat_hs_comb   : out std_logic;
+    rbeat_hs_comb_o   : out std_logic;
     -- seed-only-once logic moved here (mirrors TG)
-    o_seed_pulse      : out std_logic
+    seed_pulse_o      : out std_logic
   );
 end entity;
 
@@ -41,7 +41,7 @@ architecture rtl of tm_read_controller is
   signal state_r : std_logic_vector(1 downto 0) := C_STATE_IDLE;
 
   signal arvalid_i, rready_i : std_logic;
-  signal ar_hs, r_hs : std_logic;
+  signal ar_hs, hs_r : std_logic;
 
   signal done_pulse_r  : std_logic := '0';
   signal seed_pulse_r  : std_logic := '0';
@@ -54,13 +54,13 @@ begin
   RREADY  <= rready_i;
 
   ar_hs <= arvalid_i and ARREADY;
-  r_hs  <= rready_i  and RVALID;
+  hs_r  <= rready_i  and RVALID;
 
   -- Expose same-cycle read-data handshake (combinational)
-  o_rbeat_hs_comb <= r_hs;
+  rbeat_hs_comb_o <= hs_r;
 
-  o_done            <= done_pulse_r;
-  o_seed_pulse      <= seed_pulse_r;
+  done_o            <= done_pulse_r;
+  seed_pulse_o      <= seed_pulse_r;
 
   process(ACLK)
   begin
@@ -74,7 +74,7 @@ begin
       else
         case state_r is
           when C_STATE_IDLE =>
-            if i_start = '1' then
+            if start_i = '1' then
               if seeded_r = '0' then
                 seed_pulse_r <= '1';
                 seeded_r   <= '1';
@@ -88,7 +88,7 @@ begin
             end if;
 
           when C_STATE_R =>
-            if r_hs = '1' then
+            if hs_r = '1' then
               if RLAST = '1' then
                 done_pulse_r <= '1';
                 state_r <= C_STATE_IDLE;

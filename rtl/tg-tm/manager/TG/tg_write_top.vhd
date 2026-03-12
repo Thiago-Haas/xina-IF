@@ -18,8 +18,8 @@ entity tg_write_top is
     ARESETn : in std_logic;
 
     -- sequencing
-    i_start : in  std_logic := '1';
-    o_done  : out std_logic;
+    start_i : in  std_logic := '1';
+    done_o  : out std_logic;
 
     -- control inputs
     INPUT_ADDRESS : in std_logic_vector(63 downto 0);
@@ -46,29 +46,29 @@ entity tg_write_top is
     BREADY : out std_logic;
 
     -- observation (routed to top)
-    i_OBS_TG_HAM_BUFFER_CORRECT_ERROR : in std_logic := '1';
-    i_OBS_TG_TMR_CTRL_CORRECT_ERROR   : in std_logic := '1';
+    OBS_TG_HAM_BUFFER_CORRECT_ERROR_i : in std_logic := '1';
+    OBS_TG_TMR_CTRL_CORRECT_ERROR_i   : in std_logic := '1';
 
-    o_OBS_TG_TMR_CTRL_ERROR        : out std_logic;
-    o_OBS_TG_HAM_BUFFER_SINGLE_ERR : out std_logic;
-    o_OBS_TG_HAM_BUFFER_DOUBLE_ERR : out std_logic;
-    o_OBS_TG_HAM_BUFFER_ENC_DATA   : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_TG_HAMMING_DOUBLE_DETECT) - 1 downto 0)
+    OBS_TG_TMR_CTRL_ERROR_o        : out std_logic;
+    OBS_TG_HAM_BUFFER_SINGLE_ERR_o : out std_logic;
+    OBS_TG_HAM_BUFFER_DOUBLE_ERR_o : out std_logic;
+    OBS_TG_HAM_BUFFER_ENC_DATA_o   : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_TG_HAMMING_DOUBLE_DETECT) - 1 downto 0)
   );
 end tg_write_top;
 
 architecture rtl of tg_write_top is
-  signal w_write_done      : std_logic;
-  signal w_seed_pulse      : std_logic;
-  signal w_wbeat_pulse     : std_logic;
-  signal w_ctrl_tmr_err   : std_logic;
-  signal w_ham_single_err : std_logic;
-  signal w_ham_double_err : std_logic;
-  signal w_ham_enc_data   : std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_TG_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+  signal write_done_w      : std_logic;
+  signal seed_pulse_w      : std_logic;
+  signal wbeat_pulse_w     : std_logic;
+  signal ctrl_tmr_err_w   : std_logic;
+  signal ham_single_err_w : std_logic;
+  signal ham_double_err_w : std_logic;
+  signal ham_enc_data_w   : std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_TG_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 begin
 
   gen_ctrl_plain : if (not p_USE_TG_CTRL_TMR) generate
     
-    w_ctrl_tmr_err <= '0';
+    ctrl_tmr_err_w <= '0';
   end generate;
 
   gen_ctrl_tmr : if p_USE_TG_CTRL_TMR generate
@@ -78,8 +78,8 @@ begin
         ACLK    => ACLK,
         ARESETn => ARESETn,
 
-        i_start => i_start,
-        o_done  => w_write_done,
+        start_i => start_i,
+        done_o  => write_done_w,
 
         AWREADY => AWREADY,
         WREADY  => WREADY,
@@ -89,11 +89,11 @@ begin
         WVALID  => WVALID,
         BREADY  => BREADY,
 
-        o_seed_pulse      => w_seed_pulse,
-        o_wbeat_pulse     => w_wbeat_pulse,
+        seed_pulse_o      => seed_pulse_w,
+        wbeat_pulse_o     => wbeat_pulse_w,
 
-        i_correct_enable=> i_OBS_TG_TMR_CTRL_CORRECT_ERROR,
-        error_o         => w_ctrl_tmr_err
+        correct_enable_i=> OBS_TG_TMR_CTRL_CORRECT_ERROR_i,
+        error_o         => ctrl_tmr_err_w
       );
   end generate;
 
@@ -110,8 +110,8 @@ begin
       INPUT_ADDRESS => INPUT_ADDRESS,
       STARTING_SEED => STARTING_SEED,
 
-      i_seed_pulse      => w_seed_pulse,
-      i_wbeat_pulse     => w_wbeat_pulse,
+      seed_pulse_i      => seed_pulse_w,
+      wbeat_pulse_i     => wbeat_pulse_w,
 
       AWID    => AWID,
       AWADDR  => AWADDR,
@@ -122,17 +122,17 @@ begin
 
       WLAST   => WLAST,
       
-      i_correct_enable => i_OBS_TG_HAM_BUFFER_CORRECT_ERROR,
-      o_single_err => w_ham_single_err,
-      o_double_err => w_ham_double_err,
-      o_ham_buffer_enc_data => w_ham_enc_data
+      correct_enable_i => OBS_TG_HAM_BUFFER_CORRECT_ERROR_i,
+      single_err_o => ham_single_err_w,
+      double_err_o => ham_double_err_w,
+      ham_buffer_enc_data_o => ham_enc_data_w
     );
 
-  o_done <= w_write_done;
+  done_o <= write_done_w;
 
   -- observation outputs
-  o_OBS_TG_TMR_CTRL_ERROR        <= w_ctrl_tmr_err;
-  o_OBS_TG_HAM_BUFFER_SINGLE_ERR <= w_ham_single_err;
-  o_OBS_TG_HAM_BUFFER_DOUBLE_ERR <= w_ham_double_err;
-  o_OBS_TG_HAM_BUFFER_ENC_DATA   <= w_ham_enc_data;
+  OBS_TG_TMR_CTRL_ERROR_o        <= ctrl_tmr_err_w;
+  OBS_TG_HAM_BUFFER_SINGLE_ERR_o <= ham_single_err_w;
+  OBS_TG_HAM_BUFFER_DOUBLE_ERR_o <= ham_double_err_w;
+  OBS_TG_HAM_BUFFER_ENC_DATA_o   <= ham_enc_data_w;
 end rtl;

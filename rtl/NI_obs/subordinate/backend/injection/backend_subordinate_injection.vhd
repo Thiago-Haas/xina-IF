@@ -23,18 +23,18 @@ entity backend_subordinate_injection is
         ARESETn: in std_logic;
 
         -- Backend signals.
-        i_VALID_SEND_DATA: in std_logic;
-        i_LAST_SEND_DATA : in std_logic;
-        o_READY_SEND_DATA: out std_logic;
+        VALID_SEND_DATA_i: in std_logic;
+        LAST_SEND_DATA_i : in std_logic;
+        READY_SEND_DATA_o: out std_logic;
 
-        i_DATA_SEND  : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
-        i_STATUS_SEND: in std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
+        DATA_SEND_i  : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+        STATUS_SEND_i: in std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
 
         -- Signals from reception.
-        i_H_SRC_RECEIVE        : in std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-        i_H_INTERFACE_RECEIVE  : in std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-        i_HAS_REQUEST_PACKET   : in std_logic;
-        o_HAS_FINISHED_RESPONSE: out std_logic;
+        H_SRC_RECEIVE_i        : in std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+        H_INTERFACE_RECEIVE_i  : in std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+        HAS_REQUEST_PACKET_i   : in std_logic;
+        HAS_FINISHED_RESPONSE_o: out std_logic;
 
         -- XINA signals.
         l_in_data_i: out std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
@@ -44,22 +44,22 @@ entity backend_subordinate_injection is
 end backend_subordinate_injection;
 
 architecture rtl of backend_subordinate_injection is
-    signal w_ARESET: std_logic;
+    signal ARESET_w: std_logic;
 
     -- Packetizer.
-    signal w_FLIT: std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-    signal w_FLIT_SELECTOR: std_logic_vector(2 downto 0);
+    signal FLIT_w: std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+    signal FLIT_SELECTOR_w: std_logic_vector(2 downto 0);
 
     -- Checksum.
-    signal w_ADD: std_logic;
-    signal w_CHECKSUM: std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
-    signal w_INTEGRITY_RESETn: std_logic;
+    signal ADD_w: std_logic;
+    signal CHECKSUM_w: std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
+    signal INTEGRITY_RESETn_w: std_logic;
 
     -- FIFO.
-    signal w_WRITE_BUFFER   : std_logic;
-    signal w_WRITE_OK_BUFFER: std_logic;
-    signal w_READ_BUFFER    : std_logic;
-    signal w_READ_OK_BUFFER : std_logic;
+    signal WRITE_BUFFER_w   : std_logic;
+    signal WRITE_OK_BUFFER_w: std_logic;
+    signal READ_BUFFER_w    : std_logic;
+    signal READ_OK_BUFFER_w : std_logic;
 begin
     u_PACKETIZER_CONTROL:
     if (p_USE_TMR_PACKETIZER) generate
@@ -68,20 +68,20 @@ begin
                 ACLK    => ACLK,
                 ARESETn => ARESETn,
 
-                i_OPC_SEND => i_H_INTERFACE_RECEIVE(1),
-                i_VALID_SEND_DATA => i_VALID_SEND_DATA,
-                i_LAST_SEND_DATA  => i_LAST_SEND_DATA,
-                o_READY_SEND_DATA => o_READY_SEND_DATA,
-                o_FLIT_SELECTOR   => w_FLIT_SELECTOR,
+                OPC_SEND_i => H_INTERFACE_RECEIVE_i(1),
+                VALID_SEND_DATA_i => VALID_SEND_DATA_i,
+                LAST_SEND_DATA_i  => LAST_SEND_DATA_i,
+                READY_SEND_DATA_o => READY_SEND_DATA_o,
+                FLIT_SELECTOR_o   => FLIT_SELECTOR_w,
 
-                i_HAS_REQUEST_PACKET    => i_HAS_REQUEST_PACKET,
-                o_HAS_FINISHED_RESPONSE => o_HAS_FINISHED_RESPONSE,
+                HAS_REQUEST_PACKET_i    => HAS_REQUEST_PACKET_i,
+                HAS_FINISHED_RESPONSE_o => HAS_FINISHED_RESPONSE_o,
 
-                i_WRITE_OK_BUFFER => w_WRITE_OK_BUFFER,
-                o_WRITE_BUFFER    => w_WRITE_BUFFER,
+                WRITE_OK_BUFFER_i => WRITE_OK_BUFFER_w,
+                WRITE_BUFFER_o    => WRITE_BUFFER_w,
 
-                o_ADD => w_ADD,
-                o_INTEGRITY_RESETn => w_INTEGRITY_RESETn
+                ADD_o => ADD_w,
+                INTEGRITY_RESETn_o => INTEGRITY_RESETn_w
             );
     else generate
         u_PACKETIZER_CONTROL_NORMAL: entity work.backend_subordinate_packetizer_control
@@ -89,20 +89,20 @@ begin
                 ACLK    => ACLK,
                 ARESETn => ARESETn,
 
-                i_OPC_SEND => i_H_INTERFACE_RECEIVE(1),
-                i_VALID_SEND_DATA => i_VALID_SEND_DATA,
-                i_LAST_SEND_DATA  => i_LAST_SEND_DATA,
-                o_READY_SEND_DATA => o_READY_SEND_DATA,
-                o_FLIT_SELECTOR   => w_FLIT_SELECTOR,
+                OPC_SEND_i => H_INTERFACE_RECEIVE_i(1),
+                VALID_SEND_DATA_i => VALID_SEND_DATA_i,
+                LAST_SEND_DATA_i  => LAST_SEND_DATA_i,
+                READY_SEND_DATA_o => READY_SEND_DATA_o,
+                FLIT_SELECTOR_o   => FLIT_SELECTOR_w,
 
-                i_HAS_REQUEST_PACKET    => i_HAS_REQUEST_PACKET,
-                o_HAS_FINISHED_RESPONSE => o_HAS_FINISHED_RESPONSE,
+                HAS_REQUEST_PACKET_i    => HAS_REQUEST_PACKET_i,
+                HAS_FINISHED_RESPONSE_o => HAS_FINISHED_RESPONSE_o,
 
-                i_WRITE_OK_BUFFER => w_WRITE_OK_BUFFER,
-                o_WRITE_BUFFER    => w_WRITE_BUFFER,
+                WRITE_OK_BUFFER_i => WRITE_OK_BUFFER_w,
+                WRITE_BUFFER_o    => WRITE_BUFFER_w,
 
-                o_ADD => w_ADD,
-                o_INTEGRITY_RESETn => w_INTEGRITY_RESETn
+                ADD_o => ADD_w,
+                INTEGRITY_RESETn_o => INTEGRITY_RESETn_w
             );
     end generate;
 
@@ -116,14 +116,14 @@ begin
             ACLK    => ACLK,
             ARESETn => ARESETn,
 
-            i_DATA_SEND           => i_DATA_SEND,
-            i_STATUS_SEND         => i_STATUS_SEND,
-            i_H_SRC_RECEIVE       => i_H_SRC_RECEIVE,
-            i_H_INTERFACE_RECEIVE => i_H_INTERFACE_RECEIVE,
-            i_FLIT_SELECTOR       => w_FLIT_SELECTOR,
-            i_CHECKSUM            => w_CHECKSUM,
+            DATA_SEND_i           => DATA_SEND_i,
+            STATUS_SEND_i         => STATUS_SEND_i,
+            H_SRC_RECEIVE_i       => H_SRC_RECEIVE_i,
+            H_INTERFACE_RECEIVE_i => H_INTERFACE_RECEIVE_i,
+            FLIT_SELECTOR_i       => FLIT_SELECTOR_w,
+            CHECKSUM_i            => CHECKSUM_w,
 
-            o_FLIT => w_FLIT
+            FLIT_o => FLIT_w
         );
 
     u_INTEGRITY_CONTROL_SEND:
@@ -131,29 +131,29 @@ begin
         u_INTEGRITY_CONTROL_SEND_HAM: entity work.integrity_control_send_hamming
             port map(
                 ACLK    => ACLK,
-                ARESETn => w_INTEGRITY_RESETn,
+                ARESETn => INTEGRITY_RESETn_w,
 
-                i_ADD       => w_ADD,
-                i_VALUE_ADD => w_FLIT(c_AXI_DATA_WIDTH - 1 downto 0),
+                ADD_i       => ADD_w,
+                VALUE_ADD_i => FLIT_w(c_AXI_DATA_WIDTH - 1 downto 0),
 
-                o_CHECKSUM => w_CHECKSUM,
+                CHECKSUM_o => CHECKSUM_w,
                 correct_error_i => '0',
                 error_o         => open,
-                i_OBS_HAM_INTEGRITY_CORRECT_ERROR => '0',
-                o_OBS_HAM_INTEGRITY_SINGLE_ERR    => open,
-                o_OBS_HAM_INTEGRITY_DOUBLE_ERR    => open,
-                o_OBS_HAM_INTEGRITY_ENC_DATA      => open
+                OBS_HAM_INTEGRITY_CORRECT_ERROR_i => '0',
+                OBS_HAM_INTEGRITY_SINGLE_ERR_o    => open,
+                OBS_HAM_INTEGRITY_DOUBLE_ERR_o    => open,
+                OBS_HAM_INTEGRITY_ENC_DATA_o      => open
             );
     elsif (p_USE_INTEGRITY) generate
         u_INTEGRITY_CONTROL_SEND_NORMAL: entity work.integrity_control_send
             port map(
                 ACLK    => ACLK,
-                ARESETn => w_INTEGRITY_RESETn,
+                ARESETn => INTEGRITY_RESETn_w,
 
-                i_ADD       => w_ADD,
-                i_VALUE_ADD => w_FLIT(c_AXI_DATA_WIDTH - 1 downto 0),
+                ADD_i       => ADD_w,
+                VALUE_ADD_i => FLIT_w(c_AXI_DATA_WIDTH - 1 downto 0),
 
-                o_CHECKSUM => w_CHECKSUM
+                CHECKSUM_o => CHECKSUM_w
             );
     end generate;
 
@@ -166,18 +166,18 @@ begin
             )
             port map(
                 ACLK   => ACLK,
-                ARESET => w_ARESET,
+                ARESET => ARESET_w,
 
-                o_READ_OK  => w_READ_OK_BUFFER,
-                i_READ     => w_READ_BUFFER,
-                o_DATA     => l_in_data_i,
+                READ_OK_o  => READ_OK_BUFFER_w,
+                READ_i     => READ_BUFFER_w,
+                DATA_o     => l_in_data_i,
 
-                o_WRITE_OK => w_WRITE_OK_BUFFER,
-                i_WRITE    => w_WRITE_BUFFER,
-                i_DATA     => w_FLIT,
-                o_enc_stage_data => open,
-                i_OBS_HAM_FIFO_CTRL_TMR_CORRECT_ERROR => '1',
-                o_OBS_HAM_FIFO_CTRL_TMR_ERROR         => open
+                WRITE_OK_o => WRITE_OK_BUFFER_w,
+                WRITE_i    => WRITE_BUFFER_w,
+                DATA_i     => FLIT_w,
+                enc_stage_data_o => open,
+                OBS_HAM_FIFO_CTRL_TMR_CORRECT_ERROR_i => '1',
+                OBS_HAM_FIFO_CTRL_TMR_ERROR_o         => open
             );
     else generate
         u_BUFFER_FIFO_NORMAL: entity work.buffer_fifo
@@ -187,15 +187,15 @@ begin
             )
             port map(
                 ACLK   => ACLK,
-                ARESET => w_ARESET,
+                ARESET => ARESET_w,
 
-                o_READ_OK  => w_READ_OK_BUFFER,
-                i_READ     => w_READ_BUFFER,
-                o_DATA     => l_in_data_i,
+                READ_OK_o  => READ_OK_BUFFER_w,
+                READ_i     => READ_BUFFER_w,
+                DATA_o     => l_in_data_i,
 
-                o_WRITE_OK => w_WRITE_OK_BUFFER,
-                i_WRITE    => w_WRITE_BUFFER,
-                i_DATA     => w_FLIT
+                WRITE_OK_o => WRITE_OK_BUFFER_w,
+                WRITE_i    => WRITE_BUFFER_w,
+                DATA_i     => FLIT_w
             );
     end generate;
 
@@ -206,8 +206,8 @@ begin
                 ACLK    => ACLK,
                 ARESETn => ARESETn,
 
-                i_READ_OK_BUFFER => w_READ_OK_BUFFER,
-                o_READ_BUFFER    => w_READ_BUFFER,
+                READ_OK_BUFFER_i => READ_OK_BUFFER_w,
+                READ_BUFFER_o    => READ_BUFFER_w,
 
                 l_in_val_i  => l_in_val_i,
                 l_in_ack_o  => l_in_ack_o
@@ -218,13 +218,13 @@ begin
                 ACLK    => ACLK,
                 ARESETn => ARESETn,
 
-                i_READ_OK_BUFFER => w_READ_OK_BUFFER,
-                o_READ_BUFFER    => w_READ_BUFFER,
+                READ_OK_BUFFER_i => READ_OK_BUFFER_w,
+                READ_BUFFER_o    => READ_BUFFER_w,
 
                 l_in_val_i  => l_in_val_i,
                 l_in_ack_o  => l_in_ack_o
             );
     end generate;
 
-    w_ARESET <= not ARESETn;
+    ARESET_w <= not ARESETn;
 end rtl;

@@ -24,19 +24,19 @@ entity backend_manager_injection is
         ARESETn: in std_logic;
 
         -- Backend signals.
-        i_START_SEND_PACKET: in std_logic;
-        i_VALID_SEND_DATA  : in std_logic;
-        i_LAST_SEND_DATA   : in std_logic;
+        START_SEND_PACKET_i: in std_logic;
+        VALID_SEND_DATA_i  : in std_logic;
+        LAST_SEND_DATA_i   : in std_logic;
 
-        o_READY_SEND_PACKET: out std_logic;
-        o_READY_SEND_DATA  : out std_logic;
+        READY_SEND_PACKET_o: out std_logic;
+        READY_SEND_DATA_o  : out std_logic;
 
-        i_ADDR     : in std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
-        i_ID       : in std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
-        i_LENGTH   : in std_logic_vector(7 downto 0);
-        i_BURST    : in std_logic_vector(1 downto 0);
-        i_OPC_SEND : in std_logic;
-        i_DATA_SEND: in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+        ADDR_i     : in std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
+        ID_i       : in std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
+        LENGTH_i   : in std_logic_vector(7 downto 0);
+        BURST_i    : in std_logic_vector(1 downto 0);
+        OPC_SEND_i : in std_logic;
+        DATA_SEND_i: in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
         -- XINA signals.
         l_in_data_i: out std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
@@ -44,54 +44,54 @@ entity backend_manager_injection is
         l_in_ack_o : in std_logic;
 
         -- Hamming (new buffer ports) - EXTERNAL
-        i_OBS_INJ_HAM_BUFFER_CORRECT_ERROR : in  std_logic;
-        o_OBS_INJ_HAM_BUFFER_SINGLE_ERR    : out std_logic;
-        o_OBS_INJ_HAM_BUFFER_DOUBLE_ERR    : out std_logic;
-        o_OBS_INJ_HAM_BUFFER_ENC_DATA      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, DETECT_DOUBLE) - 1 downto 0);
-        i_OBS_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR : in  std_logic := '1';
-        o_OBS_INJ_TMR_HAM_BUFFER_CTRL_ERROR         : out std_logic := '0';
+        OBS_INJ_HAM_BUFFER_CORRECT_ERROR_i : in  std_logic;
+        OBS_INJ_HAM_BUFFER_SINGLE_ERR_o    : out std_logic;
+        OBS_INJ_HAM_BUFFER_DOUBLE_ERR_o    : out std_logic;
+        OBS_INJ_HAM_BUFFER_ENC_DATA_o      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, DETECT_DOUBLE) - 1 downto 0);
+        OBS_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i : in  std_logic := '1';
+        OBS_INJ_TMR_HAM_BUFFER_CTRL_ERROR_o         : out std_logic := '0';
 
         -- Injection integrity (checksum) Hamming.
-        i_OBS_INJ_HAM_INTEGRITY_CORRECT_ERROR : in  std_logic := '1';
-        o_OBS_INJ_HAM_INTEGRITY_SINGLE_ERR    : out std_logic := '0';
-        o_OBS_INJ_HAM_INTEGRITY_DOUBLE_ERR    : out std_logic := '0';
-        o_OBS_INJ_HAM_INTEGRITY_ENC_DATA      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+        OBS_INJ_HAM_INTEGRITY_CORRECT_ERROR_i : in  std_logic := '1';
+        OBS_INJ_HAM_INTEGRITY_SINGLE_ERR_o    : out std_logic := '0';
+        OBS_INJ_HAM_INTEGRITY_DOUBLE_ERR_o    : out std_logic := '0';
+        OBS_INJ_HAM_INTEGRITY_ENC_DATA_o      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
         -- Injection flow control TMR (send_control_tmr)
         -- Meaningful when p_USE_INJ_FLOW_CTRL_TMR = TRUE.
-        i_OBS_INJ_TMR_FLOW_CTRL_CORRECT_ERROR : in  std_logic := '0';
-        o_OBS_INJ_TMR_FLOW_CTRL_ERROR       : out std_logic := '0';
+        OBS_INJ_TMR_FLOW_CTRL_CORRECT_ERROR_i : in  std_logic := '0';
+        OBS_INJ_TMR_FLOW_CTRL_ERROR_o       : out std_logic := '0';
 
         -- Injection packetizer control TMR (backend_manager_packetizer_control_tmr)
         -- Meaningful when p_USE_INJ_PKTZ_CTRL_TMR = TRUE.
-        i_OBS_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR : in  std_logic := '0';
-        o_OBS_INJ_TMR_PKTZ_CTRL_ERROR       : out std_logic := '0'
+        OBS_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR_i : in  std_logic := '0';
+        OBS_INJ_TMR_PKTZ_CTRL_ERROR_o       : out std_logic := '0'
     );
 end backend_manager_injection;
 
 architecture rtl of backend_manager_injection is
-    signal w_ARESET: std_logic;
+    signal ARESET_w: std_logic;
 
     -- Routing table.
-    signal w_OPC_ADDR: std_logic_vector((c_AXI_ADDR_WIDTH / 2) - 1 downto 0);
-    signal w_DEST_X  : std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0);
-    signal w_DEST_Y  : std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0);
+    signal OPC_ADDR_w: std_logic_vector((c_AXI_ADDR_WIDTH / 2) - 1 downto 0);
+    signal DEST_X_w  : std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0);
+    signal DEST_Y_w  : std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0);
 
     -- Packetizer.
-    signal w_FLIT: std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-    signal w_FLIT_SELECTOR: std_logic_vector(2 downto 0);
+    signal FLIT_w: std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+    signal FLIT_SELECTOR_w: std_logic_vector(2 downto 0);
 
     -- Checksum.
-    signal w_ADD: std_logic;
-    signal w_CHECKSUM: std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
-    signal w_INTEGRITY_RESETn: std_logic;
-    signal w_OBS_INJ_TMR_PKTZ_CTRL_ERROR: std_logic;
+    signal ADD_w: std_logic;
+    signal CHECKSUM_w: std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
+    signal INTEGRITY_RESETn_w: std_logic;
+    signal OBS_INJ_TMR_PKTZ_CTRL_ERROR_w: std_logic;
 
     -- FIFO.
-    signal w_WRITE_BUFFER   : std_logic;
-    signal w_WRITE_OK_BUFFER: std_logic;
-    signal w_READ_BUFFER    : std_logic;
-    signal w_READ_OK_BUFFER : std_logic;
+    signal WRITE_BUFFER_w   : std_logic;
+    signal WRITE_OK_BUFFER_w: std_logic;
+    signal READ_BUFFER_w    : std_logic;
+    signal READ_OK_BUFFER_w : std_logic;
 
 begin
     u_ROUTING_TABLE: entity work.backend_manager_routing_table
@@ -99,11 +99,11 @@ begin
             ACLK    => ACLK,
             ARESETn => ARESETn,
 
-            i_ADDR     => i_ADDR,
+            ADDR_i     => ADDR_i,
 
-            o_OPC_ADDR => w_OPC_ADDR,
-            o_DEST_X   => w_DEST_X,
-            o_DEST_Y   => w_DEST_Y
+            OPC_ADDR_o => OPC_ADDR_w,
+            DEST_X_o   => DEST_X_w,
+            DEST_Y_o   => DEST_Y_w
         );
 
     u_PACKETIZER_CONTROL:
@@ -113,23 +113,23 @@ begin
                 ACLK    => ACLK,
                 ARESETn => ARESETn,
 
-                i_OPC_SEND          => i_OPC_SEND,
-                i_START_SEND_PACKET => i_START_SEND_PACKET,
-                i_VALID_SEND_DATA   => i_VALID_SEND_DATA,
-                i_LAST_SEND_DATA    => i_LAST_SEND_DATA,
+                OPC_SEND_i          => OPC_SEND_i,
+                START_SEND_PACKET_i => START_SEND_PACKET_i,
+                VALID_SEND_DATA_i   => VALID_SEND_DATA_i,
+                LAST_SEND_DATA_i    => LAST_SEND_DATA_i,
 
-                o_READY_SEND_PACKET => o_READY_SEND_PACKET,
-                o_READY_SEND_DATA   => o_READY_SEND_DATA,
-                o_FLIT_SELECTOR     => w_FLIT_SELECTOR,
+                READY_SEND_PACKET_o => READY_SEND_PACKET_o,
+                READY_SEND_DATA_o   => READY_SEND_DATA_o,
+                FLIT_SELECTOR_o     => FLIT_SELECTOR_w,
 
-                i_WRITE_OK_BUFFER => w_WRITE_OK_BUFFER,
-                o_WRITE_BUFFER    => w_WRITE_BUFFER,
+                WRITE_OK_BUFFER_i => WRITE_OK_BUFFER_w,
+                WRITE_BUFFER_o    => WRITE_BUFFER_w,
 
-                o_ADD              => w_ADD,
-                o_INTEGRITY_RESETn => w_INTEGRITY_RESETn,
+                ADD_o              => ADD_w,
+                INTEGRITY_RESETn_o => INTEGRITY_RESETn_w,
 
-                correct_error_i => i_OBS_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR,
-                error_o         => w_OBS_INJ_TMR_PKTZ_CTRL_ERROR
+                correct_error_i => OBS_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR_i,
+                error_o         => OBS_INJ_TMR_PKTZ_CTRL_ERROR_w
             );
     else generate
         u_PACKETIZER_CONTROL_NORMAL: entity work.backend_manager_packetizer_control
@@ -137,23 +137,23 @@ begin
                 ACLK    => ACLK,
                 ARESETn => ARESETn,
 
-                i_OPC_SEND           => i_OPC_SEND,
-                i_START_SEND_PACKET  => i_START_SEND_PACKET,
-                i_VALID_SEND_DATA    => i_VALID_SEND_DATA,
-                i_LAST_SEND_DATA     => i_LAST_SEND_DATA,
+                OPC_SEND_i           => OPC_SEND_i,
+                START_SEND_PACKET_i  => START_SEND_PACKET_i,
+                VALID_SEND_DATA_i    => VALID_SEND_DATA_i,
+                LAST_SEND_DATA_i     => LAST_SEND_DATA_i,
 
-                o_READY_SEND_PACKET  => o_READY_SEND_PACKET,
-                o_READY_SEND_DATA    => o_READY_SEND_DATA,
-                o_FLIT_SELECTOR      => w_FLIT_SELECTOR,
+                READY_SEND_PACKET_o  => READY_SEND_PACKET_o,
+                READY_SEND_DATA_o    => READY_SEND_DATA_o,
+                FLIT_SELECTOR_o      => FLIT_SELECTOR_w,
 
-                i_WRITE_OK_BUFFER => w_WRITE_OK_BUFFER,
-                o_WRITE_BUFFER    => w_WRITE_BUFFER,
+                WRITE_OK_BUFFER_i => WRITE_OK_BUFFER_w,
+                WRITE_BUFFER_o    => WRITE_BUFFER_w,
 
-                o_ADD              => w_ADD,
-                o_INTEGRITY_RESETn => w_INTEGRITY_RESETn
+                ADD_o              => ADD_w,
+                INTEGRITY_RESETn_o => INTEGRITY_RESETn_w
             );
 
-        w_OBS_INJ_TMR_PKTZ_CTRL_ERROR   <= '0';
+        OBS_INJ_TMR_PKTZ_CTRL_ERROR_w   <= '0';
     end generate;
 
     u_PACKETIZER_DATAPATH: entity work.backend_manager_packetizer_datapath
@@ -165,19 +165,19 @@ begin
             ACLK    => ACLK,
             ARESETn => ARESETn,
 
-            i_OPC_ADDR  => w_OPC_ADDR,
-            i_ID        => i_ID,
-            i_LENGTH    => i_LENGTH,
-            i_BURST     => i_BURST,
-            i_OPC_SEND  => i_OPC_SEND,
-            i_DATA_SEND => i_DATA_SEND,
+            OPC_ADDR_i  => OPC_ADDR_w,
+            ID_i        => ID_i,
+            LENGTH_i    => LENGTH_i,
+            BURST_i     => BURST_i,
+            OPC_SEND_i  => OPC_SEND_i,
+            DATA_SEND_i => DATA_SEND_i,
 
-            i_DEST_X        => w_DEST_X,
-            i_DEST_Y        => w_DEST_Y,
-            i_FLIT_SELECTOR => w_FLIT_SELECTOR,
-            i_CHECKSUM      => w_CHECKSUM,
+            DEST_X_i        => DEST_X_w,
+            DEST_Y_i        => DEST_Y_w,
+            FLIT_SELECTOR_i => FLIT_SELECTOR_w,
+            CHECKSUM_i      => CHECKSUM_w,
 
-            o_FLIT => w_FLIT
+            FLIT_o => FLIT_w
         );
 
     u_INTEGRITY_CONTROL_SEND:
@@ -185,29 +185,29 @@ begin
         u_INTEGRITY_CONTROL_SEND_HAM: entity work.integrity_control_send_hamming
             port map(
                 ACLK    => ACLK,
-                ARESETn => w_INTEGRITY_RESETn,
+                ARESETn => INTEGRITY_RESETn_w,
 
-                i_ADD       => w_ADD,
-                i_VALUE_ADD => w_FLIT(c_AXI_DATA_WIDTH - 1 downto 0),
+                ADD_i       => ADD_w,
+                VALUE_ADD_i => FLIT_w(c_AXI_DATA_WIDTH - 1 downto 0),
 
-                o_CHECKSUM      => w_CHECKSUM,
+                CHECKSUM_o      => CHECKSUM_w,
 
                 correct_error_i => '0',
                 error_o         => open,
 
-                i_OBS_HAM_INTEGRITY_CORRECT_ERROR => i_OBS_INJ_HAM_INTEGRITY_CORRECT_ERROR,
-                o_OBS_HAM_INTEGRITY_SINGLE_ERR    => o_OBS_INJ_HAM_INTEGRITY_SINGLE_ERR,
-                o_OBS_HAM_INTEGRITY_DOUBLE_ERR    => o_OBS_INJ_HAM_INTEGRITY_DOUBLE_ERR,
-                o_OBS_HAM_INTEGRITY_ENC_DATA      => o_OBS_INJ_HAM_INTEGRITY_ENC_DATA
+                OBS_HAM_INTEGRITY_CORRECT_ERROR_i => OBS_INJ_HAM_INTEGRITY_CORRECT_ERROR_i,
+                OBS_HAM_INTEGRITY_SINGLE_ERR_o    => OBS_INJ_HAM_INTEGRITY_SINGLE_ERR_o,
+                OBS_HAM_INTEGRITY_DOUBLE_ERR_o    => OBS_INJ_HAM_INTEGRITY_DOUBLE_ERR_o,
+                OBS_HAM_INTEGRITY_ENC_DATA_o      => OBS_INJ_HAM_INTEGRITY_ENC_DATA_o
             );
     end generate;
 
     u_INTEGRITY_CONTROL_SEND_DISABLE:
     if (not p_USE_INJ_INTEGRITY_CHECK) generate
-        o_OBS_INJ_HAM_INTEGRITY_SINGLE_ERR <= '0';
-        o_OBS_INJ_HAM_INTEGRITY_DOUBLE_ERR <= '0';
-        o_OBS_INJ_HAM_INTEGRITY_ENC_DATA   <= (others => '0');
-        w_OBS_INJ_TMR_PKTZ_CTRL_ERROR   <= '0';
+        OBS_INJ_HAM_INTEGRITY_SINGLE_ERR_o <= '0';
+        OBS_INJ_HAM_INTEGRITY_DOUBLE_ERR_o <= '0';
+        OBS_INJ_HAM_INTEGRITY_ENC_DATA_o   <= (others => '0');
+        OBS_INJ_TMR_PKTZ_CTRL_ERROR_w   <= '0';
     end generate;
 
     u_BUFFER_FIFO:
@@ -220,25 +220,25 @@ begin
             )
             port map(
                 ACLK   => ACLK,
-                ARESET => w_ARESET,
+                ARESET => ARESET_w,
 
                 -- Read
-                o_READ_OK => w_READ_OK_BUFFER,
-                i_READ    => w_READ_BUFFER,
-                o_DATA    => l_in_data_i,
+                READ_OK_o => READ_OK_BUFFER_w,
+                READ_i    => READ_BUFFER_w,
+                DATA_o    => l_in_data_i,
 
                 -- Write
-                o_WRITE_OK => w_WRITE_OK_BUFFER,
-                i_WRITE    => w_WRITE_BUFFER,
-                i_DATA     => w_FLIT,
+                WRITE_OK_o => WRITE_OK_BUFFER_w,
+                WRITE_i    => WRITE_BUFFER_w,
+                DATA_i     => FLIT_w,
 
                 -- Hamming status/control (EXTERNAL WIRES)
-                correct_error_i => i_OBS_INJ_HAM_BUFFER_CORRECT_ERROR,
-                single_err_o    => o_OBS_INJ_HAM_BUFFER_SINGLE_ERR,
-                double_err_o    => o_OBS_INJ_HAM_BUFFER_DOUBLE_ERR,
-                o_enc_stage_data => o_OBS_INJ_HAM_BUFFER_ENC_DATA,
-                i_OBS_HAM_FIFO_CTRL_TMR_CORRECT_ERROR => i_OBS_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR,
-                o_OBS_HAM_FIFO_CTRL_TMR_ERROR         => o_OBS_INJ_TMR_HAM_BUFFER_CTRL_ERROR
+                correct_error_i => OBS_INJ_HAM_BUFFER_CORRECT_ERROR_i,
+                single_err_o    => OBS_INJ_HAM_BUFFER_SINGLE_ERR_o,
+                double_err_o    => OBS_INJ_HAM_BUFFER_DOUBLE_ERR_o,
+                enc_stage_data_o => OBS_INJ_HAM_BUFFER_ENC_DATA_o,
+                OBS_HAM_FIFO_CTRL_TMR_CORRECT_ERROR_i => OBS_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i,
+                OBS_HAM_FIFO_CTRL_TMR_ERROR_o         => OBS_INJ_TMR_HAM_BUFFER_CTRL_ERROR_o
             );
     else generate
         u_BUFFER_FIFO_NORMAL: entity work.buffer_fifo
@@ -248,19 +248,19 @@ begin
             )
             port map(
                 ACLK   => ACLK,
-                ARESET => w_ARESET,
+                ARESET => ARESET_w,
 
-                o_READ_OK  => w_READ_OK_BUFFER,
-                i_READ     => w_READ_BUFFER,
-                o_DATA     => l_in_data_i,
+                READ_OK_o  => READ_OK_BUFFER_w,
+                READ_i     => READ_BUFFER_w,
+                DATA_o     => l_in_data_i,
 
-                o_WRITE_OK => w_WRITE_OK_BUFFER,
-                i_WRITE    => w_WRITE_BUFFER,
-                i_DATA     => w_FLIT
+                WRITE_OK_o => WRITE_OK_BUFFER_w,
+                WRITE_i    => WRITE_BUFFER_w,
+                DATA_i     => FLIT_w
             );
 
-        o_OBS_INJ_HAM_BUFFER_ENC_DATA <= (others => '0');
-        o_OBS_INJ_TMR_HAM_BUFFER_CTRL_ERROR <= '0';
+        OBS_INJ_HAM_BUFFER_ENC_DATA_o <= (others => '0');
+        OBS_INJ_TMR_HAM_BUFFER_CTRL_ERROR_o <= '0';
     end generate;
 
     u_SEND_CONTROL:
@@ -270,14 +270,14 @@ begin
                 ACLK    => ACLK,
                 ARESETn => ARESETn,
 
-                i_READ_OK_BUFFER => w_READ_OK_BUFFER,
-                o_READ_BUFFER    => w_READ_BUFFER,
+                READ_OK_BUFFER_i => READ_OK_BUFFER_w,
+                READ_BUFFER_o    => READ_BUFFER_w,
 
                 l_in_val_i => l_in_val_i,
                 l_in_ack_o => l_in_ack_o,
 
-                correct_error_i => i_OBS_INJ_TMR_FLOW_CTRL_CORRECT_ERROR,
-                error_o         => o_OBS_INJ_TMR_FLOW_CTRL_ERROR
+                correct_error_i => OBS_INJ_TMR_FLOW_CTRL_CORRECT_ERROR_i,
+                error_o         => OBS_INJ_TMR_FLOW_CTRL_ERROR_o
             );
     else generate
         u_SEND_CONTROL_NORMAL: entity work.send_control
@@ -285,18 +285,18 @@ begin
                 ACLK    => ACLK,
                 ARESETn => ARESETn,
 
-                i_READ_OK_BUFFER => w_READ_OK_BUFFER,
-                o_READ_BUFFER    => w_READ_BUFFER,
+                READ_OK_BUFFER_i => READ_OK_BUFFER_w,
+                READ_BUFFER_o    => READ_BUFFER_w,
 
                 l_in_val_i => l_in_val_i,
                 l_in_ack_o => l_in_ack_o
             );
 
-        o_OBS_INJ_TMR_FLOW_CTRL_ERROR <= '0';
+        OBS_INJ_TMR_FLOW_CTRL_ERROR_o <= '0';
     end generate;
 
-    w_ARESET <= not ARESETn;
+    ARESET_w <= not ARESETn;
 
-    o_OBS_INJ_TMR_PKTZ_CTRL_ERROR   <= w_OBS_INJ_TMR_PKTZ_CTRL_ERROR;
+    OBS_INJ_TMR_PKTZ_CTRL_ERROR_o   <= OBS_INJ_TMR_PKTZ_CTRL_ERROR_w;
 
 end rtl;

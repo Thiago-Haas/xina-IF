@@ -27,8 +27,8 @@ entity frontend_manager_injection_dp is
     ARESETn : in  std_logic;
 
     -- Capture strobes (1-cycle pulses)
-    i_CAP_AW : in std_logic;
-    i_CAP_AR : in std_logic;
+    CAP_AW_i : in std_logic;
+    CAP_AR_i : in std_logic;
 
     -- AXI header sources
     AWID    : in std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
@@ -46,26 +46,26 @@ entity frontend_manager_injection_dp is
     WDATA  : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
     -- Frontend injection Hamming correction enables
-    i_META_HDR_CORRECT_ERROR : in std_logic := '1';
-    i_ADDR_CORRECT_ERROR     : in std_logic := '1';
+    META_HDR_CORRECT_ERROR_i : in std_logic := '1';
+    ADDR_CORRECT_ERROR_i     : in std_logic := '1';
 
     -- Outputs to backend
-    o_ADDR      : out std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
-    o_ID        : out std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
-    o_LENGTH    : out std_logic_vector(7 downto 0);
-    o_BURST     : out std_logic_vector(1 downto 0);
-    o_OPC_SEND  : out std_logic;
-    o_DATA_SEND : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+    ADDR_o      : out std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
+    ID_o        : out std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
+    LENGTH_o    : out std_logic_vector(7 downto 0);
+    BURST_o     : out std_logic_vector(1 downto 0);
+    OPC_SEND_o  : out std_logic;
+    DATA_SEND_o : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
     -- Hamming detection flags (exported to top)
     --  * meta header = opc + id + len + burst
-    o_META_HDR_SINGLE_ERR : out std_logic;
-    o_META_HDR_DOUBLE_ERR : out std_logic;
+    META_HDR_SINGLE_ERR_o : out std_logic;
+    META_HDR_DOUBLE_ERR_o : out std_logic;
     --  * address = addr
-    o_ADDR_SINGLE_ERR     : out std_logic;
-    o_ADDR_DOUBLE_ERR     : out std_logic;
-    o_META_HDR_ENC_DATA   : out std_logic_vector((1 + c_AXI_ID_WIDTH + 8 + 2) + work.hamming_pkg.get_ecc_size((1 + c_AXI_ID_WIDTH + 8 + 2), p_HAMMING_DETECT_DOUBLE) - 1 downto 0);
-    o_ADDR_ENC_DATA       : out std_logic_vector(c_AXI_ADDR_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_ADDR_WIDTH, p_HAMMING_DETECT_DOUBLE) - 1 downto 0)
+    ADDR_SINGLE_ERR_o     : out std_logic;
+    ADDR_DOUBLE_ERR_o     : out std_logic;
+    META_HDR_ENC_DATA_o   : out std_logic_vector((1 + c_AXI_ID_WIDTH + 8 + 2) + work.hamming_pkg.get_ecc_size((1 + c_AXI_ID_WIDTH + 8 + 2), p_HAMMING_DETECT_DOUBLE) - 1 downto 0);
+    ADDR_ENC_DATA_o       : out std_logic_vector(c_AXI_ADDR_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_ADDR_WIDTH, p_HAMMING_DETECT_DOUBLE) - 1 downto 0)
   );
 end entity;
 
@@ -120,29 +120,29 @@ begin
   ---------------------------------------------------------------------------------------------
   -- Capture qualification
 
-  cap_hdr_w <= '1' when (i_CAP_AW = '1' or i_CAP_AR = '1') else '0';
+  cap_hdr_w <= '1' when (CAP_AW_i = '1' or CAP_AR_i = '1') else '0';
 
   ---------------------------------------------------------------------------------------------
   -- Input muxing
 
-  opc_in_w <= '0' when (i_CAP_AW = '1') else
-              '1' when (i_CAP_AR = '1') else
+  opc_in_w <= '0' when (CAP_AW_i = '1') else
+              '1' when (CAP_AR_i = '1') else
               '0';
 
-  id_in_w <= AWID when (i_CAP_AW = '1') else
-             ARID when (i_CAP_AR = '1') else
+  id_in_w <= AWID when (CAP_AW_i = '1') else
+             ARID when (CAP_AR_i = '1') else
              (others => '0');
 
-  len_in_w <= AWLEN when (i_CAP_AW = '1') else
-              ARLEN when (i_CAP_AR = '1') else
+  len_in_w <= AWLEN when (CAP_AW_i = '1') else
+              ARLEN when (CAP_AR_i = '1') else
               (others => '0');
 
-  burst_in_w <= AWBURST when (i_CAP_AW = '1') else
-                ARBURST when (i_CAP_AR = '1') else
+  burst_in_w <= AWBURST when (CAP_AW_i = '1') else
+                ARBURST when (CAP_AR_i = '1') else
                 (others => '0');
 
-  addr_in_w <= AWADDR when (i_CAP_AW = '1') else
-               ARADDR when (i_CAP_AR = '1') else
+  addr_in_w <= AWADDR when (CAP_AW_i = '1') else
+               ARADDR when (CAP_AR_i = '1') else
                (others => '0');
 
   ---------------------------------------------------------------------------------------------
@@ -162,7 +162,7 @@ begin
       INJECT_ERROR   => INJECT_ERROR_C
     )
     port map(
-      correct_en_i => i_META_HDR_CORRECT_ERROR,
+      correct_en_i => META_HDR_CORRECT_ERROR_i,
       write_en_i   => cap_hdr_w,
       data_i       => meta_hdr_in_w,
       rstn_i       => ARESETn,
@@ -185,7 +185,7 @@ begin
       INJECT_ERROR   => INJECT_ERROR_C
     )
     port map(
-      correct_en_i => i_ADDR_CORRECT_ERROR,
+      correct_en_i => ADDR_CORRECT_ERROR_i,
       write_en_i   => cap_hdr_w,
       data_i       => addr_in_w,
       rstn_i       => ARESETn,
@@ -210,26 +210,26 @@ begin
   ---------------------------------------------------------------------------------------------
   -- Drive backend outputs
 
-  o_OPC_SEND <= opc_send_r_w;
-  o_ID       <= id_r_w;
-  o_LENGTH   <= len_r_w;
-  o_BURST    <= burst_r_w;
-  o_ADDR     <= addr_out_w;
+  OPC_SEND_o <= opc_send_r_w;
+  ID_o       <= id_r_w;
+  LENGTH_o   <= len_r_w;
+  BURST_o    <= burst_r_w;
+  ADDR_o     <= addr_out_w;
 
   ---------------------------------------------------------------------------------------------
   -- Export Hamming detection flags
 
-  o_META_HDR_SINGLE_ERR <= meta_hdr_single_err_w;
-  o_META_HDR_DOUBLE_ERR <= meta_hdr_double_err_w;
+  META_HDR_SINGLE_ERR_o <= meta_hdr_single_err_w;
+  META_HDR_DOUBLE_ERR_o <= meta_hdr_double_err_w;
 
-  o_ADDR_SINGLE_ERR <= addr_single_err_w;
-  o_ADDR_DOUBLE_ERR <= addr_double_err_w;
-  o_META_HDR_ENC_DATA <= meta_hdr_enc_w;
-  o_ADDR_ENC_DATA <= addr_enc_w;
+  ADDR_SINGLE_ERR_o <= addr_single_err_w;
+  ADDR_DOUBLE_ERR_o <= addr_double_err_w;
+  META_HDR_ENC_DATA_o <= meta_hdr_enc_w;
+  ADDR_ENC_DATA_o <= addr_enc_w;
 
   ---------------------------------------------------------------------------------------------
   -- Preserve original data send behaviour (only meaningful for writes and when WVALID=1)
 
-  o_DATA_SEND <= WDATA when (opc_send_r_w = '0' and WVALID = '1') else (others => '0');
+  DATA_SEND_o <= WDATA when (opc_send_r_w = '0' and WVALID = '1') else (others => '0');
 
 end architecture;

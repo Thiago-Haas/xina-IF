@@ -22,18 +22,18 @@ entity backend_manager_reception is
         ARESETn: in std_logic;
 
         -- Backend signals.
-        i_READY_RECEIVE_PACKET: in std_logic;
-        i_READY_RECEIVE_DATA  : in std_logic;
+        READY_RECEIVE_PACKET_i: in std_logic;
+        READY_RECEIVE_DATA_i  : in std_logic;
 
-        o_VALID_RECEIVE_DATA: out std_logic;
-        o_LAST_RECEIVE_DATA : out std_logic;
+        VALID_RECEIVE_DATA_o: out std_logic;
+        LAST_RECEIVE_DATA_o : out std_logic;
 
-        o_ID_RECEIVE    : out std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
-        o_STATUS_RECEIVE: out std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
-        o_OPC_RECEIVE   : out std_logic;
-        o_DATA_RECEIVE  : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+        ID_RECEIVE_o    : out std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
+        STATUS_RECEIVE_o: out std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
+        OPC_RECEIVE_o   : out std_logic;
+        DATA_RECEIVE_o  : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
-        o_CORRUPT_RECEIVE: out std_logic := '0';
+        CORRUPT_RECEIVE_o: out std_logic := '0';
 
         -- XINA signals.
         l_out_data_o: in  std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
@@ -41,57 +41,57 @@ entity backend_manager_reception is
         l_out_ack_i : out std_logic;
 
         -- Hamming (buffer) - EXTERNAL
-        i_OBS_RX_HAM_BUFFER_CORRECT_ERROR : in  std_logic;
-        o_OBS_RX_HAM_BUFFER_SINGLE_ERR    : out std_logic;
-        o_OBS_RX_HAM_BUFFER_DOUBLE_ERR    : out std_logic;
-        o_OBS_RX_HAM_BUFFER_ENC_DATA      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, DETECT_DOUBLE) - 1 downto 0);
-        i_OBS_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR : in  std_logic := '1';
-        o_OBS_RX_TMR_HAM_BUFFER_CTRL_ERROR         : out std_logic := '0';
+        OBS_RX_HAM_BUFFER_CORRECT_ERROR_i : in  std_logic;
+        OBS_RX_HAM_BUFFER_SINGLE_ERR_o    : out std_logic;
+        OBS_RX_HAM_BUFFER_DOUBLE_ERR_o    : out std_logic;
+        OBS_RX_HAM_BUFFER_ENC_DATA_o      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, DETECT_DOUBLE) - 1 downto 0);
+        OBS_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i : in  std_logic := '1';
+        OBS_RX_TMR_HAM_BUFFER_CTRL_ERROR_o         : out std_logic := '0';
         -- Hamming (interface header register) - EXTERNAL
-        i_OBS_RX_HAM_INTERFACE_HDR_CORRECT_ERROR : in  std_logic := '1';
-        o_OBS_RX_HAM_INTERFACE_HDR_SINGLE_ERR    : out std_logic := '0';
-        o_OBS_RX_HAM_INTERFACE_HDR_DOUBLE_ERR    : out std_logic := '0';
-        o_OBS_RX_HAM_INTERFACE_HDR_ENC_DATA      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, DETECT_DOUBLE) - 1 downto 0);
+        OBS_RX_HAM_INTERFACE_HDR_CORRECT_ERROR_i : in  std_logic := '1';
+        OBS_RX_HAM_INTERFACE_HDR_SINGLE_ERR_o    : out std_logic := '0';
+        OBS_RX_HAM_INTERFACE_HDR_DOUBLE_ERR_o    : out std_logic := '0';
+        OBS_RX_HAM_INTERFACE_HDR_ENC_DATA_o      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, DETECT_DOUBLE) - 1 downto 0);
 
         -- Integrity receive checker (integrity_control_receive_hamming) - EXTERNAL
         -- Meaningful when p_USE_RX_INTEGRITY_CHECK = TRUE.
-        o_OBS_RX_INTEGRITY_CORRUPT        : out std_logic := '0';
+        OBS_RX_INTEGRITY_CORRUPT_o        : out std_logic := '0';
         -- Meaningful when p_USE_RX_INTEGRITY_CHECK = TRUE.
-        i_OBS_RX_HAM_INTEGRITY_CORRECT_ERROR : in  std_logic := '1';
-        o_OBS_RX_HAM_INTEGRITY_SINGLE_ERR    : out std_logic := '0';
-        o_OBS_RX_HAM_INTEGRITY_DOUBLE_ERR    : out std_logic := '0';
-        o_OBS_RX_HAM_INTEGRITY_ENC_DATA      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+        OBS_RX_HAM_INTEGRITY_CORRECT_ERROR_i : in  std_logic := '1';
+        OBS_RX_HAM_INTEGRITY_SINGLE_ERR_o    : out std_logic := '0';
+        OBS_RX_HAM_INTEGRITY_DOUBLE_ERR_o    : out std_logic := '0';
+        OBS_RX_HAM_INTEGRITY_ENC_DATA_o      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
         -- Receive flow control TMR (receive_control_tmr) - EXTERNAL
         -- Meaningful when p_USE_RX_FLOW_CTRL_TMR = TRUE.
-        i_OBS_RX_TMR_FLOW_CTRL_CORRECT_ERROR : in  std_logic := '0';
-        o_OBS_RX_TMR_FLOW_CTRL_ERROR       : out std_logic := '0'
+        OBS_RX_TMR_FLOW_CTRL_CORRECT_ERROR_i : in  std_logic := '0';
+        OBS_RX_TMR_FLOW_CTRL_ERROR_o       : out std_logic := '0'
     );
 end backend_manager_reception;
 
 architecture rtl of backend_manager_reception is
-    signal w_ARESET: std_logic;
+    signal ARESET_w: std_logic;
 
     -- Depacketizer.
-    signal w_FLIT: std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+    signal FLIT_w: std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
 
     -- Registers.
-    signal w_WRITE_H_INTERFACE_REG: std_logic;
-    signal w_H_INTERFACE: std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+    signal WRITE_H_INTERFACE_REG_w: std_logic;
+    signal H_INTERFACE_w: std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
 
     -- Integrity (receive) outputs.
-    signal w_OBS_RX_INTEGRITY_CORRUPT : std_logic;
+    signal OBS_RX_INTEGRITY_CORRUPT_w : std_logic;
 
     -- Checksum.
-    signal w_ADD: std_logic;
-    signal w_COMPARE: std_logic;
-    signal w_INTEGRITY_RESETn: std_logic;
+    signal ADD_w: std_logic;
+    signal COMPARE_w: std_logic;
+    signal INTEGRITY_RESETn_w: std_logic;
 
     -- FIFO.
-    signal w_WRITE_BUFFER   : std_logic;
-    signal w_WRITE_OK_BUFFER: std_logic;
-    signal w_READ_BUFFER    : std_logic;
-    signal w_READ_OK_BUFFER : std_logic;
+    signal WRITE_BUFFER_w   : std_logic;
+    signal WRITE_OK_BUFFER_w: std_logic;
+    signal READ_BUFFER_w    : std_logic;
+    signal READ_OK_BUFFER_w : std_logic;
 
 begin
     u_H_INTERFACE_REG: entity work.backend_manager_reception_h_interface_reg
@@ -103,20 +103,20 @@ begin
             ACLK    => ACLK,
             ARESETn => ARESETn,
 
-            i_WRITE_EN => w_WRITE_H_INTERFACE_REG,
-            i_DATA     => w_FLIT,
-            o_DATA     => w_H_INTERFACE,
+            WRITE_EN_i => WRITE_H_INTERFACE_REG_w,
+            DATA_i     => FLIT_w,
+            DATA_o     => H_INTERFACE_w,
 
-            i_OBS_HAM_CORRECT_ERROR => i_OBS_RX_HAM_INTERFACE_HDR_CORRECT_ERROR,
-            o_OBS_HAM_SINGLE_ERR    => o_OBS_RX_HAM_INTERFACE_HDR_SINGLE_ERR,
-            o_OBS_HAM_DOUBLE_ERR    => o_OBS_RX_HAM_INTERFACE_HDR_DOUBLE_ERR,
-            o_OBS_HAM_ENC_DATA      => o_OBS_RX_HAM_INTERFACE_HDR_ENC_DATA
+            OBS_HAM_CORRECT_ERROR_i => OBS_RX_HAM_INTERFACE_HDR_CORRECT_ERROR_i,
+            OBS_HAM_SINGLE_ERR_o    => OBS_RX_HAM_INTERFACE_HDR_SINGLE_ERR_o,
+            OBS_HAM_DOUBLE_ERR_o    => OBS_RX_HAM_INTERFACE_HDR_DOUBLE_ERR_o,
+            OBS_HAM_ENC_DATA_o      => OBS_RX_HAM_INTERFACE_HDR_ENC_DATA_o
         );
 
-    o_ID_RECEIVE     <= w_H_INTERFACE(19 downto 15);
-    o_STATUS_RECEIVE <= w_H_INTERFACE(4 downto 2);
-    o_OPC_RECEIVE    <= w_H_INTERFACE(1);
-    o_DATA_RECEIVE   <= w_FLIT(31 downto 0);
+    ID_RECEIVE_o     <= H_INTERFACE_w(19 downto 15);
+    STATUS_RECEIVE_o <= H_INTERFACE_w(4 downto 2);
+    OPC_RECEIVE_o    <= H_INTERFACE_w(1);
+    DATA_RECEIVE_o   <= FLIT_w(31 downto 0);
 
     u_DEPACKETIZER_CONTROL:
     if (p_USE_RX_DEPKTZ_CTRL_TMR) generate
@@ -125,20 +125,20 @@ begin
                 ACLK    => ACLK,
                 ARESETn => ARESETn,
 
-                i_READY_RECEIVE_PACKET => i_READY_RECEIVE_PACKET,
-                i_READY_RECEIVE_DATA   => i_READY_RECEIVE_DATA,
-                o_VALID_RECEIVE_DATA   => o_VALID_RECEIVE_DATA,
-                o_LAST_RECEIVE_DATA    => o_LAST_RECEIVE_DATA,
+                READY_RECEIVE_PACKET_i => READY_RECEIVE_PACKET_i,
+                READY_RECEIVE_DATA_i   => READY_RECEIVE_DATA_i,
+                VALID_RECEIVE_DATA_o   => VALID_RECEIVE_DATA_o,
+                LAST_RECEIVE_DATA_o    => LAST_RECEIVE_DATA_o,
 
-                i_FLIT           => w_FLIT,
-                i_READ_OK_BUFFER => w_READ_OK_BUFFER,
-                o_READ_BUFFER    => w_READ_BUFFER,
+                FLIT_i           => FLIT_w,
+                READ_OK_BUFFER_i => READ_OK_BUFFER_w,
+                READ_BUFFER_o    => READ_BUFFER_w,
 
-                o_WRITE_H_INTERFACE_REG => w_WRITE_H_INTERFACE_REG,
+                WRITE_H_INTERFACE_REG_o => WRITE_H_INTERFACE_REG_w,
 
-                o_ADD              => w_ADD,
-                o_COMPARE          => w_COMPARE,
-                o_INTEGRITY_RESETn => w_INTEGRITY_RESETn
+                ADD_o              => ADD_w,
+                COMPARE_o          => COMPARE_w,
+                INTEGRITY_RESETn_o => INTEGRITY_RESETn_w
             );
     else generate
         u_DEPACKETIZER_CONTROL_NORMAL: entity work.backend_manager_depacketizer_control
@@ -146,20 +146,20 @@ begin
                 ACLK    => ACLK,
                 ARESETn => ARESETn,
 
-                i_READY_RECEIVE_PACKET => i_READY_RECEIVE_PACKET,
-                i_READY_RECEIVE_DATA   => i_READY_RECEIVE_DATA,
-                o_VALID_RECEIVE_DATA   => o_VALID_RECEIVE_DATA,
-                o_LAST_RECEIVE_DATA    => o_LAST_RECEIVE_DATA,
+                READY_RECEIVE_PACKET_i => READY_RECEIVE_PACKET_i,
+                READY_RECEIVE_DATA_i   => READY_RECEIVE_DATA_i,
+                VALID_RECEIVE_DATA_o   => VALID_RECEIVE_DATA_o,
+                LAST_RECEIVE_DATA_o    => LAST_RECEIVE_DATA_o,
 
-                i_FLIT           => w_FLIT,
-                i_READ_OK_BUFFER => w_READ_OK_BUFFER,
-                o_READ_BUFFER    => w_READ_BUFFER,
+                FLIT_i           => FLIT_w,
+                READ_OK_BUFFER_i => READ_OK_BUFFER_w,
+                READ_BUFFER_o    => READ_BUFFER_w,
 
-                o_WRITE_H_INTERFACE_REG => w_WRITE_H_INTERFACE_REG,
+                WRITE_H_INTERFACE_REG_o => WRITE_H_INTERFACE_REG_w,
 
-                o_ADD              => w_ADD,
-                o_COMPARE          => w_COMPARE,
-                o_INTEGRITY_RESETn => w_INTEGRITY_RESETn
+                ADD_o              => ADD_w,
+                COMPARE_o          => COMPARE_w,
+                INTEGRITY_RESETn_o => INTEGRITY_RESETn_w
             );
     end generate;
 
@@ -168,35 +168,35 @@ begin
         u_INTEGRITY_CONTROL_RECEIVE_HAM: entity work.integrity_control_receive_hamming
             port map(
                 ACLK    => ACLK,
-                ARESETn => w_INTEGRITY_RESETn,
+                ARESETn => INTEGRITY_RESETn_w,
 
-                i_ADD           => w_ADD,
-                i_VALUE_ADD     => w_FLIT(c_AXI_DATA_WIDTH - 1 downto 0),
+                ADD_i           => ADD_w,
+                VALUE_ADD_i     => FLIT_w(c_AXI_DATA_WIDTH - 1 downto 0),
 
-                i_COMPARE       => w_COMPARE,
-                i_VALUE_COMPARE => w_FLIT(c_AXI_DATA_WIDTH - 1 downto 0),
+                COMPARE_i       => COMPARE_w,
+                VALUE_COMPARE_i => FLIT_w(c_AXI_DATA_WIDTH - 1 downto 0),
 
-                o_CORRUPT       => w_OBS_RX_INTEGRITY_CORRUPT,
+                CORRUPT_o       => OBS_RX_INTEGRITY_CORRUPT_w,
 
                 correct_error_i => '0',
                 error_o         => open,
 
-                i_OBS_HAM_INTEGRITY_CORRECT_ERROR => i_OBS_RX_HAM_INTEGRITY_CORRECT_ERROR,
-                o_OBS_HAM_INTEGRITY_SINGLE_ERR    => o_OBS_RX_HAM_INTEGRITY_SINGLE_ERR,
-                o_OBS_HAM_INTEGRITY_DOUBLE_ERR    => o_OBS_RX_HAM_INTEGRITY_DOUBLE_ERR,
-                o_OBS_HAM_INTEGRITY_ENC_DATA      => o_OBS_RX_HAM_INTEGRITY_ENC_DATA
+                OBS_HAM_INTEGRITY_CORRECT_ERROR_i => OBS_RX_HAM_INTEGRITY_CORRECT_ERROR_i,
+                OBS_HAM_INTEGRITY_SINGLE_ERR_o    => OBS_RX_HAM_INTEGRITY_SINGLE_ERR_o,
+                OBS_HAM_INTEGRITY_DOUBLE_ERR_o    => OBS_RX_HAM_INTEGRITY_DOUBLE_ERR_o,
+                OBS_HAM_INTEGRITY_ENC_DATA_o      => OBS_RX_HAM_INTEGRITY_ENC_DATA_o
             );
     else generate
         -- Integrity disabled.
-        w_OBS_RX_INTEGRITY_CORRUPT  <= '0';
-        o_OBS_RX_HAM_INTEGRITY_SINGLE_ERR <= '0';
-        o_OBS_RX_HAM_INTEGRITY_DOUBLE_ERR <= '0';
-        o_OBS_RX_HAM_INTEGRITY_ENC_DATA   <= (others => '0');
+        OBS_RX_INTEGRITY_CORRUPT_w  <= '0';
+        OBS_RX_HAM_INTEGRITY_SINGLE_ERR_o <= '0';
+        OBS_RX_HAM_INTEGRITY_DOUBLE_ERR_o <= '0';
+        OBS_RX_HAM_INTEGRITY_ENC_DATA_o   <= (others => '0');
     end generate;
 
     -- Export integrity checker outputs with descriptive names.
-    o_CORRUPT_RECEIVE   <= w_OBS_RX_INTEGRITY_CORRUPT;
-    o_OBS_RX_INTEGRITY_CORRUPT <= w_OBS_RX_INTEGRITY_CORRUPT;
+    CORRUPT_RECEIVE_o   <= OBS_RX_INTEGRITY_CORRUPT_w;
+    OBS_RX_INTEGRITY_CORRUPT_o <= OBS_RX_INTEGRITY_CORRUPT_w;
 
     u_BUFFER_FIFO:
     if (p_USE_RX_BUFFER_HAMMING) generate
@@ -208,25 +208,25 @@ begin
             )
             port map(
                 ACLK   => ACLK,
-                ARESET => w_ARESET,
+                ARESET => ARESET_w,
 
                 -- Read
-                o_READ_OK => w_READ_OK_BUFFER,
-                i_READ    => w_READ_BUFFER,
-                o_DATA    => w_FLIT,
+                READ_OK_o => READ_OK_BUFFER_w,
+                READ_i    => READ_BUFFER_w,
+                DATA_o    => FLIT_w,
 
                 -- Write
-                o_WRITE_OK => w_WRITE_OK_BUFFER,
-                i_WRITE    => w_WRITE_BUFFER,
-                i_DATA     => l_out_data_o,
+                WRITE_OK_o => WRITE_OK_BUFFER_w,
+                WRITE_i    => WRITE_BUFFER_w,
+                DATA_i     => l_out_data_o,
 
                 -- Hamming status/control (EXTERNAL WIRES)
-                correct_error_i => i_OBS_RX_HAM_BUFFER_CORRECT_ERROR,
-                single_err_o    => o_OBS_RX_HAM_BUFFER_SINGLE_ERR,
-                double_err_o    => o_OBS_RX_HAM_BUFFER_DOUBLE_ERR,
-                o_enc_stage_data => o_OBS_RX_HAM_BUFFER_ENC_DATA,
-                i_OBS_HAM_FIFO_CTRL_TMR_CORRECT_ERROR => i_OBS_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR,
-                o_OBS_HAM_FIFO_CTRL_TMR_ERROR         => o_OBS_RX_TMR_HAM_BUFFER_CTRL_ERROR
+                correct_error_i => OBS_RX_HAM_BUFFER_CORRECT_ERROR_i,
+                single_err_o    => OBS_RX_HAM_BUFFER_SINGLE_ERR_o,
+                double_err_o    => OBS_RX_HAM_BUFFER_DOUBLE_ERR_o,
+                enc_stage_data_o => OBS_RX_HAM_BUFFER_ENC_DATA_o,
+                OBS_HAM_FIFO_CTRL_TMR_CORRECT_ERROR_i => OBS_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i,
+                OBS_HAM_FIFO_CTRL_TMR_ERROR_o         => OBS_RX_TMR_HAM_BUFFER_CTRL_ERROR_o
             );
     else generate
         u_BUFFER_FIFO_NORMAL: entity work.buffer_fifo
@@ -236,19 +236,19 @@ begin
             )
             port map(
                 ACLK   => ACLK,
-                ARESET => w_ARESET,
+                ARESET => ARESET_w,
 
-                o_READ_OK  => w_READ_OK_BUFFER,
-                i_READ     => w_READ_BUFFER,
-                o_DATA     => w_FLIT,
+                READ_OK_o  => READ_OK_BUFFER_w,
+                READ_i     => READ_BUFFER_w,
+                DATA_o     => FLIT_w,
 
-                o_WRITE_OK => w_WRITE_OK_BUFFER,
-                i_WRITE    => w_WRITE_BUFFER,
-                i_DATA     => l_out_data_o
+                WRITE_OK_o => WRITE_OK_BUFFER_w,
+                WRITE_i    => WRITE_BUFFER_w,
+                DATA_i     => l_out_data_o
             );
 
-        o_OBS_RX_HAM_BUFFER_ENC_DATA <= (others => '0');
-        o_OBS_RX_TMR_HAM_BUFFER_CTRL_ERROR <= '0';
+        OBS_RX_HAM_BUFFER_ENC_DATA_o <= (others => '0');
+        OBS_RX_TMR_HAM_BUFFER_CTRL_ERROR_o <= '0';
     end generate;
 
     u_RECEIVE_CONTROL:
@@ -258,14 +258,14 @@ begin
                 ACLK    => ACLK,
                 ARESETn => ARESETn,
 
-                i_WRITE_OK_BUFFER => w_WRITE_OK_BUFFER,
-                o_WRITE_BUFFER    => w_WRITE_BUFFER,
+                WRITE_OK_BUFFER_i => WRITE_OK_BUFFER_w,
+                WRITE_BUFFER_o    => WRITE_BUFFER_w,
 
                 l_out_val_o => l_out_val_o,
                 l_out_ack_i => l_out_ack_i,
 
-                correct_error_i => i_OBS_RX_TMR_FLOW_CTRL_CORRECT_ERROR,
-                error_o         => o_OBS_RX_TMR_FLOW_CTRL_ERROR
+                correct_error_i => OBS_RX_TMR_FLOW_CTRL_CORRECT_ERROR_i,
+                error_o         => OBS_RX_TMR_FLOW_CTRL_ERROR_o
             );
     else generate
         u_RECEIVE_CONTROL_NORMAL: entity work.receive_control
@@ -273,16 +273,16 @@ begin
                 ACLK    => ACLK,
                 ARESETn => ARESETn,
 
-                i_WRITE_OK_BUFFER => w_WRITE_OK_BUFFER,
-                o_WRITE_BUFFER    => w_WRITE_BUFFER,
+                WRITE_OK_BUFFER_i => WRITE_OK_BUFFER_w,
+                WRITE_BUFFER_o    => WRITE_BUFFER_w,
 
                 l_out_val_o => l_out_val_o,
                 l_out_ack_i => l_out_ack_i
             );
 
-        o_OBS_RX_TMR_FLOW_CTRL_ERROR <= '0';
+        OBS_RX_TMR_FLOW_CTRL_ERROR_o <= '0';
     end generate;
 
-    w_ARESET <= not ARESETn;
+    ARESET_w <= not ARESETn;
 
 end rtl;

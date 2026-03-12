@@ -9,8 +9,8 @@ entity tg_write_lfsr is
     p_WIDTH : positive := 32
   );
   port(
-    i_data : in  std_logic_vector(p_WIDTH - 1 downto 0);
-    o_next : out std_logic_vector(p_WIDTH - 1 downto 0)
+    data_i : in  std_logic_vector(p_WIDTH - 1 downto 0);
+    next_o : out std_logic_vector(p_WIDTH - 1 downto 0)
   );
 end entity;
 
@@ -19,6 +19,6 @@ architecture rtl of tg_write_lfsr is
 begin
   -- Same taps as before:
   -- fb := x(msb) xor x(msb-1) xor x(msb-3) xor x(msb-4)
-  fb     <= i_data(p_WIDTH-1) xor i_data(p_WIDTH-2) xor i_data(p_WIDTH-4) xor i_data(p_WIDTH-5);
-  o_next <= i_data(p_WIDTH-2 downto 0) & fb;
+  fb     <= data_i(p_WIDTH-1) xor data_i(p_WIDTH-2) xor data_i(p_WIDTH-4) xor data_i(p_WIDTH-5);
+  next_o <= data_i(p_WIDTH-2 downto 0) & fb;
 end rtl;

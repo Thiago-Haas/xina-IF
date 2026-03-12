@@ -12,17 +12,17 @@ entity integrity_control_send is
         ARESETn: in std_logic;
 
         -- Inputs.
-        i_ADD      : in std_logic;
-        i_VALUE_ADD: in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+        ADD_i      : in std_logic;
+        VALUE_ADD_i: in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
         -- Outputs.
-        o_CHECKSUM: out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0)
+        CHECKSUM_o: out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0)
     );
 end integrity_control_send;
 
 architecture rtl of integrity_control_send is
     
-    signal w_CHECKSUM_r : unsigned(c_AXI_DATA_WIDTH - 1 downto 0) := to_unsigned(0, c_AXI_DATA_WIDTH);
+    signal CHECKSUM_r_w : unsigned(c_AXI_DATA_WIDTH - 1 downto 0) := to_unsigned(0, c_AXI_DATA_WIDTH);
 
 begin
     ---------------------------------------------------------------------------------------------
@@ -30,13 +30,13 @@ begin
     process (all)
     begin
         if (ARESETn = '0') then
-            w_CHECKSUM_r <= to_unsigned(0, c_AXI_DATA_WIDTH);
+            CHECKSUM_r_w <= to_unsigned(0, c_AXI_DATA_WIDTH);
         elsif (rising_edge(ACLK)) then
-            if (i_ADD = '1') then
-                w_CHECKSUM_r <= w_CHECKSUM_r + unsigned(i_VALUE_ADD);
+            if (ADD_i = '1') then
+                CHECKSUM_r_w <= CHECKSUM_r_w + unsigned(VALUE_ADD_i);
             end if;
         end if;
     end process;
 
-    o_CHECKSUM <= std_logic_vector(w_CHECKSUM_r);
+    CHECKSUM_o <= std_logic_vector(CHECKSUM_r_w);
 end rtl;

@@ -12,32 +12,32 @@ entity backend_subordinate_depacketizer_control is
         ARESETn: in std_logic;
 
         -- Backend signals.
-        i_READY_RECEIVE_PACKET: in std_logic;
-        i_READY_RECEIVE_DATA  : in std_logic;
-        o_VALID_RECEIVE_PACKET: out std_logic;
-        o_VALID_RECEIVE_DATA  : out std_logic;
-        o_LAST_RECEIVE_DATA   : out std_logic;
+        READY_RECEIVE_PACKET_i: in std_logic;
+        READY_RECEIVE_DATA_i  : in std_logic;
+        VALID_RECEIVE_PACKET_o: out std_logic;
+        VALID_RECEIVE_DATA_o  : out std_logic;
+        LAST_RECEIVE_DATA_o   : out std_logic;
 
         -- Signals from injection.
-        i_HAS_FINISHED_RESPONSE: in std_logic;
-        o_HAS_REQUEST_PACKET   : out std_logic;
+        HAS_FINISHED_RESPONSE_i: in std_logic;
+        HAS_REQUEST_PACKET_o   : out std_logic;
 
         -- Buffer.
-        i_FLIT          : in std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-        o_READ_BUFFER   : out std_logic;
-        i_READ_OK_BUFFER: in std_logic;
+        FLIT_i          : in std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+        READ_BUFFER_o   : out std_logic;
+        READ_OK_BUFFER_i: in std_logic;
 
         -- Headers.
-        i_H_INTERFACE: in std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+        H_INTERFACE_i: in std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
 
-        o_WRITE_H_SRC_REG      : out std_logic;
-        o_WRITE_H_INTERFACE_REG: out std_logic;
-        o_WRITE_H_ADDRESS_REG  : out std_logic;
+        WRITE_H_SRC_REG_o      : out std_logic;
+        WRITE_H_INTERFACE_REG_o: out std_logic;
+        WRITE_H_ADDRESS_REG_o  : out std_logic;
 
         -- Integrity control.
-        o_ADD    : out std_logic;
-        o_COMPARE: out std_logic;
-        o_INTEGRITY_RESETn: out std_logic
+        ADD_o    : out std_logic;
+        COMPARE_o: out std_logic;
+        INTEGRITY_RESETn_o: out std_logic
     );
 end backend_subordinate_depacketizer_control;
 
@@ -67,14 +67,14 @@ begin
     process (all)
     begin
         case state_w_r is
-            when "0000" => if (i_READ_OK_BUFFER = '1') then next_state_w <= "0001"; else next_state_w <= "0000"; end if;
+            when "0000" => if (READ_OK_BUFFER_i = '1') then next_state_w <= "0001"; else next_state_w <= "0000"; end if;
 
-            when "0001"  => if (i_READ_OK_BUFFER = '1') then next_state_w <= "0010"; else next_state_w <= "0001"; end if;
+            when "0001"  => if (READ_OK_BUFFER_i = '1') then next_state_w <= "0010"; else next_state_w <= "0001"; end if;
 
-            when "0010" => if (i_READ_OK_BUFFER = '1') then next_state_w <= "0011"; else next_state_w <= "0010"; end if;
+            when "0010" => if (READ_OK_BUFFER_i = '1') then next_state_w <= "0011"; else next_state_w <= "0010"; end if;
 
-            when "0011" => if (i_READ_OK_BUFFER = '1') then
-                             if (i_H_INTERFACE(1) = '0') then
+            when "0011" => if (READ_OK_BUFFER_i = '1') then
+                             if (H_INTERFACE_i(1) = '0') then
                                next_state_w <= "0100"; -- Write request.
                              else
                                next_state_w <= "0110"; -- Read request. Next flit is trailer.
@@ -83,19 +83,19 @@ begin
                              next_state_w <= "0011";
                            end if;
 
-            when "0100" => if (i_READY_RECEIVE_PACKET = '1') then next_state_w <= "0101"; else next_state_w <= "0100"; end if;
+            when "0100" => if (READY_RECEIVE_PACKET_i = '1') then next_state_w <= "0101"; else next_state_w <= "0100"; end if;
 
-            when "0101" => if (PAYLOAD_COUNTER_r = to_unsigned(0, 8) and i_READY_RECEIVE_DATA = '1' and i_READ_OK_BUFFER = '1') then
+            when "0101" => if (PAYLOAD_COUNTER_r = to_unsigned(0, 8) and READY_RECEIVE_DATA_i = '1' and READ_OK_BUFFER_i = '1') then
                              next_state_w <= "0111";
                            else
                              next_state_w <= "0101";
                            end if;
 
-            when "0110" => if (i_READY_RECEIVE_PACKET = '1') then next_state_w <= "0111"; else next_state_w <= "0110"; end if;
+            when "0110" => if (READY_RECEIVE_PACKET_i = '1') then next_state_w <= "0111"; else next_state_w <= "0110"; end if;
 
-            when "0111" => if (i_READ_OK_BUFFER = '1') then next_state_w <= "1000"; else next_state_w <= "0111"; end if;
+            when "0111" => if (READ_OK_BUFFER_i = '1') then next_state_w <= "1000"; else next_state_w <= "0111"; end if;
 
-            when "1000" => if (i_HAS_FINISHED_RESPONSE = '1') then next_state_w <= "0000"; else next_state_w <= "1000"; end if;
+            when "1000" => if (HAS_FINISHED_RESPONSE_i = '1') then next_state_w <= "0000"; else next_state_w <= "1000"; end if;
             
             when others => next_state_w <= "0000"; 
 
@@ -110,7 +110,7 @@ begin
             PAYLOAD_COUNTER_r <= to_unsigned(255, 8);
         elsif (rising_edge(ACLK)) then
             if (set_payload_counter_w = '1') then
-                PAYLOAD_COUNTER_r <= unsigned(i_H_INTERFACE(14 downto 7));
+                PAYLOAD_COUNTER_r <= unsigned(H_INTERFACE_i(14 downto 7));
             elsif (subtract_payload_counter_w = '1') then
                 PAYLOAD_COUNTER_r <= PAYLOAD_COUNTER_r - 1;
             end if;
@@ -120,40 +120,40 @@ begin
     ---------------------------------------------------------------------------------------------
     -- Internal signals.
     set_payload_counter_w      <= '1' when (state_w_r = "0011") else '0';
-    subtract_payload_counter_w <= '1' when (state_w_r = "0101" and i_READ_OK_BUFFER = '1' and i_READY_RECEIVE_DATA = '1') else '0';
+    subtract_payload_counter_w <= '1' when (state_w_r = "0101" and READ_OK_BUFFER_i = '1' and READY_RECEIVE_DATA_i = '1') else '0';
 
     ---------------------------------------------------------------------------------------------
     -- Output values.
-	o_READ_BUFFER <= '1' when (state_w_r = "0000") or
+	READ_BUFFER_o <= '1' when (state_w_r = "0000") or
                               (state_w_r = "0001") or
                               (state_w_r = "0010") or
                               (state_w_r = "0011") or
-                              (state_w_r = "0101" and i_READY_RECEIVE_DATA = '1') or
+                              (state_w_r = "0101" and READY_RECEIVE_DATA_i = '1') or
                               (state_w_r = "0111")
                               else '0';
 
-    o_VALID_RECEIVE_PACKET <= '1' when (state_w_r = "0100") or
+    VALID_RECEIVE_PACKET_o <= '1' when (state_w_r = "0100") or
                                        (state_w_r = "0110")
                                        else '0';
 
-    o_VALID_RECEIVE_DATA <= '1' when (state_w_r = "0101" and i_READ_OK_BUFFER = '1') else '0';
+    VALID_RECEIVE_DATA_o <= '1' when (state_w_r = "0101" and READ_OK_BUFFER_i = '1') else '0';
 
-    o_LAST_RECEIVE_DATA  <= '1' when (state_w_r = "0101" and i_READ_OK_BUFFER = '1' and PAYLOAD_COUNTER_r = to_unsigned(0, 8)) else '0';
+    LAST_RECEIVE_DATA_o  <= '1' when (state_w_r = "0101" and READ_OK_BUFFER_i = '1' and PAYLOAD_COUNTER_r = to_unsigned(0, 8)) else '0';
 
-    o_HAS_REQUEST_PACKET <= '1' when (state_w_r = "1000") else '0';
+    HAS_REQUEST_PACKET_o <= '1' when (state_w_r = "1000") else '0';
 
-    o_WRITE_H_SRC_REG       <= '1' when (state_w_r = "0001") else '0';
-    o_WRITE_H_INTERFACE_REG <= '1' when (state_w_r = "0010") else '0';
-    o_WRITE_H_ADDRESS_REG   <= '1' when (state_w_r = "0011")  else '0';
+    WRITE_H_SRC_REG_o       <= '1' when (state_w_r = "0001") else '0';
+    WRITE_H_INTERFACE_REG_o <= '1' when (state_w_r = "0010") else '0';
+    WRITE_H_ADDRESS_REG_o   <= '1' when (state_w_r = "0011")  else '0';
 
-    o_ADD <= '1' when ((state_w_r = "0000") or
+    ADD_o <= '1' when ((state_w_r = "0000") or
                        (state_w_r = "0001") or
                        (state_w_r = "0010") or
                        (state_w_r = "0011") or
-                       (state_w_r = "0101" and i_READY_RECEIVE_DATA = '1')) and i_READ_OK_BUFFER = '1' else '0';
+                       (state_w_r = "0101" and READY_RECEIVE_DATA_i = '1')) and READ_OK_BUFFER_i = '1' else '0';
 
-    o_COMPARE <= '1' when (state_w_r = "0111" and i_READ_OK_BUFFER = '1') else '0';
+    COMPARE_o <= '1' when (state_w_r = "0111" and READ_OK_BUFFER_i = '1') else '0';
 
-    o_INTEGRITY_RESETn <= '0' when (state_w_r = "0000" and next_state_w = "0000") else '1';
+    INTEGRITY_RESETn_o <= '0' when (state_w_r = "0000" and next_state_w = "0000") else '1';
 
 end rtl;

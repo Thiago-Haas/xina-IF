@@ -13,22 +13,22 @@ entity backend_manager_reception_h_interface_reg is
         ACLK   : in std_logic;
         ARESETn: in std_logic;
 
-        i_WRITE_EN : in std_logic;
-        i_DATA     : in std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-        o_DATA     : out std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+        WRITE_EN_i : in std_logic;
+        DATA_i     : in std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+        DATA_o     : out std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
 
-        i_OBS_HAM_CORRECT_ERROR : in  std_logic := '1';
-        o_OBS_HAM_SINGLE_ERR    : out std_logic;
-        o_OBS_HAM_DOUBLE_ERR    : out std_logic;
-        o_OBS_HAM_ENC_DATA      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, p_HAMMING_DETECT_DOUBLE) - 1 downto 0)
+        OBS_HAM_CORRECT_ERROR_i : in  std_logic := '1';
+        OBS_HAM_SINGLE_ERR_o    : out std_logic;
+        OBS_HAM_DOUBLE_ERR_o    : out std_logic;
+        OBS_HAM_ENC_DATA_o      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, p_HAMMING_DETECT_DOUBLE) - 1 downto 0)
     );
 end backend_manager_reception_h_interface_reg;
 
 architecture rtl of backend_manager_reception_h_interface_reg is
-    signal w_H_INTERFACE_r : std_logic_vector(c_FLIT_WIDTH - 1 downto 0) := (others => '0');
-    signal w_H_INTERFACE_enc : std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, p_HAMMING_DETECT_DOUBLE) - 1 downto 0) := (others => '0');
-    signal w_HAM_SINGLE    : std_logic := '0';
-    signal w_HAM_DOUBLE    : std_logic := '0';
+    signal H_INTERFACE_r_w : std_logic_vector(c_FLIT_WIDTH - 1 downto 0) := (others => '0');
+    signal H_INTERFACE_enc_w : std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, p_HAMMING_DETECT_DOUBLE) - 1 downto 0) := (others => '0');
+    signal HAM_SINGLE_w    : std_logic := '0';
+    signal HAM_DOUBLE_w    : std_logic := '0';
 begin
     gen_ham : if p_USE_HAMMING generate
         u_H_INTERFACE_HAM: entity work.hamming_register
@@ -40,15 +40,15 @@ begin
                 INJECT_ERROR   => false
             )
             port map(
-                correct_en_i => i_OBS_HAM_CORRECT_ERROR,
-                write_en_i   => i_WRITE_EN,
-                data_i       => i_DATA,
+                correct_en_i => OBS_HAM_CORRECT_ERROR_i,
+                write_en_i   => WRITE_EN_i,
+                data_i       => DATA_i,
                 rstn_i       => ARESETn,
                 clk_i        => ACLK,
-                single_err_o => w_HAM_SINGLE,
-                double_err_o => w_HAM_DOUBLE,
-                enc_data_o   => w_H_INTERFACE_enc,
-                data_o       => w_H_INTERFACE_r
+                single_err_o => HAM_SINGLE_w,
+                double_err_o => HAM_DOUBLE_w,
+                enc_data_o   => H_INTERFACE_enc_w,
+                data_o       => H_INTERFACE_r_w
             );
     end generate;
 
@@ -57,20 +57,20 @@ begin
         begin
             if rising_edge(ACLK) then
                 if ARESETn = '0' then
-                    w_H_INTERFACE_r <= (others => '0');
-                elsif i_WRITE_EN = '1' then
-                    w_H_INTERFACE_r <= i_DATA;
+                    H_INTERFACE_r_w <= (others => '0');
+                elsif WRITE_EN_i = '1' then
+                    H_INTERFACE_r_w <= DATA_i;
                 end if;
             end if;
         end process;
 
-        w_HAM_SINGLE <= '0';
-        w_HAM_DOUBLE <= '0';
-        w_H_INTERFACE_enc <= (w_H_INTERFACE_enc'left downto c_FLIT_WIDTH => '0') & w_H_INTERFACE_r;
+        HAM_SINGLE_w <= '0';
+        HAM_DOUBLE_w <= '0';
+        H_INTERFACE_enc_w <= (H_INTERFACE_enc_w'left downto c_FLIT_WIDTH => '0') & H_INTERFACE_r_w;
     end generate;
 
-    o_DATA <= w_H_INTERFACE_r;
-    o_OBS_HAM_SINGLE_ERR <= w_HAM_SINGLE;
-    o_OBS_HAM_DOUBLE_ERR <= w_HAM_DOUBLE;
-    o_OBS_HAM_ENC_DATA   <= w_H_INTERFACE_enc;
+    DATA_o <= H_INTERFACE_r_w;
+    OBS_HAM_SINGLE_ERR_o <= HAM_SINGLE_w;
+    OBS_HAM_DOUBLE_ERR_o <= HAM_DOUBLE_w;
+    OBS_HAM_ENC_DATA_o   <= H_INTERFACE_enc_w;
 end rtl;

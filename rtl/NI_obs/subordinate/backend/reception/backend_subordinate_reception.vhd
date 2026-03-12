@@ -20,23 +20,23 @@ entity backend_subordinate_reception is
         ARESETn: in std_logic;
 
         -- Backend signals.
-        i_READY_RECEIVE_PACKET: in std_logic;
-        i_READY_RECEIVE_DATA  : in std_logic;
+        READY_RECEIVE_PACKET_i: in std_logic;
+        READY_RECEIVE_DATA_i  : in std_logic;
 
-        o_VALID_RECEIVE_PACKET: out std_logic;
-        o_VALID_RECEIVE_DATA  : out std_logic;
-        o_LAST_RECEIVE_DATA   : out std_logic;
+        VALID_RECEIVE_PACKET_o: out std_logic;
+        VALID_RECEIVE_DATA_o  : out std_logic;
+        LAST_RECEIVE_DATA_o   : out std_logic;
 
-        o_DATA_RECEIVE       : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
-        o_H_SRC_RECEIVE      : out std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-        o_H_INTERFACE_RECEIVE: out std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-        o_ADDRESS_RECEIVE    : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+        DATA_RECEIVE_o       : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+        H_SRC_RECEIVE_o      : out std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+        H_INTERFACE_RECEIVE_o: out std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+        ADDRESS_RECEIVE_o    : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
-        o_CORRUPT_RECEIVE: out std_logic := '0';
+        CORRUPT_RECEIVE_o: out std_logic := '0';
 
         -- Signals from injection.
-        i_HAS_FINISHED_RESPONSE: in std_logic;
-        o_HAS_REQUEST_PACKET   : out std_logic;
+        HAS_FINISHED_RESPONSE_i: in std_logic;
+        HAS_REQUEST_PACKET_o   : out std_logic;
 
         -- XINA signals.
         l_out_data_o: in std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
@@ -46,46 +46,46 @@ entity backend_subordinate_reception is
 end backend_subordinate_reception;
 
 architecture rtl of backend_subordinate_reception is
-    signal w_ARESET: std_logic;
+    signal ARESET_w: std_logic;
 
     -- Depacketizer.
-    signal w_FLIT: std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+    signal FLIT_w: std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
 
     -- Registers.
-    signal w_WRITE_H_SRC_REG: std_logic;
-    signal w_WRITE_H_INTERFACE_REG: std_logic;
-    signal w_WRITE_H_ADDRESS_REG  : std_logic;
+    signal WRITE_H_SRC_REG_w: std_logic;
+    signal WRITE_H_INTERFACE_REG_w: std_logic;
+    signal WRITE_H_ADDRESS_REG_w  : std_logic;
 
-    signal w_H_SRC_r : std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-    signal w_H_INTERFACE_r : std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-    signal w_H_ADDRESS_r : std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+    signal H_SRC_r_w : std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+    signal H_INTERFACE_r_w : std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+    signal H_ADDRESS_r_w : std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
 
     -- Checksum.
-    signal w_ADD: std_logic;
-    signal w_COMPARE: std_logic;
-    signal w_INTEGRITY_RESETn: std_logic;
+    signal ADD_w: std_logic;
+    signal COMPARE_w: std_logic;
+    signal INTEGRITY_RESETn_w: std_logic;
 
     -- FIFO.
-    signal w_WRITE_BUFFER   : std_logic;
-    signal w_WRITE_OK_BUFFER: std_logic;
-    signal w_READ_BUFFER    : std_logic;
-    signal w_READ_OK_BUFFER : std_logic;
+    signal WRITE_BUFFER_w   : std_logic;
+    signal WRITE_OK_BUFFER_w: std_logic;
+    signal READ_BUFFER_w    : std_logic;
+    signal READ_OK_BUFFER_w : std_logic;
 
 begin
     -- Registering headers.
     registering: process(all)
     begin
         if (rising_edge(ACLK)) then
-            if (w_WRITE_H_SRC_REG)       then w_H_SRC_r       <= w_FLIT; end if;
-            if (w_WRITE_H_INTERFACE_REG) then w_H_INTERFACE_r <= w_FLIT; end if;
-            if (w_WRITE_H_ADDRESS_REG)   then w_H_ADDRESS_r   <= w_FLIT; end if;
+            if (WRITE_H_SRC_REG_w)       then H_SRC_r_w       <= FLIT_w; end if;
+            if (WRITE_H_INTERFACE_REG_w) then H_INTERFACE_r_w <= FLIT_w; end if;
+            if (WRITE_H_ADDRESS_REG_w)   then H_ADDRESS_r_w   <= FLIT_w; end if;
         end if;
     end process registering;
 
-    o_H_SRC_RECEIVE       <= w_H_SRC_r;
-    o_H_INTERFACE_RECEIVE <= w_H_INTERFACE_r;
-    o_ADDRESS_RECEIVE     <= w_H_ADDRESS_r(c_FLIT_WIDTH - 2 downto 0);
-    o_DATA_RECEIVE        <= w_FLIT(31 downto 0);
+    H_SRC_RECEIVE_o       <= H_SRC_r_w;
+    H_INTERFACE_RECEIVE_o <= H_INTERFACE_r_w;
+    ADDRESS_RECEIVE_o     <= H_ADDRESS_r_w(c_FLIT_WIDTH - 2 downto 0);
+    DATA_RECEIVE_o        <= FLIT_w(31 downto 0);
 
     u_DEPACKETIZER_CONTROL:
     if (p_USE_TMR_PACKETIZER) generate
@@ -94,28 +94,28 @@ begin
                 ACLK => ACLK,
                 ARESETn => ARESETn,
 
-                i_READY_RECEIVE_PACKET => i_READY_RECEIVE_PACKET,
-                i_READY_RECEIVE_DATA   => i_READY_RECEIVE_DATA,
-                o_VALID_RECEIVE_PACKET => o_VALID_RECEIVE_PACKET,
-                o_VALID_RECEIVE_DATA   => o_VALID_RECEIVE_DATA,
-                o_LAST_RECEIVE_DATA    => o_LAST_RECEIVE_DATA,
+                READY_RECEIVE_PACKET_i => READY_RECEIVE_PACKET_i,
+                READY_RECEIVE_DATA_i   => READY_RECEIVE_DATA_i,
+                VALID_RECEIVE_PACKET_o => VALID_RECEIVE_PACKET_o,
+                VALID_RECEIVE_DATA_o   => VALID_RECEIVE_DATA_o,
+                LAST_RECEIVE_DATA_o    => LAST_RECEIVE_DATA_o,
 
-                i_HAS_FINISHED_RESPONSE => i_HAS_FINISHED_RESPONSE,
-                o_HAS_REQUEST_PACKET    => o_HAS_REQUEST_PACKET,
+                HAS_FINISHED_RESPONSE_i => HAS_FINISHED_RESPONSE_i,
+                HAS_REQUEST_PACKET_o    => HAS_REQUEST_PACKET_o,
 
-                i_FLIT => w_FLIT,
-                o_READ_BUFFER => w_READ_BUFFER,
-                i_READ_OK_BUFFER => w_READ_OK_BUFFER,
+                FLIT_i => FLIT_w,
+                READ_BUFFER_o => READ_BUFFER_w,
+                READ_OK_BUFFER_i => READ_OK_BUFFER_w,
 
-                i_H_INTERFACE => w_H_INTERFACE_r,
+                H_INTERFACE_i => H_INTERFACE_r_w,
 
-                o_WRITE_H_SRC_REG       => w_WRITE_H_SRC_REG,
-                o_WRITE_H_INTERFACE_REG => w_WRITE_H_INTERFACE_REG,
-                o_WRITE_H_ADDRESS_REG   => w_WRITE_H_ADDRESS_REG,
+                WRITE_H_SRC_REG_o       => WRITE_H_SRC_REG_w,
+                WRITE_H_INTERFACE_REG_o => WRITE_H_INTERFACE_REG_w,
+                WRITE_H_ADDRESS_REG_o   => WRITE_H_ADDRESS_REG_w,
 
-                o_ADD     => w_ADD,
-                o_COMPARE => w_COMPARE,
-                o_INTEGRITY_RESETn => w_INTEGRITY_RESETn
+                ADD_o     => ADD_w,
+                COMPARE_o => COMPARE_w,
+                INTEGRITY_RESETn_o => INTEGRITY_RESETn_w
             );
     else generate
         u_DEPACKETIZER_CONTROL_NORMAL: entity work.backend_subordinate_depacketizer_control
@@ -123,28 +123,28 @@ begin
                 ACLK => ACLK,
                 ARESETn => ARESETn,
 
-                i_READY_RECEIVE_PACKET => i_READY_RECEIVE_PACKET,
-                i_READY_RECEIVE_DATA   => i_READY_RECEIVE_DATA,
-                o_VALID_RECEIVE_PACKET => o_VALID_RECEIVE_PACKET,
-                o_VALID_RECEIVE_DATA   => o_VALID_RECEIVE_DATA,
-                o_LAST_RECEIVE_DATA    => o_LAST_RECEIVE_DATA,
+                READY_RECEIVE_PACKET_i => READY_RECEIVE_PACKET_i,
+                READY_RECEIVE_DATA_i   => READY_RECEIVE_DATA_i,
+                VALID_RECEIVE_PACKET_o => VALID_RECEIVE_PACKET_o,
+                VALID_RECEIVE_DATA_o   => VALID_RECEIVE_DATA_o,
+                LAST_RECEIVE_DATA_o    => LAST_RECEIVE_DATA_o,
 
-                i_HAS_FINISHED_RESPONSE => i_HAS_FINISHED_RESPONSE,
-                o_HAS_REQUEST_PACKET    => o_HAS_REQUEST_PACKET,
+                HAS_FINISHED_RESPONSE_i => HAS_FINISHED_RESPONSE_i,
+                HAS_REQUEST_PACKET_o    => HAS_REQUEST_PACKET_o,
 
-                i_FLIT => w_FLIT,
-                o_READ_BUFFER => w_READ_BUFFER,
-                i_READ_OK_BUFFER => w_READ_OK_BUFFER,
+                FLIT_i => FLIT_w,
+                READ_BUFFER_o => READ_BUFFER_w,
+                READ_OK_BUFFER_i => READ_OK_BUFFER_w,
 
-                i_H_INTERFACE => w_H_INTERFACE_r,
+                H_INTERFACE_i => H_INTERFACE_r_w,
 
-                o_WRITE_H_SRC_REG => w_WRITE_H_SRC_REG,
-                o_WRITE_H_INTERFACE_REG => w_WRITE_H_INTERFACE_REG,
-                o_WRITE_H_ADDRESS_REG   => w_WRITE_H_ADDRESS_REG,
+                WRITE_H_SRC_REG_o => WRITE_H_SRC_REG_w,
+                WRITE_H_INTERFACE_REG_o => WRITE_H_INTERFACE_REG_w,
+                WRITE_H_ADDRESS_REG_o   => WRITE_H_ADDRESS_REG_w,
 
-                o_ADD     => w_ADD,
-                o_COMPARE => w_COMPARE,
-                o_INTEGRITY_RESETn => w_INTEGRITY_RESETn
+                ADD_o     => ADD_w,
+                COMPARE_o => COMPARE_w,
+                INTEGRITY_RESETn_o => INTEGRITY_RESETn_w
             );
     end generate;
 
@@ -153,33 +153,33 @@ begin
         u_INTEGRITY_CONTROL_RECEIVE_HAM: entity work.integrity_control_receive_hamming
             port map(
                 ACLK    => ACLK,
-                ARESETn => w_INTEGRITY_RESETn,
+                ARESETn => INTEGRITY_RESETn_w,
 
-                i_ADD           => w_ADD,
-                i_VALUE_ADD     => w_FLIT(c_AXI_DATA_WIDTH - 1 downto 0),
-                i_COMPARE       => w_COMPARE,
-                i_VALUE_COMPARE => w_FLIT(c_AXI_DATA_WIDTH - 1 downto 0),
+                ADD_i           => ADD_w,
+                VALUE_ADD_i     => FLIT_w(c_AXI_DATA_WIDTH - 1 downto 0),
+                COMPARE_i       => COMPARE_w,
+                VALUE_COMPARE_i => FLIT_w(c_AXI_DATA_WIDTH - 1 downto 0),
 
-                o_CORRUPT  => o_CORRUPT_RECEIVE,
+                CORRUPT_o  => CORRUPT_RECEIVE_o,
                 correct_error_i => '0',
                 error_o         => open,
-                i_OBS_HAM_INTEGRITY_CORRECT_ERROR => '0',
-                o_OBS_HAM_INTEGRITY_SINGLE_ERR    => open,
-                o_OBS_HAM_INTEGRITY_DOUBLE_ERR    => open,
-                o_OBS_HAM_INTEGRITY_ENC_DATA      => open
+                OBS_HAM_INTEGRITY_CORRECT_ERROR_i => '0',
+                OBS_HAM_INTEGRITY_SINGLE_ERR_o    => open,
+                OBS_HAM_INTEGRITY_DOUBLE_ERR_o    => open,
+                OBS_HAM_INTEGRITY_ENC_DATA_o      => open
             );
     elsif (p_USE_INTEGRITY) generate
         u_INTEGRITY_CONTROL_RECEIVE_NORMAL: entity work.integrity_control_receive
             port map(
                 ACLK    => ACLK,
-                ARESETn => w_INTEGRITY_RESETn,
+                ARESETn => INTEGRITY_RESETn_w,
 
-                i_ADD           => w_ADD,
-                i_VALUE_ADD     => w_FLIT(c_AXI_DATA_WIDTH - 1 downto 0),
-                i_COMPARE       => w_COMPARE,
-                i_VALUE_COMPARE => w_FLIT(c_AXI_DATA_WIDTH - 1 downto 0),
+                ADD_i           => ADD_w,
+                VALUE_ADD_i     => FLIT_w(c_AXI_DATA_WIDTH - 1 downto 0),
+                COMPARE_i       => COMPARE_w,
+                VALUE_COMPARE_i => FLIT_w(c_AXI_DATA_WIDTH - 1 downto 0),
 
-                o_CORRUPT  => o_CORRUPT_RECEIVE
+                CORRUPT_o  => CORRUPT_RECEIVE_o
             );
     end generate;
 
@@ -192,18 +192,18 @@ begin
             )
             port map(
                 ACLK   => ACLK,
-                ARESET => w_ARESET,
+                ARESET => ARESET_w,
 
-                o_READ_OK  => w_READ_OK_BUFFER,
-                i_READ     => w_READ_BUFFER,
-                o_DATA     => w_FLIT,
+                READ_OK_o  => READ_OK_BUFFER_w,
+                READ_i     => READ_BUFFER_w,
+                DATA_o     => FLIT_w,
 
-                o_WRITE_OK => w_WRITE_OK_BUFFER,
-                i_WRITE    => w_WRITE_BUFFER,
-                i_DATA     => l_out_data_o,
-                o_enc_stage_data => open,
-                i_OBS_HAM_FIFO_CTRL_TMR_CORRECT_ERROR => '1',
-                o_OBS_HAM_FIFO_CTRL_TMR_ERROR         => open
+                WRITE_OK_o => WRITE_OK_BUFFER_w,
+                WRITE_i    => WRITE_BUFFER_w,
+                DATA_i     => l_out_data_o,
+                enc_stage_data_o => open,
+                OBS_HAM_FIFO_CTRL_TMR_CORRECT_ERROR_i => '1',
+                OBS_HAM_FIFO_CTRL_TMR_ERROR_o         => open
             );
     else generate
         u_BUFFER_FIFO_NORMAL: entity work.buffer_fifo
@@ -213,15 +213,15 @@ begin
             )
             port map(
                 ACLK   => ACLK,
-                ARESET => w_ARESET,
+                ARESET => ARESET_w,
 
-                o_READ_OK  => w_READ_OK_BUFFER,
-                i_READ     => w_READ_BUFFER,
-                o_DATA     => w_FLIT,
+                READ_OK_o  => READ_OK_BUFFER_w,
+                READ_i     => READ_BUFFER_w,
+                DATA_o     => FLIT_w,
 
-                o_WRITE_OK => w_WRITE_OK_BUFFER,
-                i_WRITE    => w_WRITE_BUFFER,
-                i_DATA     => l_out_data_o
+                WRITE_OK_o => WRITE_OK_BUFFER_w,
+                WRITE_i    => WRITE_BUFFER_w,
+                DATA_i     => l_out_data_o
             );
     end generate;
 
@@ -232,8 +232,8 @@ begin
                 ACLK    => ACLK,
                 ARESETn => ARESETn,
 
-                i_WRITE_OK_BUFFER => w_WRITE_OK_BUFFER,
-                o_WRITE_BUFFER    => w_WRITE_BUFFER,
+                WRITE_OK_BUFFER_i => WRITE_OK_BUFFER_w,
+                WRITE_BUFFER_o    => WRITE_BUFFER_w,
 
                 l_out_val_o => l_out_val_o,
                 l_out_ack_i => l_out_ack_i
@@ -244,13 +244,13 @@ begin
                 ACLK    => ACLK,
                 ARESETn => ARESETn,
 
-                i_WRITE_OK_BUFFER => w_WRITE_OK_BUFFER,
-                o_WRITE_BUFFER    => w_WRITE_BUFFER,
+                WRITE_OK_BUFFER_i => WRITE_OK_BUFFER_w,
+                WRITE_BUFFER_o    => WRITE_BUFFER_w,
 
                 l_out_val_o => l_out_val_o,
                 l_out_ack_i => l_out_ack_i
             );
     end generate;
 
-    w_ARESET <= not ARESETn;
+    ARESET_w <= not ARESETn;
 end rtl;

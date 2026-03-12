@@ -42,92 +42,92 @@ entity tg_tm_lb_top is
     ARESETn : in  std_logic;
 
     -- TG control
-    i_tg_start       : in  std_logic;
-    o_tg_done        : out std_logic;
+    tg_start_i       : in  std_logic;
+    tg_done_o        : out std_logic;
     TG_INPUT_ADDRESS : in  std_logic_vector(63 downto 0);
     TG_STARTING_SEED : in  std_logic_vector(31 downto 0);
 
     -- TM control
-    i_tm_start       : in  std_logic;
-    o_tm_done        : out std_logic;
+    tm_start_i       : in  std_logic;
+    tm_done_o        : out std_logic;
     TM_INPUT_ADDRESS : in  std_logic_vector(63 downto 0);
     TM_STARTING_SEED : in  std_logic_vector(31 downto 0);
 
     -- TM observability
-    o_tm_lfsr_comparison_mismatch : out std_logic;
-    o_tm_expected_value : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
-    i_OBS_TM_HAM_BUFFER_CORRECT_ERROR : in  std_logic := '1';
-    i_OBS_TM_TMR_CTRL_CORRECT_ERROR   : in  std_logic := '1';
-    i_OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR : in std_logic := '1';
-    o_OBS_TM_TMR_CTRL_ERROR           : out std_logic;
-    o_OBS_TM_HAM_BUFFER_SINGLE_ERR    : out std_logic;
-    o_OBS_TM_HAM_BUFFER_DOUBLE_ERR    : out std_logic;
-    o_OBS_TM_HAM_BUFFER_ENC_DATA      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
-    o_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR : out std_logic;
-    o_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR : out std_logic;
-    o_OBS_TM_HAM_TXN_COUNTER_ENC_DATA   : out std_logic_vector(p_TM_TXN_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(p_TM_TXN_COUNTER_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
-    o_TM_TRANSACTION_COUNT              : out std_logic_vector(p_TM_TXN_COUNTER_WIDTH - 1 downto 0);
+    tm_lfsr_comparison_mismatch_o : out std_logic;
+    tm_expected_value_o : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+    OBS_TM_HAM_BUFFER_CORRECT_ERROR_i : in  std_logic := '1';
+    OBS_TM_TMR_CTRL_CORRECT_ERROR_i   : in  std_logic := '1';
+    OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_i : in std_logic := '1';
+    OBS_TM_TMR_CTRL_ERROR_o           : out std_logic;
+    OBS_TM_HAM_BUFFER_SINGLE_ERR_o    : out std_logic;
+    OBS_TM_HAM_BUFFER_DOUBLE_ERR_o    : out std_logic;
+    OBS_TM_HAM_BUFFER_ENC_DATA_o      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+    OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR_o : out std_logic;
+    OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR_o : out std_logic;
+    OBS_TM_HAM_TXN_COUNTER_ENC_DATA_o   : out std_logic_vector(p_TM_TXN_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(p_TM_TXN_COUNTER_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+    TM_TRANSACTION_COUNT_o              : out std_logic_vector(p_TM_TXN_COUNTER_WIDTH - 1 downto 0);
 
     -- LB observability
-    i_OBS_LB_HAM_BUFFER_CORRECT_ERROR : in  std_logic := '1';
-    i_OBS_LB_TMR_CTRL_CORRECT_ERROR   : in  std_logic := '1';
-    o_OBS_LB_TMR_CTRL_ERROR           : out std_logic;
-    o_OBS_LB_HAM_BUFFER_SINGLE_ERR    : out std_logic;
-    o_OBS_LB_HAM_BUFFER_DOUBLE_ERR    : out std_logic;
-    o_OBS_LB_HAM_BUFFER_ENC_DATA      : out std_logic_vector(32 + work.hamming_pkg.get_ecc_size(32, p_USE_LB_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+    OBS_LB_HAM_BUFFER_CORRECT_ERROR_i : in  std_logic := '1';
+    OBS_LB_TMR_CTRL_CORRECT_ERROR_i   : in  std_logic := '1';
+    OBS_LB_TMR_CTRL_ERROR_o           : out std_logic;
+    OBS_LB_HAM_BUFFER_SINGLE_ERR_o    : out std_logic;
+    OBS_LB_HAM_BUFFER_DOUBLE_ERR_o    : out std_logic;
+    OBS_LB_HAM_BUFFER_ENC_DATA_o      : out std_logic_vector(32 + work.hamming_pkg.get_ecc_size(32, p_USE_LB_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
     -- TG observability (same naming pattern as NI OBS ports)
-    i_OBS_TG_HAM_BUFFER_CORRECT_ERROR : in  std_logic := '1';
-    i_OBS_TG_TMR_CTRL_CORRECT_ERROR   : in  std_logic := '1';
-    o_OBS_TG_TMR_CTRL_ERROR           : out std_logic;
-    o_OBS_TG_HAM_BUFFER_SINGLE_ERR    : out std_logic;
-    o_OBS_TG_HAM_BUFFER_DOUBLE_ERR    : out std_logic;
-    o_OBS_TG_HAM_BUFFER_ENC_DATA      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_TG_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+    OBS_TG_HAM_BUFFER_CORRECT_ERROR_i : in  std_logic := '1';
+    OBS_TG_TMR_CTRL_CORRECT_ERROR_i   : in  std_logic := '1';
+    OBS_TG_TMR_CTRL_ERROR_o           : out std_logic;
+    OBS_TG_HAM_BUFFER_SINGLE_ERR_o    : out std_logic;
+    OBS_TG_HAM_BUFFER_DOUBLE_ERR_o    : out std_logic;
+    OBS_TG_HAM_BUFFER_ENC_DATA_o      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_TG_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
     -- NI observability (forwarded from top_manager)
-    o_OBS_FE_INJ_META_HDR_SINGLE_ERR : out std_logic;
-    o_OBS_FE_INJ_META_HDR_DOUBLE_ERR : out std_logic;
-    o_OBS_FE_INJ_ADDR_SINGLE_ERR     : out std_logic;
-    o_OBS_FE_INJ_ADDR_DOUBLE_ERR     : out std_logic;
-    o_OBS_FE_INJ_HAM_META_HDR_ENC_DATA : out std_logic_vector((1 + c_AXI_ID_WIDTH + 8 + 2) + work.hamming_pkg.get_ecc_size((1 + c_AXI_ID_WIDTH + 8 + 2), c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
-    o_OBS_FE_INJ_HAM_ADDR_ENC_DATA     : out std_logic_vector(c_AXI_ADDR_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_ADDR_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
-    i_OBS_FE_INJ_META_HDR_CORRECT_ERROR : in std_logic := '1';
-    i_OBS_FE_INJ_ADDR_CORRECT_ERROR     : in std_logic := '1';
+    OBS_FE_INJ_META_HDR_SINGLE_ERR_o : out std_logic;
+    OBS_FE_INJ_META_HDR_DOUBLE_ERR_o : out std_logic;
+    OBS_FE_INJ_ADDR_SINGLE_ERR_o     : out std_logic;
+    OBS_FE_INJ_ADDR_DOUBLE_ERR_o     : out std_logic;
+    OBS_FE_INJ_HAM_META_HDR_ENC_DATA_o : out std_logic_vector((1 + c_AXI_ID_WIDTH + 8 + 2) + work.hamming_pkg.get_ecc_size((1 + c_AXI_ID_WIDTH + 8 + 2), c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+    OBS_FE_INJ_HAM_ADDR_ENC_DATA_o     : out std_logic_vector(c_AXI_ADDR_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_ADDR_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+    OBS_FE_INJ_META_HDR_CORRECT_ERROR_i : in std_logic := '1';
+    OBS_FE_INJ_ADDR_CORRECT_ERROR_i     : in std_logic := '1';
 
-    i_OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR    : in std_logic := '1';
-    o_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR       : out std_logic;
-    o_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR       : out std_logic;
-    o_OBS_BE_INJ_HAM_BUFFER_ENC_DATA         : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
-    i_OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR : in std_logic := '1';
-    o_OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_ERROR         : out std_logic;
-    i_OBS_BE_INJ_HAM_INTEGRITY_CORRECT_ERROR : in std_logic := '1';
-    o_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR    : out std_logic;
-    o_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR    : out std_logic;
-    o_OBS_BE_INJ_HAM_INTEGRITY_ENC_DATA      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
-    i_OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR : in std_logic := '1';
-    o_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR         : out std_logic;
-    i_OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR : in std_logic := '1';
-    o_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR         : out std_logic;
+    OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR_i    : in std_logic := '1';
+    OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR_o       : out std_logic;
+    OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR_o       : out std_logic;
+    OBS_BE_INJ_HAM_BUFFER_ENC_DATA_o         : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+    OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i : in std_logic := '1';
+    OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_ERROR_o         : out std_logic;
+    OBS_BE_INJ_HAM_INTEGRITY_CORRECT_ERROR_i : in std_logic := '1';
+    OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR_o    : out std_logic;
+    OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR_o    : out std_logic;
+    OBS_BE_INJ_HAM_INTEGRITY_ENC_DATA_o      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+    OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR_i : in std_logic := '1';
+    OBS_BE_INJ_TMR_FLOW_CTRL_ERROR_o         : out std_logic;
+    OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR_i : in std_logic := '1';
+    OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR_o         : out std_logic;
 
-    i_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR     : in std_logic := '1';
-    o_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR        : out std_logic;
-    o_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR        : out std_logic;
-    o_OBS_BE_RX_HAM_BUFFER_ENC_DATA          : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
-    i_OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR : in std_logic := '1';
-    o_OBS_BE_RX_TMR_HAM_BUFFER_CTRL_ERROR         : out std_logic;
-    i_OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR : in std_logic := '1';
-    o_OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR    : out std_logic;
-    o_OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR    : out std_logic;
-    o_OBS_BE_RX_HAM_INTERFACE_HDR_ENC_DATA      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
-    o_OBS_BE_RX_INTEGRITY_CORRUPT            : out std_logic;
-    i_OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR  : in std_logic := '1';
-    o_OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR     : out std_logic;
-    o_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR     : out std_logic;
-    o_OBS_BE_RX_HAM_INTEGRITY_ENC_DATA       : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
-    i_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR  : in std_logic := '1';
-    o_OBS_BE_RX_TMR_FLOW_CTRL_ERROR          : out std_logic;
+    OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR_i     : in std_logic := '1';
+    OBS_BE_RX_HAM_BUFFER_SINGLE_ERR_o        : out std_logic;
+    OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR_o        : out std_logic;
+    OBS_BE_RX_HAM_BUFFER_ENC_DATA_o          : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+    OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i : in std_logic := '1';
+    OBS_BE_RX_TMR_HAM_BUFFER_CTRL_ERROR_o         : out std_logic;
+    OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR_i : in std_logic := '1';
+    OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR_o    : out std_logic;
+    OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR_o    : out std_logic;
+    OBS_BE_RX_HAM_INTERFACE_HDR_ENC_DATA_o      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+    OBS_BE_RX_INTEGRITY_CORRUPT_o            : out std_logic;
+    OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR_i  : in std_logic := '1';
+    OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR_o     : out std_logic;
+    OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR_o     : out std_logic;
+    OBS_BE_RX_HAM_INTEGRITY_ENC_DATA_o       : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+    OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR_i  : in std_logic := '1';
+    OBS_BE_RX_TMR_FLOW_CTRL_ERROR_o          : out std_logic;
 
-    o_NI_CORRUPT_PACKET : out std_logic
+    NI_CORRUPT_PACKET_o : out std_logic
   );
 end entity;
 
@@ -191,14 +191,14 @@ begin
       ACLK    => ACLK,
       ARESETn => ARESETn,
 
-      i_start => i_tg_start,
-      o_done  => o_tg_done,
+      start_i => tg_start_i,
+      done_o  => tg_done_o,
 
       INPUT_ADDRESS => TG_INPUT_ADDRESS,
       STARTING_SEED => TG_STARTING_SEED,
 
-      --i_ext_update_en => '0',
-      --i_ext_data_in   => (others => '0'),
+      --ext_update_en_i => '0',
+      --ext_data_in_i   => (others => '0'),
 
       AWID    => awid,
       AWADDR  => awaddr,
@@ -217,15 +217,15 @@ begin
       BVALID  => bvalid,
       BREADY  => bready,
 
-      i_OBS_TG_HAM_BUFFER_CORRECT_ERROR => i_OBS_TG_HAM_BUFFER_CORRECT_ERROR,
-      i_OBS_TG_TMR_CTRL_CORRECT_ERROR   => i_OBS_TG_TMR_CTRL_CORRECT_ERROR,
+      OBS_TG_HAM_BUFFER_CORRECT_ERROR_i => OBS_TG_HAM_BUFFER_CORRECT_ERROR_i,
+      OBS_TG_TMR_CTRL_CORRECT_ERROR_i   => OBS_TG_TMR_CTRL_CORRECT_ERROR_i,
 
-      o_OBS_TG_TMR_CTRL_ERROR        => o_OBS_TG_TMR_CTRL_ERROR,
-      o_OBS_TG_HAM_BUFFER_SINGLE_ERR => o_OBS_TG_HAM_BUFFER_SINGLE_ERR,
-      o_OBS_TG_HAM_BUFFER_DOUBLE_ERR => o_OBS_TG_HAM_BUFFER_DOUBLE_ERR,
-      o_OBS_TG_HAM_BUFFER_ENC_DATA   => o_OBS_TG_HAM_BUFFER_ENC_DATA
+      OBS_TG_TMR_CTRL_ERROR_o        => OBS_TG_TMR_CTRL_ERROR_o,
+      OBS_TG_HAM_BUFFER_SINGLE_ERR_o => OBS_TG_HAM_BUFFER_SINGLE_ERR_o,
+      OBS_TG_HAM_BUFFER_DOUBLE_ERR_o => OBS_TG_HAM_BUFFER_DOUBLE_ERR_o,
+      OBS_TG_HAM_BUFFER_ENC_DATA_o   => OBS_TG_HAM_BUFFER_ENC_DATA_o
 
-      --o_lfsr_value => tg_lfsr_value
+      --lfsr_value_o => tg_lfsr_value
     );
 
   -- TM
@@ -242,8 +242,8 @@ begin
       ACLK    => ACLK,
       ARESETn => ARESETn,
 
-      i_start => i_tm_start,
-      o_done  => o_tm_done,
+      start_i => tm_start_i,
+      done_o  => tm_done_o,
 
       INPUT_ADDRESS => TM_INPUT_ADDRESS,
       STARTING_SEED => TM_STARTING_SEED,
@@ -262,20 +262,20 @@ begin
       RID    => rid,
       RRESP  => rresp,
 
-      o_tm_lfsr_comparison_mismatch => o_tm_lfsr_comparison_mismatch,
-      o_expected_value => o_tm_expected_value,
+      tm_lfsr_comparison_mismatch_o => tm_lfsr_comparison_mismatch_o,
+      expected_value_o => tm_expected_value_o,
 
-      i_OBS_TM_HAM_BUFFER_CORRECT_ERROR => i_OBS_TM_HAM_BUFFER_CORRECT_ERROR,
-      i_OBS_TM_TMR_CTRL_CORRECT_ERROR   => i_OBS_TM_TMR_CTRL_CORRECT_ERROR,
-      i_OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR => i_OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR,
-      o_OBS_TM_TMR_CTRL_ERROR           => o_OBS_TM_TMR_CTRL_ERROR,
-      o_OBS_TM_HAM_BUFFER_SINGLE_ERR    => o_OBS_TM_HAM_BUFFER_SINGLE_ERR,
-      o_OBS_TM_HAM_BUFFER_DOUBLE_ERR    => o_OBS_TM_HAM_BUFFER_DOUBLE_ERR,
-      o_OBS_TM_HAM_BUFFER_ENC_DATA      => o_OBS_TM_HAM_BUFFER_ENC_DATA,
-      o_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR => o_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR,
-      o_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR => o_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR,
-      o_OBS_TM_HAM_TXN_COUNTER_ENC_DATA   => o_OBS_TM_HAM_TXN_COUNTER_ENC_DATA,
-      o_TM_TRANSACTION_COUNT              => o_TM_TRANSACTION_COUNT
+      OBS_TM_HAM_BUFFER_CORRECT_ERROR_i => OBS_TM_HAM_BUFFER_CORRECT_ERROR_i,
+      OBS_TM_TMR_CTRL_CORRECT_ERROR_i   => OBS_TM_TMR_CTRL_CORRECT_ERROR_i,
+      OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_i => OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_i,
+      OBS_TM_TMR_CTRL_ERROR_o           => OBS_TM_TMR_CTRL_ERROR_o,
+      OBS_TM_HAM_BUFFER_SINGLE_ERR_o    => OBS_TM_HAM_BUFFER_SINGLE_ERR_o,
+      OBS_TM_HAM_BUFFER_DOUBLE_ERR_o    => OBS_TM_HAM_BUFFER_DOUBLE_ERR_o,
+      OBS_TM_HAM_BUFFER_ENC_DATA_o      => OBS_TM_HAM_BUFFER_ENC_DATA_o,
+      OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR_o => OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR_o,
+      OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR_o => OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR_o,
+      OBS_TM_HAM_TXN_COUNTER_ENC_DATA_o   => OBS_TM_HAM_TXN_COUNTER_ENC_DATA_o,
+      TM_TRANSACTION_COUNT_o              => TM_TRANSACTION_COUNT_o
     );
 
   -- Single NI manager
@@ -328,51 +328,51 @@ begin
       l_out_val_o  => lout_val,
       l_out_ack_i  => lout_ack,
 
-      corrupt_packet => o_NI_CORRUPT_PACKET,
+      corrupt_packet => NI_CORRUPT_PACKET_o,
 
       -- Frontend observation ports
-      o_OBS_FE_INJ_META_HDR_SINGLE_ERR => o_OBS_FE_INJ_META_HDR_SINGLE_ERR,
-      o_OBS_FE_INJ_META_HDR_DOUBLE_ERR => o_OBS_FE_INJ_META_HDR_DOUBLE_ERR,
-      o_OBS_FE_INJ_ADDR_SINGLE_ERR     => o_OBS_FE_INJ_ADDR_SINGLE_ERR,
-      o_OBS_FE_INJ_ADDR_DOUBLE_ERR     => o_OBS_FE_INJ_ADDR_DOUBLE_ERR,
-      o_OBS_FE_INJ_HAM_META_HDR_ENC_DATA => o_OBS_FE_INJ_HAM_META_HDR_ENC_DATA,
-      o_OBS_FE_INJ_HAM_ADDR_ENC_DATA     => o_OBS_FE_INJ_HAM_ADDR_ENC_DATA,
-      i_OBS_FE_INJ_META_HDR_CORRECT_ERROR => i_OBS_FE_INJ_META_HDR_CORRECT_ERROR,
-      i_OBS_FE_INJ_ADDR_CORRECT_ERROR     => i_OBS_FE_INJ_ADDR_CORRECT_ERROR,
+      OBS_FE_INJ_META_HDR_SINGLE_ERR_o => OBS_FE_INJ_META_HDR_SINGLE_ERR_o,
+      OBS_FE_INJ_META_HDR_DOUBLE_ERR_o => OBS_FE_INJ_META_HDR_DOUBLE_ERR_o,
+      OBS_FE_INJ_ADDR_SINGLE_ERR_o     => OBS_FE_INJ_ADDR_SINGLE_ERR_o,
+      OBS_FE_INJ_ADDR_DOUBLE_ERR_o     => OBS_FE_INJ_ADDR_DOUBLE_ERR_o,
+      OBS_FE_INJ_HAM_META_HDR_ENC_DATA_o => OBS_FE_INJ_HAM_META_HDR_ENC_DATA_o,
+      OBS_FE_INJ_HAM_ADDR_ENC_DATA_o     => OBS_FE_INJ_HAM_ADDR_ENC_DATA_o,
+      OBS_FE_INJ_META_HDR_CORRECT_ERROR_i => OBS_FE_INJ_META_HDR_CORRECT_ERROR_i,
+      OBS_FE_INJ_ADDR_CORRECT_ERROR_i     => OBS_FE_INJ_ADDR_CORRECT_ERROR_i,
 
       -- Backend correction enables / observation ports
-      i_OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR    => i_OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR,
-      o_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR       => o_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR,
-      o_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR       => o_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR,
-      o_OBS_BE_INJ_HAM_BUFFER_ENC_DATA         => o_OBS_BE_INJ_HAM_BUFFER_ENC_DATA,
-      i_OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR => i_OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR,
-      o_OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_ERROR         => o_OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_ERROR,
-      i_OBS_BE_INJ_HAM_INTEGRITY_CORRECT_ERROR => i_OBS_BE_INJ_HAM_INTEGRITY_CORRECT_ERROR,
-      o_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR    => o_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR,
-      o_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR    => o_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR,
-      o_OBS_BE_INJ_HAM_INTEGRITY_ENC_DATA      => o_OBS_BE_INJ_HAM_INTEGRITY_ENC_DATA,
-      i_OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR => i_OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR,
-      o_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR         => o_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR,
-      i_OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR => i_OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR,
-      o_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR         => o_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR,
+      OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR_i    => OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR_i,
+      OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR_o       => OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR_o,
+      OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR_o       => OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR_o,
+      OBS_BE_INJ_HAM_BUFFER_ENC_DATA_o         => OBS_BE_INJ_HAM_BUFFER_ENC_DATA_o,
+      OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i => OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i,
+      OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_ERROR_o         => OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_ERROR_o,
+      OBS_BE_INJ_HAM_INTEGRITY_CORRECT_ERROR_i => OBS_BE_INJ_HAM_INTEGRITY_CORRECT_ERROR_i,
+      OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR_o    => OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR_o,
+      OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR_o    => OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR_o,
+      OBS_BE_INJ_HAM_INTEGRITY_ENC_DATA_o      => OBS_BE_INJ_HAM_INTEGRITY_ENC_DATA_o,
+      OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR_i => OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR_i,
+      OBS_BE_INJ_TMR_FLOW_CTRL_ERROR_o         => OBS_BE_INJ_TMR_FLOW_CTRL_ERROR_o,
+      OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR_i => OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR_i,
+      OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR_o         => OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR_o,
 
-      i_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR     => i_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR,
-      o_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR        => o_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR,
-      o_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR        => o_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR,
-      o_OBS_BE_RX_HAM_BUFFER_ENC_DATA          => o_OBS_BE_RX_HAM_BUFFER_ENC_DATA,
-      i_OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR => i_OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR,
-      o_OBS_BE_RX_TMR_HAM_BUFFER_CTRL_ERROR         => o_OBS_BE_RX_TMR_HAM_BUFFER_CTRL_ERROR,
-      i_OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR => i_OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR,
-      o_OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR    => o_OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR,
-      o_OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR    => o_OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR,
-      o_OBS_BE_RX_HAM_INTERFACE_HDR_ENC_DATA      => o_OBS_BE_RX_HAM_INTERFACE_HDR_ENC_DATA,
-      o_OBS_BE_RX_INTEGRITY_CORRUPT            => o_OBS_BE_RX_INTEGRITY_CORRUPT,
-      i_OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR  => i_OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR,
-      o_OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR     => o_OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR,
-      o_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR     => o_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR,
-      o_OBS_BE_RX_HAM_INTEGRITY_ENC_DATA       => o_OBS_BE_RX_HAM_INTEGRITY_ENC_DATA,
-      i_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR  => i_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR,
-      o_OBS_BE_RX_TMR_FLOW_CTRL_ERROR          => o_OBS_BE_RX_TMR_FLOW_CTRL_ERROR
+      OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR_i     => OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR_i,
+      OBS_BE_RX_HAM_BUFFER_SINGLE_ERR_o        => OBS_BE_RX_HAM_BUFFER_SINGLE_ERR_o,
+      OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR_o        => OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR_o,
+      OBS_BE_RX_HAM_BUFFER_ENC_DATA_o          => OBS_BE_RX_HAM_BUFFER_ENC_DATA_o,
+      OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i => OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i,
+      OBS_BE_RX_TMR_HAM_BUFFER_CTRL_ERROR_o         => OBS_BE_RX_TMR_HAM_BUFFER_CTRL_ERROR_o,
+      OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR_i => OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR_i,
+      OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR_o    => OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR_o,
+      OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR_o    => OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR_o,
+      OBS_BE_RX_HAM_INTERFACE_HDR_ENC_DATA_o      => OBS_BE_RX_HAM_INTERFACE_HDR_ENC_DATA_o,
+      OBS_BE_RX_INTEGRITY_CORRUPT_o            => OBS_BE_RX_INTEGRITY_CORRUPT_o,
+      OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR_i  => OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR_i,
+      OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR_o     => OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR_o,
+      OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR_o     => OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR_o,
+      OBS_BE_RX_HAM_INTEGRITY_ENC_DATA_o       => OBS_BE_RX_HAM_INTEGRITY_ENC_DATA_o,
+      OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR_i  => OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR_i,
+      OBS_BE_RX_TMR_FLOW_CTRL_ERROR_o          => OBS_BE_RX_TMR_FLOW_CTRL_ERROR_o
     );
 
   -- HW loopback (non-debug)
@@ -396,12 +396,12 @@ begin
       lout_val_o  => lout_val,
       lout_ack_i  => lout_ack,
 
-      i_OBS_LB_HAM_BUFFER_CORRECT_ERROR => i_OBS_LB_HAM_BUFFER_CORRECT_ERROR,
-      i_OBS_LB_TMR_CTRL_CORRECT_ERROR   => i_OBS_LB_TMR_CTRL_CORRECT_ERROR,
-      o_OBS_LB_TMR_CTRL_ERROR           => o_OBS_LB_TMR_CTRL_ERROR,
-      o_OBS_LB_HAM_BUFFER_SINGLE_ERR    => o_OBS_LB_HAM_BUFFER_SINGLE_ERR,
-      o_OBS_LB_HAM_BUFFER_DOUBLE_ERR    => o_OBS_LB_HAM_BUFFER_DOUBLE_ERR,
-      o_OBS_LB_HAM_BUFFER_ENC_DATA      => o_OBS_LB_HAM_BUFFER_ENC_DATA
+      OBS_LB_HAM_BUFFER_CORRECT_ERROR_i => OBS_LB_HAM_BUFFER_CORRECT_ERROR_i,
+      OBS_LB_TMR_CTRL_CORRECT_ERROR_i   => OBS_LB_TMR_CTRL_CORRECT_ERROR_i,
+      OBS_LB_TMR_CTRL_ERROR_o           => OBS_LB_TMR_CTRL_ERROR_o,
+      OBS_LB_HAM_BUFFER_SINGLE_ERR_o    => OBS_LB_HAM_BUFFER_SINGLE_ERR_o,
+      OBS_LB_HAM_BUFFER_DOUBLE_ERR_o    => OBS_LB_HAM_BUFFER_DOUBLE_ERR_o,
+      OBS_LB_HAM_BUFFER_ENC_DATA_o      => OBS_LB_HAM_BUFFER_ENC_DATA_o
     );
 
 end architecture;

@@ -53,35 +53,35 @@ entity frontend_subordinate is
             CORRUPT_PACKET: out std_logic;
 
         -- Backend signals (injection).
-        i_READY_SEND_DATA: in std_logic;
-        o_VALID_SEND_DATA: out std_logic;
-        o_LAST_SEND_DATA : out std_logic;
+        READY_SEND_DATA_i: in std_logic;
+        VALID_SEND_DATA_o: out std_logic;
+        LAST_SEND_DATA_o : out std_logic;
 
-        o_DATA_SEND  : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
-        o_STATUS_SEND: out std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
+        DATA_SEND_o  : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+        STATUS_SEND_o: out std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
 
         -- Backend signals (reception).
-        i_VALID_RECEIVE_PACKET: in std_logic;
-        i_VALID_RECEIVE_DATA  : in std_logic;
-        i_LAST_RECEIVE_DATA   : in std_logic;
+        VALID_RECEIVE_PACKET_i: in std_logic;
+        VALID_RECEIVE_DATA_i  : in std_logic;
+        LAST_RECEIVE_DATA_i   : in std_logic;
 
-        i_ID_RECEIVE     : in std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
-        i_LEN_RECEIVE    : in std_logic_vector(7 downto 0);
-        i_BURST_RECEIVE  : in std_logic_vector(1 downto 0);
-        i_OPC_RECEIVE    : in std_logic;
-        i_ADDRESS_RECEIVE: in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
-        i_DATA_RECEIVE   : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+        ID_RECEIVE_i     : in std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
+        LEN_RECEIVE_i    : in std_logic_vector(7 downto 0);
+        BURST_RECEIVE_i  : in std_logic_vector(1 downto 0);
+        OPC_RECEIVE_i    : in std_logic;
+        ADDRESS_RECEIVE_i: in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+        DATA_RECEIVE_i   : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
-        i_CORRUPT_RECEIVE: in std_logic;
+        CORRUPT_RECEIVE_i: in std_logic;
 
-        o_READY_RECEIVE_PACKET: out std_logic;
-        o_READY_RECEIVE_DATA  : out std_logic
+        READY_RECEIVE_PACKET_o: out std_logic;
+        READY_RECEIVE_DATA_o  : out std_logic
     );
 end frontend_subordinate;
 
 architecture rtl of frontend_subordinate is
-    signal w_VALID_SEND_DATA: std_logic;
-    signal w_STATUS_SEND_r : std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
+    signal VALID_SEND_DATA_w: std_logic;
+    signal STATUS_SEND_r_w : std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
 
 begin
     ---------------------------------------------------------------------------------------------
@@ -91,52 +91,52 @@ begin
     registering: process(all)
     begin
         if (rising_edge(ACLK)) then
-            if (w_VALID_SEND_DATA = '1') then
+            if (VALID_SEND_DATA_w = '1') then
                 if (BVALID = '1') then
                     -- Registering write signals.
-                    w_STATUS_SEND_r <= BRESP;
+                    STATUS_SEND_r_w <= BRESP;
                 elsif (RVALID = '1') then
                     -- Registering read signals.
-                    w_STATUS_SEND_r <= RRESP;
+                    STATUS_SEND_r_w <= RRESP;
                 end if;
             end if;
         end if;
     end process registering;
 
-    o_STATUS_SEND <= w_STATUS_SEND_r;
+    STATUS_SEND_o <= STATUS_SEND_r_w;
 
     -- Control information.
-    w_VALID_SEND_DATA   <= '1' when (BVALID = '1' or RVALID = '1') else '0';
-    o_VALID_SEND_DATA   <= w_VALID_SEND_DATA;
+    VALID_SEND_DATA_w   <= '1' when (BVALID = '1' or RVALID = '1') else '0';
+    VALID_SEND_DATA_o   <= VALID_SEND_DATA_w;
 
-    o_LAST_SEND_DATA    <= RLAST;
-    o_DATA_SEND         <= RDATA when (RVALID = '1') else (c_AXI_DATA_WIDTH - 1 downto 0 => '0');
+    LAST_SEND_DATA_o    <= RLAST;
+    DATA_SEND_o         <= RDATA when (RVALID = '1') else (c_AXI_DATA_WIDTH - 1 downto 0 => '0');
 
     -- Ready information to IP.
-    BREADY <= '1' when (i_OPC_RECEIVE = '0' and i_READY_SEND_DATA = '1') else '0';
-    RREADY <= '1' when (i_OPC_RECEIVE = '1' and i_READY_SEND_DATA = '1') else '0';
+    BREADY <= '1' when (OPC_RECEIVE_i = '0' and READY_SEND_DATA_i = '1') else '0';
+    RREADY <= '1' when (OPC_RECEIVE_i = '1' and READY_SEND_DATA_i = '1') else '0';
 
     ---------------------------------------------------------------------------------------------
     -- Reception.
-    o_READY_RECEIVE_PACKET <= '1' when (i_OPC_RECEIVE = '0' and AWREADY = '1') or
-                                       (i_OPC_RECEIVE = '1' and ARREADY = '1') else '0';
-    o_READY_RECEIVE_DATA   <= WREADY;
+    READY_RECEIVE_PACKET_o <= '1' when (OPC_RECEIVE_i = '0' and AWREADY = '1') or
+                                       (OPC_RECEIVE_i = '1' and ARREADY = '1') else '0';
+    READY_RECEIVE_DATA_o   <= WREADY;
 
-    AWVALID <= '1' when (i_OPC_RECEIVE = '0' and i_VALID_RECEIVE_PACKET = '1') else '0';
-    AWID    <= i_ID_RECEIVE when (i_OPC_RECEIVE = '0' and i_VALID_RECEIVE_PACKET = '1') else (c_AXI_ID_WIDTH - 1 downto 0 => '0');
-    AWADDR  <= i_ADDRESS_RECEIVE & (0 to c_AXI_DATA_WIDTH - 1 => '0') when (i_OPC_RECEIVE = '0' and i_VALID_RECEIVE_PACKET = '1') else (c_AXI_ADDR_WIDTH - 1 downto 0 => '0');
-    AWLEN   <= i_LEN_RECEIVE when (i_OPC_RECEIVE = '0' and i_VALID_RECEIVE_PACKET = '1') else (7 downto 0 => '0');
-    AWBURST <= i_BURST_RECEIVE when (i_OPC_RECEIVE = '0' and i_VALID_RECEIVE_PACKET = '1') else (1 downto 0 => '0');
+    AWVALID <= '1' when (OPC_RECEIVE_i = '0' and VALID_RECEIVE_PACKET_i = '1') else '0';
+    AWID    <= ID_RECEIVE_i when (OPC_RECEIVE_i = '0' and VALID_RECEIVE_PACKET_i = '1') else (c_AXI_ID_WIDTH - 1 downto 0 => '0');
+    AWADDR  <= ADDRESS_RECEIVE_i & (0 to c_AXI_DATA_WIDTH - 1 => '0') when (OPC_RECEIVE_i = '0' and VALID_RECEIVE_PACKET_i = '1') else (c_AXI_ADDR_WIDTH - 1 downto 0 => '0');
+    AWLEN   <= LEN_RECEIVE_i when (OPC_RECEIVE_i = '0' and VALID_RECEIVE_PACKET_i = '1') else (7 downto 0 => '0');
+    AWBURST <= BURST_RECEIVE_i when (OPC_RECEIVE_i = '0' and VALID_RECEIVE_PACKET_i = '1') else (1 downto 0 => '0');
 
-    WVALID <= '1' when (i_OPC_RECEIVE = '0' and i_VALID_RECEIVE_DATA = '1') else '0';
-    WDATA  <= i_DATA_RECEIVE when (i_VALID_RECEIVE_DATA = '1') else (c_AXI_DATA_WIDTH - 1 downto 0 => '0');
-    WLAST  <= i_LAST_RECEIVE_DATA;
+    WVALID <= '1' when (OPC_RECEIVE_i = '0' and VALID_RECEIVE_DATA_i = '1') else '0';
+    WDATA  <= DATA_RECEIVE_i when (VALID_RECEIVE_DATA_i = '1') else (c_AXI_DATA_WIDTH - 1 downto 0 => '0');
+    WLAST  <= LAST_RECEIVE_DATA_i;
 
-    ARVALID <= '1' when (i_OPC_RECEIVE = '1' and i_VALID_RECEIVE_PACKET = '1') else '0';
-    ARID    <= i_ID_RECEIVE when (i_OPC_RECEIVE = '1' and i_VALID_RECEIVE_PACKET = '1') else (c_AXI_ID_WIDTH - 1 downto 0 => '0');
-    ARADDR  <= i_ADDRESS_RECEIVE & (0 to c_AXI_DATA_WIDTH - 1 => '0') when (i_OPC_RECEIVE = '1' and i_VALID_RECEIVE_PACKET = '1') else (c_AXI_ADDR_WIDTH - 1 downto 0 => '0');
-    ARLEN   <= i_LEN_RECEIVE when (i_OPC_RECEIVE = '1' and i_VALID_RECEIVE_PACKET = '1') else (7 downto 0 => '0');
-    ARBURST <= i_BURST_RECEIVE when (i_OPC_RECEIVE = '1' and i_VALID_RECEIVE_PACKET = '1') else (1 downto 0 => '0');
+    ARVALID <= '1' when (OPC_RECEIVE_i = '1' and VALID_RECEIVE_PACKET_i = '1') else '0';
+    ARID    <= ID_RECEIVE_i when (OPC_RECEIVE_i = '1' and VALID_RECEIVE_PACKET_i = '1') else (c_AXI_ID_WIDTH - 1 downto 0 => '0');
+    ARADDR  <= ADDRESS_RECEIVE_i & (0 to c_AXI_DATA_WIDTH - 1 => '0') when (OPC_RECEIVE_i = '1' and VALID_RECEIVE_PACKET_i = '1') else (c_AXI_ADDR_WIDTH - 1 downto 0 => '0');
+    ARLEN   <= LEN_RECEIVE_i when (OPC_RECEIVE_i = '1' and VALID_RECEIVE_PACKET_i = '1') else (7 downto 0 => '0');
+    ARBURST <= BURST_RECEIVE_i when (OPC_RECEIVE_i = '1' and VALID_RECEIVE_PACKET_i = '1') else (1 downto 0 => '0');
 
-    CORRUPT_PACKET <= i_CORRUPT_RECEIVE;
+    CORRUPT_PACKET <= CORRUPT_RECEIVE_i;
 end rtl;

@@ -11,19 +11,19 @@ entity buffer_fifo_ham_ctrl_tmr is
     ACLK   : in std_logic;
     ARESET : in std_logic;
 
-    i_WRITE_REQ : in std_logic;
-    i_READ_REQ  : in std_logic;
+    WRITE_REQ_i : in std_logic;
+    READ_REQ_i  : in std_logic;
 
-    o_STAGE_VALID  : out std_logic;
-    o_STAGE_LOAD   : out std_logic;
-    o_STAGE_PUSH   : out std_logic;
-    o_FIFO_DO_WRITE: out std_logic;
-    o_FIFO_DO_READ : out std_logic;
-    o_FIFO_WRITE_OK: out std_logic;
-    o_FIFO_READ_OK : out std_logic;
-    o_FIFO_COUNT   : out unsigned(integer(ceil(log2(real(p_BUFFER_DEPTH)))) downto 0);
+    STAGE_VALID_o  : out std_logic;
+    STAGE_LOAD_o   : out std_logic;
+    STAGE_PUSH_o   : out std_logic;
+    FIFO_DO_WRITE_o: out std_logic;
+    FIFO_DO_READ_o : out std_logic;
+    FIFO_WRITE_OK_o: out std_logic;
+    FIFO_READ_OK_o : out std_logic;
+    FIFO_COUNT_o   : out unsigned(integer(ceil(log2(real(p_BUFFER_DEPTH)))) downto 0);
 
-    i_correct_enable : in std_logic;
+    correct_enable_i : in std_logic;
     error_o          : out std_logic
   );
 end entity;
@@ -78,29 +78,29 @@ begin
       port map(
         ACLK   => ACLK,
         ARESET => ARESET,
-        i_WRITE_REQ => i_WRITE_REQ,
-        i_READ_REQ  => i_READ_REQ,
-        o_STAGE_VALID   => stage_valid_w(i),
-        o_STAGE_LOAD    => stage_load_w(i),
-        o_STAGE_PUSH    => stage_push_w(i),
-        o_FIFO_DO_WRITE => fifo_do_write_w(i),
-        o_FIFO_DO_READ  => fifo_do_read_w(i),
-        o_FIFO_WRITE_OK => fifo_write_ok_w(i),
-        o_FIFO_READ_OK  => fifo_read_ok_w(i),
-        o_FIFO_COUNT    => fifo_count_w(i)
+        WRITE_REQ_i => WRITE_REQ_i,
+        READ_REQ_i  => READ_REQ_i,
+        STAGE_VALID_o   => stage_valid_w(i),
+        STAGE_LOAD_o    => stage_load_w(i),
+        STAGE_PUSH_o    => stage_push_w(i),
+        FIFO_DO_WRITE_o => fifo_do_write_w(i),
+        FIFO_DO_READ_o  => fifo_do_read_w(i),
+        FIFO_WRITE_OK_o => fifo_write_ok_w(i),
+        FIFO_READ_OK_o  => fifo_read_ok_w(i),
+        FIFO_COUNT_o    => fifo_count_w(i)
       );
   end generate;
 
   error_o <= dis3(stage_valid_w(2), stage_valid_w(1), stage_valid_w(0)) or
              dis3_uns(fifo_count_w(2), fifo_count_w(1), fifo_count_w(0));
 
-  o_STAGE_VALID   <= maj3(stage_valid_w(2), stage_valid_w(1), stage_valid_w(0)) when i_correct_enable = '1' else stage_valid_w(0);
-  o_STAGE_LOAD    <= maj3(stage_load_w(2), stage_load_w(1), stage_load_w(0)) when i_correct_enable = '1' else stage_load_w(0);
-  o_STAGE_PUSH    <= maj3(stage_push_w(2), stage_push_w(1), stage_push_w(0)) when i_correct_enable = '1' else stage_push_w(0);
-  o_FIFO_DO_WRITE <= maj3(fifo_do_write_w(2), fifo_do_write_w(1), fifo_do_write_w(0)) when i_correct_enable = '1' else fifo_do_write_w(0);
-  o_FIFO_DO_READ  <= maj3(fifo_do_read_w(2), fifo_do_read_w(1), fifo_do_read_w(0)) when i_correct_enable = '1' else fifo_do_read_w(0);
-  o_FIFO_WRITE_OK <= maj3(fifo_write_ok_w(2), fifo_write_ok_w(1), fifo_write_ok_w(0)) when i_correct_enable = '1' else fifo_write_ok_w(0);
-  o_FIFO_READ_OK  <= maj3(fifo_read_ok_w(2), fifo_read_ok_w(1), fifo_read_ok_w(0)) when i_correct_enable = '1' else fifo_read_ok_w(0);
-  o_FIFO_COUNT    <= maj3_uns(fifo_count_w(2), fifo_count_w(1), fifo_count_w(0)) when i_correct_enable = '1' else fifo_count_w(0);
+  STAGE_VALID_o   <= maj3(stage_valid_w(2), stage_valid_w(1), stage_valid_w(0)) when correct_enable_i = '1' else stage_valid_w(0);
+  STAGE_LOAD_o    <= maj3(stage_load_w(2), stage_load_w(1), stage_load_w(0)) when correct_enable_i = '1' else stage_load_w(0);
+  STAGE_PUSH_o    <= maj3(stage_push_w(2), stage_push_w(1), stage_push_w(0)) when correct_enable_i = '1' else stage_push_w(0);
+  FIFO_DO_WRITE_o <= maj3(fifo_do_write_w(2), fifo_do_write_w(1), fifo_do_write_w(0)) when correct_enable_i = '1' else fifo_do_write_w(0);
+  FIFO_DO_READ_o  <= maj3(fifo_do_read_w(2), fifo_do_read_w(1), fifo_do_read_w(0)) when correct_enable_i = '1' else fifo_do_read_w(0);
+  FIFO_WRITE_OK_o <= maj3(fifo_write_ok_w(2), fifo_write_ok_w(1), fifo_write_ok_w(0)) when correct_enable_i = '1' else fifo_write_ok_w(0);
+  FIFO_READ_OK_o  <= maj3(fifo_read_ok_w(2), fifo_read_ok_w(1), fifo_read_ok_w(0)) when correct_enable_i = '1' else fifo_read_ok_w(0);
+  FIFO_COUNT_o    <= maj3_uns(fifo_count_w(2), fifo_count_w(1), fifo_count_w(0)) when correct_enable_i = '1' else fifo_count_w(0);
 end architecture;
 

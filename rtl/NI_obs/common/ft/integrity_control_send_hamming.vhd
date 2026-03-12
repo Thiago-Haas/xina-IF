@@ -12,32 +12,32 @@ entity integrity_control_send_hamming is
         ARESETn: in std_logic;
 
         -- Inputs.
-        i_ADD      : in std_logic;
-        i_VALUE_ADD: in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+        ADD_i      : in std_logic;
+        VALUE_ADD_i: in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
         -- Outputs.
-        o_CHECKSUM: out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+        CHECKSUM_o: out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
         -- Hardening
         correct_error_i : in  std_logic;
         error_o         : out std_logic;
 
-        i_OBS_HAM_INTEGRITY_CORRECT_ERROR : in  std_logic := '1';
-        o_OBS_HAM_INTEGRITY_SINGLE_ERR    : out std_logic;
-        o_OBS_HAM_INTEGRITY_DOUBLE_ERR    : out std_logic;
-        o_OBS_HAM_INTEGRITY_ENC_DATA      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0)
+        OBS_HAM_INTEGRITY_CORRECT_ERROR_i : in  std_logic := '1';
+        OBS_HAM_INTEGRITY_SINGLE_ERR_o    : out std_logic;
+        OBS_HAM_INTEGRITY_DOUBLE_ERR_o    : out std_logic;
+        OBS_HAM_INTEGRITY_ENC_DATA_o      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0)
     );
 end integrity_control_send_hamming;
 
 architecture rtl of integrity_control_send_hamming is
-    signal w_CHECKSUM_ham_r    : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
-    signal w_CHECKSUM_ham_next : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
-    signal w_HAM_SINGLE_ERR    : std_logic;
-    signal w_HAM_DOUBLE_ERR    : std_logic;
-    signal w_CHECKSUM_ham_enc  : std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+    signal CHECKSUM_ham_r_w    : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+    signal CHECKSUM_ham_next_w : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+    signal HAM_SINGLE_ERR_w    : std_logic;
+    signal HAM_DOUBLE_ERR_w    : std_logic;
+    signal CHECKSUM_ham_enc_w  : std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
 begin
-    w_CHECKSUM_ham_next <= std_logic_vector(unsigned(w_CHECKSUM_ham_r) + unsigned(i_VALUE_ADD));
+    CHECKSUM_ham_next_w <= std_logic_vector(unsigned(CHECKSUM_ham_r_w) + unsigned(VALUE_ADD_i));
 
     u_CHECKSUM_HAM_REG: entity work.hamming_register
         generic map(
@@ -48,22 +48,22 @@ begin
             INJECT_ERROR   => false
         )
         port map(
-            correct_en_i => i_OBS_HAM_INTEGRITY_CORRECT_ERROR,
-            write_en_i   => i_ADD,
-            data_i       => w_CHECKSUM_ham_next,
+            correct_en_i => OBS_HAM_INTEGRITY_CORRECT_ERROR_i,
+            write_en_i   => ADD_i,
+            data_i       => CHECKSUM_ham_next_w,
             rstn_i       => ARESETn,
             clk_i        => ACLK,
-            single_err_o => w_HAM_SINGLE_ERR,
-            double_err_o => w_HAM_DOUBLE_ERR,
-            enc_data_o   => w_CHECKSUM_ham_enc,
-            data_o       => w_CHECKSUM_ham_r
+            single_err_o => HAM_SINGLE_ERR_w,
+            double_err_o => HAM_DOUBLE_ERR_w,
+            enc_data_o   => CHECKSUM_ham_enc_w,
+            data_o       => CHECKSUM_ham_r_w
         );
 
-    o_CHECKSUM <= w_CHECKSUM_ham_r;
+    CHECKSUM_o <= CHECKSUM_ham_r_w;
     -- TMR mode removed for this block; keep legacy ports stable.
     error_o <= '0';
-    o_OBS_HAM_INTEGRITY_SINGLE_ERR <= w_HAM_SINGLE_ERR;
-    o_OBS_HAM_INTEGRITY_DOUBLE_ERR <= w_HAM_DOUBLE_ERR;
-    o_OBS_HAM_INTEGRITY_ENC_DATA   <= w_CHECKSUM_ham_enc;
+    OBS_HAM_INTEGRITY_SINGLE_ERR_o <= HAM_SINGLE_ERR_w;
+    OBS_HAM_INTEGRITY_DOUBLE_ERR_o <= HAM_DOUBLE_ERR_w;
+    OBS_HAM_INTEGRITY_ENC_DATA_o   <= CHECKSUM_ham_enc_w;
 
 end rtl;

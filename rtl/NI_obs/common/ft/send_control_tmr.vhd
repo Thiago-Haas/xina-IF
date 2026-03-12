@@ -11,8 +11,8 @@ entity send_control_tmr is
         ARESETn: in std_logic;
 
         -- Buffer signals.
-        i_READ_OK_BUFFER: in std_logic;
-        o_READ_BUFFER   : out std_logic;
+        READ_OK_BUFFER_i: in std_logic;
+        READ_BUFFER_o   : out std_logic;
 
         -- XINA signals.
         l_in_val_i: out std_logic;
@@ -27,8 +27,8 @@ end send_control_tmr;
 architecture rtl of send_control_tmr is
     type t_BIT_VECTOR is array (2 downto 0) of std_logic;
 
-    signal w_READ_BUFFER: t_BIT_VECTOR;
-    signal w_l_in_val_i : t_BIT_VECTOR;
+    signal READ_BUFFER_w: t_BIT_VECTOR;
+    signal l_in_val_i_w : t_BIT_VECTOR;
 
     signal corr_READ_BUFFER_w : std_logic;
     signal corr_l_in_val_i_w  : std_logic;
@@ -57,36 +57,36 @@ begin
                 ACLK    => ACLK,
                 ARESETn => ARESETn,
 
-                i_READ_OK_BUFFER => i_READ_OK_BUFFER,
-                o_READ_BUFFER    => w_READ_BUFFER(i),
+                READ_OK_BUFFER_i => READ_OK_BUFFER_i,
+                READ_BUFFER_o    => READ_BUFFER_w(i),
 
-                l_in_val_i  => w_l_in_val_i(i),
+                l_in_val_i  => l_in_val_i_w(i),
                 l_in_ack_o  => l_in_ack_o
             );
     end generate;
 
     -- Majority vote (corrected outputs)
-    corr_READ_BUFFER_w <= (w_READ_BUFFER(2) and w_READ_BUFFER(1)) or
-                          (w_READ_BUFFER(2) and w_READ_BUFFER(0)) or
-                          (w_READ_BUFFER(1) and w_READ_BUFFER(0));
+    corr_READ_BUFFER_w <= (READ_BUFFER_w(2) and READ_BUFFER_w(1)) or
+                          (READ_BUFFER_w(2) and READ_BUFFER_w(0)) or
+                          (READ_BUFFER_w(1) and READ_BUFFER_w(0));
 
-    corr_l_in_val_i_w  <= (w_l_in_val_i(2) and w_l_in_val_i(1)) or
-                          (w_l_in_val_i(2) and w_l_in_val_i(0)) or
-                          (w_l_in_val_i(1) and w_l_in_val_i(0));
+    corr_l_in_val_i_w  <= (l_in_val_i_w(2) and l_in_val_i_w(1)) or
+                          (l_in_val_i_w(2) and l_in_val_i_w(0)) or
+                          (l_in_val_i_w(1) and l_in_val_i_w(0));
 
     -- Error detection: any mismatch among replicas
-    error_READ_BUFFER_w <= (w_READ_BUFFER(2) xor w_READ_BUFFER(1)) or
-                           (w_READ_BUFFER(2) xor w_READ_BUFFER(0)) or
-                           (w_READ_BUFFER(1) xor w_READ_BUFFER(0));
+    error_READ_BUFFER_w <= (READ_BUFFER_w(2) xor READ_BUFFER_w(1)) or
+                           (READ_BUFFER_w(2) xor READ_BUFFER_w(0)) or
+                           (READ_BUFFER_w(1) xor READ_BUFFER_w(0));
 
-    error_l_in_val_i_w  <= (w_l_in_val_i(2) xor w_l_in_val_i(1)) or
-                           (w_l_in_val_i(2) xor w_l_in_val_i(0)) or
-                           (w_l_in_val_i(1) xor w_l_in_val_i(0));
+    error_l_in_val_i_w  <= (l_in_val_i_w(2) xor l_in_val_i_w(1)) or
+                           (l_in_val_i_w(2) xor l_in_val_i_w(0)) or
+                           (l_in_val_i_w(1) xor l_in_val_i_w(0));
 
     error_o <= error_READ_BUFFER_w or error_l_in_val_i_w;
 
     -- Output selection matches control_tmr pattern:
     -- if correction enabled -> majority, else -> replica 0.
-    o_READ_BUFFER <= corr_READ_BUFFER_w when correct_error_i = '1' else w_READ_BUFFER(0);
-    l_in_val_i    <= corr_l_in_val_i_w  when correct_error_i = '1' else w_l_in_val_i(0);
+    READ_BUFFER_o <= corr_READ_BUFFER_w when correct_error_i = '1' else READ_BUFFER_w(0);
+    l_in_val_i    <= corr_l_in_val_i_w  when correct_error_i = '1' else l_in_val_i_w(0);
 end rtl;

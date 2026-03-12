@@ -75,29 +75,29 @@ end top_subordinate;
 
 architecture rtl of top_subordinate is
     -- Injection.
-    signal w_VALID_SEND_DATA  : std_logic;
-    signal w_LAST_SEND_DATA   : std_logic;
-    signal w_READY_SEND_DATA  : std_logic;
+    signal VALID_SEND_DATA_w  : std_logic;
+    signal LAST_SEND_DATA_w   : std_logic;
+    signal READY_SEND_DATA_w  : std_logic;
 
-    signal w_DATA_SEND  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
-    signal w_STATUS_SEND: std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
+    signal DATA_SEND_w  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+    signal STATUS_SEND_w: std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
 
     -- Reception.
-    signal w_READY_RECEIVE_PACKET: std_logic;
-    signal w_READY_RECEIVE_DATA  : std_logic;
+    signal READY_RECEIVE_PACKET_w: std_logic;
+    signal READY_RECEIVE_DATA_w  : std_logic;
 
-    signal w_VALID_RECEIVE_PACKET: std_logic;
-    signal w_VALID_RECEIVE_DATA  : std_logic;
-    signal w_LAST_RECEIVE_DATA   : std_logic;
+    signal VALID_RECEIVE_PACKET_w: std_logic;
+    signal VALID_RECEIVE_DATA_w  : std_logic;
+    signal LAST_RECEIVE_DATA_w   : std_logic;
 
-    signal w_ID_RECEIVE     : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
-    signal w_LEN_RECEIVE    : std_logic_vector(7 downto 0);
-    signal w_BURST_RECEIVE  : std_logic_vector(1 downto 0);
-    signal w_OPC_RECEIVE    : std_logic;
-    signal w_ADDRESS_RECEIVE: std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
-    signal w_DATA_RECEIVE   : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+    signal ID_RECEIVE_w     : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
+    signal LEN_RECEIVE_w    : std_logic_vector(7 downto 0);
+    signal BURST_RECEIVE_w  : std_logic_vector(1 downto 0);
+    signal OPC_RECEIVE_w    : std_logic;
+    signal ADDRESS_RECEIVE_w: std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+    signal DATA_RECEIVE_w   : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
-    signal w_CORRUPT_RECEIVE: std_logic;
+    signal CORRUPT_RECEIVE_w: std_logic;
 
 begin
     u_FRONTEND: entity work.frontend_subordinate
@@ -148,29 +148,29 @@ begin
                 CORRUPT_PACKET => CORRUPT_PACKET,
 
             -- Backend signals (injection).
-            o_VALID_SEND_DATA   => w_VALID_SEND_DATA,
-            o_LAST_SEND_DATA    => w_LAST_SEND_DATA,
-            i_READY_SEND_DATA   => w_READY_SEND_DATA,
+            VALID_SEND_DATA_o   => VALID_SEND_DATA_w,
+            LAST_SEND_DATA_o    => LAST_SEND_DATA_w,
+            READY_SEND_DATA_i   => READY_SEND_DATA_w,
 
-            o_DATA_SEND   => w_DATA_SEND,
-            o_STATUS_SEND => w_STATUS_SEND,
+            DATA_SEND_o   => DATA_SEND_w,
+            STATUS_SEND_o => STATUS_SEND_w,
 
             -- Backend signals (reception).
-            o_READY_RECEIVE_PACKET => w_READY_RECEIVE_PACKET,
-            o_READY_RECEIVE_DATA   => w_READY_RECEIVE_DATA,
+            READY_RECEIVE_PACKET_o => READY_RECEIVE_PACKET_w,
+            READY_RECEIVE_DATA_o   => READY_RECEIVE_DATA_w,
 
-            i_VALID_RECEIVE_PACKET => w_VALID_RECEIVE_PACKET,
-            i_VALID_RECEIVE_DATA   => w_VALID_RECEIVE_DATA,
-            i_LAST_RECEIVE_DATA    => w_LAST_RECEIVE_DATA,
+            VALID_RECEIVE_PACKET_i => VALID_RECEIVE_PACKET_w,
+            VALID_RECEIVE_DATA_i   => VALID_RECEIVE_DATA_w,
+            LAST_RECEIVE_DATA_i    => LAST_RECEIVE_DATA_w,
 
-            i_ID_RECEIVE      => w_ID_RECEIVE,
-            i_LEN_RECEIVE     => w_LEN_RECEIVE,
-            i_BURST_RECEIVE   => w_BURST_RECEIVE,
-            i_OPC_RECEIVE     => w_OPC_RECEIVE,
-            i_ADDRESS_RECEIVE => w_ADDRESS_RECEIVE,
-            i_DATA_RECEIVE    => w_DATA_RECEIVE,
+            ID_RECEIVE_i      => ID_RECEIVE_w,
+            LEN_RECEIVE_i     => LEN_RECEIVE_w,
+            BURST_RECEIVE_i   => BURST_RECEIVE_w,
+            OPC_RECEIVE_i     => OPC_RECEIVE_w,
+            ADDRESS_RECEIVE_i => ADDRESS_RECEIVE_w,
+            DATA_RECEIVE_i    => DATA_RECEIVE_w,
 
-            i_CORRUPT_RECEIVE => w_CORRUPT_RECEIVE
+            CORRUPT_RECEIVE_i => CORRUPT_RECEIVE_w
         );
 
     u_BACKEND: entity work.backend_subordinate
@@ -192,29 +192,29 @@ begin
             ARESETn => ARESETn,
 
             -- Backend signals (injection).
-            i_VALID_SEND_DATA   => w_VALID_SEND_DATA,
-            i_LAST_SEND_DATA    => w_LAST_SEND_DATA,
-            o_READY_SEND_DATA   => w_READY_SEND_DATA,
+            VALID_SEND_DATA_i   => VALID_SEND_DATA_w,
+            LAST_SEND_DATA_i    => LAST_SEND_DATA_w,
+            READY_SEND_DATA_o   => READY_SEND_DATA_w,
 
-            i_DATA_SEND   => w_DATA_SEND,
-            i_STATUS_SEND => w_STATUS_SEND,
+            DATA_SEND_i   => DATA_SEND_w,
+            STATUS_SEND_i => STATUS_SEND_w,
 
             -- Backend signals (reception).
-            i_READY_RECEIVE_PACKET => w_READY_RECEIVE_PACKET,
-            i_READY_RECEIVE_DATA   => w_READY_RECEIVE_DATA,
+            READY_RECEIVE_PACKET_i => READY_RECEIVE_PACKET_w,
+            READY_RECEIVE_DATA_i   => READY_RECEIVE_DATA_w,
 
-            o_VALID_RECEIVE_PACKET => w_VALID_RECEIVE_PACKET,
-            o_VALID_RECEIVE_DATA   => w_VALID_RECEIVE_DATA,
-            o_LAST_RECEIVE_DATA    => w_LAST_RECEIVE_DATA,
+            VALID_RECEIVE_PACKET_o => VALID_RECEIVE_PACKET_w,
+            VALID_RECEIVE_DATA_o   => VALID_RECEIVE_DATA_w,
+            LAST_RECEIVE_DATA_o    => LAST_RECEIVE_DATA_w,
 
-            o_ID_RECEIVE      => w_ID_RECEIVE,
-            o_LEN_RECEIVE     => w_LEN_RECEIVE,
-            o_BURST_RECEIVE   => w_BURST_RECEIVE,
-            o_OPC_RECEIVE     => w_OPC_RECEIVE,
-            o_ADDRESS_RECEIVE => w_ADDRESS_RECEIVE,
-            o_DATA_RECEIVE    => w_DATA_RECEIVE,
+            ID_RECEIVE_o      => ID_RECEIVE_w,
+            LEN_RECEIVE_o     => LEN_RECEIVE_w,
+            BURST_RECEIVE_o   => BURST_RECEIVE_w,
+            OPC_RECEIVE_o     => OPC_RECEIVE_w,
+            ADDRESS_RECEIVE_o => ADDRESS_RECEIVE_w,
+            DATA_RECEIVE_o    => DATA_RECEIVE_w,
 
-            o_CORRUPT_RECEIVE => w_CORRUPT_RECEIVE,
+            CORRUPT_RECEIVE_o => CORRUPT_RECEIVE_w,
 
             -- XINA signals.
             l_in_data_i  => l_in_data_i,

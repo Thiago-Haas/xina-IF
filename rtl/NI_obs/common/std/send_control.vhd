@@ -11,8 +11,8 @@ entity send_control is
         ARESETn: in std_logic;
 
         -- Buffer signals.
-        i_READ_OK_BUFFER: in std_logic;
-        o_READ_BUFFER   : out std_logic;
+        READ_OK_BUFFER_i: in std_logic;
+        READ_BUFFER_o   : out std_logic;
 
         -- XINA signals.
         l_in_val_i: out std_logic;
@@ -43,7 +43,7 @@ begin
     begin
         case state_w_r is
 
-            when "00" => if (l_in_ack_o = '1' and i_READ_OK_BUFFER = '1') then next_state_w <= "01"; else next_state_w <= "00"; end if;
+            when "00" => if (l_in_ack_o = '1' and READ_OK_BUFFER_i = '1') then next_state_w <= "01"; else next_state_w <= "00"; end if;
 
             when "01" => if (l_in_ack_o = '0') then next_state_w <= "10"; else next_state_w <= "01"; end if;
 
@@ -56,11 +56,11 @@ begin
 
     ---------------------------------------------------------------------------------------------
     -- Output values (buffer).
-    o_READ_BUFFER <= '1' when (state_w_r = "10") else '0';
+    READ_BUFFER_o <= '1' when (state_w_r = "10") else '0';
 
     ---------------------------------------------------------------------------------------------
     -- Output values (NoC).
-    l_in_val_i <= '1' when (state_w_r = "00" and i_READ_OK_BUFFER = '1') else '0';
+    l_in_val_i <= '1' when (state_w_r = "00" and READ_OK_BUFFER_i = '1') else '0';
     --l_in_val_i <= '1' when (state_w_r = "00" or state_w_r = "10") else '0';
 
 end rtl;

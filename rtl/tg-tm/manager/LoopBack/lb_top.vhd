@@ -31,45 +31,45 @@ entity lb_top is
     lout_ack_i  : in  std_logic;
 
     -- observation / correction (routed to top like TG)
-    i_OBS_LB_HAM_BUFFER_CORRECT_ERROR : in  std_logic := '1';
-    i_OBS_LB_TMR_CTRL_CORRECT_ERROR   : in  std_logic := '1';
+    OBS_LB_HAM_BUFFER_CORRECT_ERROR_i : in  std_logic := '1';
+    OBS_LB_TMR_CTRL_CORRECT_ERROR_i   : in  std_logic := '1';
 
-    o_OBS_LB_TMR_CTRL_ERROR        : out std_logic;
-    o_OBS_LB_HAM_BUFFER_SINGLE_ERR : out std_logic;
-    o_OBS_LB_HAM_BUFFER_DOUBLE_ERR : out std_logic;
-    o_OBS_LB_HAM_BUFFER_ENC_DATA   : out std_logic_vector(32 + work.hamming_pkg.get_ecc_size(32, p_USE_LB_HAMMING_DOUBLE_DETECT) - 1 downto 0)
+    OBS_LB_TMR_CTRL_ERROR_o        : out std_logic;
+    OBS_LB_HAM_BUFFER_SINGLE_ERR_o : out std_logic;
+    OBS_LB_HAM_BUFFER_DOUBLE_ERR_o : out std_logic;
+    OBS_LB_HAM_BUFFER_ENC_DATA_o   : out std_logic_vector(32 + work.hamming_pkg.get_ecc_size(32, p_USE_LB_HAMMING_DOUBLE_DETECT) - 1 downto 0)
   );
 end entity;
 
 architecture rtl of lb_top is
 
   -- Control-domain signals
-  signal w_ctrl_cap_en          : std_logic;
-  signal w_ctrl_cap_flit_ctrl   : std_logic;
-  signal w_ctrl_cap_idx         : unsigned(5 downto 0);
-  signal w_ctrl_tx_next_is_read : std_logic;
-  signal w_ctrl_tx_flit_sel     : std_logic_vector(2 downto 0);
+  signal ctrl_cap_en_w          : std_logic;
+  signal ctrl_cap_flit_ctrl_w   : std_logic;
+  signal ctrl_cap_idx_w         : unsigned(5 downto 0);
+  signal ctrl_tx_next_is_read_w : std_logic;
+  signal ctrl_tx_flit_sel_w     : std_logic_vector(2 downto 0);
 
   -- Datapath-domain signals
-  signal w_dp_cap_flit       : std_logic_vector(c_FLIT_WIDTH-1 downto 0);
-  signal w_dp_rd_payload     : std_logic_vector(31 downto 0);
-  signal w_dp_hold_valid_pulse : std_logic;
+  signal dp_cap_flit_w       : std_logic_vector(c_FLIT_WIDTH-1 downto 0);
+  signal dp_rd_payload_w     : std_logic_vector(31 downto 0);
+  signal dp_hold_valid_pulse_w : std_logic;
 
-  signal w_ctrl_tmr_err   : std_logic;
-  signal w_ham_single_err : std_logic;
-  signal w_ham_double_err : std_logic;
-  signal w_ham_enc_data   : std_logic_vector(32 + work.hamming_pkg.get_ecc_size(32, p_USE_LB_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+  signal ctrl_tmr_err_w   : std_logic;
+  signal ham_single_err_w : std_logic;
+  signal ham_double_err_w : std_logic;
+  signal ham_enc_data_w   : std_logic_vector(32 + work.hamming_pkg.get_ecc_size(32, p_USE_LB_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
 begin
   u_ctrl_adapter: entity work.lb_ctrl_adapter
     port map(
-      i_lin_data       => lin_data_i,
-      i_cap_flit_ctrl  => w_ctrl_cap_flit_ctrl,
-      i_tx_flit_sel    => w_ctrl_tx_flit_sel,
-      i_tx_next_is_read=> w_ctrl_tx_next_is_read,
-      i_rd_payload     => w_dp_rd_payload,
-      o_cap_flit       => w_dp_cap_flit,
-      o_lout_data      => lout_data_o
+      lin_data_i       => lin_data_i,
+      cap_flit_ctrl_i  => ctrl_cap_flit_ctrl_w,
+      tx_flit_sel_i    => ctrl_tx_flit_sel_w,
+      tx_next_is_read_i=> ctrl_tx_next_is_read_w,
+      rd_payload_i     => dp_rd_payload_w,
+      cap_flit_o       => dp_cap_flit_w,
+      lout_data_o      => lout_data_o
     );
 
   u_dp: entity work.lb_dp
@@ -82,44 +82,44 @@ begin
       ACLK    => ACLK,
       ARESETn => ARESETn,
 
-      i_cap_en   => w_ctrl_cap_en,
-      i_cap_flit => w_dp_cap_flit,
-      i_cap_idx  => w_ctrl_cap_idx,
-      o_rd_payload => w_dp_rd_payload,
+      cap_en_i   => ctrl_cap_en_w,
+      cap_flit_i => dp_cap_flit_w,
+      cap_idx_i  => ctrl_cap_idx_w,
+      rd_payload_o => dp_rd_payload_w,
 
       -- hamming obs/correct
-      i_OBS_LB_HAM_BUFFER_CORRECT_ERROR => i_OBS_LB_HAM_BUFFER_CORRECT_ERROR,
-      o_single_err     => w_ham_single_err,
-      o_double_err     => w_ham_double_err,
-      o_ham_buffer_enc_data => w_ham_enc_data,
+      OBS_LB_HAM_BUFFER_CORRECT_ERROR_i => OBS_LB_HAM_BUFFER_CORRECT_ERROR_i,
+      single_err_o     => ham_single_err_w,
+      double_err_o     => ham_double_err_w,
+      ham_buffer_enc_data_o => ham_enc_data_w,
 
       -- payload-captured pulse
-      o_hold_valid => w_dp_hold_valid_pulse
+      hold_valid_o => dp_hold_valid_pulse_w
     );
 
   gen_ctrl_plain : if (not p_USE_LB_CTRL_TMR) generate
   begin
-    w_ctrl_tmr_err <= '0';
+    ctrl_tmr_err_w <= '0';
 
     u_ctrl: entity work.lb_ctrl
       port map(
         ACLK    => ACLK,
         ARESETn => ARESETn,
 
-        i_lin_ctrl => lin_data_i(c_FLIT_WIDTH-1),
-        i_lin_val  => lin_val_i,
-        o_lin_ack  => lin_ack_o,
+        lin_ctrl_i => lin_data_i(c_FLIT_WIDTH-1),
+        lin_val_i  => lin_val_i,
+        lin_ack_o  => lin_ack_o,
 
-        o_lout_val  => lout_val_o,
-        i_lout_ack  => lout_ack_i,
-        o_tx_next_is_read => w_ctrl_tx_next_is_read,
-        o_tx_flit_sel     => w_ctrl_tx_flit_sel,
+        lout_val_o  => lout_val_o,
+        lout_ack_i  => lout_ack_i,
+        tx_next_is_read_o => ctrl_tx_next_is_read_w,
+        tx_flit_sel_o     => ctrl_tx_flit_sel_w,
 
-        o_cap_en   => w_ctrl_cap_en,
-        o_cap_flit_ctrl => w_ctrl_cap_flit_ctrl,
-        o_cap_idx  => w_ctrl_cap_idx,
+        cap_en_o   => ctrl_cap_en_w,
+        cap_flit_ctrl_o => ctrl_cap_flit_ctrl_w,
+        cap_idx_o  => ctrl_cap_idx_w,
 
-        i_hold_valid => w_dp_hold_valid_pulse
+        hold_valid_i => dp_hold_valid_pulse_w
       );
   end generate;
 
@@ -130,30 +130,30 @@ begin
         ACLK    => ACLK,
         ARESETn => ARESETn,
 
-        i_lin_ctrl => lin_data_i(c_FLIT_WIDTH-1),
-        i_lin_val  => lin_val_i,
-        o_lin_ack  => lin_ack_o,
+        lin_ctrl_i => lin_data_i(c_FLIT_WIDTH-1),
+        lin_val_i  => lin_val_i,
+        lin_ack_o  => lin_ack_o,
 
-        o_lout_val  => lout_val_o,
-        i_lout_ack  => lout_ack_i,
-        o_tx_next_is_read => w_ctrl_tx_next_is_read,
-        o_tx_flit_sel     => w_ctrl_tx_flit_sel,
+        lout_val_o  => lout_val_o,
+        lout_ack_i  => lout_ack_i,
+        tx_next_is_read_o => ctrl_tx_next_is_read_w,
+        tx_flit_sel_o     => ctrl_tx_flit_sel_w,
 
-        o_cap_en   => w_ctrl_cap_en,
-        o_cap_flit_ctrl => w_ctrl_cap_flit_ctrl,
-        o_cap_idx  => w_ctrl_cap_idx,
+        cap_en_o   => ctrl_cap_en_w,
+        cap_flit_ctrl_o => ctrl_cap_flit_ctrl_w,
+        cap_idx_o  => ctrl_cap_idx_w,
 
-        i_hold_valid => w_dp_hold_valid_pulse,
+        hold_valid_i => dp_hold_valid_pulse_w,
 
-        i_correct_enable => i_OBS_LB_TMR_CTRL_CORRECT_ERROR,
-        error_o          => w_ctrl_tmr_err
+        correct_enable_i => OBS_LB_TMR_CTRL_CORRECT_ERROR_i,
+        error_o          => ctrl_tmr_err_w
       );
   end generate;
 
   -- observation outputs (same pattern as TG)
-  o_OBS_LB_TMR_CTRL_ERROR        <= w_ctrl_tmr_err;
-  o_OBS_LB_HAM_BUFFER_SINGLE_ERR <= w_ham_single_err;
-  o_OBS_LB_HAM_BUFFER_DOUBLE_ERR <= w_ham_double_err;
-  o_OBS_LB_HAM_BUFFER_ENC_DATA   <= w_ham_enc_data;
+  OBS_LB_TMR_CTRL_ERROR_o        <= ctrl_tmr_err_w;
+  OBS_LB_HAM_BUFFER_SINGLE_ERR_o <= ham_single_err_w;
+  OBS_LB_HAM_BUFFER_DOUBLE_ERR_o <= ham_double_err_w;
+  OBS_LB_HAM_BUFFER_ENC_DATA_o   <= ham_enc_data_w;
 
 end architecture;

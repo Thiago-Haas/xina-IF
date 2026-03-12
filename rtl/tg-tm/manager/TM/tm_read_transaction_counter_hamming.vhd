@@ -17,24 +17,24 @@ entity tm_read_transaction_counter_hamming is
     ACLK    : in std_logic;
     ARESETn : in std_logic;
 
-    i_increment_en : in std_logic;
-    i_OBS_TM_HAM_COUNTER_CORRECT_ERROR : in std_logic := '1';
+    increment_en_i : in std_logic;
+    OBS_TM_HAM_COUNTER_CORRECT_ERROR_i : in std_logic := '1';
 
-    o_TM_TRANSACTION_COUNT : out std_logic_vector(p_TM_TXN_COUNTER_WIDTH - 1 downto 0);
-    o_OBS_TM_HAM_COUNTER_SINGLE_ERR : out std_logic;
-    o_OBS_TM_HAM_COUNTER_DOUBLE_ERR : out std_logic;
-    o_OBS_TM_HAM_COUNTER_ENC_DATA   : out std_logic_vector(p_TM_TXN_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(p_TM_TXN_COUNTER_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0)
+    TM_TRANSACTION_COUNT_o : out std_logic_vector(p_TM_TXN_COUNTER_WIDTH - 1 downto 0);
+    OBS_TM_HAM_COUNTER_SINGLE_ERR_o : out std_logic;
+    OBS_TM_HAM_COUNTER_DOUBLE_ERR_o : out std_logic;
+    OBS_TM_HAM_COUNTER_ENC_DATA_o   : out std_logic_vector(p_TM_TXN_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(p_TM_TXN_COUNTER_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0)
   );
 end entity;
 
 architecture rtl of tm_read_transaction_counter_hamming is
-  signal w_counter_data_r  : std_logic_vector(p_TM_TXN_COUNTER_WIDTH - 1 downto 0);
-  signal w_counter_next_w  : std_logic_vector(p_TM_TXN_COUNTER_WIDTH - 1 downto 0);
-  signal w_counter_enc_r   : std_logic_vector(p_TM_TXN_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(p_TM_TXN_COUNTER_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
-  signal w_counter_single_err_w : std_logic;
-  signal w_counter_double_err_w : std_logic;
+  signal counter_data_r_w  : std_logic_vector(p_TM_TXN_COUNTER_WIDTH - 1 downto 0);
+  signal counter_next_w  : std_logic_vector(p_TM_TXN_COUNTER_WIDTH - 1 downto 0);
+  signal counter_enc_r_w   : std_logic_vector(p_TM_TXN_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(p_TM_TXN_COUNTER_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+  signal counter_single_err_w : std_logic;
+  signal counter_double_err_w : std_logic;
 begin
-  w_counter_next_w <= std_logic_vector(unsigned(w_counter_data_r) + 1);
+  counter_next_w <= std_logic_vector(unsigned(counter_data_r_w) + 1);
 
   u_TM_COUNTER_HAM: entity work.hamming_register
     generic map(
@@ -45,19 +45,19 @@ begin
       INJECT_ERROR   => false
     )
     port map(
-      correct_en_i => i_OBS_TM_HAM_COUNTER_CORRECT_ERROR,
-      write_en_i   => i_increment_en,
-      data_i       => w_counter_next_w,
+      correct_en_i => OBS_TM_HAM_COUNTER_CORRECT_ERROR_i,
+      write_en_i   => increment_en_i,
+      data_i       => counter_next_w,
       rstn_i       => ARESETn,
       clk_i        => ACLK,
-      single_err_o => w_counter_single_err_w,
-      double_err_o => w_counter_double_err_w,
-      enc_data_o   => w_counter_enc_r,
-      data_o       => w_counter_data_r
+      single_err_o => counter_single_err_w,
+      double_err_o => counter_double_err_w,
+      enc_data_o   => counter_enc_r_w,
+      data_o       => counter_data_r_w
     );
 
-  o_TM_TRANSACTION_COUNT <= w_counter_data_r;
-  o_OBS_TM_HAM_COUNTER_SINGLE_ERR <= w_counter_single_err_w;
-  o_OBS_TM_HAM_COUNTER_DOUBLE_ERR <= w_counter_double_err_w;
-  o_OBS_TM_HAM_COUNTER_ENC_DATA   <= w_counter_enc_r;
+  TM_TRANSACTION_COUNT_o <= counter_data_r_w;
+  OBS_TM_HAM_COUNTER_SINGLE_ERR_o <= counter_single_err_w;
+  OBS_TM_HAM_COUNTER_DOUBLE_ERR_o <= counter_double_err_w;
+  OBS_TM_HAM_COUNTER_ENC_DATA_o   <= counter_enc_r_w;
 end rtl;

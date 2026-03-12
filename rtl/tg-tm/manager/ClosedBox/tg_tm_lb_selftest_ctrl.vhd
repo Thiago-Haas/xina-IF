@@ -11,16 +11,16 @@ entity tg_tm_lb_selftest_ctrl is
     ARESETn : in  std_logic;
 
     -- TG control
-    o_tg_start : out std_logic;
-    i_tg_done  : in  std_logic;
-    o_tg_addr  : out std_logic_vector(63 downto 0);
-    o_tg_seed  : out std_logic_vector(31 downto 0);
+    tg_start_o : out std_logic;
+    tg_done_i  : in  std_logic;
+    tg_addr_o  : out std_logic_vector(63 downto 0);
+    tg_seed_o  : out std_logic_vector(31 downto 0);
 
     -- TM control
-    o_tm_start : out std_logic;
-    i_tm_done  : in  std_logic;
-    o_tm_addr  : out std_logic_vector(63 downto 0);
-    o_tm_seed  : out std_logic_vector(31 downto 0)
+    tm_start_o : out std_logic;
+    tm_done_i  : in  std_logic;
+    tm_addr_o  : out std_logic_vector(63 downto 0);
+    tm_seed_o  : out std_logic_vector(31 downto 0)
   );
 end entity;
 
@@ -30,19 +30,19 @@ begin
     port map(
       ACLK    => ACLK,
       ARESETn => ARESETn,
-      i_experiment_run_enable  => '1',
-      i_experiment_reset_pulse => '0',
-      i_tg_done => i_tg_done,
-      i_tm_done => i_tm_done,
-      o_tg_start => o_tg_start,
-      o_tm_start => o_tm_start
+      experiment_run_enable_i  => '1',
+      experiment_reset_pulse_i => '0',
+      tg_done_i => tg_done_i,
+      tm_done_i => tm_done_i,
+      tg_start_o => tg_start_o,
+      tm_start_o => tm_start_o
     );
 
   u_legacy_obs_datapath: entity work.tg_tm_lb_selftest_obs_datapath
     port map(
-      o_tg_addr  => o_tg_addr,
-      o_tg_seed  => o_tg_seed,
-      o_tm_addr  => o_tm_addr,
-      o_tm_seed  => o_tm_seed
+      tg_addr_o  => tg_addr_o,
+      tg_seed_o  => tg_seed_o,
+      tm_addr_o  => tm_addr_o,
+      tm_seed_o  => tm_seed_o
     );
 end architecture;

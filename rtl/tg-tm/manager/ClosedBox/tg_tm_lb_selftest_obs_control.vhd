@@ -7,14 +7,14 @@ entity tg_tm_lb_selftest_obs_control is
   port (
     ACLK    : in  std_logic;
     ARESETn : in  std_logic;
-    i_experiment_run_enable  : in  std_logic;
-    i_experiment_reset_pulse : in  std_logic;
+    experiment_run_enable_i  : in  std_logic;
+    experiment_reset_pulse_i : in  std_logic;
 
-    i_tg_done : in  std_logic;
-    i_tm_done : in  std_logic;
+    tg_done_i : in  std_logic;
+    tm_done_i : in  std_logic;
 
-    o_tg_start : out std_logic;
-    o_tm_start : out std_logic
+    tg_start_o : out std_logic;
+    tm_start_o : out std_logic
   );
 end entity;
 
@@ -28,8 +28,8 @@ architecture rtl of tg_tm_lb_selftest_obs_control is
   signal tg_start_r : std_logic := '0';
   signal tm_start_r : std_logic := '0';
 begin
-  o_tg_start <= tg_start_r;
-  o_tm_start <= tm_start_r;
+  tg_start_o <= tg_start_r;
+  tm_start_o <= tm_start_r;
 
   process(ACLK)
   begin
@@ -42,9 +42,9 @@ begin
         tg_start_r <= '0';
         tm_start_r <= '0';
 
-        if i_experiment_reset_pulse = '1' then
+        if experiment_reset_pulse_i = '1' then
           state_r <= C_STATE_TG_PULSE;
-        elsif i_experiment_run_enable = '0' then
+        elsif experiment_run_enable_i = '0' then
           state_r <= C_STATE_TG_PULSE;
         else
           case state_r is
@@ -53,7 +53,7 @@ begin
               state_r    <= C_STATE_WAIT_TG;
 
             when C_STATE_WAIT_TG =>
-              if i_tg_done = '1' then
+              if tg_done_i = '1' then
                 state_r <= C_STATE_TM_PULSE;
               end if;
 
@@ -62,7 +62,7 @@ begin
               state_r    <= C_STATE_WAIT_TM;
 
             when C_STATE_WAIT_TM =>
-              if i_tm_done = '1' then
+              if tm_done_i = '1' then
                 state_r <= C_STATE_TG_PULSE;
               end if;
             when others =>

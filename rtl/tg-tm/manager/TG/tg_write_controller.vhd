@@ -3,16 +3,16 @@ use IEEE.std_logic_1164.all;
 
 -- Write-phase controller (AW -> W -> B).
 -- Generates datapath control pulses:
---  * o_seed_pulse:      asserted for 1 cycle ONLY for the first transaction after reset
---  * o_wbeat_pulse:     asserted for 1 cycle when W handshake completes (WVALID&WREADY)
+--  * seed_pulse_o:      asserted for 1 cycle ONLY for the first transaction after reset
+--  * wbeat_pulse_o:     asserted for 1 cycle when W handshake completes (WVALID&WREADY)
 entity tg_write_controller is
   port(
     ACLK    : in  std_logic;
     ARESETn : in  std_logic := '1';
 
     -- sequencing
-    i_start : in  std_logic := '1';  -- tie to '1' for continuous writes
-    o_done  : out std_logic;         -- 1-cycle pulse when B handshake completes
+    start_i : in  std_logic := '1';  -- tie to '1' for continuous writes
+    done_o  : out std_logic;         -- 1-cycle pulse when B handshake completes
 
     -- Handshake inputs (from AXI slave)
     AWREADY : in  std_logic;
@@ -25,8 +25,8 @@ entity tg_write_controller is
     BREADY  : out std_logic;
 
     -- datapath control
-    o_seed_pulse      : out std_logic;
-    o_wbeat_pulse     : out std_logic
+    seed_pulse_o      : out std_logic;
+    wbeat_pulse_o     : out std_logic
   );
 end entity;
 
@@ -41,7 +41,7 @@ architecture rtl of tg_write_controller is
   signal seeded_r : std_logic := '0';
 
   signal awvalid_i, wvalid_i, bready_i : std_logic;
-  signal aw_hs, w_hs, b_hs : std_logic;
+  signal aw_hs, hs_w, b_hs : std_logic;
 
   signal done_pulse_r  : std_logic := '0';
   signal seed_pulse_r  : std_logic := '0';
@@ -57,12 +57,12 @@ begin
   BREADY  <= bready_i;
 
   aw_hs <= awvalid_i and AWREADY;
-  w_hs  <= wvalid_i  and WREADY;
+  hs_w  <= wvalid_i  and WREADY;
   b_hs  <= bready_i  and BVALID;
 
-  o_done            <= done_pulse_r;
-  o_seed_pulse      <= seed_pulse_r;
-  o_wbeat_pulse     <= wbeat_pulse_r;
+  done_o            <= done_pulse_r;
+  seed_pulse_o      <= seed_pulse_r;
+  wbeat_pulse_o     <= wbeat_pulse_r;
 
   process(ACLK)
   begin
@@ -77,7 +77,7 @@ begin
       else
         case state_r is
           when C_STATE_IDLE =>
-            if i_start = '1' then
+            if start_i = '1' then
               -- Seed only on the very first transaction after reset.
               if seeded_r = '0' then
                 seed_pulse_r <= '1';
@@ -92,7 +92,7 @@ begin
             end if;
 
           when C_STATE_W =>
-            if w_hs = '1' then
+            if hs_w = '1' then
               wbeat_pulse_r <= '1';
 
               -- AXI-compliant slaves must keep BVALID asserted until BREADY is high

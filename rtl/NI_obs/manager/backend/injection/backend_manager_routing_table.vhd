@@ -11,17 +11,17 @@ entity backend_manager_routing_table is
         ARESETn: in std_logic;
 
         -- Backend signals.
-        i_ADDR : in std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
+        ADDR_i : in std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
 
-        o_OPC_ADDR: out std_logic_vector((c_AXI_ADDR_WIDTH / 2) - 1 downto 0);
-        o_DEST_X  : out std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0);
-        o_DEST_Y  : out std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0)
+        OPC_ADDR_o: out std_logic_vector((c_AXI_ADDR_WIDTH / 2) - 1 downto 0);
+        DEST_X_o  : out std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0);
+        DEST_Y_o  : out std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0)
     );
 end backend_manager_routing_table;
 
 architecture rtl of backend_manager_routing_table is
 begin
-    o_OPC_ADDR <= i_ADDR((c_AXI_ADDR_WIDTH - 1) downto c_AXI_ADDR_WIDTH / 2);
-    o_DEST_X   <= i_ADDR((c_AXI_ADDR_WIDTH / 2) - 1 downto c_AXI_ADDR_WIDTH / 4);
-    o_DEST_Y   <= i_ADDR((c_AXI_ADDR_WIDTH / 4) - 1 downto 0);
+    OPC_ADDR_o <= ADDR_i((c_AXI_ADDR_WIDTH - 1) downto c_AXI_ADDR_WIDTH / 2);
+    DEST_X_o   <= ADDR_i((c_AXI_ADDR_WIDTH / 2) - 1 downto c_AXI_ADDR_WIDTH / 4);
+    DEST_Y_o   <= ADDR_i((c_AXI_ADDR_WIDTH / 4) - 1 downto 0);
 end rtl;

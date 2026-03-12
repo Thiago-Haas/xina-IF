@@ -12,20 +12,20 @@ entity integrity_control_receive is
         ARESETn: in std_logic;
 
         -- Inputs.
-        i_ADD      : in std_logic;
-        i_VALUE_ADD: in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+        ADD_i      : in std_logic;
+        VALUE_ADD_i: in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
-        i_COMPARE      : in std_logic;
-        i_VALUE_COMPARE: in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+        COMPARE_i      : in std_logic;
+        VALUE_COMPARE_i: in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
         -- Outputs.
-        o_CORRUPT : out std_logic
+        CORRUPT_o : out std_logic
     );
 end integrity_control_receive;
 
 architecture rtl of integrity_control_receive is
 
-    signal w_CHECKSUM_r : unsigned(c_AXI_DATA_WIDTH - 1 downto 0) := to_unsigned(0, c_AXI_DATA_WIDTH);
+    signal CHECKSUM_r_w : unsigned(c_AXI_DATA_WIDTH - 1 downto 0) := to_unsigned(0, c_AXI_DATA_WIDTH);
 
 begin
     ---------------------------------------------------------------------------------------------
@@ -33,13 +33,13 @@ begin
     process (all)
     begin
         if (ARESETn = '0') then
-            w_CHECKSUM_r <= to_unsigned(0, c_AXI_DATA_WIDTH);
+            CHECKSUM_r_w <= to_unsigned(0, c_AXI_DATA_WIDTH);
         elsif (rising_edge(ACLK)) then
-            if (i_ADD = '1') then
-                w_CHECKSUM_r <= w_CHECKSUM_r + unsigned(i_VALUE_ADD);
+            if (ADD_i = '1') then
+                CHECKSUM_r_w <= CHECKSUM_r_w + unsigned(VALUE_ADD_i);
             end if;
         end if;
     end process;
 
-    o_CORRUPT  <= '1' when (w_CHECKSUM_r /= unsigned(i_VALUE_COMPARE) and i_COMPARE = '1') else '0';
+    CORRUPT_o  <= '1' when (CHECKSUM_r_w /= unsigned(VALUE_COMPARE_i) and COMPARE_i = '1') else '0';
 end rtl;

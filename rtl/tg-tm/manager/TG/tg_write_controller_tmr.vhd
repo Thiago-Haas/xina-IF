@@ -15,8 +15,8 @@ entity tg_write_controller_tmr is
     ARESETn : in  std_logic := '1';
 
     -- sequencing
-    i_start : in  std_logic := '1';
-    o_done  : out std_logic;
+    start_i : in  std_logic := '1';
+    done_o  : out std_logic;
 
     -- Handshake inputs (from AXI slave)
     AWREADY : in  std_logic;
@@ -29,11 +29,11 @@ entity tg_write_controller_tmr is
     BREADY  : out std_logic;
 
     -- datapath control
-    o_seed_pulse      : out std_logic;
-    o_wbeat_pulse     : out std_logic;
+    seed_pulse_o      : out std_logic;
+    wbeat_pulse_o     : out std_logic;
 
     -- hardening
-    i_correct_enable: in  std_logic;
+    correct_enable_i: in  std_logic;
     error_o         : out std_logic
   );
 end entity;
@@ -84,8 +84,8 @@ begin
         ACLK    => ACLK,
         ARESETn => ARESETn,
 
-        i_start => i_start,
-        o_done  => done_w(i),
+        start_i => start_i,
+        done_o  => done_w(i),
 
         AWREADY => AWREADY,
         WREADY  => WREADY,
@@ -95,8 +95,8 @@ begin
         WVALID  => wvalid_w(i),
         BREADY  => bready_w(i),
 
-        o_seed_pulse      => seed_pulse_w(i),
-        o_wbeat_pulse     => wbeat_pulse_w(i)
+        seed_pulse_o      => seed_pulse_w(i),
+        wbeat_pulse_o     => wbeat_pulse_w(i)
       );
   end generate;
 
@@ -120,11 +120,11 @@ begin
              err_seed_pulse_w or err_wbeat_pulse_w;
 
   -- output selection
-  o_done            <= corr_done_w            when i_correct_enable = '1' else done_w(0);
-  AWVALID           <= corr_awvalid_w         when i_correct_enable = '1' else awvalid_w(0);
-  WVALID            <= corr_wvalid_w          when i_correct_enable = '1' else wvalid_w(0);
-  BREADY            <= corr_bready_w          when i_correct_enable = '1' else bready_w(0);
-  o_seed_pulse      <= corr_seed_pulse_w      when i_correct_enable = '1' else seed_pulse_w(0);
-  o_wbeat_pulse     <= corr_wbeat_pulse_w     when i_correct_enable = '1' else wbeat_pulse_w(0);
+  done_o            <= corr_done_w            when correct_enable_i = '1' else done_w(0);
+  AWVALID           <= corr_awvalid_w         when correct_enable_i = '1' else awvalid_w(0);
+  WVALID            <= corr_wvalid_w          when correct_enable_i = '1' else wvalid_w(0);
+  BREADY            <= corr_bready_w          when correct_enable_i = '1' else bready_w(0);
+  seed_pulse_o      <= corr_seed_pulse_w      when correct_enable_i = '1' else seed_pulse_w(0);
+  wbeat_pulse_o     <= corr_wbeat_pulse_w     when correct_enable_i = '1' else wbeat_pulse_w(0);
 
 end architecture;

@@ -13,56 +13,56 @@ entity buffer_fifo is
         ARESET : in std_logic;
 
         -- Read
-        i_READ   : in std_logic;
-        o_READ_OK: out std_logic;
-        o_DATA   : out std_logic_vector(p_DATA_WIDTH - 1 downto 0);
+        READ_i   : in std_logic;
+        READ_OK_o: out std_logic;
+        DATA_o   : out std_logic_vector(p_DATA_WIDTH - 1 downto 0);
 
         -- Write.
-        i_WRITE   : in std_logic;
-        i_DATA    : in std_logic_vector(p_DATA_WIDTH - 1 downto 0);
-        o_WRITE_OK: out std_logic
+        WRITE_i   : in std_logic;
+        DATA_i    : in std_logic_vector(p_DATA_WIDTH - 1 downto 0);
+        WRITE_OK_o: out std_logic
     );
 end buffer_fifo;
 
 architecture rtl of buffer_fifo is
 
   type FIFO_TYPE is array (p_BUFFER_DEPTH - 1 downto 0) of std_logic_vector(p_DATA_WIDTH - 1 downto 0);
-  signal w_FIFO_r    : FIFO_TYPE;
-  signal w_READ_PTR: unsigned(integer(ceil(log2(real(p_BUFFER_DEPTH)))) downto 0) := (others => '0');
+  signal FIFO_r_w    : FIFO_TYPE;
+  signal READ_PTR_w: unsigned(integer(ceil(log2(real(p_BUFFER_DEPTH)))) downto 0) := (others => '0');
 
 begin
     process (all)
         variable var_READ_PTR: unsigned(integer(ceil(log2(real(p_BUFFER_DEPTH)))) downto 0) := (others => '0');
     begin
         if (ARESET = '1') then
-            w_READ_PTR <= (others => '0');
+            READ_PTR_w <= (others => '0');
         elsif (rising_edge(ACLK)) then
-            var_READ_PTR := w_READ_PTR;
+            var_READ_PTR := READ_PTR_w;
 
-            if (i_WRITE = '1' and var_READ_PTR /= p_BUFFER_DEPTH) then
-                w_FIFO_r(0) <= i_DATA;
+            if (WRITE_i = '1' and var_READ_PTR /= p_BUFFER_DEPTH) then
+                FIFO_r_w(0) <= DATA_i;
 
                 for i in 1 to p_BUFFER_DEPTH - 1 loop
-                    w_FIFO_r(i) <= w_FIFO_r(i - 1);
+                    FIFO_r_w(i) <= FIFO_r_w(i - 1);
                 end loop;
 
-                if not (i_READ = '1' and w_READ_PTR /= 0) then
+                if not (READ_i = '1' and READ_PTR_w /= 0) then
                     var_READ_PTR := var_READ_PTR + 1;
                 end if;
-            elsif (i_READ = '1' and w_READ_PTR /= 0) then
+            elsif (READ_i = '1' and READ_PTR_w /= 0) then
                 var_READ_PTR := var_READ_PTR - 1;
             end if;
 
-            w_READ_PTR <= var_READ_PTR;
+            READ_PTR_w <= var_READ_PTR;
         end if;
 
-        if (var_READ_PTR /= 0) then o_READ_OK <= '1'; else o_READ_OK <= '0'; end if;
-        if (var_READ_PTR /= p_BUFFER_DEPTH) then o_WRITE_OK <= '1'; else o_WRITE_OK <= '0'; end if;
+        if (var_READ_PTR /= 0) then READ_OK_o <= '1'; else READ_OK_o <= '0'; end if;
+        if (var_READ_PTR /= p_BUFFER_DEPTH) then WRITE_OK_o <= '1'; else WRITE_OK_o <= '0'; end if;
 
         if (to_integer(var_READ_PTR) = 0) then
-            o_DATA <= w_FIFO_r(to_integer(var_READ_PTR));
+            DATA_o <= FIFO_r_w(to_integer(var_READ_PTR));
         else
-            o_DATA <= w_FIFO_r(to_integer(var_READ_PTR - 1));
+            DATA_o <= FIFO_r_w(to_integer(var_READ_PTR - 1));
         end if;
     end process;
 end rtl;

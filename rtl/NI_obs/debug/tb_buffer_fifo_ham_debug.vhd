@@ -30,13 +30,13 @@ architecture tb of tb_buffer_fifo_ham_debug is
   signal ACLK   : std_logic := '0';
   signal ARESET : std_logic := '1';
 
-  signal i_READ    : std_logic := '0';
-  signal o_READ_OK : std_logic;
-  signal o_DATA    : std_logic_vector(c_DATA_WIDTH-1 downto 0);
+  signal READ_i    : std_logic := '0';
+  signal READ_OK_o : std_logic;
+  signal DATA_o    : std_logic_vector(c_DATA_WIDTH-1 downto 0);
 
-  signal i_WRITE    : std_logic := '0';
-  signal i_DATA     : std_logic_vector(c_DATA_WIDTH-1 downto 0) := (others => '0');
-  signal o_WRITE_OK : std_logic;
+  signal WRITE_i    : std_logic := '0';
+  signal DATA_i     : std_logic_vector(c_DATA_WIDTH-1 downto 0) := (others => '0');
+  signal WRITE_OK_o : std_logic;
 
   signal correct_error_i : std_logic := '1';
   signal single_err_o    : std_logic;
@@ -61,21 +61,21 @@ begin
       ACLK   => ACLK,
       ARESET => ARESET,
 
-      i_READ    => i_READ,
-      o_READ_OK => o_READ_OK,
-      o_DATA    => o_DATA,
+      READ_i    => READ_i,
+      READ_OK_o => READ_OK_o,
+      DATA_o    => DATA_o,
 
-      i_WRITE    => i_WRITE,
-      i_DATA     => i_DATA,
-      o_WRITE_OK => o_WRITE_OK,
+      WRITE_i    => WRITE_i,
+      DATA_i     => DATA_i,
+      WRITE_OK_o => WRITE_OK_o,
 
       correct_error_i => correct_error_i,
       single_err_o    => single_err_o,
       double_err_o    => double_err_o,
 
-      i_INJECT_EN   => inj_en,
-      i_INJECT_IDX  => inj_idx,
-      i_INJECT_MASK => inj_mask
+      INJECT_EN_i   => inj_en,
+      INJECT_IDX_i  => inj_idx,
+      INJECT_MASK_i => inj_mask
     );
 
   stim: process
@@ -102,8 +102,8 @@ begin
 
     -- reset
     ARESET <= '1';
-    i_WRITE <= '0';
-    i_READ  <= '0';
+    WRITE_i <= '0';
+    READ_i  <= '0';
     inj_en  <= '0';
     inj_mask <= (others => '0');
     inj_idx <= 0;
@@ -117,14 +117,14 @@ begin
       expected := std_logic_vector(to_unsigned(it, c_DATA_WIDTH));
 
       -- WRITE one word
-      while o_WRITE_OK = '0' loop
+      while WRITE_OK_o = '0' loop
         wait until rising_edge(ACLK);
       end loop;
 
-      i_DATA  <= expected;
-      i_WRITE <= '1';
+      DATA_i  <= expected;
+      WRITE_i <= '1';
       wait until rising_edge(ACLK);
-      i_WRITE <= '0';
+      WRITE_i <= '0';
 
       -- OPTIONAL INJECT
       do_inj := (c_INJECT_EVERY /= 0) and ((it mod integer(c_INJECT_EVERY)) = 0);
@@ -150,20 +150,20 @@ begin
       end if;
 
       -- READ one word
-      while o_READ_OK = '0' loop
+      while READ_OK_o = '0' loop
         wait until rising_edge(ACLK);
       end loop;
 
-      i_READ <= '1';
+      READ_i <= '1';
       wait until rising_edge(ACLK);
-      i_READ <= '0';
+      READ_i <= '0';
 
       -- wait 1 cycle for data/flags to settle
       wait until rising_edge(ACLK);
 
       -- ASSERTS
       if (not do_inj) then
-        assert o_DATA = expected
+        assert DATA_o = expected
           report "DATA mismatch (no inj) at it=" & integer'image(it)
           severity error;
 
@@ -175,7 +175,7 @@ begin
 
       elsif (do_inj and (not do_dbl)) then
         -- single-bit: should correct
-        assert o_DATA = expected
+        assert DATA_o = expected
           report "DATA mismatch (single inj) at it=" & integer'image(it)
           severity error;
 

@@ -6,21 +6,21 @@ use IEEE.std_logic_1164.all;
 -- * 3 replicas
 -- * majority vote on outputs
 -- * disagreement flag (error_o)
--- * optional correction bypass via i_correct_enable
+-- * optional correction bypass via correct_enable_i
 entity tg_tm_lb_selftest_obs_control_tmr is
   port (
     ACLK    : in  std_logic;
     ARESETn : in  std_logic;
 
-    i_experiment_run_enable  : in  std_logic;
-    i_experiment_reset_pulse : in  std_logic;
-    i_tg_done : in  std_logic;
-    i_tm_done : in  std_logic;
+    experiment_run_enable_i  : in  std_logic;
+    experiment_reset_pulse_i : in  std_logic;
+    tg_done_i : in  std_logic;
+    tm_done_i : in  std_logic;
 
-    o_tg_start : out std_logic;
-    o_tm_start : out std_logic;
+    tg_start_o : out std_logic;
+    tm_start_o : out std_logic;
 
-    i_correct_enable : in  std_logic;
+    correct_enable_i : in  std_logic;
     error_o          : out std_logic
   );
 end entity;
@@ -53,12 +53,12 @@ begin
       port map(
         ACLK    => ACLK,
         ARESETn => ARESETn,
-        i_experiment_run_enable  => i_experiment_run_enable,
-        i_experiment_reset_pulse => i_experiment_reset_pulse,
-        i_tg_done => i_tg_done,
-        i_tm_done => i_tm_done,
-        o_tg_start => tg_start_w(i),
-        o_tm_start => tm_start_w(i)
+        experiment_run_enable_i  => experiment_run_enable_i,
+        experiment_reset_pulse_i => experiment_reset_pulse_i,
+        tg_done_i => tg_done_i,
+        tm_done_i => tm_done_i,
+        tg_start_o => tg_start_w(i),
+        tm_start_o => tm_start_w(i)
       );
   end generate;
 
@@ -70,6 +70,6 @@ begin
 
   error_o <= err_tg_start_w or err_tm_start_w;
 
-  o_tg_start <= corr_tg_start_w when i_correct_enable = '1' else tg_start_w(0);
-  o_tm_start <= corr_tm_start_w when i_correct_enable = '1' else tm_start_w(0);
+  tg_start_o <= corr_tg_start_w when correct_enable_i = '1' else tg_start_w(0);
+  tm_start_o <= corr_tm_start_w when correct_enable_i = '1' else tm_start_w(0);
 end architecture;

@@ -9,22 +9,22 @@ entity lb_ctrl_tmr is
     ACLK    : in  std_logic;
     ARESETn : in  std_logic;
 
-    i_lin_ctrl : in  std_logic;
-    i_lin_val  : in  std_logic;
-    o_lin_ack  : out std_logic;
+    lin_ctrl_i : in  std_logic;
+    lin_val_i  : in  std_logic;
+    lin_ack_o  : out std_logic;
 
-    o_lout_val  : out std_logic;
-    i_lout_ack  : in  std_logic;
-    o_tx_next_is_read : out std_logic;
-    o_tx_flit_sel     : out std_logic_vector(2 downto 0);
+    lout_val_o  : out std_logic;
+    lout_ack_i  : in  std_logic;
+    tx_next_is_read_o : out std_logic;
+    tx_flit_sel_o     : out std_logic_vector(2 downto 0);
 
-    o_cap_en   : out std_logic;
-    o_cap_flit_ctrl : out std_logic;
-    o_cap_idx  : out unsigned(5 downto 0);
+    cap_en_o   : out std_logic;
+    cap_flit_ctrl_o : out std_logic;
+    cap_idx_o  : out unsigned(5 downto 0);
 
-    i_hold_valid : in  std_logic;
+    hold_valid_i : in  std_logic;
 
-    i_correct_enable : in  std_logic;
+    correct_enable_i : in  std_logic;
     error_o          : out std_logic
   );
 end entity;
@@ -110,20 +110,20 @@ begin
         ACLK    => ACLK,
         ARESETn => ARESETn,
 
-        i_lin_ctrl => i_lin_ctrl,
-        i_lin_val  => i_lin_val,
-        o_lin_ack  => lin_ack_w(i),
+        lin_ctrl_i => lin_ctrl_i,
+        lin_val_i  => lin_val_i,
+        lin_ack_o  => lin_ack_w(i),
 
-        o_lout_val  => lout_val_w(i),
-        i_lout_ack  => i_lout_ack,
-        o_tx_next_is_read => tx_next_is_read_w(i),
-        o_tx_flit_sel     => tx_flit_sel_w(i),
+        lout_val_o  => lout_val_w(i),
+        lout_ack_i  => lout_ack_i,
+        tx_next_is_read_o => tx_next_is_read_w(i),
+        tx_flit_sel_o     => tx_flit_sel_w(i),
 
-        o_cap_en   => cap_en_w(i),
-        o_cap_flit_ctrl => cap_flit_ctrl_w(i),
-        o_cap_idx  => cap_idx_w(i),
+        cap_en_o   => cap_en_w(i),
+        cap_flit_ctrl_o => cap_flit_ctrl_w(i),
+        cap_idx_o  => cap_idx_w(i),
 
-        i_hold_valid => i_hold_valid
+        hold_valid_i => hold_valid_i
       );
   end generate;
 
@@ -149,12 +149,12 @@ begin
   error_o <= err_any;
 
   -- selection (same as TG controller_tmr style)
-  o_lin_ack  <= corr_lin_ack  when i_correct_enable='1' else lin_ack_w(0);
-  o_lout_val <= corr_lout_val when i_correct_enable='1' else lout_val_w(0);
-  o_tx_next_is_read <= corr_tx_next_is_read when i_correct_enable='1' else tx_next_is_read_w(0);
-  o_tx_flit_sel <= corr_tx_flit_sel when i_correct_enable='1' else tx_flit_sel_w(0);
-  o_cap_en   <= corr_cap_en   when i_correct_enable='1' else cap_en_w(0);
-  o_cap_idx  <= corr_cap_idx  when i_correct_enable='1' else cap_idx_w(0);
-  o_cap_flit_ctrl <= corr_cap_flit_ctrl when i_correct_enable='1' else cap_flit_ctrl_w(0);
+  lin_ack_o  <= corr_lin_ack  when correct_enable_i='1' else lin_ack_w(0);
+  lout_val_o <= corr_lout_val when correct_enable_i='1' else lout_val_w(0);
+  tx_next_is_read_o <= corr_tx_next_is_read when correct_enable_i='1' else tx_next_is_read_w(0);
+  tx_flit_sel_o <= corr_tx_flit_sel when correct_enable_i='1' else tx_flit_sel_w(0);
+  cap_en_o   <= corr_cap_en   when correct_enable_i='1' else cap_en_w(0);
+  cap_idx_o  <= corr_cap_idx  when correct_enable_i='1' else cap_idx_w(0);
+  cap_flit_ctrl_o <= corr_cap_flit_ctrl when correct_enable_i='1' else cap_flit_ctrl_w(0);
 
 end architecture;

@@ -16,56 +16,56 @@ entity backend_subordinate_packetizer_datapath is
         ARESETn: in std_logic;
 
         -- Backend signals.
-        i_DATA_SEND    : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
-        i_STATUS_SEND  : in std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
-        i_H_SRC_RECEIVE: in std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-        i_H_INTERFACE_RECEIVE: in std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-        i_FLIT_SELECTOR: in std_logic_vector(2 downto 0);
-        i_CHECKSUM     : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+        DATA_SEND_i    : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+        STATUS_SEND_i  : in std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
+        H_SRC_RECEIVE_i: in std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+        H_INTERFACE_RECEIVE_i: in std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+        FLIT_SELECTOR_i: in std_logic_vector(2 downto 0);
+        CHECKSUM_i     : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
-        o_FLIT: out std_logic_vector(c_FLIT_WIDTH - 1 downto 0)
+        FLIT_o: out std_logic_vector(c_FLIT_WIDTH - 1 downto 0)
     );
 end backend_subordinate_packetizer_datapath;
 
 architecture rtl of backend_subordinate_packetizer_datapath is
-    signal w_FLIT_H_DEST: std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-    signal w_FLIT_H_SRC : std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-    signal w_FLIT_H_INTERFACE: std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-    signal w_FLIT_PAYLOAD : std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-    signal w_FLIT_TRAILER : std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+    signal FLIT_H_DEST_w: std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+    signal FLIT_H_SRC_w : std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+    signal FLIT_H_INTERFACE_w: std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+    signal FLIT_PAYLOAD_w : std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+    signal FLIT_TRAILER_w : std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
 
-    signal w_ID: std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
-    signal w_LENGTH: std_logic_vector(7 downto 0);
-    signal w_BURST : std_logic_vector(1 downto 0);
-    signal w_OPC   : std_logic;
+    signal ID_w: std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
+    signal LENGTH_w: std_logic_vector(7 downto 0);
+    signal BURST_w : std_logic_vector(1 downto 0);
+    signal OPC_w   : std_logic;
 
 begin
-    w_ID     <= i_H_INTERFACE_RECEIVE(19 downto 15);
-    w_LENGTH <= i_H_INTERFACE_RECEIVE(14 downto 7);
-    w_BURST  <= i_H_INTERFACE_RECEIVE(6 downto 5);
-    w_OPC    <= i_H_INTERFACE_RECEIVE(1);
+    ID_w     <= H_INTERFACE_RECEIVE_i(19 downto 15);
+    LENGTH_w <= H_INTERFACE_RECEIVE_i(14 downto 7);
+    BURST_w  <= H_INTERFACE_RECEIVE_i(6 downto 5);
+    OPC_w    <= H_INTERFACE_RECEIVE_i(1);
 
-    w_FLIT_H_DEST <= '1' & i_H_SRC_RECEIVE(31 downto 0);
-    w_FLIT_H_SRC  <= '0' & p_SRC_X & p_SRC_Y;
-    w_FLIT_H_INTERFACE <= '0' & "000000000000" & w_ID & w_LENGTH & w_BURST & i_STATUS_SEND & w_OPC & "1";
-    w_FLIT_PAYLOAD  <= '0' & i_DATA_SEND;
-    w_FLIT_TRAILER  <= '1' & i_CHECKSUM;
+    FLIT_H_DEST_w <= '1' & H_SRC_RECEIVE_i(31 downto 0);
+    FLIT_H_SRC_w  <= '0' & p_SRC_X & p_SRC_Y;
+    FLIT_H_INTERFACE_w <= '0' & "000000000000" & ID_w & LENGTH_w & BURST_w & STATUS_SEND_i & OPC_w & "1";
+    FLIT_PAYLOAD_w  <= '0' & DATA_SEND_i;
+    FLIT_TRAILER_w  <= '1' & CHECKSUM_i;
 
-    process (w_FLIT_H_DEST, w_FLIT_H_SRC, w_FLIT_H_INTERFACE, w_FLIT_PAYLOAD, w_FLIT_TRAILER, i_FLIT_SELECTOR)
+    process (FLIT_H_DEST_w, FLIT_H_SRC_w, FLIT_H_INTERFACE_w, FLIT_PAYLOAD_w, FLIT_TRAILER_w, FLIT_SELECTOR_i)
     begin
-        case i_FLIT_SELECTOR is
+        case FLIT_SELECTOR_i is
             when "000" =>
-                o_FLIT <= w_FLIT_H_DEST;
+                FLIT_o <= FLIT_H_DEST_w;
             when "001" =>
-                o_FLIT <= w_FLIT_H_SRC;
+                FLIT_o <= FLIT_H_SRC_w;
             when "010" =>
-                o_FLIT <= w_FLIT_H_INTERFACE;
+                FLIT_o <= FLIT_H_INTERFACE_w;
             when "011" =>
-                o_FLIT <= w_FLIT_PAYLOAD;
+                FLIT_o <= FLIT_PAYLOAD_w;
             when "100" =>
-                o_FLIT <= w_FLIT_TRAILER;
+                FLIT_o <= FLIT_TRAILER_w;
             when others =>
-                o_FLIT <= (others => '0');
+                FLIT_o <= (others => '0');
         end case;
     end process;
 end rtl;

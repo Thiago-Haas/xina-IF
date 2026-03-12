@@ -7,7 +7,7 @@ use IEEE.std_logic_1164.all;
 --   * 3 replicated controllers
 --   * majority vote on every output
 --   * error_o asserts when any replica disagrees
---   * when i_correct_enable='1', output is the voted value; otherwise replica 0 is passed through
+--   * when correct_enable_i='1', output is the voted value; otherwise replica 0 is passed through
 
 entity tm_read_controller_tmr is
   port(
@@ -15,8 +15,8 @@ entity tm_read_controller_tmr is
     ARESETn : in  std_logic := '1';
 
     -- sequencing
-    i_start : in  std_logic := '1';
-    o_done  : out std_logic;
+    start_i : in  std_logic := '1';
+    done_o  : out std_logic;
 
     -- Handshake inputs (from AXI slave)
     ARREADY : in  std_logic;
@@ -28,11 +28,11 @@ entity tm_read_controller_tmr is
     RREADY  : out std_logic;
 
     -- datapath control
-    o_rbeat_hs_comb   : out std_logic;
-    o_seed_pulse      : out std_logic;
+    rbeat_hs_comb_o   : out std_logic;
+    seed_pulse_o      : out std_logic;
 
     -- hardening
-    i_correct_enable : in  std_logic;
+    correct_enable_i : in  std_logic;
     error_o          : out std_logic
   );
 end entity;
@@ -77,8 +77,8 @@ begin
         ACLK    => ACLK,
         ARESETn => ARESETn,
 
-        i_start => i_start,
-        o_done  => done_w(i),
+        start_i => start_i,
+        done_o  => done_w(i),
 
         ARREADY => ARREADY,
         RVALID  => RVALID,
@@ -87,8 +87,8 @@ begin
         ARVALID => arvalid_w(i),
         RREADY  => rready_w(i),
 
-        o_rbeat_hs_comb   => rbeat_hs_comb_w(i),
-        o_seed_pulse      => seed_pulse_w(i)
+        rbeat_hs_comb_o   => rbeat_hs_comb_w(i),
+        seed_pulse_o      => seed_pulse_w(i)
       );
   end generate;
 
@@ -109,10 +109,10 @@ begin
   error_o <= err_done_w or err_arvalid_w or err_rready_w or err_rbeat_hs_comb_w or err_seed_pulse_w;
 
   -- output selection
-  o_done            <= corr_done_w            when i_correct_enable = '1' else done_w(0);
-  ARVALID           <= corr_arvalid_w         when i_correct_enable = '1' else arvalid_w(0);
-  RREADY            <= corr_rready_w          when i_correct_enable = '1' else rready_w(0);
-  o_rbeat_hs_comb   <= corr_rbeat_hs_comb_w   when i_correct_enable = '1' else rbeat_hs_comb_w(0);
-  o_seed_pulse      <= corr_seed_pulse_w      when i_correct_enable = '1' else seed_pulse_w(0);
+  done_o            <= corr_done_w            when correct_enable_i = '1' else done_w(0);
+  ARVALID           <= corr_arvalid_w         when correct_enable_i = '1' else arvalid_w(0);
+  RREADY            <= corr_rready_w          when correct_enable_i = '1' else rready_w(0);
+  rbeat_hs_comb_o   <= corr_rbeat_hs_comb_w   when correct_enable_i = '1' else rbeat_hs_comb_w(0);
+  seed_pulse_o      <= corr_seed_pulse_w      when correct_enable_i = '1' else seed_pulse_w(0);
 
 end architecture;

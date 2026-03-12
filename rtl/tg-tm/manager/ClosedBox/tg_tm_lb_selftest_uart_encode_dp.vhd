@@ -13,18 +13,18 @@ entity tg_tm_lb_selftest_uart_encode_dp is
     ACLK    : in  std_logic;
     ARESETn : in  std_logic;
 
-    i_load_base  : in  std_logic;
-    i_load_enc   : in  std_logic;
-    i_tm_count   : in  std_logic_vector(c_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
-    i_flags      : in  std_logic_vector(c_TM_UART_FLAGS_WIDTH - 1 downto 0);
-    i_enc_src    : in  std_logic_vector(3 downto 0);
-    i_enc_data   : in  std_logic_vector(79 downto 0);
+    load_base_i  : in  std_logic;
+    load_enc_i   : in  std_logic;
+    tm_count_i   : in  std_logic_vector(c_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
+    flags_i      : in  std_logic_vector(c_TM_UART_FLAGS_WIDTH - 1 downto 0);
+    enc_src_i    : in  std_logic_vector(3 downto 0);
+    enc_data_i   : in  std_logic_vector(79 downto 0);
 
-    i_nibble_index : in  unsigned(4 downto 0);
-    i_label_sel    : in  std_logic_vector(2 downto 0);
-    i_label_index  : in  natural range 1 to 8;
-    o_hex_char     : out std_logic_vector(7 downto 0);
-    o_label_char   : out std_logic_vector(7 downto 0)
+    nibble_index_i : in  unsigned(4 downto 0);
+    label_sel_i    : in  std_logic_vector(2 downto 0);
+    label_index_i  : in  natural range 1 to 8;
+    hex_char_o     : out std_logic_vector(7 downto 0);
+    label_char_o   : out std_logic_vector(7 downto 0)
   );
 end entity;
 
@@ -39,7 +39,7 @@ architecture rtl of tg_tm_lb_selftest_uart_encode_dp is
   constant C_LABEL_DATA  : string := " DATA=";
 
   signal fault_data_r  : std_logic_vector(83 downto 0) := (others => '0');
-  signal w_nibble_data : std_logic_vector(3 downto 0);
+  signal nibble_data_w : std_logic_vector(3 downto 0);
 
   function f_char_to_slv8(c : character) return std_logic_vector is
   begin
@@ -56,22 +56,22 @@ begin
       if ARESETn = '0' then
         fault_data_r <= (others => '0');
       else
-        if i_load_base = '1' then
+        if load_base_i = '1' then
           fault_data_r <= (others => '0');
-          fault_data_r(C_BASE_TM_MSB downto C_BASE_TM_LSB) <= i_tm_count;
-          fault_data_r(c_TM_UART_FLAGS_WIDTH - 1 downto 0) <= i_flags;
+          fault_data_r(C_BASE_TM_MSB downto C_BASE_TM_LSB) <= tm_count_i;
+          fault_data_r(c_TM_UART_FLAGS_WIDTH - 1 downto 0) <= flags_i;
         end if;
 
-        if i_load_enc = '1' then
-          fault_data_r(83 downto 80) <= i_enc_src;
-          fault_data_r(79 downto 0)  <= i_enc_data;
+        if load_enc_i = '1' then
+          fault_data_r(83 downto 80) <= enc_src_i;
+          fault_data_r(79 downto 0)  <= enc_data_i;
         end if;
       end if;
     end if;
   end process;
 
-  with to_integer(i_nibble_index) select
-    w_nibble_data <=
+  with to_integer(nibble_index_i) select
+    nibble_data_w <=
       fault_data_r(83 downto 80) when 20,
       fault_data_r(79 downto 76) when 19,
       fault_data_r(75 downto 72) when 18,
@@ -97,33 +97,33 @@ begin
   u_utf8_hex: entity work.utf8_hex
     port map(
       ctl_writelf_i => '0',
-      data_i        => w_nibble_data,
-      utf_data_o    => o_hex_char
+      data_i        => nibble_data_w,
+      utf_data_o    => hex_char_o
     );
 
-  process(i_label_sel, i_label_index)
+  process(label_sel_i, label_index_i)
   begin
-    o_label_char <= x"3F"; -- '?'
-    case i_label_sel is
+    label_char_o <= x"3F"; -- '?'
+    case label_sel_i is
       when "000" =>
-        if i_label_index <= C_LABEL_TS'length then
-          o_label_char <= f_char_to_slv8(C_LABEL_TS(i_label_index));
+        if label_index_i <= C_LABEL_TS'length then
+          label_char_o <= f_char_to_slv8(C_LABEL_TS(label_index_i));
         end if;
       when "001" =>
-        if i_label_index <= C_LABEL_TM'length then
-          o_label_char <= f_char_to_slv8(C_LABEL_TM(i_label_index));
+        if label_index_i <= C_LABEL_TM'length then
+          label_char_o <= f_char_to_slv8(C_LABEL_TM(label_index_i));
         end if;
       when "010" =>
-        if i_label_index <= C_LABEL_FLAGS'length then
-          o_label_char <= f_char_to_slv8(C_LABEL_FLAGS(i_label_index));
+        if label_index_i <= C_LABEL_FLAGS'length then
+          label_char_o <= f_char_to_slv8(C_LABEL_FLAGS(label_index_i));
         end if;
       when "011" =>
-        if i_label_index <= C_LABEL_ENC'length then
-          o_label_char <= f_char_to_slv8(C_LABEL_ENC(i_label_index));
+        if label_index_i <= C_LABEL_ENC'length then
+          label_char_o <= f_char_to_slv8(C_LABEL_ENC(label_index_i));
         end if;
       when "100" =>
-        if i_label_index <= C_LABEL_DATA'length then
-          o_label_char <= f_char_to_slv8(C_LABEL_DATA(i_label_index));
+        if label_index_i <= C_LABEL_DATA'length then
+          label_char_o <= f_char_to_slv8(C_LABEL_DATA(label_index_i));
         end if;
       when others =>
         null;

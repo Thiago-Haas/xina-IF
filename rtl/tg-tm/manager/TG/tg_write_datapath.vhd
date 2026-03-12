@@ -25,8 +25,8 @@ entity tg_write_datapath is
     STARTING_SEED : in  std_logic_vector(31 downto 0);
 
     -- from controller
-    i_seed_pulse      : in std_logic;
-    i_wbeat_pulse     : in std_logic;
+    seed_pulse_i      : in std_logic;
+    wbeat_pulse_i     : in std_logic;
 
     -- AXI constant fields (write address)
     AWID    : out std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
@@ -39,26 +39,26 @@ entity tg_write_datapath is
     WLAST   : out std_logic;
 
     -- observation
-    i_correct_enable : in  std_logic;
-    o_single_err     : out std_logic;
-    o_double_err     : out std_logic;
-    o_ham_buffer_enc_data : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_HAMMING_DOUBLE_DETECT) - 1 downto 0)
+    correct_enable_i : in  std_logic;
+    single_err_o     : out std_logic;
+    double_err_o     : out std_logic;
+    ham_buffer_enc_data_o : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_HAMMING_DOUBLE_DETECT) - 1 downto 0)
   );
 end tg_write_datapath;
 
 architecture rtl of tg_write_datapath is
   -- Stored payload/LFSR state (optionally protected by Hamming register)
   signal wdata_r  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
-  signal w_single_err : std_logic;
-  signal w_double_err : std_logic;
+  signal single_err_w : std_logic;
+  signal double_err_w : std_logic;
   -- Not used externally; handy for debug visibility if you ever need it.
-  signal w_enc_state  : std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+  signal enc_state_w  : std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
-  signal w_init_value : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
-  signal w_lfsr_input : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
-  signal w_lfsr_next  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+  signal init_value_w : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+  signal lfsr_input_w : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+  signal lfsr_next_w  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
-  signal w_do_step : std_logic;
+  signal do_step_w : std_logic;
 begin
   -- Constant fields
   AWADDR  <= INPUT_ADDRESS(c_AXI_ADDR_WIDTH - 1 downto 0);
@@ -73,7 +73,7 @@ begin
   WDATA <= wdata_r;
 
   -- Controller provides a single-cycle seed pulse (only once after reset)
-  w_do_step <= i_wbeat_pulse;
+  do_step_w <= wbeat_pulse_i;
 
   -- Init value = all zeros, with seed in low bits
   process(all)
@@ -85,19 +85,19 @@ begin
     else
       v(c_AXI_DATA_WIDTH-1 downto 0) := STARTING_SEED(c_AXI_DATA_WIDTH-1 downto 0);
     end if;
-    w_init_value <= v;
+    init_value_w <= v;
   end process;
 
   -- Feed init value only when seeding; otherwise feed the current (decoded) state.
-  w_lfsr_input <= w_init_value when (i_seed_pulse = '1') else wdata_r;
+  lfsr_input_w <= init_value_w when (seed_pulse_i = '1') else wdata_r;
 
   u_LFSR: entity work.tg_write_lfsr
     generic map(
       p_WIDTH => c_AXI_DATA_WIDTH
     )
     port map(
-      i_data => w_lfsr_input,
-      o_next => w_lfsr_next
+      data_i => lfsr_input_w,
+      next_o => lfsr_next_w
     );
 
   -- Optional Hamming-protected state register.
@@ -111,20 +111,20 @@ begin
       INJECT_ERROR   => p_USE_HAMMING_INJECT_ERROR
     )
     port map(
-      correct_en_i => i_correct_enable,
-      write_en_i   => (i_seed_pulse or w_do_step),
-      data_i       => w_lfsr_next,
+      correct_en_i => correct_enable_i,
+      write_en_i   => (seed_pulse_i or do_step_w),
+      data_i       => lfsr_next_w,
       rstn_i       => ARESETn,
       clk_i        => ACLK,
-      single_err_o => w_single_err,
-      double_err_o => w_double_err,
-      enc_data_o   => w_enc_state,
+      single_err_o => single_err_w,
+      double_err_o => double_err_w,
+      enc_data_o   => enc_state_w,
       data_o       => wdata_r
     );
 
   -- observation outputs
-  o_single_err <= w_single_err;
-  o_double_err <= w_double_err;
-  o_ham_buffer_enc_data <= w_enc_state;
+  single_err_o <= single_err_w;
+  double_err_o <= double_err_w;
+  ham_buffer_enc_data_o <= enc_state_w;
 
 end rtl;

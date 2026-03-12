@@ -23,8 +23,8 @@ entity tm_read_top is
     ARESETn : in std_logic;
 
     -- sequencing
-    i_start : in  std_logic := '1';
-    o_done  : out std_logic;
+    start_i : in  std_logic := '1';
+    done_o  : out std_logic;
 
     -- control inputs
     INPUT_ADDRESS : in std_logic_vector(63 downto 0);
@@ -48,39 +48,39 @@ entity tm_read_top is
     RRESP  : in  std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0) := (others => '0');
 
     -- comparator output
-    o_tm_lfsr_comparison_mismatch : out std_logic;
+    tm_lfsr_comparison_mismatch_o : out std_logic;
 
     -- debug
-    o_expected_value : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+    expected_value_o : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
     -- observation
-    i_OBS_TM_HAM_BUFFER_CORRECT_ERROR : in  std_logic := '1';
-    i_OBS_TM_TMR_CTRL_CORRECT_ERROR   : in  std_logic := '1';
-    i_OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR : in std_logic := '1';
-    o_OBS_TM_TMR_CTRL_ERROR           : out std_logic;
-    o_OBS_TM_HAM_BUFFER_SINGLE_ERR    : out std_logic;
-    o_OBS_TM_HAM_BUFFER_DOUBLE_ERR    : out std_logic;
-    o_OBS_TM_HAM_BUFFER_ENC_DATA      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
-    o_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR : out std_logic;
-    o_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR : out std_logic;
-    o_OBS_TM_HAM_TXN_COUNTER_ENC_DATA   : out std_logic_vector(p_TM_TXN_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(p_TM_TXN_COUNTER_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
-    o_TM_TRANSACTION_COUNT              : out std_logic_vector(p_TM_TXN_COUNTER_WIDTH - 1 downto 0)
+    OBS_TM_HAM_BUFFER_CORRECT_ERROR_i : in  std_logic := '1';
+    OBS_TM_TMR_CTRL_CORRECT_ERROR_i   : in  std_logic := '1';
+    OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_i : in std_logic := '1';
+    OBS_TM_TMR_CTRL_ERROR_o           : out std_logic;
+    OBS_TM_HAM_BUFFER_SINGLE_ERR_o    : out std_logic;
+    OBS_TM_HAM_BUFFER_DOUBLE_ERR_o    : out std_logic;
+    OBS_TM_HAM_BUFFER_ENC_DATA_o      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+    OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR_o : out std_logic;
+    OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR_o : out std_logic;
+    OBS_TM_HAM_TXN_COUNTER_ENC_DATA_o   : out std_logic_vector(p_TM_TXN_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(p_TM_TXN_COUNTER_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+    TM_TRANSACTION_COUNT_o              : out std_logic_vector(p_TM_TXN_COUNTER_WIDTH - 1 downto 0)
   );
 end tm_read_top;
 
 architecture rtl of tm_read_top is
-  signal w_read_done       : std_logic;
-  signal w_r_hs_comb       : std_logic;
-  signal w_seed_pulse      : std_logic;
+  signal read_done_w       : std_logic;
+  signal hs_comb_w       : std_logic;
+  signal seed_pulse_w      : std_logic;
 
-  signal w_ctrl_tmr_err    : std_logic := '0';
-  signal w_ham_single_err  : std_logic := '0';
-  signal w_ham_double_err  : std_logic := '0';
-  signal w_ham_buffer_enc_data : std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
-  signal w_txn_count_data_out : std_logic_vector(p_TM_TXN_COUNTER_WIDTH - 1 downto 0);
-  signal w_txn_count_enc_data : std_logic_vector(p_TM_TXN_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(p_TM_TXN_COUNTER_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
-  signal w_txn_count_single_err : std_logic := '0';
-  signal w_txn_count_double_err : std_logic := '0';
+  signal ctrl_tmr_err_w    : std_logic := '0';
+  signal ham_single_err_w  : std_logic := '0';
+  signal ham_double_err_w  : std_logic := '0';
+  signal ham_buffer_enc_data_w : std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+  signal txn_count_data_out_w : std_logic_vector(p_TM_TXN_COUNTER_WIDTH - 1 downto 0);
+  signal txn_count_enc_data_w : std_logic_vector(p_TM_TXN_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(p_TM_TXN_COUNTER_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+  signal txn_count_single_err_w : std_logic := '0';
+  signal txn_count_double_err_w : std_logic := '0';
 begin
 
   -- Controller selection: plain vs TMR
@@ -90,8 +90,8 @@ begin
         ACLK    => ACLK,
         ARESETn => ARESETn,
 
-        i_start => i_start,
-        o_done  => w_read_done,
+        start_i => start_i,
+        done_o  => read_done_w,
 
         ARREADY => ARREADY,
         RVALID  => RVALID,
@@ -100,10 +100,10 @@ begin
         ARVALID => ARVALID,
         RREADY  => RREADY,
 
-        o_rbeat_hs_comb   => w_r_hs_comb,
-        o_seed_pulse      => w_seed_pulse
+        rbeat_hs_comb_o   => hs_comb_w,
+        seed_pulse_o      => seed_pulse_w
       );
-    w_ctrl_tmr_err <= '0';
+    ctrl_tmr_err_w <= '0';
   end generate;
 
   gen_ctrl_tmr : if p_USE_TM_CTRL_TMR generate
@@ -112,8 +112,8 @@ begin
         ACLK    => ACLK,
         ARESETn => ARESETn,
 
-        i_start => i_start,
-        o_done  => w_read_done,
+        start_i => start_i,
+        done_o  => read_done_w,
 
         ARREADY => ARREADY,
         RVALID  => RVALID,
@@ -122,11 +122,11 @@ begin
         ARVALID => ARVALID,
         RREADY  => RREADY,
 
-        o_rbeat_hs_comb   => w_r_hs_comb,
-        o_seed_pulse      => w_seed_pulse,
+        rbeat_hs_comb_o   => hs_comb_w,
+        seed_pulse_o      => seed_pulse_w,
 
-        i_correct_enable  => i_OBS_TM_TMR_CTRL_CORRECT_ERROR,
-        error_o           => w_ctrl_tmr_err
+        correct_enable_i  => OBS_TM_TMR_CTRL_CORRECT_ERROR_i,
+        error_o           => ctrl_tmr_err_w
       );
   end generate;
 
@@ -144,9 +144,9 @@ begin
       INPUT_ADDRESS => INPUT_ADDRESS,
       STARTING_SEED => STARTING_SEED,
 
-      i_seed_pulse      => w_seed_pulse,
+      seed_pulse_i      => seed_pulse_w,
       -- Use same-cycle R handshake for stepping/checking (avoid 1-cycle delayed pulse)
-      i_rbeat_pulse     => w_r_hs_comb,
+      rbeat_pulse_i     => hs_comb_w,
 
       RDATA => RDATA,
 
@@ -155,13 +155,13 @@ begin
       ARLEN   => ARLEN,
       ARBURST => ARBURST,
 
-      o_lfsr_comparison_mismatch => o_tm_lfsr_comparison_mismatch,
-      o_expected_value => o_expected_value,
+      lfsr_comparison_mismatch_o => tm_lfsr_comparison_mismatch_o,
+      expected_value_o => expected_value_o,
 
-      i_OBS_TM_HAM_BUFFER_CORRECT_ERROR => i_OBS_TM_HAM_BUFFER_CORRECT_ERROR,
-      o_ham_single_err => w_ham_single_err,
-      o_ham_double_err => w_ham_double_err,
-      o_ham_buffer_enc_data => w_ham_buffer_enc_data
+      OBS_TM_HAM_BUFFER_CORRECT_ERROR_i => OBS_TM_HAM_BUFFER_CORRECT_ERROR_i,
+      ham_single_err_o => ham_single_err_w,
+      ham_double_err_o => ham_double_err_w,
+      ham_buffer_enc_data_o => ham_buffer_enc_data_w
     );
 
   u_TM_TXN_COUNTER: entity work.tm_read_transaction_counter_hamming
@@ -173,23 +173,23 @@ begin
     port map(
       ACLK    => ACLK,
       ARESETn => ARESETn,
-      i_increment_en => w_read_done,
-      i_OBS_TM_HAM_COUNTER_CORRECT_ERROR => i_OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR,
-      o_TM_TRANSACTION_COUNT => w_txn_count_data_out,
-      o_OBS_TM_HAM_COUNTER_SINGLE_ERR => w_txn_count_single_err,
-      o_OBS_TM_HAM_COUNTER_DOUBLE_ERR => w_txn_count_double_err,
-      o_OBS_TM_HAM_COUNTER_ENC_DATA   => w_txn_count_enc_data
+      increment_en_i => read_done_w,
+      OBS_TM_HAM_COUNTER_CORRECT_ERROR_i => OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_i,
+      TM_TRANSACTION_COUNT_o => txn_count_data_out_w,
+      OBS_TM_HAM_COUNTER_SINGLE_ERR_o => txn_count_single_err_w,
+      OBS_TM_HAM_COUNTER_DOUBLE_ERR_o => txn_count_double_err_w,
+      OBS_TM_HAM_COUNTER_ENC_DATA_o   => txn_count_enc_data_w
     );
 
-  o_done <= w_read_done;
+  done_o <= read_done_w;
 
   -- obs to top
-  o_OBS_TM_TMR_CTRL_ERROR        <= w_ctrl_tmr_err;
-  o_OBS_TM_HAM_BUFFER_SINGLE_ERR <= w_ham_single_err;
-  o_OBS_TM_HAM_BUFFER_DOUBLE_ERR <= w_ham_double_err;
-  o_OBS_TM_HAM_BUFFER_ENC_DATA   <= w_ham_buffer_enc_data;
-  o_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR <= w_txn_count_single_err;
-  o_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR <= w_txn_count_double_err;
-  o_OBS_TM_HAM_TXN_COUNTER_ENC_DATA   <= w_txn_count_enc_data;
-  o_TM_TRANSACTION_COUNT <= w_txn_count_data_out;
+  OBS_TM_TMR_CTRL_ERROR_o        <= ctrl_tmr_err_w;
+  OBS_TM_HAM_BUFFER_SINGLE_ERR_o <= ham_single_err_w;
+  OBS_TM_HAM_BUFFER_DOUBLE_ERR_o <= ham_double_err_w;
+  OBS_TM_HAM_BUFFER_ENC_DATA_o   <= ham_buffer_enc_data_w;
+  OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR_o <= txn_count_single_err_w;
+  OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR_o <= txn_count_double_err_w;
+  OBS_TM_HAM_TXN_COUNTER_ENC_DATA_o   <= txn_count_enc_data_w;
+  TM_TRANSACTION_COUNT_o <= txn_count_data_out_w;
 end rtl;

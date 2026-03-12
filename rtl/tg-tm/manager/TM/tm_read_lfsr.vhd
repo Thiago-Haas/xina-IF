@@ -9,8 +9,8 @@ entity tm_read_lfsr is
     p_WIDTH : positive := 32
   );
   port(
-    i_value : in  std_logic_vector(p_WIDTH - 1 downto 0);
-    o_next  : out std_logic_vector(p_WIDTH - 1 downto 0)
+    value_i : in  std_logic_vector(p_WIDTH - 1 downto 0);
+    next_o  : out std_logic_vector(p_WIDTH - 1 downto 0)
   );
 end entity;
 
@@ -25,5 +25,5 @@ architecture rtl of tm_read_lfsr is
     return v;
   end function;
 begin
-  o_next <= next_lfsr(i_value);
+  next_o <= next_lfsr(value_i);
 end rtl;

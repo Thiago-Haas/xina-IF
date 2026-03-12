@@ -57,66 +57,66 @@ entity frontend_manager is
         CORRUPT_PACKET: out std_logic;
 
         -- Backend signals (injection).
-        i_READY_SEND_DATA  : in std_logic;
-        i_READY_SEND_PACKET: in std_logic;
+        READY_SEND_DATA_i  : in std_logic;
+        READY_SEND_PACKET_i: in std_logic;
 
-        o_START_SEND_PACKET: out std_logic;
-        o_VALID_SEND_DATA  : out std_logic;
-        o_LAST_SEND_DATA   : out std_logic;
+        START_SEND_PACKET_o: out std_logic;
+        VALID_SEND_DATA_o  : out std_logic;
+        LAST_SEND_DATA_o   : out std_logic;
 
-        o_ADDR     : out std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
-        o_ID       : out std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
-        o_LENGTH   : out std_logic_vector(7 downto 0);
-        o_BURST    : out std_logic_vector(1 downto 0);
-        o_OPC_SEND : out std_logic;
-        o_DATA_SEND: out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+        ADDR_o     : out std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
+        ID_o       : out std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
+        LENGTH_o   : out std_logic_vector(7 downto 0);
+        BURST_o    : out std_logic_vector(1 downto 0);
+        OPC_SEND_o : out std_logic;
+        DATA_SEND_o: out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
         -- Backend signals (reception).
-        i_VALID_RECEIVE_DATA: in std_logic;
-        i_LAST_RECEIVE_DATA : in std_logic;
+        VALID_RECEIVE_DATA_i: in std_logic;
+        LAST_RECEIVE_DATA_i : in std_logic;
 
-        i_ID_RECEIVE    : in std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
-        i_STATUS_RECEIVE: in std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
-        i_OPC_RECEIVE   : in std_logic;
-        i_DATA_RECEIVE  : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+        ID_RECEIVE_i    : in std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
+        STATUS_RECEIVE_i: in std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
+        OPC_RECEIVE_i   : in std_logic;
+        DATA_RECEIVE_i  : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
-        i_CORRUPT_RECEIVE: in std_logic;
+        CORRUPT_RECEIVE_i: in std_logic;
 
-        o_READY_RECEIVE_PACKET: out std_logic;
-        o_READY_RECEIVE_DATA  : out std_logic;
+        READY_RECEIVE_PACKET_o: out std_logic;
+        READY_RECEIVE_DATA_o  : out std_logic;
 
         -- Frontend injection Hamming detection flags (exported to top)
-        o_OBS_FE_INJ_META_HDR_SINGLE_ERR : out std_logic;
-        o_OBS_FE_INJ_META_HDR_DOUBLE_ERR : out std_logic;
-        o_OBS_FE_INJ_ADDR_SINGLE_ERR     : out std_logic;
-        o_OBS_FE_INJ_ADDR_DOUBLE_ERR     : out std_logic;
-        o_OBS_FE_INJ_HAM_META_HDR_ENC_DATA : out std_logic_vector((1 + c_AXI_ID_WIDTH + 8 + 2) + work.hamming_pkg.get_ecc_size((1 + c_AXI_ID_WIDTH + 8 + 2), p_HAMMING_DETECT_DOUBLE) - 1 downto 0);
-        o_OBS_FE_INJ_HAM_ADDR_ENC_DATA     : out std_logic_vector(c_AXI_ADDR_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_ADDR_WIDTH, p_HAMMING_DETECT_DOUBLE) - 1 downto 0);
+        OBS_FE_INJ_META_HDR_SINGLE_ERR_o : out std_logic;
+        OBS_FE_INJ_META_HDR_DOUBLE_ERR_o : out std_logic;
+        OBS_FE_INJ_ADDR_SINGLE_ERR_o     : out std_logic;
+        OBS_FE_INJ_ADDR_DOUBLE_ERR_o     : out std_logic;
+        OBS_FE_INJ_HAM_META_HDR_ENC_DATA_o : out std_logic_vector((1 + c_AXI_ID_WIDTH + 8 + 2) + work.hamming_pkg.get_ecc_size((1 + c_AXI_ID_WIDTH + 8 + 2), p_HAMMING_DETECT_DOUBLE) - 1 downto 0);
+        OBS_FE_INJ_HAM_ADDR_ENC_DATA_o     : out std_logic_vector(c_AXI_ADDR_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_ADDR_WIDTH, p_HAMMING_DETECT_DOUBLE) - 1 downto 0);
 
         -- Frontend injection Hamming correction enables (from top)
-        i_OBS_FE_INJ_META_HDR_CORRECT_ERROR : in std_logic := '1';
-        i_OBS_FE_INJ_ADDR_CORRECT_ERROR     : in std_logic := '1'
+        OBS_FE_INJ_META_HDR_CORRECT_ERROR_i : in std_logic := '1';
+        OBS_FE_INJ_ADDR_CORRECT_ERROR_i     : in std_logic := '1'
     );
 end frontend_manager;
 
 architecture rtl of frontend_manager is
 
     -- Injection internal signals
-    signal w_cap_aw    : std_logic;
-    signal w_cap_ar    : std_logic;
-    signal w_opc_send  : std_logic;
+    signal cap_aw_w    : std_logic;
+    signal cap_ar_w    : std_logic;
+    signal opc_send_w  : std_logic;
 
     -- Frontend injection Hamming detection flags
-    signal w_fe_inj_meta_hdr_single_err : std_logic;
-    signal w_fe_inj_meta_hdr_double_err : std_logic;
-    signal w_fe_inj_addr_single_err     : std_logic;
-    signal w_fe_inj_addr_double_err     : std_logic;
-    signal w_fe_inj_meta_hdr_enc_data   : std_logic_vector((1 + c_AXI_ID_WIDTH + 8 + 2) + work.hamming_pkg.get_ecc_size((1 + c_AXI_ID_WIDTH + 8 + 2), p_HAMMING_DETECT_DOUBLE) - 1 downto 0);
-    signal w_fe_inj_addr_enc_data       : std_logic_vector(c_AXI_ADDR_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_ADDR_WIDTH, p_HAMMING_DETECT_DOUBLE) - 1 downto 0);
+    signal fe_inj_meta_hdr_single_err_w : std_logic;
+    signal fe_inj_meta_hdr_double_err_w : std_logic;
+    signal fe_inj_addr_single_err_w     : std_logic;
+    signal fe_inj_addr_double_err_w     : std_logic;
+    signal fe_inj_meta_hdr_enc_data_w   : std_logic_vector((1 + c_AXI_ID_WIDTH + 8 + 2) + work.hamming_pkg.get_ecc_size((1 + c_AXI_ID_WIDTH + 8 + 2), p_HAMMING_DETECT_DOUBLE) - 1 downto 0);
+    signal fe_inj_addr_enc_data_w       : std_logic_vector(c_AXI_ADDR_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_ADDR_WIDTH, p_HAMMING_DETECT_DOUBLE) - 1 downto 0);
 
     -- Ejection internal signals
-    signal w_bvalid_en : std_logic;
-    signal w_rvalid_en : std_logic;
+    signal bvalid_en_w : std_logic;
+    signal rvalid_en_w : std_logic;
 
 begin
 
@@ -128,26 +128,26 @@ begin
         ACLK    => ACLK,
         ARESETn => ARESETn,
 
-                i_AWVALID => AWVALID,
-                i_ARVALID => ARVALID,
-                i_WVALID  => WVALID,
-                i_WLAST   => WLAST,
+                AWVALID_i => AWVALID,
+                ARVALID_i => ARVALID,
+                WVALID_i  => WVALID,
+                WLAST_i   => WLAST,
 
-        i_READY_SEND_PACKET => i_READY_SEND_PACKET,
-        i_READY_SEND_DATA   => i_READY_SEND_DATA,
+        READY_SEND_PACKET_i => READY_SEND_PACKET_i,
+        READY_SEND_DATA_i   => READY_SEND_DATA_i,
 
-        i_OPC_SEND_R => w_opc_send,
+        OPC_SEND_R_i => opc_send_w,
 
-        o_CAP_AW => w_cap_aw,
-        o_CAP_AR => w_cap_ar,
+        CAP_AW_o => cap_aw_w,
+        CAP_AR_o => cap_ar_w,
 
-        o_START_SEND_PACKET => o_START_SEND_PACKET,
-        o_VALID_SEND_DATA   => o_VALID_SEND_DATA,
-        o_LAST_SEND_DATA    => o_LAST_SEND_DATA,
+        START_SEND_PACKET_o => START_SEND_PACKET_o,
+        VALID_SEND_DATA_o   => VALID_SEND_DATA_o,
+        LAST_SEND_DATA_o    => LAST_SEND_DATA_o,
 
-                o_AWREADY => AWREADY,
-                o_ARREADY => ARREADY,
-                o_WREADY  => WREADY
+                AWREADY_o => AWREADY,
+                ARREADY_o => ARREADY,
+                WREADY_o  => WREADY
       );
 
     u_injection_dp: entity work.frontend_manager_injection_dp
@@ -160,8 +160,8 @@ begin
         ACLK    => ACLK,
         ARESETn => ARESETn,
 
-        i_CAP_AW => w_cap_aw,
-        i_CAP_AR => w_cap_ar,
+        CAP_AW_i => cap_aw_w,
+        CAP_AR_i => cap_ar_w,
 
         AWID    => AWID,
         AWADDR  => AWADDR,
@@ -176,55 +176,55 @@ begin
         WVALID => WVALID,
         WDATA  => WDATA,
 
-        i_META_HDR_CORRECT_ERROR => i_OBS_FE_INJ_META_HDR_CORRECT_ERROR,
-        i_ADDR_CORRECT_ERROR     => i_OBS_FE_INJ_ADDR_CORRECT_ERROR,
+        META_HDR_CORRECT_ERROR_i => OBS_FE_INJ_META_HDR_CORRECT_ERROR_i,
+        ADDR_CORRECT_ERROR_i     => OBS_FE_INJ_ADDR_CORRECT_ERROR_i,
 
-        o_ADDR      => o_ADDR,
-        o_ID        => o_ID,
-        o_LENGTH    => o_LENGTH,
-        o_BURST     => o_BURST,
-        o_OPC_SEND  => w_opc_send,
-        o_DATA_SEND => o_DATA_SEND,
+        ADDR_o      => ADDR_o,
+        ID_o        => ID_o,
+        LENGTH_o    => LENGTH_o,
+        BURST_o     => BURST_o,
+        OPC_SEND_o  => opc_send_w,
+        DATA_SEND_o => DATA_SEND_o,
 
-        o_META_HDR_SINGLE_ERR => w_fe_inj_meta_hdr_single_err,
-        o_META_HDR_DOUBLE_ERR => w_fe_inj_meta_hdr_double_err,
-        o_ADDR_SINGLE_ERR     => w_fe_inj_addr_single_err,
-        o_ADDR_DOUBLE_ERR     => w_fe_inj_addr_double_err,
-        o_META_HDR_ENC_DATA   => w_fe_inj_meta_hdr_enc_data,
-        o_ADDR_ENC_DATA       => w_fe_inj_addr_enc_data
+        META_HDR_SINGLE_ERR_o => fe_inj_meta_hdr_single_err_w,
+        META_HDR_DOUBLE_ERR_o => fe_inj_meta_hdr_double_err_w,
+        ADDR_SINGLE_ERR_o     => fe_inj_addr_single_err_w,
+        ADDR_DOUBLE_ERR_o     => fe_inj_addr_double_err_w,
+        META_HDR_ENC_DATA_o   => fe_inj_meta_hdr_enc_data_w,
+        ADDR_ENC_DATA_o       => fe_inj_addr_enc_data_w
       );
 
     -- expose opcode to backend with the same name as before
-    o_OPC_SEND <= w_opc_send;
+    OPC_SEND_o <= opc_send_w;
 
     ---------------------------------------------------------------------------------------------
     -- Ejection (backend receive -> AXI)
 
     u_ejection_ctrl: entity work.frontend_manager_ejection_ctrl
       port map(
-        i_VALID_RECEIVE_DATA => i_VALID_RECEIVE_DATA,
-        i_OPC_RECEIVE        => i_OPC_RECEIVE,
+        VALID_RECEIVE_DATA_i => VALID_RECEIVE_DATA_i,
+        OPC_RECEIVE_i        => OPC_RECEIVE_i,
 
         BREADY => BREADY,
         RREADY => RREADY,
 
-        o_READY_RECEIVE_PACKET => o_READY_RECEIVE_PACKET,
-        o_READY_RECEIVE_DATA   => o_READY_RECEIVE_DATA,
+        READY_RECEIVE_PACKET_o => READY_RECEIVE_PACKET_o,
+        READY_RECEIVE_DATA_o   => READY_RECEIVE_DATA_o,
 
-        o_BVALID_EN => w_bvalid_en,
-        o_RVALID_EN => w_rvalid_en
+        BVALID_EN_o => bvalid_en_w,
+        RVALID_EN_o => rvalid_en_w
       );
 
     u_ejection_dp: entity work.frontend_manager_ejection_dp
       port map(
-        i_LAST_RECEIVE_DATA => i_LAST_RECEIVE_DATA,
-        i_ID_RECEIVE        => i_ID_RECEIVE,
-        i_STATUS_RECEIVE    => i_STATUS_RECEIVE,
-        i_DATA_RECEIVE      => i_DATA_RECEIVE,
-        i_CORRUPT_RECEIVE   => i_CORRUPT_RECEIVE,
+        LAST_RECEIVE_DATA_i => LAST_RECEIVE_DATA_i,
+        ID_RECEIVE_i        => ID_RECEIVE_i,
+        STATUS_RECEIVE_i    => STATUS_RECEIVE_i,
+        DATA_RECEIVE_i      => DATA_RECEIVE_i,
+        CORRUPT_RECEIVE_i   => CORRUPT_RECEIVE_i,
 
-        i_BVALID_EN => w_bvalid_en,
-        i_RVALID_EN => w_rvalid_en,
+        BVALID_EN_i => bvalid_en_w,
+        RVALID_EN_i => rvalid_en_w,
 
         BVALID => BVALID,
         BID    => BID,
@@ -240,11 +240,11 @@ begin
       );
 
     -- Export frontend injection Hamming detection flags
-    o_OBS_FE_INJ_META_HDR_SINGLE_ERR <= w_fe_inj_meta_hdr_single_err;
-    o_OBS_FE_INJ_META_HDR_DOUBLE_ERR <= w_fe_inj_meta_hdr_double_err;
-    o_OBS_FE_INJ_ADDR_SINGLE_ERR     <= w_fe_inj_addr_single_err;
-    o_OBS_FE_INJ_ADDR_DOUBLE_ERR     <= w_fe_inj_addr_double_err;
-    o_OBS_FE_INJ_HAM_META_HDR_ENC_DATA <= w_fe_inj_meta_hdr_enc_data;
-    o_OBS_FE_INJ_HAM_ADDR_ENC_DATA     <= w_fe_inj_addr_enc_data;
+    OBS_FE_INJ_META_HDR_SINGLE_ERR_o <= fe_inj_meta_hdr_single_err_w;
+    OBS_FE_INJ_META_HDR_DOUBLE_ERR_o <= fe_inj_meta_hdr_double_err_w;
+    OBS_FE_INJ_ADDR_SINGLE_ERR_o     <= fe_inj_addr_single_err_w;
+    OBS_FE_INJ_ADDR_DOUBLE_ERR_o     <= fe_inj_addr_double_err_w;
+    OBS_FE_INJ_HAM_META_HDR_ENC_DATA_o <= fe_inj_meta_hdr_enc_data_w;
+    OBS_FE_INJ_HAM_ADDR_ENC_DATA_o     <= fe_inj_addr_enc_data_w;
 
 end rtl;

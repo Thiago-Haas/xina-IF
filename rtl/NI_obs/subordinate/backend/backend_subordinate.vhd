@@ -23,29 +23,29 @@ entity backend_subordinate is
         ARESETn: in std_logic;
 
         -- Signals (injection).
-        i_VALID_SEND_DATA: in std_logic;
-        i_LAST_SEND_DATA : in std_logic;
-        o_READY_SEND_DATA: out std_logic;
+        VALID_SEND_DATA_i: in std_logic;
+        LAST_SEND_DATA_i : in std_logic;
+        READY_SEND_DATA_o: out std_logic;
 
-        i_DATA_SEND  : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
-        i_STATUS_SEND: in std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
+        DATA_SEND_i  : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+        STATUS_SEND_i: in std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
 
         -- Signals (reception).
-        i_READY_RECEIVE_PACKET: in std_logic;
-        i_READY_RECEIVE_DATA  : in std_logic;
+        READY_RECEIVE_PACKET_i: in std_logic;
+        READY_RECEIVE_DATA_i  : in std_logic;
 
-        o_VALID_RECEIVE_PACKET: out std_logic;
-        o_VALID_RECEIVE_DATA  : out std_logic;
-        o_LAST_RECEIVE_DATA   : out std_logic;
+        VALID_RECEIVE_PACKET_o: out std_logic;
+        VALID_RECEIVE_DATA_o  : out std_logic;
+        LAST_RECEIVE_DATA_o   : out std_logic;
 
-        o_ID_RECEIVE     : out std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
-        o_LEN_RECEIVE    : out std_logic_vector(7 downto 0);
-        o_BURST_RECEIVE  : out std_logic_vector(1 downto 0);
-        o_OPC_RECEIVE    : out std_logic;
-        o_ADDRESS_RECEIVE: out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
-        o_DATA_RECEIVE   : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+        ID_RECEIVE_o     : out std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
+        LEN_RECEIVE_o    : out std_logic_vector(7 downto 0);
+        BURST_RECEIVE_o  : out std_logic_vector(1 downto 0);
+        OPC_RECEIVE_o    : out std_logic;
+        ADDRESS_RECEIVE_o: out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+        DATA_RECEIVE_o   : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
-        o_CORRUPT_RECEIVE: out std_logic;
+        CORRUPT_RECEIVE_o: out std_logic;
 
         -- XINA signals.
         l_in_data_i : out std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
@@ -58,11 +58,11 @@ entity backend_subordinate is
 end backend_subordinate;
 
 architecture rtl of backend_subordinate is
-    signal w_H_SRC_RECEIVE: std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-    signal w_H_INTERFACE_RECEIVE: std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+    signal H_SRC_RECEIVE_w: std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
+    signal H_INTERFACE_RECEIVE_w: std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
 
-    signal w_HAS_REQUEST_PACKET: std_logic;
-    signal w_HAS_FINISHED_RESPONSE: std_logic;
+    signal HAS_REQUEST_PACKET_w: std_logic;
+    signal HAS_FINISHED_RESPONSE_w: std_logic;
 
 begin
     u_INJECTION: entity work.backend_subordinate_injection
@@ -82,17 +82,17 @@ begin
             ACLK    => ACLK,
             ARESETn => ARESETn,
 
-            i_VALID_SEND_DATA => i_VALID_SEND_DATA,
-            i_LAST_SEND_DATA  => i_LAST_SEND_DATA,
-            o_READY_SEND_DATA => o_READY_SEND_DATA,
+            VALID_SEND_DATA_i => VALID_SEND_DATA_i,
+            LAST_SEND_DATA_i  => LAST_SEND_DATA_i,
+            READY_SEND_DATA_o => READY_SEND_DATA_o,
 
-            i_DATA_SEND   => i_DATA_SEND,
-            i_STATUS_SEND => i_STATUS_SEND,
+            DATA_SEND_i   => DATA_SEND_i,
+            STATUS_SEND_i => STATUS_SEND_i,
 
-            i_H_SRC_RECEIVE         => w_H_SRC_RECEIVE,
-            i_H_INTERFACE_RECEIVE   => w_H_INTERFACE_RECEIVE,
-            i_HAS_REQUEST_PACKET    => w_HAS_REQUEST_PACKET,
-            o_HAS_FINISHED_RESPONSE => w_HAS_FINISHED_RESPONSE,
+            H_SRC_RECEIVE_i         => H_SRC_RECEIVE_w,
+            H_INTERFACE_RECEIVE_i   => H_INTERFACE_RECEIVE_w,
+            HAS_REQUEST_PACKET_i    => HAS_REQUEST_PACKET_w,
+            HAS_FINISHED_RESPONSE_o => HAS_FINISHED_RESPONSE_w,
 
             l_in_data_i => l_in_data_i,
             l_in_val_i  => l_in_val_i,
@@ -113,29 +113,29 @@ begin
             ACLK    => ACLK,
             ARESETn => ARESETn,
 
-            i_READY_RECEIVE_PACKET => i_READY_RECEIVE_PACKET,
-            i_READY_RECEIVE_DATA   => i_READY_RECEIVE_DATA,
+            READY_RECEIVE_PACKET_i => READY_RECEIVE_PACKET_i,
+            READY_RECEIVE_DATA_i   => READY_RECEIVE_DATA_i,
 
-            o_VALID_RECEIVE_PACKET => o_VALID_RECEIVE_PACKET,
-            o_VALID_RECEIVE_DATA   => o_VALID_RECEIVE_DATA,
-            o_LAST_RECEIVE_DATA    => o_LAST_RECEIVE_DATA,
-            o_DATA_RECEIVE         => o_DATA_RECEIVE,
-            o_H_SRC_RECEIVE        => w_H_SRC_RECEIVE,
-            o_H_INTERFACE_RECEIVE  => w_H_INTERFACE_RECEIVE,
-            o_ADDRESS_RECEIVE      => o_ADDRESS_RECEIVE,
+            VALID_RECEIVE_PACKET_o => VALID_RECEIVE_PACKET_o,
+            VALID_RECEIVE_DATA_o   => VALID_RECEIVE_DATA_o,
+            LAST_RECEIVE_DATA_o    => LAST_RECEIVE_DATA_o,
+            DATA_RECEIVE_o         => DATA_RECEIVE_o,
+            H_SRC_RECEIVE_o        => H_SRC_RECEIVE_w,
+            H_INTERFACE_RECEIVE_o  => H_INTERFACE_RECEIVE_w,
+            ADDRESS_RECEIVE_o      => ADDRESS_RECEIVE_o,
 
-            o_CORRUPT_RECEIVE      => o_CORRUPT_RECEIVE,
+            CORRUPT_RECEIVE_o      => CORRUPT_RECEIVE_o,
 
-            i_HAS_FINISHED_RESPONSE => w_HAS_FINISHED_RESPONSE,
-            o_HAS_REQUEST_PACKET    => w_HAS_REQUEST_PACKET,
+            HAS_FINISHED_RESPONSE_i => HAS_FINISHED_RESPONSE_w,
+            HAS_REQUEST_PACKET_o    => HAS_REQUEST_PACKET_w,
 
             l_out_data_o => l_out_data_o,
             l_out_val_o  => l_out_val_o,
             l_out_ack_i  => l_out_ack_i
         );
 
-    o_ID_RECEIVE    <= w_H_INTERFACE_RECEIVE(19 downto 15);
-    o_LEN_RECEIVE   <= w_H_INTERFACE_RECEIVE(14 downto 7);
-    o_BURST_RECEIVE <= w_H_INTERFACE_RECEIVE(6 downto 5);
-    o_OPC_RECEIVE   <= w_H_INTERFACE_RECEIVE(1);
+    ID_RECEIVE_o    <= H_INTERFACE_RECEIVE_w(19 downto 15);
+    LEN_RECEIVE_o   <= H_INTERFACE_RECEIVE_w(14 downto 7);
+    BURST_RECEIVE_o <= H_INTERFACE_RECEIVE_w(6 downto 5);
+    OPC_RECEIVE_o   <= H_INTERFACE_RECEIVE_w(1);
 end rtl;

@@ -10,32 +10,32 @@ use work.xina_ni_ft_pkg.all;
 entity tb_tg_tm_lb_top is
   port(
     -- TG correction enables
-    i_obs_tg_ham_buffer_correct_error : in std_logic := '1';
-    i_obs_tg_tmr_ctrl_correct_error   : in std_logic := '1';
+    obs_tg_ham_buffer_correct_error_i : in std_logic := '1';
+    obs_tg_tmr_ctrl_correct_error_i   : in std_logic := '1';
 
     -- TM correction enables
-    i_obs_tm_ham_buffer_correct_error : in std_logic := '1';
-    i_obs_tm_tmr_ctrl_correct_error   : in std_logic := '1';
-    i_obs_tm_ham_txn_counter_correct_error : in std_logic := '1';
+    obs_tm_ham_buffer_correct_error_i : in std_logic := '1';
+    obs_tm_tmr_ctrl_correct_error_i   : in std_logic := '1';
+    obs_tm_ham_txn_counter_correct_error_i : in std_logic := '1';
 
     -- Loopback correction enables
-    i_obs_lb_ham_buffer_correct_error : in std_logic := '1';
-    i_obs_lb_tmr_ctrl_correct_error   : in std_logic := '1';
+    obs_lb_ham_buffer_correct_error_i : in std_logic := '1';
+    obs_lb_tmr_ctrl_correct_error_i   : in std_logic := '1';
 
     -- NI frontend correction enables
-    i_obs_fe_inj_meta_hdr_correct_error : in std_logic := '1';
-    i_obs_fe_inj_addr_correct_error     : in std_logic := '1';
+    obs_fe_inj_meta_hdr_correct_error_i : in std_logic := '1';
+    obs_fe_inj_addr_correct_error_i     : in std_logic := '1';
 
     -- NI backend correction enables
-    i_obs_be_inj_ham_buffer_correct_error    : in std_logic := '1';
-    i_obs_be_inj_tmr_ham_buffer_ctrl_correct_error : in std_logic := '1';
-    i_obs_be_inj_ham_integrity_correct_error : in std_logic := '1';
-    i_obs_be_inj_tmr_flow_ctrl_correct_error : in std_logic := '1';
-    i_obs_be_inj_tmr_pktz_ctrl_correct_error : in std_logic := '1';
-    i_obs_be_rx_ham_buffer_correct_error     : in std_logic := '1';
-    i_obs_be_rx_tmr_ham_buffer_ctrl_correct_error : in std_logic := '1';
-    i_obs_be_rx_ham_interface_hdr_correct_error : in std_logic := '1';
-    i_obs_be_rx_tmr_flow_ctrl_correct_error  : in std_logic := '1'
+    obs_be_inj_ham_buffer_correct_error_i    : in std_logic := '1';
+    obs_be_inj_tmr_ham_buffer_ctrl_correct_error_i : in std_logic := '1';
+    obs_be_inj_ham_integrity_correct_error_i : in std_logic := '1';
+    obs_be_inj_tmr_flow_ctrl_correct_error_i : in std_logic := '1';
+    obs_be_inj_tmr_pktz_ctrl_correct_error_i : in std_logic := '1';
+    obs_be_rx_ham_buffer_correct_error_i     : in std_logic := '1';
+    obs_be_rx_tmr_ham_buffer_ctrl_correct_error_i : in std_logic := '1';
+    obs_be_rx_ham_interface_hdr_correct_error_i : in std_logic := '1';
+    obs_be_rx_tmr_flow_ctrl_correct_error_i  : in std_logic := '1'
   );
 end entity;
 
@@ -153,8 +153,8 @@ begin
       ACLK    => ACLK,
       ARESETn => ARESETn,
 
-      i_start => tg_start,
-      o_done  => tg_done,
+      start_i => tg_start,
+      done_o  => tg_done,
 
       INPUT_ADDRESS => tg_addr,
       STARTING_SEED => tg_seed,
@@ -180,13 +180,13 @@ begin
       BREADY => bready,
 
       -- observation/correction
-      i_OBS_TG_HAM_BUFFER_CORRECT_ERROR => i_obs_tg_ham_buffer_correct_error,
-      i_OBS_TG_TMR_CTRL_CORRECT_ERROR   => i_obs_tg_tmr_ctrl_correct_error,
+      OBS_TG_HAM_BUFFER_CORRECT_ERROR_i => obs_tg_ham_buffer_correct_error_i,
+      OBS_TG_TMR_CTRL_CORRECT_ERROR_i   => obs_tg_tmr_ctrl_correct_error_i,
 
-      o_OBS_TG_TMR_CTRL_ERROR        => tg_ctrl_tmr_err,
-      o_OBS_TG_HAM_BUFFER_SINGLE_ERR => tg_ham_single_err,
-      o_OBS_TG_HAM_BUFFER_DOUBLE_ERR => tg_ham_double_err,
-      o_OBS_TG_HAM_BUFFER_ENC_DATA   => tg_ham_enc_data
+      OBS_TG_TMR_CTRL_ERROR_o        => tg_ctrl_tmr_err,
+      OBS_TG_HAM_BUFFER_SINGLE_ERR_o => tg_ham_single_err,
+      OBS_TG_HAM_BUFFER_DOUBLE_ERR_o => tg_ham_double_err,
+      OBS_TG_HAM_BUFFER_ENC_DATA_o   => tg_ham_enc_data
     );
 
   -- TM
@@ -195,8 +195,8 @@ begin
       ACLK    => ACLK,
       ARESETn => ARESETn,
 
-      i_start => tm_start,
-      o_done  => tm_done,
+      start_i => tm_start,
+      done_o  => tm_done,
 
       INPUT_ADDRESS => tm_addr,
       STARTING_SEED => tm_seed,
@@ -219,21 +219,21 @@ begin
       RRESP  => rresp,
 
       -- compare/debug
-      o_tm_lfsr_comparison_mismatch => tm_lfsr_comparison_mismatch,
-      o_expected_value => tm_expected,
+      tm_lfsr_comparison_mismatch_o => tm_lfsr_comparison_mismatch,
+      expected_value_o => tm_expected,
 
       -- observation
-      i_OBS_TM_HAM_BUFFER_CORRECT_ERROR => i_obs_tm_ham_buffer_correct_error,
-      i_OBS_TM_TMR_CTRL_CORRECT_ERROR   => i_obs_tm_tmr_ctrl_correct_error,
-      i_OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR => i_obs_tm_ham_txn_counter_correct_error,
-      o_OBS_TM_TMR_CTRL_ERROR           => tm_ctrl_tmr_err,
-      o_OBS_TM_HAM_BUFFER_SINGLE_ERR    => tm_ham_single_err,
-      o_OBS_TM_HAM_BUFFER_DOUBLE_ERR    => tm_ham_double_err,
-      o_OBS_TM_HAM_BUFFER_ENC_DATA      => tm_ham_buffer_enc_data,
-      o_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR => tm_ham_txn_counter_single_err,
-      o_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR => tm_ham_txn_counter_double_err,
-      o_OBS_TM_HAM_TXN_COUNTER_ENC_DATA   => tm_ham_txn_counter_enc_data,
-      o_TM_TRANSACTION_COUNT              => tm_transaction_count
+      OBS_TM_HAM_BUFFER_CORRECT_ERROR_i => obs_tm_ham_buffer_correct_error_i,
+      OBS_TM_TMR_CTRL_CORRECT_ERROR_i   => obs_tm_tmr_ctrl_correct_error_i,
+      OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_i => obs_tm_ham_txn_counter_correct_error_i,
+      OBS_TM_TMR_CTRL_ERROR_o           => tm_ctrl_tmr_err,
+      OBS_TM_HAM_BUFFER_SINGLE_ERR_o    => tm_ham_single_err,
+      OBS_TM_HAM_BUFFER_DOUBLE_ERR_o    => tm_ham_double_err,
+      OBS_TM_HAM_BUFFER_ENC_DATA_o      => tm_ham_buffer_enc_data,
+      OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR_o => tm_ham_txn_counter_single_err,
+      OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR_o => tm_ham_txn_counter_double_err,
+      OBS_TM_HAM_TXN_COUNTER_ENC_DATA_o   => tm_ham_txn_counter_enc_data,
+      TM_TRANSACTION_COUNT_o              => tm_transaction_count
     );
 
   -- NI manager
@@ -290,49 +290,49 @@ begin
       corrupt_packet => open,
 
       -- Observability/ECC ports
-      o_OBS_FE_INJ_META_HDR_SINGLE_ERR => open,
-      o_OBS_FE_INJ_META_HDR_DOUBLE_ERR => open,
-      o_OBS_FE_INJ_ADDR_SINGLE_ERR     => open,
-      o_OBS_FE_INJ_ADDR_DOUBLE_ERR     => open,
-      o_OBS_FE_INJ_HAM_META_HDR_ENC_DATA => open,
-      o_OBS_FE_INJ_HAM_ADDR_ENC_DATA     => open,
-      i_OBS_FE_INJ_META_HDR_CORRECT_ERROR => i_obs_fe_inj_meta_hdr_correct_error,
-      i_OBS_FE_INJ_ADDR_CORRECT_ERROR     => i_obs_fe_inj_addr_correct_error,
+      OBS_FE_INJ_META_HDR_SINGLE_ERR_o => open,
+      OBS_FE_INJ_META_HDR_DOUBLE_ERR_o => open,
+      OBS_FE_INJ_ADDR_SINGLE_ERR_o     => open,
+      OBS_FE_INJ_ADDR_DOUBLE_ERR_o     => open,
+      OBS_FE_INJ_HAM_META_HDR_ENC_DATA_o => open,
+      OBS_FE_INJ_HAM_ADDR_ENC_DATA_o     => open,
+      OBS_FE_INJ_META_HDR_CORRECT_ERROR_i => obs_fe_inj_meta_hdr_correct_error_i,
+      OBS_FE_INJ_ADDR_CORRECT_ERROR_i     => obs_fe_inj_addr_correct_error_i,
 
-      i_OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR => i_obs_be_inj_ham_buffer_correct_error,
-      o_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR    => inj_single_err,
-      o_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR    => inj_double_err,
-      o_OBS_BE_INJ_HAM_BUFFER_ENC_DATA      => open,
-      i_OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR => i_obs_be_inj_tmr_ham_buffer_ctrl_correct_error,
-      i_OBS_BE_INJ_HAM_INTEGRITY_CORRECT_ERROR => i_obs_be_inj_ham_integrity_correct_error,
-      i_OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR => i_obs_be_inj_tmr_flow_ctrl_correct_error,
-      i_OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR => i_obs_be_inj_tmr_pktz_ctrl_correct_error,
+      OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR_i => obs_be_inj_ham_buffer_correct_error_i,
+      OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR_o    => inj_single_err,
+      OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR_o    => inj_double_err,
+      OBS_BE_INJ_HAM_BUFFER_ENC_DATA_o      => open,
+      OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i => obs_be_inj_tmr_ham_buffer_ctrl_correct_error_i,
+      OBS_BE_INJ_HAM_INTEGRITY_CORRECT_ERROR_i => obs_be_inj_ham_integrity_correct_error_i,
+      OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR_i => obs_be_inj_tmr_flow_ctrl_correct_error_i,
+      OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR_i => obs_be_inj_tmr_pktz_ctrl_correct_error_i,
 
-      o_OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_ERROR => open,
-      o_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR => open,
-      o_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR => open,
-      o_OBS_BE_INJ_HAM_INTEGRITY_ENC_DATA   => open,
-      o_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR => open,
-      o_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR => open,
+      OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_ERROR_o => open,
+      OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR_o => open,
+      OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR_o => open,
+      OBS_BE_INJ_HAM_INTEGRITY_ENC_DATA_o   => open,
+      OBS_BE_INJ_TMR_FLOW_CTRL_ERROR_o => open,
+      OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR_o => open,
 
-      i_OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR => i_obs_be_rx_ham_buffer_correct_error,
-      o_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR    => rx_single_err,
-      o_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR    => rx_double_err,
-      o_OBS_BE_RX_HAM_BUFFER_ENC_DATA      => open,
-      i_OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR => i_obs_be_rx_tmr_ham_buffer_ctrl_correct_error,
-      i_OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR => i_obs_be_rx_ham_interface_hdr_correct_error,
-      o_OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR    => open,
-      o_OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR    => open,
-      o_OBS_BE_RX_HAM_INTERFACE_HDR_ENC_DATA      => open,
-      i_OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR => '1',
-      i_OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR => i_obs_be_rx_tmr_flow_ctrl_correct_error,
+      OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR_i => obs_be_rx_ham_buffer_correct_error_i,
+      OBS_BE_RX_HAM_BUFFER_SINGLE_ERR_o    => rx_single_err,
+      OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR_o    => rx_double_err,
+      OBS_BE_RX_HAM_BUFFER_ENC_DATA_o      => open,
+      OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i => obs_be_rx_tmr_ham_buffer_ctrl_correct_error_i,
+      OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR_i => obs_be_rx_ham_interface_hdr_correct_error_i,
+      OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR_o    => open,
+      OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR_o    => open,
+      OBS_BE_RX_HAM_INTERFACE_HDR_ENC_DATA_o      => open,
+      OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR_i => '1',
+      OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR_i => obs_be_rx_tmr_flow_ctrl_correct_error_i,
 
-      o_OBS_BE_RX_TMR_HAM_BUFFER_CTRL_ERROR => open,
-      o_OBS_BE_RX_INTEGRITY_CORRUPT   => open,
-      o_OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR => open,
-      o_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR => open,
-      o_OBS_BE_RX_HAM_INTEGRITY_ENC_DATA   => open,
-      o_OBS_BE_RX_TMR_FLOW_CTRL_ERROR => open
+      OBS_BE_RX_TMR_HAM_BUFFER_CTRL_ERROR_o => open,
+      OBS_BE_RX_INTEGRITY_CORRUPT_o   => open,
+      OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR_o => open,
+      OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR_o => open,
+      OBS_BE_RX_HAM_INTEGRITY_ENC_DATA_o   => open,
+      OBS_BE_RX_TMR_FLOW_CTRL_ERROR_o => open
     );
 
   -- Loopback
@@ -353,13 +353,13 @@ begin
       lout_ack_i  => lout_ack,
 
       -- NEW: ECC observation/correction ports for loopback (same style as TG/TM)
-      i_OBS_LB_HAM_BUFFER_CORRECT_ERROR => i_obs_lb_ham_buffer_correct_error,
-      i_OBS_LB_TMR_CTRL_CORRECT_ERROR   => i_obs_lb_tmr_ctrl_correct_error,
+      OBS_LB_HAM_BUFFER_CORRECT_ERROR_i => obs_lb_ham_buffer_correct_error_i,
+      OBS_LB_TMR_CTRL_CORRECT_ERROR_i   => obs_lb_tmr_ctrl_correct_error_i,
 
-      o_OBS_LB_TMR_CTRL_ERROR        => lb_ctrl_tmr_err,
-      o_OBS_LB_HAM_BUFFER_SINGLE_ERR => lb_ham_single_err,
-      o_OBS_LB_HAM_BUFFER_DOUBLE_ERR => lb_ham_double_err,
-      o_OBS_LB_HAM_BUFFER_ENC_DATA   => lb_ham_enc_data
+      OBS_LB_TMR_CTRL_ERROR_o        => lb_ctrl_tmr_err,
+      OBS_LB_HAM_BUFFER_SINGLE_ERR_o => lb_ham_single_err,
+      OBS_LB_HAM_BUFFER_DOUBLE_ERR_o => lb_ham_double_err,
+      OBS_LB_HAM_BUFFER_ENC_DATA_o   => lb_ham_enc_data
     );
 
   -- reset + stimulus
