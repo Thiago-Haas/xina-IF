@@ -81,8 +81,15 @@ end frontend_subordinate;
 
 architecture rtl of frontend_subordinate is
     signal VALID_SEND_DATA_w: std_logic;
-    signal STATUS_SEND_r_w : std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
+    signal STATUS_SEND_r : std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
 
+
+  -- Xilinx attributes to prevent optimization of TMR
+  attribute DONT_TOUCH : string;
+  attribute DONT_TOUCH of STATUS_SEND_r : signal is "TRUE";
+  -- Synplify attributes to prevent optimization of TMR
+  attribute syn_preserve : boolean;
+  attribute syn_preserve of STATUS_SEND_r : signal is true;
 begin
     ---------------------------------------------------------------------------------------------
     -- Injection.
@@ -94,16 +101,16 @@ begin
             if (VALID_SEND_DATA_w = '1') then
                 if (BVALID = '1') then
                     -- Registering write signals.
-                    STATUS_SEND_r_w <= BRESP;
+                    STATUS_SEND_r <= BRESP;
                 elsif (RVALID = '1') then
                     -- Registering read signals.
-                    STATUS_SEND_r_w <= RRESP;
+                    STATUS_SEND_r <= RRESP;
                 end if;
             end if;
         end if;
     end process registering;
 
-    STATUS_SEND_o <= STATUS_SEND_r_w;
+    STATUS_SEND_o <= STATUS_SEND_r;
 
     -- Control information.
     VALID_SEND_DATA_w   <= '1' when (BVALID = '1' or RVALID = '1') else '0';

@@ -26,6 +26,10 @@ entity tg_tm_lb_selftest_obs_control_tmr is
 end entity;
 
 architecture rtl of tg_tm_lb_selftest_obs_control_tmr is
+  attribute DONT_TOUCH : string;
+    attribute syn_preserve : boolean;
+  attribute KEEP_HIERARCHY : string;
+
   type tmr_sl_t is array (2 downto 0) of std_logic;
 
   signal tg_start_w : tmr_sl_t;
@@ -48,6 +52,9 @@ architecture rtl of tg_tm_lb_selftest_obs_control_tmr is
   end function;
 begin
   gen_ctrl : for i in 0 to 2 generate
+    attribute DONT_TOUCH of u_obs_ctrl : label is "TRUE";
+        attribute syn_preserve of u_obs_ctrl : label is true;
+    attribute KEEP_HIERARCHY of u_obs_ctrl : label is "TRUE";
   begin
     u_obs_ctrl : entity work.tg_tm_lb_selftest_obs_control
       port map(

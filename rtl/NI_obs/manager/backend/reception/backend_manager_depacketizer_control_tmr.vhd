@@ -33,6 +33,10 @@ entity backend_manager_depacketizer_control_tmr is
 end backend_manager_depacketizer_control_tmr;
 
 architecture rtl of backend_manager_depacketizer_control_tmr is
+    attribute DONT_TOUCH : string;
+    attribute syn_preserve : boolean;
+    attribute KEEP_HIERARCHY : string;
+
     type t_BIT_VECTOR is array (2 downto 0) of std_logic;
 
     signal VALID_RECEIVE_DATA_w: t_BIT_VECTOR;
@@ -47,6 +51,10 @@ architecture rtl of backend_manager_depacketizer_control_tmr is
 begin
     TMR:
     for i in 2 downto 0 generate
+        attribute DONT_TOUCH of u_DEPACKETIZER_CONTROL : label is "TRUE";
+        attribute syn_preserve of u_DEPACKETIZER_CONTROL : label is true;
+        attribute KEEP_HIERARCHY of u_DEPACKETIZER_CONTROL : label is "TRUE";
+    begin
         u_DEPACKETIZER_CONTROL: entity work.backend_manager_depacketizer_control
             port map(
                 ACLK => ACLK,

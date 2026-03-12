@@ -44,6 +44,16 @@ architecture rtl of lb_dp is
 
   signal payload_dec_r : std_logic_vector(31 downto 0);
 
+
+
+
+
+  -- Xilinx attributes to prevent optimization of TMR
+  attribute DONT_TOUCH : string;
+  attribute DONT_TOUCH of payload_dec_r : signal is "TRUE";
+  -- Synplify attributes to prevent optimization of TMR
+  attribute syn_preserve : boolean;
+  attribute syn_preserve of payload_dec_r : signal is true;
 begin
   ------------------------------------------------------------------------------
   -- Capture condition: payload at fixed flit index 4 when ctrl=0

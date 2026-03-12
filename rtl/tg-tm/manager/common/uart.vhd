@@ -60,7 +60,6 @@ architecture arch of uart is
   signal tbaud_r    : std_logic_vector(15 downto 0);
   signal tmax_w     : std_logic;
 
-
   -----------------------------------------------------------
   -------------------- RECEIVE FSM --------------------------
   -----------------------------------------------------------
@@ -71,12 +70,6 @@ architecture arch of uart is
   constant RX_STOP   : std_logic_vector(2 downto 0) := "100";
   signal rx_curr_r : std_logic_vector(2 downto 0);
   signal rx_next_w : std_logic_vector(2 downto 0);
-
-  attribute syn_preserve : boolean;
-  attribute syn_preserve of tx_curr_r : signal is true;
-  attribute syn_preserve of rx_curr_r : signal is true;
-
-
   signal ctl_rbaud_clr_w : std_logic;
   signal ctl_rbaud_cnt_w : std_logic;
   signal ctl_rbit_clr_w  : std_logic;
@@ -93,6 +86,28 @@ architecture arch of uart is
   signal rbit_max_w  : std_logic;
 
 
+
+
+
+
+  -- Xilinx attributes to prevent optimization of TMR
+  attribute DONT_TOUCH : string;
+  attribute DONT_TOUCH of rbaud_r : signal is "TRUE";
+  attribute DONT_TOUCH of rcounter_r : signal is "TRUE";
+  attribute DONT_TOUCH of rdata_r : signal is "TRUE";
+  attribute DONT_TOUCH of rx_curr_r : signal is "TRUE";
+  attribute DONT_TOUCH of tbaud_r : signal is "TRUE";
+  attribute DONT_TOUCH of tcounter_r : signal is "TRUE";
+  attribute DONT_TOUCH of tx_curr_r : signal is "TRUE";
+  -- Synplify attributes to prevent optimization of TMR
+  attribute syn_preserve : boolean;
+  attribute syn_preserve of rbaud_r : signal is true;
+  attribute syn_preserve of rcounter_r : signal is true;
+  attribute syn_preserve of rdata_r : signal is true;
+  attribute syn_preserve of rx_curr_r : signal is true;
+  attribute syn_preserve of tbaud_r : signal is true;
+  attribute syn_preserve of tcounter_r : signal is true;
+  attribute syn_preserve of tx_curr_r : signal is true;
 begin
 
   baud_div_max_w <= baud_div_i;

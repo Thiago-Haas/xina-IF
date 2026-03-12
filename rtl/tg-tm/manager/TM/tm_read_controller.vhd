@@ -46,6 +46,24 @@ architecture rtl of tm_read_controller is
   signal done_pulse_r  : std_logic := '0';
   signal seed_pulse_r  : std_logic := '0';
   signal seeded_r    : std_logic := '0';
+
+
+
+
+  -- Xilinx attributes to prevent optimization of TMR
+  attribute DONT_TOUCH : string;
+  attribute DONT_TOUCH of done_pulse_r : signal is "TRUE";
+  attribute DONT_TOUCH of hs_r : signal is "TRUE";
+  attribute DONT_TOUCH of seed_pulse_r : signal is "TRUE";
+  attribute DONT_TOUCH of seeded_r : signal is "TRUE";
+  attribute DONT_TOUCH of state_r : signal is "TRUE";
+  -- Synplify attributes to prevent optimization of TMR
+  attribute syn_preserve : boolean;
+  attribute syn_preserve of done_pulse_r : signal is true;
+  attribute syn_preserve of hs_r : signal is true;
+  attribute syn_preserve of seed_pulse_r : signal is true;
+  attribute syn_preserve of seeded_r : signal is true;
+  attribute syn_preserve of state_r : signal is true;
 begin
   arvalid_i <= '1' when (state_r = C_STATE_AR) else '0';
   rready_i  <= '1' when (state_r = C_STATE_R)  else '0';

@@ -38,6 +38,10 @@ end backend_manager_packetizer_control_tmr;
 
 architecture rtl of backend_manager_packetizer_control_tmr is
 
+    attribute DONT_TOUCH : string;
+    attribute syn_preserve : boolean;
+    attribute KEEP_HIERARCHY : string;
+
     type t_BIT_VECTOR is array (2 downto 0) of std_logic;
     type t_BIT_VECTOR_FLIT_SELECTOR is array (2 downto 0) of std_logic_vector(2 downto 0);
 
@@ -68,10 +72,9 @@ architecture rtl of backend_manager_packetizer_control_tmr is
 begin
 
     gen_TMR : for i in 2 downto 0 generate
-        -- Xilinx attributes to prevent optimization of TMR
-        attribute DONT_TOUCH : string;
         attribute DONT_TOUCH of u_PACKETIZER_CONTROL : label is "TRUE";
-        -- Synplify attributes to prevent optimization of TMR
+        attribute syn_preserve of u_PACKETIZER_CONTROL : label is true;
+        attribute KEEP_HIERARCHY of u_PACKETIZER_CONTROL : label is "TRUE";
         attribute syn_radhardlevel : string;
         attribute syn_keep         : boolean;
         attribute syn_safe_case    : boolean;

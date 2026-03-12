@@ -59,6 +59,16 @@ architecture rtl of tg_write_datapath is
   signal lfsr_next_w  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
   signal do_step_w : std_logic;
+
+
+
+
+  -- Xilinx attributes to prevent optimization of TMR
+  attribute DONT_TOUCH : string;
+  attribute DONT_TOUCH of wdata_r : signal is "TRUE";
+  -- Synplify attributes to prevent optimization of TMR
+  attribute syn_preserve : boolean;
+  attribute syn_preserve of wdata_r : signal is true;
 begin
   -- Constant fields
   AWADDR  <= INPUT_ADDRESS(c_AXI_ADDR_WIDTH - 1 downto 0);

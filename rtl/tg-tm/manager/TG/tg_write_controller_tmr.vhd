@@ -39,6 +39,9 @@ entity tg_write_controller_tmr is
 end entity;
 
 architecture rtl of tg_write_controller_tmr is
+  attribute DONT_TOUCH : string;
+    attribute syn_preserve : boolean;
+  attribute KEEP_HIERARCHY : string;
 
   type tmr_sl_t is array (2 downto 0) of std_logic;
 
@@ -79,6 +82,10 @@ begin
 
   -- 3 replicated controllers
   gen_ctrl : for i in 0 to 2 generate
+    attribute DONT_TOUCH of u_CTRL : label is "TRUE";
+        attribute syn_preserve of u_CTRL : label is true;
+    attribute KEEP_HIERARCHY of u_CTRL : label is "TRUE";
+  begin
     u_CTRL : entity work.tg_write_controller
       port map (
         ACLK    => ACLK,

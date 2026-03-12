@@ -25,6 +25,16 @@ architecture rtl of receive_control is
     signal state_w_r    : std_logic_vector(1 downto 0);
     signal next_state_w : std_logic_vector(1 downto 0);
 
+
+
+
+
+  -- Xilinx attributes to prevent optimization of TMR
+  attribute DONT_TOUCH : string;
+  attribute DONT_TOUCH of state_w_r : signal is "TRUE";
+  -- Synplify attributes to prevent optimization of TMR
+  attribute syn_preserve : boolean;
+  attribute syn_preserve of state_w_r : signal is true;
 begin
     ---------------------------------------------------------------------------------------------
     -- Update current state on clock rising edge.

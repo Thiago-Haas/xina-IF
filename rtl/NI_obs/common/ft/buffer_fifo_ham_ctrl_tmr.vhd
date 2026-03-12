@@ -29,6 +29,10 @@ entity buffer_fifo_ham_ctrl_tmr is
 end entity;
 
 architecture rtl of buffer_fifo_ham_ctrl_tmr is
+  attribute DONT_TOUCH : string;
+    attribute syn_preserve : boolean;
+  attribute KEEP_HIERARCHY : string;
+
   function maj3(a, b, c : std_logic) return std_logic is
   begin
     return (a and b) or (a and c) or (b and c);
@@ -70,6 +74,9 @@ architecture rtl of buffer_fifo_ham_ctrl_tmr is
   signal fifo_count_w    : tmr_cnt_t;
 begin
   gen_ctrl : for i in 0 to 2 generate
+    attribute DONT_TOUCH of u_ctrl : label is "TRUE";
+        attribute syn_preserve of u_ctrl : label is true;
+    attribute KEEP_HIERARCHY of u_ctrl : label is "TRUE";
   begin
     u_ctrl : entity work.buffer_fifo_ham_ctrl
       generic map(
@@ -103,4 +110,3 @@ begin
   FIFO_READ_OK_o  <= maj3(fifo_read_ok_w(2), fifo_read_ok_w(1), fifo_read_ok_w(0)) when correct_enable_i = '1' else fifo_read_ok_w(0);
   FIFO_COUNT_o    <= maj3_uns(fifo_count_w(2), fifo_count_w(1), fifo_count_w(0)) when correct_enable_i = '1' else fifo_count_w(0);
 end architecture;
-

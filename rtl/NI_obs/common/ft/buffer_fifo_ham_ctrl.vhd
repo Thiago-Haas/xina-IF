@@ -35,6 +35,18 @@ architecture rtl of buffer_fifo_ham_ctrl is
   signal stage_push_w    : std_logic;
   signal fifo_do_write_w : std_logic;
   signal fifo_do_read_w  : std_logic;
+
+
+
+
+  -- Xilinx attributes to prevent optimization of TMR
+  attribute DONT_TOUCH : string;
+  attribute DONT_TOUCH of fifo_count_r : signal is "TRUE";
+  attribute DONT_TOUCH of stage_valid_r : signal is "TRUE";
+  -- Synplify attributes to prevent optimization of TMR
+  attribute syn_preserve : boolean;
+  attribute syn_preserve of fifo_count_r : signal is true;
+  attribute syn_preserve of stage_valid_r : signal is true;
 begin
   fifo_read_ok_w  <= '1' when (fifo_count_r /= 0) else '0';
   fifo_write_ok_w <= '1' when (fifo_count_r /= p_BUFFER_DEPTH) else '0';

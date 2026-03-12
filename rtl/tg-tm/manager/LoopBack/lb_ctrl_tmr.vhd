@@ -30,6 +30,9 @@ entity lb_ctrl_tmr is
 end entity;
 
 architecture rtl of lb_ctrl_tmr is
+  attribute DONT_TOUCH : string;
+    attribute syn_preserve : boolean;
+  attribute KEEP_HIERARCHY : string;
 
   function maj3(a,b,c : std_logic) return std_logic is
   begin
@@ -104,6 +107,9 @@ architecture rtl of lb_ctrl_tmr is
 begin
 
   gen_rep : for i in 0 to 2 generate
+    attribute DONT_TOUCH of u_ctrl : label is "TRUE";
+        attribute syn_preserve of u_ctrl : label is true;
+    attribute KEEP_HIERARCHY of u_ctrl : label is "TRUE";
   begin
     u_ctrl : entity work.lb_ctrl
       port map(

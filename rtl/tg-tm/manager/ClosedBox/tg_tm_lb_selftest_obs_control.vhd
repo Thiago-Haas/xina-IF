@@ -27,6 +27,20 @@ architecture rtl of tg_tm_lb_selftest_obs_control is
 
   signal tg_start_r : std_logic := '0';
   signal tm_start_r : std_logic := '0';
+
+
+
+
+  -- Xilinx attributes to prevent optimization of TMR
+  attribute DONT_TOUCH : string;
+  attribute DONT_TOUCH of state_r : signal is "TRUE";
+  attribute DONT_TOUCH of tg_start_r : signal is "TRUE";
+  attribute DONT_TOUCH of tm_start_r : signal is "TRUE";
+  -- Synplify attributes to prevent optimization of TMR
+  attribute syn_preserve : boolean;
+  attribute syn_preserve of state_r : signal is true;
+  attribute syn_preserve of tg_start_r : signal is true;
+  attribute syn_preserve of tm_start_r : signal is true;
 begin
   tg_start_o <= tg_start_r;
   tm_start_o <= tm_start_r;

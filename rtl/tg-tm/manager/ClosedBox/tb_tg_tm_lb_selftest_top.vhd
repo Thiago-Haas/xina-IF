@@ -51,6 +51,7 @@ architecture tb of tb_tg_tm_lb_selftest_top is
 
   function f_byte_to_char(b : std_logic_vector(7 downto 0)) return character is
     variable n : integer := to_integer(unsigned(b));
+
   begin
     if (n >= 32) and (n <= 126) then
       return character'val(n);
@@ -122,6 +123,14 @@ architecture tb of tb_tg_tm_lb_selftest_top is
     return v;
   end function;
 
+
+
+  -- Xilinx attributes to prevent optimization of TMR
+  attribute DONT_TOUCH : string;
+  attribute DONT_TOUCH of tm_decoded_count_r : signal is "TRUE";
+  -- Synplify attributes to prevent optimization of TMR
+  attribute syn_preserve : boolean;
+  attribute syn_preserve of tm_decoded_count_r : signal is true;
 begin
 
   -- clock

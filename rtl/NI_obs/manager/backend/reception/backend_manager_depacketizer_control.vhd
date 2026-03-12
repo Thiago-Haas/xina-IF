@@ -41,6 +41,22 @@ architecture rtl of backend_manager_depacketizer_control is
     signal set_payload_counter_r: std_logic := '0';
     signal subtract_payload_counter_r: std_logic := '0';
 
+
+
+
+
+  -- Xilinx attributes to prevent optimization of TMR
+  attribute DONT_TOUCH : string;
+  attribute DONT_TOUCH of payload_counter_r : signal is "TRUE";
+  attribute DONT_TOUCH of set_payload_counter_r : signal is "TRUE";
+  attribute DONT_TOUCH of state_w_r : signal is "TRUE";
+  attribute DONT_TOUCH of subtract_payload_counter_r : signal is "TRUE";
+  -- Synplify attributes to prevent optimization of TMR
+  attribute syn_preserve : boolean;
+  attribute syn_preserve of payload_counter_r : signal is true;
+  attribute syn_preserve of set_payload_counter_r : signal is true;
+  attribute syn_preserve of state_w_r : signal is true;
+  attribute syn_preserve of subtract_payload_counter_r : signal is true;
 begin
     ---------------------------------------------------------------------------------------------
     -- Update current state on clock rising edge.

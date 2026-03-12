@@ -52,6 +52,34 @@ architecture rtl of lb_ctrl is
   signal tx_has_payload_r  : std_logic := '0';
 
   signal hold_valid_r    : std_logic := '0';
+
+
+
+
+  -- Xilinx attributes to prevent optimization of TMR
+  attribute DONT_TOUCH : string;
+  attribute DONT_TOUCH of cap_en_r : signal is "TRUE";
+  attribute DONT_TOUCH of cap_idx_r : signal is "TRUE";
+  attribute DONT_TOUCH of hold_valid_r : signal is "TRUE";
+  attribute DONT_TOUCH of lin_ack_r : signal is "TRUE";
+  attribute DONT_TOUCH of rx_seen_first_r : signal is "TRUE";
+  attribute DONT_TOUCH of seen_last_r : signal is "TRUE";
+  attribute DONT_TOUCH of st_r : signal is "TRUE";
+  attribute DONT_TOUCH of tx_has_payload_r : signal is "TRUE";
+  attribute DONT_TOUCH of tx_next_is_read_r : signal is "TRUE";
+  attribute DONT_TOUCH of tx_phase_r : signal is "TRUE";
+  -- Synplify attributes to prevent optimization of TMR
+  attribute syn_preserve : boolean;
+  attribute syn_preserve of cap_en_r : signal is true;
+  attribute syn_preserve of cap_idx_r : signal is true;
+  attribute syn_preserve of hold_valid_r : signal is true;
+  attribute syn_preserve of lin_ack_r : signal is true;
+  attribute syn_preserve of rx_seen_first_r : signal is true;
+  attribute syn_preserve of seen_last_r : signal is true;
+  attribute syn_preserve of st_r : signal is true;
+  attribute syn_preserve of tx_has_payload_r : signal is true;
+  attribute syn_preserve of tx_next_is_read_r : signal is true;
+  attribute syn_preserve of tx_phase_r : signal is true;
 begin
   lin_ack_o       <= lin_ack_r;
   cap_en_o        <= cap_en_r;

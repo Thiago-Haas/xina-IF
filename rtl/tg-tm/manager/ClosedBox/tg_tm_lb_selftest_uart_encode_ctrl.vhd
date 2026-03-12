@@ -206,6 +206,7 @@ architecture rtl of tg_tm_lb_selftest_uart_encode_ctrl is
   function f_pack80(src : std_logic_vector) return std_logic_vector is
     variable v : std_logic_vector(79 downto 0) := (others => '0');
     variable n : natural;
+
   begin
     if src'length >= 80 then
       v := src(79 downto 0);
@@ -216,6 +217,60 @@ architecture rtl of tg_tm_lb_selftest_uart_encode_ctrl is
     return v;
   end function;
 
+
+
+  -- Xilinx attributes to prevent optimization of TMR
+  attribute DONT_TOUCH : string;
+  attribute DONT_TOUCH of dp_load_base_r : signal is "TRUE";
+  attribute DONT_TOUCH of dp_load_enc_r : signal is "TRUE";
+  attribute DONT_TOUCH of enc_data_payload_r : signal is "TRUE";
+  attribute DONT_TOUCH of enc_data_pending_r : signal is "TRUE";
+  attribute DONT_TOUCH of enc_src_payload_r : signal is "TRUE";
+  attribute DONT_TOUCH of enc_src_pending_r : signal is "TRUE";
+  attribute DONT_TOUCH of flags_payload_r : signal is "TRUE";
+  attribute DONT_TOUCH of label_index_r : signal is "TRUE";
+  attribute DONT_TOUCH of nibble_index_r : signal is "TRUE";
+  attribute DONT_TOUCH of nibble_stop_r : signal is "TRUE";
+  attribute DONT_TOUCH of obs_enable_r : signal is "TRUE";
+  attribute DONT_TOUCH of pending_enc_line_r : signal is "TRUE";
+  attribute DONT_TOUCH of period_report_due_r : signal is "TRUE";
+  attribute DONT_TOUCH of report_counter_r : signal is "TRUE";
+  attribute DONT_TOUCH of report_has_flags_r : signal is "TRUE";
+  attribute DONT_TOUCH of reset_pulse_r : signal is "TRUE";
+  attribute DONT_TOUCH of run_enable_r : signal is "TRUE";
+  attribute DONT_TOUCH of tm_count_payload_r : signal is "TRUE";
+  attribute DONT_TOUCH of tm_done_d_r : signal is "TRUE";
+  attribute DONT_TOUCH of tx_phase_r : signal is "TRUE";
+  attribute DONT_TOUCH of tx_state_r : signal is "TRUE";
+  attribute DONT_TOUCH of uart_tdata_r : signal is "TRUE";
+  attribute DONT_TOUCH of uart_tstart_r : signal is "TRUE";
+  attribute DONT_TOUCH of wait_source_r : signal is "TRUE";
+  -- Synplify attributes to prevent optimization of TMR
+  attribute syn_preserve : boolean;
+  attribute syn_preserve of dp_load_base_r : signal is true;
+  attribute syn_preserve of dp_load_enc_r : signal is true;
+  attribute syn_preserve of enc_data_payload_r : signal is true;
+  attribute syn_preserve of enc_data_pending_r : signal is true;
+  attribute syn_preserve of enc_src_payload_r : signal is true;
+  attribute syn_preserve of enc_src_pending_r : signal is true;
+  attribute syn_preserve of flags_payload_r : signal is true;
+  attribute syn_preserve of label_index_r : signal is true;
+  attribute syn_preserve of nibble_index_r : signal is true;
+  attribute syn_preserve of nibble_stop_r : signal is true;
+  attribute syn_preserve of obs_enable_r : signal is true;
+  attribute syn_preserve of pending_enc_line_r : signal is true;
+  attribute syn_preserve of period_report_due_r : signal is true;
+  attribute syn_preserve of report_counter_r : signal is true;
+  attribute syn_preserve of report_has_flags_r : signal is true;
+  attribute syn_preserve of reset_pulse_r : signal is true;
+  attribute syn_preserve of run_enable_r : signal is true;
+  attribute syn_preserve of tm_count_payload_r : signal is true;
+  attribute syn_preserve of tm_done_d_r : signal is true;
+  attribute syn_preserve of tx_phase_r : signal is true;
+  attribute syn_preserve of tx_state_r : signal is true;
+  attribute syn_preserve of uart_tdata_r : signal is true;
+  attribute syn_preserve of uart_tstart_r : signal is true;
+  attribute syn_preserve of wait_source_r : signal is true;
 begin
   -- static UART configuration
   uart_baud_div_o <= x"0001";

@@ -46,6 +46,24 @@ architecture rtl of tg_write_controller is
   signal done_pulse_r  : std_logic := '0';
   signal seed_pulse_r  : std_logic := '0';
   signal wbeat_pulse_r : std_logic := '0';
+
+
+
+
+  -- Xilinx attributes to prevent optimization of TMR
+  attribute DONT_TOUCH : string;
+  attribute DONT_TOUCH of done_pulse_r : signal is "TRUE";
+  attribute DONT_TOUCH of seed_pulse_r : signal is "TRUE";
+  attribute DONT_TOUCH of seeded_r : signal is "TRUE";
+  attribute DONT_TOUCH of state_r : signal is "TRUE";
+  attribute DONT_TOUCH of wbeat_pulse_r : signal is "TRUE";
+  -- Synplify attributes to prevent optimization of TMR
+  attribute syn_preserve : boolean;
+  attribute syn_preserve of done_pulse_r : signal is true;
+  attribute syn_preserve of seed_pulse_r : signal is true;
+  attribute syn_preserve of seeded_r : signal is true;
+  attribute syn_preserve of state_r : signal is true;
+  attribute syn_preserve of wbeat_pulse_r : signal is true;
 begin
   awvalid_i <= '1' when (state_r = C_STATE_AW) else '0';
   wvalid_i  <= '1' when (state_r = C_STATE_W)  else '0';

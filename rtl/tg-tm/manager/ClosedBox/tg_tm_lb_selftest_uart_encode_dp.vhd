@@ -42,9 +42,18 @@ architecture rtl of tg_tm_lb_selftest_uart_encode_dp is
   signal nibble_data_w : std_logic_vector(3 downto 0);
 
   function f_char_to_slv8(c : character) return std_logic_vector is
+
   begin
     return std_logic_vector(to_unsigned(character'pos(c), 8));
   end function;
+
+
+  -- Xilinx attributes to prevent optimization of TMR
+  attribute DONT_TOUCH : string;
+  attribute DONT_TOUCH of fault_data_r : signal is "TRUE";
+  -- Synplify attributes to prevent optimization of TMR
+  attribute syn_preserve : boolean;
+  attribute syn_preserve of fault_data_r : signal is true;
 begin
   assert (C_BASE_TM_MSB <= 83)
     report "TM+FLAGS payload width exceeds datapath storage width"

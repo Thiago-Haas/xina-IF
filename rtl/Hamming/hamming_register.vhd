@@ -38,8 +38,10 @@ begin
 
   g_NORMAL_REG : if not HAMMING_ENABLE generate
     signal reg_r : std_logic_vector(DATA_WIDTH-1 downto 0) := RESET_VALUE;
-    -- Synplify flags
+    -- Xilinx/Synplify flags to preserve ECC register
+    attribute DONT_TOUCH : string;
     attribute syn_preserve : boolean;
+    attribute DONT_TOUCH of reg_r : signal is "TRUE";
     attribute syn_preserve of reg_r : signal is true;
   begin
     p_REG : process(clk_i, rstn_i)
@@ -66,10 +68,12 @@ begin
     constant RESET_VALUE_HAMMING : std_logic_vector(REG_DATA_WIDTH-1 downto 0) := get_parity_data_result(RESET_VALUE, DETECT_DOUBLE) & RESET_VALUE;
     signal enc_w : std_logic_vector(REG_DATA_WIDTH-1 downto 0);
     signal reg_r : std_logic_vector(REG_DATA_WIDTH-1 downto 0) := RESET_VALUE_HAMMING;
-    -- Synplify flags
-    attribute syn_preserve : boolean;
-    attribute syn_preserve of reg_r : signal is true;
     signal wdata_w : std_logic_vector(REG_DATA_WIDTH-1 downto 0);
+    -- Xilinx/Synplify flags to preserve ECC register
+    attribute DONT_TOUCH : string;
+    attribute syn_preserve : boolean;
+    attribute DONT_TOUCH of reg_r : signal is "TRUE";
+    attribute syn_preserve of reg_r : signal is true;
   begin
 
     -- encode next register data
@@ -85,6 +89,10 @@ begin
 
     inject_error_g : if INJECT_ERROR generate
       signal inj_counter_r : std_logic_vector(9 downto 0);
+      attribute DONT_TOUCH : string;
+      attribute syn_preserve : boolean;
+      attribute DONT_TOUCH of inj_counter_r : signal is "TRUE";
+      attribute syn_preserve of inj_counter_r : signal is true;
     begin
       -- Inject errors based on counter
       inj_counter_p : process (rstn_i, clk_i)

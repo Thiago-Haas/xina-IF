@@ -63,6 +63,18 @@ architecture rtl of buffer_fifo_ham is
   signal enc_reg_word_r   : std_logic_vector(c_ENC_WIDTH - 1 downto 0);
   signal enc_word_w     : std_logic_vector(c_ENC_WIDTH - 1 downto 0);
 
+
+
+
+
+  -- Xilinx attributes to prevent optimization of TMR
+  attribute DONT_TOUCH : string;
+  attribute DONT_TOUCH of enc_reg_word_r : signal is "TRUE";
+  attribute DONT_TOUCH of fifo_mem_r : signal is "TRUE";
+  -- Synplify attributes to prevent optimization of TMR
+  attribute syn_preserve : boolean;
+  attribute syn_preserve of enc_reg_word_r : signal is true;
+  attribute syn_preserve of fifo_mem_r : signal is true;
 begin
 
   gen_ctrl_plain : if not p_USE_HAM_FIFO_CTRL_TMR generate

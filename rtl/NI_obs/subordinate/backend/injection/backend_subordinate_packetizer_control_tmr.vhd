@@ -32,6 +32,10 @@ entity backend_subordinate_packetizer_control_tmr is
 end backend_subordinate_packetizer_control_tmr;
 
 architecture rtl of backend_subordinate_packetizer_control_tmr is
+    attribute DONT_TOUCH : string;
+    attribute syn_preserve : boolean;
+    attribute KEEP_HIERARCHY : string;
+
     type t_BIT_VECTOR is array (2 downto 0) of std_logic;
     type t_BIT_VECTOR_FLIT_SELECTOR is array (2 downto 0) of std_logic_vector(2 downto 0);
 
@@ -46,6 +50,10 @@ architecture rtl of backend_subordinate_packetizer_control_tmr is
 begin
     TMR:
     for i in 2 downto 0 generate
+        attribute DONT_TOUCH of u_PACKETIZER_CONTROL : label is "TRUE";
+        attribute syn_preserve of u_PACKETIZER_CONTROL : label is true;
+        attribute KEEP_HIERARCHY of u_PACKETIZER_CONTROL : label is "TRUE";
+    begin
         u_PACKETIZER_CONTROL: entity work.backend_subordinate_packetizer_control
             port map(
                 ACLK    => ACLK,
