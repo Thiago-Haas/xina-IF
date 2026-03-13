@@ -54,7 +54,10 @@ architecture rtl of selftest_uart_command_block is
   signal command_enable_w : std_logic;
   signal uart_command_ctrl_tmr_error_w : std_logic;
   signal uart_command_ctrl_tmr_correct_enable_w : std_logic;
+  signal uart_command_ctrl_tmr_correct_enable_gate_w : std_logic;
 begin
+  uart_command_ctrl_tmr_correct_enable_gate_w <= uart_command_ctrl_tmr_correct_enable_w when c_ENABLE_OBS_UART_COMMAND_CTRL_TMR_CORRECTION else '0';
+
   b_uart_command_control_plain : if not p_USE_UART_COMMAND_CTRL_TMR generate
   begin
     u_uart_command_control: entity work.selftest_uart_command_control
@@ -84,7 +87,7 @@ begin
         run_enable_o     => experiment_run_enable_o,
         reset_pulse_o    => experiment_reset_pulse_o,
         command_enable_o => command_enable_w,
-        correct_enable_i => uart_command_ctrl_tmr_correct_enable_w when c_ENABLE_OBS_UART_COMMAND_CTRL_TMR_CORRECTION else '0',
+        correct_enable_i => uart_command_ctrl_tmr_correct_enable_gate_w,
         error_o          => uart_command_ctrl_tmr_error_w
       );
   end generate;
