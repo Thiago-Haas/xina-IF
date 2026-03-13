@@ -82,6 +82,10 @@ package xina_ni_ft_pkg is
 
   -- Closed-box observation start/done sequencer TMR.
   constant c_ENABLE_OBS_START_DONE_CTRL_TMR : boolean := true;
+  -- Closed-box UART command control TMR.
+  constant c_ENABLE_OBS_UART_COMMAND_CTRL_TMR : boolean := true;
+  -- Closed-box UART command control TMR correction enable.
+  constant c_ENABLE_OBS_UART_COMMAND_CTRL_TMR_CORRECTION : boolean := true;
 
   ------------------------------------------------------------------------------
   -- XINA Configuration

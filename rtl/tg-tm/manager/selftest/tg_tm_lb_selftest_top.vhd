@@ -6,8 +6,8 @@ use work.xina_ni_ft_pkg.all;
 
 -- Closed-box self-test top:
 --   Inputs: ACLK, ARESETn
---   Internally instantiates TG+TM+NI+loopback (tg_tm_lb_system_top)
---   and an observation block that is split into control/datapath.
+--   Internally instantiates TG+TM+NI+loopback (tg_tm_lb_system_top),
+--   start/done control, constant seed/address generation, and UART observability.
 entity tg_tm_lb_selftest_top is
   port (
     ACLK    : in std_logic;
@@ -33,6 +33,10 @@ architecture rtl of tg_tm_lb_selftest_top is
   signal tm_seed_w  : std_logic_vector(31 downto 0);
 
   signal tm_comparison_mismatch_w : std_logic;
+  signal experiment_run_enable_w  : std_logic;
+  signal experiment_reset_pulse_w : std_logic;
+  signal start_done_ctrl_tmr_error_w : std_logic;
+  signal start_done_ctrl_tmr_correct_error_w : std_logic;
 
   -- OBS enable wires (obs block -> DUT)
   signal OBS_TM_HAM_BUFFER_CORRECT_ERROR_w : std_logic;
@@ -150,7 +154,46 @@ begin
       uart_rts_o => uart_rts_o
     );
 
-  u_obs_block_controller: entity work.selftest_observation_top
+  gen_start_done_ctrl_plain : if not c_ENABLE_OBS_START_DONE_CTRL_TMR generate
+    u_start_done_control: entity work.selftest_start_done_control
+      port map (
+        ACLK    => ACLK,
+        ARESETn => ARESETn,
+        experiment_run_enable_i  => experiment_run_enable_w,
+        experiment_reset_pulse_i => experiment_reset_pulse_w,
+        tg_done_i => tg_done_w,
+        tm_done_i => tm_done_w,
+        tg_start_o => tg_start_w,
+        tm_start_o => tm_start_w
+      );
+    start_done_ctrl_tmr_error_w <= '0';
+  end generate;
+
+  gen_start_done_ctrl_tmr : if c_ENABLE_OBS_START_DONE_CTRL_TMR generate
+    u_start_done_control_tmr: entity work.selftest_start_done_control_tmr
+      port map (
+        ACLK    => ACLK,
+        ARESETn => ARESETn,
+        experiment_run_enable_i  => experiment_run_enable_w,
+        experiment_reset_pulse_i => experiment_reset_pulse_w,
+        tg_done_i => tg_done_w,
+        tm_done_i => tm_done_w,
+        tg_start_o => tg_start_w,
+        tm_start_o => tm_start_w,
+        correct_enable_i => start_done_ctrl_tmr_correct_error_w,
+        error_o          => start_done_ctrl_tmr_error_w
+      );
+  end generate;
+
+  u_seed_addr_constants: entity work.selftest_seed_addr_constants
+    port map (
+      tg_addr_o => tg_addr_w,
+      tg_seed_o => tg_seed_w,
+      tm_addr_o => tm_addr_w,
+      tm_seed_o => tm_seed_w
+    );
+
+  u_obs_uart_encode_block: entity work.selftest_obs_uart_encode_block
     port map (
       ACLK    => ACLK,
       ARESETn => ARESETn,
@@ -166,16 +209,7 @@ begin
       uart_rdata_i  => uart_rdata_w,
       uart_rerr_i   => uart_rerr_w,
 
-      tg_start_o => tg_start_w,
-      tg_done_i  => tg_done_w,
-      tg_addr_o  => tg_addr_w,
-      tg_seed_o  => tg_seed_w,
-
-      tm_start_o => tm_start_w,
       tm_done_i  => tm_done_w,
-      tm_addr_o  => tm_addr_w,
-      tm_seed_o  => tm_seed_w,
-
       tm_comparison_mismatch_i => tm_comparison_mismatch_w,
       TM_TRANSACTION_COUNT_i => tm_transaction_count_w,
       TM_EXPECTED_VALUE_i    => tm_expected_value_w,
@@ -244,7 +278,6 @@ begin
       OBS_BE_RX_HAM_BUFFER_SINGLE_ERR_i => OBS_BE_RX_HAM_BUFFER_SINGLE_ERR_w,
       OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR_i => OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR_w,
       OBS_BE_RX_HAM_BUFFER_ENC_DATA_i => OBS_BE_RX_HAM_BUFFER_ENC_DATA_w,
-      OBS_BE_RX_TMR_HAM_BUFFER_CTRL_ERROR_i => OBS_BE_RX_TMR_HAM_BUFFER_CTRL_ERROR_w,
       OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR_i => OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR_w,
       OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR_i => OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR_w,
       OBS_BE_RX_HAM_INTERFACE_HDR_ENC_DATA_i => OBS_BE_RX_HAM_INTERFACE_HDR_ENC_DATA_w,
@@ -252,7 +285,11 @@ begin
       OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR_i => OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR_w,
       OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR_i => OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR_w,
       OBS_BE_RX_HAM_INTEGRITY_ENC_DATA_i => OBS_BE_RX_HAM_INTEGRITY_ENC_DATA_w,
-      OBS_BE_RX_TMR_FLOW_CTRL_ERROR_i => OBS_BE_RX_TMR_FLOW_CTRL_ERROR_w
+      OBS_BE_RX_TMR_FLOW_CTRL_ERROR_i => OBS_BE_RX_TMR_FLOW_CTRL_ERROR_w,
+      OBS_START_DONE_CTRL_TMR_ERROR_i => start_done_ctrl_tmr_error_w,
+      OBS_START_DONE_CTRL_TMR_CORRECT_ERROR_o => start_done_ctrl_tmr_correct_error_w,
+      experiment_run_enable_o => experiment_run_enable_w,
+      experiment_reset_pulse_o => experiment_reset_pulse_w
     );
 
   u_tg_tm_lb_system_dut: entity work.tg_tm_lb_system_top

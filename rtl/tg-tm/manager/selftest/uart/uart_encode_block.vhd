@@ -137,12 +137,13 @@ architecture rtl of selftest_obs_uart_encode_block is
   signal dp_label_index_w : natural range 1 to 8;
   signal dp_hex_char_w    : std_logic_vector(7 downto 0);
   signal dp_label_char_w  : std_logic_vector(7 downto 0);
+  signal uart_command_ctrl_tmr_error_w : std_logic;
 begin
   uart_rready_o <= '1';
 
   b_obs_enable_block: block
   begin
-    u_obs_enable_block: entity work.selftest_obs_enable_block
+    u_obs_enable_block: entity work.selftest_uart_command_block
       port map(
         ACLK    => ACLK,
         ARESETn => ARESETn,
@@ -170,7 +171,8 @@ begin
         OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR_o => OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR_o,
         OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR_o => OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR_o,
         OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR_o => OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR_o,
-        OBS_START_DONE_CTRL_TMR_CORRECT_ERROR_o => OBS_START_DONE_CTRL_TMR_CORRECT_ERROR_o
+        OBS_START_DONE_CTRL_TMR_CORRECT_ERROR_o => OBS_START_DONE_CTRL_TMR_CORRECT_ERROR_o,
+        OBS_UART_COMMAND_CTRL_TMR_ERROR_o       => uart_command_ctrl_tmr_error_w
       );
   end block;
 
@@ -230,6 +232,7 @@ begin
         OBS_BE_RX_HAM_INTEGRITY_ENC_DATA_i => OBS_BE_RX_HAM_INTEGRITY_ENC_DATA_i,
         OBS_BE_RX_TMR_FLOW_CTRL_ERROR_i => OBS_BE_RX_TMR_FLOW_CTRL_ERROR_i,
         OBS_START_DONE_CTRL_TMR_ERROR_i => OBS_START_DONE_CTRL_TMR_ERROR_i,
+        OBS_UART_COMMAND_CTRL_TMR_ERROR_i => uart_command_ctrl_tmr_error_w,
         uart_baud_div_o => uart_baud_div_o,
         uart_parity_o   => uart_parity_o,
         uart_rtscts_o   => uart_rtscts_o,

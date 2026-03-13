@@ -70,6 +70,7 @@ entity selftest_obs_uart_encode_ctrl is
     OBS_BE_RX_HAM_INTEGRITY_ENC_DATA_i : in std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
     OBS_BE_RX_TMR_FLOW_CTRL_ERROR_i : in std_logic;
     OBS_START_DONE_CTRL_TMR_ERROR_i : in std_logic;
+    OBS_UART_COMMAND_CTRL_TMR_ERROR_i : in std_logic;
 
     -- UART config
     uart_baud_div_o : out std_logic_vector(15 downto 0);
@@ -248,10 +249,12 @@ begin
     OBS_BE_RX_INTEGRITY_CORRUPT_i or
     OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR_i or OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR_i or
     OBS_BE_RX_TMR_FLOW_CTRL_ERROR_i or
-    OBS_START_DONE_CTRL_TMR_ERROR_i;
+    OBS_START_DONE_CTRL_TMR_ERROR_i or
+    OBS_UART_COMMAND_CTRL_TMR_ERROR_i;
 
   event_flags_w <=
-    (31 downto 29 => '0') &
+    (31 downto 30 => '0') &
+    OBS_UART_COMMAND_CTRL_TMR_ERROR_i &
     OBS_START_DONE_CTRL_TMR_ERROR_i &
     tm_comparison_mismatch_i &
     NI_CORRUPT_PACKET_i &

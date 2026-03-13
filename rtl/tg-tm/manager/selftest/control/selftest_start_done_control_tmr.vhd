@@ -1,13 +1,13 @@
 library IEEE;
 use IEEE.std_logic_1164.all;
 
--- TMR wrapper for selftest_obs_start_done_control.
+-- TMR wrapper for selftest_start_done_control.
 -- Same style used by other control TMR blocks in TG/TM/LB:
 -- * 3 replicas
 -- * majority vote on outputs
 -- * disagreement flag (error_o)
 -- * optional correction bypass via correct_enable_i
-entity selftest_obs_start_done_control_tmr is
+entity selftest_start_done_control_tmr is
   port (
     ACLK    : in  std_logic;
     ARESETn : in  std_logic;
@@ -25,7 +25,7 @@ entity selftest_obs_start_done_control_tmr is
   );
 end entity;
 
-architecture rtl of selftest_obs_start_done_control_tmr is
+architecture rtl of selftest_start_done_control_tmr is
   attribute DONT_TOUCH : string;
     attribute syn_preserve : boolean;
   attribute KEEP_HIERARCHY : string;
@@ -56,7 +56,7 @@ begin
         attribute syn_preserve of u_obs_ctrl : label is true;
     attribute KEEP_HIERARCHY of u_obs_ctrl : label is "TRUE";
   begin
-    u_obs_ctrl : entity work.selftest_obs_start_done_control
+    u_obs_ctrl : entity work.selftest_start_done_control
       port map(
         ACLK    => ACLK,
         ARESETn => ARESETn,
