@@ -123,6 +123,7 @@ end entity;
 
 architecture rtl of selftest_obs_uart_encode_block is
   signal uart_command_ctrl_tmr_error_w : std_logic;
+  signal uart_encode_critical_tmr_correct_error_w : std_logic;
 begin
   uart_rready_o <= '1';
 
@@ -157,7 +158,8 @@ begin
         OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR_o => OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR_o,
         OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR_o => OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR_o,
         OBS_START_DONE_CTRL_TMR_CORRECT_ERROR_o => OBS_START_DONE_CTRL_TMR_CORRECT_ERROR_o,
-        OBS_UART_COMMAND_CTRL_TMR_ERROR_o       => uart_command_ctrl_tmr_error_w
+        OBS_UART_COMMAND_CTRL_TMR_ERROR_o       => uart_command_ctrl_tmr_error_w,
+        OBS_UART_ENCODE_CRITICAL_TMR_CORRECT_ERROR_o => uart_encode_critical_tmr_correct_error_w
       );
   end block;
 
@@ -218,6 +220,7 @@ begin
         OBS_BE_RX_TMR_FLOW_CTRL_ERROR_i => OBS_BE_RX_TMR_FLOW_CTRL_ERROR_i,
         OBS_START_DONE_CTRL_TMR_ERROR_i => OBS_START_DONE_CTRL_TMR_ERROR_i,
         OBS_UART_COMMAND_CTRL_TMR_ERROR_i => uart_command_ctrl_tmr_error_w,
+        OBS_UART_ENCODE_CRITICAL_TMR_CORRECT_ERROR_i => uart_encode_critical_tmr_correct_error_w,
         uart_baud_div_o => uart_baud_div_o,
         uart_parity_o   => uart_parity_o,
         uart_rtscts_o   => uart_rtscts_o,

@@ -10,7 +10,8 @@ use work.xina_ni_ft_pkg.all;
 -- * encode datapath
 entity selftest_obs_uart_encode_core_block is
   generic (
-    G_REPORT_PERIOD_PACKETS : positive := c_TM_UART_REPORT_PERIOD_PACKETS
+    G_REPORT_PERIOD_PACKETS : positive := c_TM_UART_REPORT_PERIOD_PACKETS;
+    p_USE_UART_ENCODE_CRITICAL_TMR : boolean := c_ENABLE_OBS_UART_ENCODE_CRITICAL_TMR
   );
   port (
     ACLK    : in  std_logic;
@@ -65,6 +66,7 @@ entity selftest_obs_uart_encode_core_block is
     OBS_BE_RX_TMR_FLOW_CTRL_ERROR_i : in std_logic;
     OBS_START_DONE_CTRL_TMR_ERROR_i : in std_logic;
     OBS_UART_COMMAND_CTRL_TMR_ERROR_i : in std_logic;
+    OBS_UART_ENCODE_CRITICAL_TMR_CORRECT_ERROR_i : in std_logic;
 
     uart_baud_div_o : out std_logic_vector(15 downto 0);
     uart_parity_o   : out std_logic;
@@ -80,6 +82,8 @@ architecture rtl of selftest_obs_uart_encode_core_block is
   signal critical_tm_done_rise_w    : std_logic;
   signal critical_period_due_w      : std_logic;
   signal critical_report_consume_w  : std_logic;
+  signal uart_encode_critical_tmr_error_w : std_logic;
+  signal uart_encode_critical_tmr_correct_enable_w : std_logic;
   signal dp_load_base_w  : std_logic;
   signal dp_load_enc_w   : std_logic;
   signal dp_event_report_w : std_logic;
@@ -96,18 +100,42 @@ architecture rtl of selftest_obs_uart_encode_core_block is
   signal dp_hex_char_w    : std_logic_vector(7 downto 0);
   signal dp_label_char_w  : std_logic_vector(7 downto 0);
 begin
-  u_uart_encode_critical: entity work.selftest_obs_uart_encode_critical
-    generic map(
-      G_REPORT_PERIOD_PACKETS => G_REPORT_PERIOD_PACKETS
-    )
-    port map(
-      ACLK              => ACLK,
-      ARESETn           => ARESETn,
-      tm_done_i         => tm_done_i,
-      report_consume_i  => critical_report_consume_w,
-      tm_done_rise_o    => critical_tm_done_rise_w,
-      period_report_due_o => critical_period_due_w
-    );
+  uart_encode_critical_tmr_correct_enable_w <= OBS_UART_ENCODE_CRITICAL_TMR_CORRECT_ERROR_i when c_ENABLE_OBS_UART_ENCODE_CRITICAL_TMR_CORRECTION else '0';
+
+  gen_uart_encode_critical_plain : if not p_USE_UART_ENCODE_CRITICAL_TMR generate
+  begin
+    u_uart_encode_critical: entity work.selftest_obs_uart_encode_critical
+      generic map(
+        G_REPORT_PERIOD_PACKETS => G_REPORT_PERIOD_PACKETS
+      )
+      port map(
+        ACLK                => ACLK,
+        ARESETn             => ARESETn,
+        tm_done_i           => tm_done_i,
+        report_consume_i    => critical_report_consume_w,
+        tm_done_rise_o      => critical_tm_done_rise_w,
+        period_report_due_o => critical_period_due_w
+      );
+    uart_encode_critical_tmr_error_w <= '0';
+  end generate;
+
+  gen_uart_encode_critical_tmr : if p_USE_UART_ENCODE_CRITICAL_TMR generate
+  begin
+    u_uart_encode_critical_tmr: entity work.selftest_obs_uart_encode_critical_tmr
+      generic map(
+        G_REPORT_PERIOD_PACKETS => G_REPORT_PERIOD_PACKETS
+      )
+      port map(
+        ACLK                => ACLK,
+        ARESETn             => ARESETn,
+        tm_done_i           => tm_done_i,
+        report_consume_i    => critical_report_consume_w,
+        tm_done_rise_o      => critical_tm_done_rise_w,
+        period_report_due_o => critical_period_due_w,
+        correct_enable_i    => uart_encode_critical_tmr_correct_enable_w,
+        error_o             => uart_encode_critical_tmr_error_w
+      );
+  end generate;
 
   u_uart_encode_ctrl: entity work.selftest_obs_uart_encode_ctrl
     generic map(
@@ -167,6 +195,7 @@ begin
       OBS_BE_RX_TMR_FLOW_CTRL_ERROR_i => OBS_BE_RX_TMR_FLOW_CTRL_ERROR_i,
       OBS_START_DONE_CTRL_TMR_ERROR_i => OBS_START_DONE_CTRL_TMR_ERROR_i,
       OBS_UART_COMMAND_CTRL_TMR_ERROR_i => OBS_UART_COMMAND_CTRL_TMR_ERROR_i,
+      OBS_UART_ENCODE_CRITICAL_TMR_ERROR_i => uart_encode_critical_tmr_error_w,
       uart_baud_div_o => uart_baud_div_o,
       uart_parity_o   => uart_parity_o,
       uart_rtscts_o   => uart_rtscts_o,

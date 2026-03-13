@@ -45,7 +45,8 @@ entity selftest_uart_command_block is
     OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR_o : out std_logic;
     OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR_o : out std_logic;
     OBS_START_DONE_CTRL_TMR_CORRECT_ERROR_o : out std_logic;
-    OBS_UART_COMMAND_CTRL_TMR_ERROR_o       : out std_logic
+    OBS_UART_COMMAND_CTRL_TMR_ERROR_o       : out std_logic;
+    OBS_UART_ENCODE_CRITICAL_TMR_CORRECT_ERROR_o : out std_logic
   );
 end entity;
 
@@ -115,7 +116,8 @@ begin
         OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR_o => OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR_o,
         OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR_o => OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR_o,
         OBS_START_DONE_CTRL_TMR_CORRECT_ERROR_o => OBS_START_DONE_CTRL_TMR_CORRECT_ERROR_o,
-        OBS_UART_COMMAND_CTRL_TMR_CORRECT_ERROR_o => uart_command_ctrl_tmr_correct_enable_w
+        OBS_UART_COMMAND_CTRL_TMR_CORRECT_ERROR_o => uart_command_ctrl_tmr_correct_enable_w,
+        OBS_UART_ENCODE_CRITICAL_TMR_CORRECT_ERROR_o => OBS_UART_ENCODE_CRITICAL_TMR_CORRECT_ERROR_o
       );
   end block;
 end architecture;

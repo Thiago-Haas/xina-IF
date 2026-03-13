@@ -86,6 +86,10 @@ package xina_ni_ft_pkg is
   constant c_ENABLE_OBS_UART_COMMAND_CTRL_TMR : boolean := true;
   -- Closed-box UART command control TMR correction enable.
   constant c_ENABLE_OBS_UART_COMMAND_CTRL_TMR_CORRECTION : boolean := true;
+  -- Closed-box UART encode critical control TMR.
+  constant c_ENABLE_OBS_UART_ENCODE_CRITICAL_TMR : boolean := true;
+  -- Closed-box UART encode critical control TMR correction enable.
+  constant c_ENABLE_OBS_UART_ENCODE_CRITICAL_TMR_CORRECTION : boolean := true;
 
   ------------------------------------------------------------------------------
   -- XINA Configuration

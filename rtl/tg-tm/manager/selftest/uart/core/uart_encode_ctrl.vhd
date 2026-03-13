@@ -74,6 +74,7 @@ entity selftest_obs_uart_encode_ctrl is
     OBS_BE_RX_TMR_FLOW_CTRL_ERROR_i : in std_logic;
     OBS_START_DONE_CTRL_TMR_ERROR_i : in std_logic;
     OBS_UART_COMMAND_CTRL_TMR_ERROR_i : in std_logic;
+    OBS_UART_ENCODE_CRITICAL_TMR_ERROR_i : in std_logic;
 
     -- UART config
     uart_baud_div_o : out std_logic_vector(15 downto 0);
@@ -243,10 +244,12 @@ begin
     OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR_i or OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR_i or
     OBS_BE_RX_TMR_FLOW_CTRL_ERROR_i or
     OBS_START_DONE_CTRL_TMR_ERROR_i or
-    OBS_UART_COMMAND_CTRL_TMR_ERROR_i;
+    OBS_UART_COMMAND_CTRL_TMR_ERROR_i or
+    OBS_UART_ENCODE_CRITICAL_TMR_ERROR_i;
 
   event_flags_w <=
-    (31 downto 30 => '0') &
+    (31 => '0') &
+    OBS_UART_ENCODE_CRITICAL_TMR_ERROR_i &
     OBS_UART_COMMAND_CTRL_TMR_ERROR_i &
     OBS_START_DONE_CTRL_TMR_ERROR_i &
     tm_comparison_mismatch_i &
