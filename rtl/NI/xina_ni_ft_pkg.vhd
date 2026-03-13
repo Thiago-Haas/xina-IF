@@ -67,7 +67,7 @@ package xina_ni_ft_pkg is
   constant c_ENABLE_TM_TXN_COUNTER_HAMMING   : boolean := true;
   constant c_TM_TRANSACTION_COUNTER_WIDTH     : natural := 32;
   -- Number of TM completed packets between periodic UART reports.
-  constant c_TM_UART_REPORT_PERIOD_PACKETS    : positive := 10000;
+  constant c_TM_UART_REPORT_PERIOD_PACKETS    : positive := 100;
   -- UART FLAGS field width (must stay nibble-aligned to keep TM hex formatting aligned).
   constant c_TM_UART_FLAGS_WIDTH              : natural := 32;
 

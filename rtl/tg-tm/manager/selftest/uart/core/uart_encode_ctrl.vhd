@@ -163,6 +163,8 @@ architecture rtl of selftest_obs_uart_encode_ctrl is
   signal event_enc_valid_w  : std_logic;
   signal event_enc_src_w    : std_logic_vector(3 downto 0);
   signal event_enc_data_w   : std_logic_vector(79 downto 0);
+  signal event_flags_seen_r : std_logic_vector(c_TM_UART_FLAGS_WIDTH - 1 downto 0) := (others => '0');
+  signal event_report_pending_r : std_logic := '0';
 
   function f_pack80(src : std_logic_vector) return std_logic_vector is
     variable v : std_logic_vector(79 downto 0) := (others => '0');
@@ -178,11 +180,26 @@ architecture rtl of selftest_obs_uart_encode_ctrl is
     return v;
   end function;
 
+  function f_has_new_error_flags(
+    current_flags  : std_logic_vector;
+    previous_flags : std_logic_vector
+  ) return boolean is
+  begin
+    for i in current_flags'range loop
+      if (current_flags(i) = '1') and (previous_flags(i) = '0') then
+        return true;
+      end if;
+    end loop;
+    return false;
+  end function;
+
   -- Xilinx attributes to prevent optimization of TMR
   attribute DONT_TOUCH : string;
   attribute DONT_TOUCH of dp_load_base_r : signal is "TRUE";
   attribute DONT_TOUCH of dp_load_enc_r : signal is "TRUE";
   attribute DONT_TOUCH of dp_event_report_r : signal is "TRUE";
+  attribute DONT_TOUCH of event_flags_seen_r : signal is "TRUE";
+  attribute DONT_TOUCH of event_report_pending_r : signal is "TRUE";
   attribute DONT_TOUCH of label_index_r : signal is "TRUE";
   attribute DONT_TOUCH of nibble_index_r : signal is "TRUE";
   attribute DONT_TOUCH of nibble_stop_r : signal is "TRUE";
@@ -196,6 +213,8 @@ architecture rtl of selftest_obs_uart_encode_ctrl is
   attribute syn_preserve of dp_load_base_r : signal is true;
   attribute syn_preserve of dp_load_enc_r : signal is true;
   attribute syn_preserve of dp_event_report_r : signal is true;
+  attribute syn_preserve of event_flags_seen_r : signal is true;
+  attribute syn_preserve of event_report_pending_r : signal is true;
   attribute syn_preserve of label_index_r : signal is true;
   attribute syn_preserve of nibble_index_r : signal is true;
   attribute syn_preserve of nibble_stop_r : signal is true;
@@ -224,7 +243,10 @@ begin
   dp_label_sel_o    <= dp_label_sel_w;
   dp_label_index_o  <= label_index_r;
 
-  period_report_consume_o <= dp_load_base_r when tx_state_r = S_IDLE else '0';
+  -- Consume the periodic report request as soon as a base report is launched.
+  -- Gating with S_IDLE prevents the pulse from ever being observed because
+  -- tx_state_r leaves IDLE in the same cycle dp_load_base_r is asserted.
+  period_report_consume_o <= dp_load_base_r;
   any_error_w <=
     tm_comparison_mismatch_i or NI_CORRUPT_PACKET_i or
     OBS_TM_TMR_CTRL_ERROR_i or
@@ -369,6 +391,8 @@ begin
         dp_load_base_r <= '0';
         dp_load_enc_r  <= '0';
         dp_event_report_r <= '0';
+        event_flags_seen_r <= (others => '0');
+        event_report_pending_r <= '0';
         nibble_index_r <= to_unsigned(C_BASE_TM_NIBBLE_START, 5);
         nibble_stop_r  <= to_unsigned(C_BASE_TM_NIBBLE_STOP, 5);
         label_index_r  <= 1;
@@ -380,13 +404,21 @@ begin
         dp_load_enc_r  <= '0';
         dp_event_report_r <= '0';
 
+        if tm_done_rise_i = '1' then
+          if f_has_new_error_flags(event_flags_w, event_flags_seen_r) then
+            event_report_pending_r <= '1';
+          end if;
+          event_flags_seen_r <= event_flags_w;
+        end if;
+
         case tx_state_r is
           when S_IDLE =>
-            v_is_event  := ((tm_done_rise_i = '1') and (any_error_w = '1'));
+            v_is_event  := (event_report_pending_r = '1');
             v_do_report := (period_report_due_i = '1') or v_is_event;
             if v_do_report then
               if v_is_event then
                 dp_event_report_r <= '1';
+                event_report_pending_r <= '0';
               else
                 dp_event_report_r <= '0';
               end if;
