@@ -165,6 +165,10 @@ architecture rtl of selftest_obs_uart_encode_ctrl is
   signal event_enc_data_w   : std_logic_vector(79 downto 0);
   signal event_flags_seen_r : std_logic_vector(c_TM_UART_FLAGS_WIDTH - 1 downto 0) := (others => '0');
   signal event_report_pending_r : std_logic := '0';
+  signal event_flags_latched_r : std_logic_vector(c_TM_UART_FLAGS_WIDTH - 1 downto 0) := (others => '0');
+  signal event_enc_valid_latched_r : std_logic := '0';
+  signal event_enc_src_latched_r : std_logic_vector(3 downto 0) := (others => '0');
+  signal event_enc_data_latched_r : std_logic_vector(79 downto 0) := (others => '0');
 
   function f_pack80(src : std_logic_vector) return std_logic_vector is
     variable v : std_logic_vector(79 downto 0) := (others => '0');
@@ -200,6 +204,10 @@ architecture rtl of selftest_obs_uart_encode_ctrl is
   attribute DONT_TOUCH of dp_event_report_r : signal is "TRUE";
   attribute DONT_TOUCH of event_flags_seen_r : signal is "TRUE";
   attribute DONT_TOUCH of event_report_pending_r : signal is "TRUE";
+  attribute DONT_TOUCH of event_flags_latched_r : signal is "TRUE";
+  attribute DONT_TOUCH of event_enc_valid_latched_r : signal is "TRUE";
+  attribute DONT_TOUCH of event_enc_src_latched_r : signal is "TRUE";
+  attribute DONT_TOUCH of event_enc_data_latched_r : signal is "TRUE";
   attribute DONT_TOUCH of label_index_r : signal is "TRUE";
   attribute DONT_TOUCH of nibble_index_r : signal is "TRUE";
   attribute DONT_TOUCH of nibble_stop_r : signal is "TRUE";
@@ -215,6 +223,10 @@ architecture rtl of selftest_obs_uart_encode_ctrl is
   attribute syn_preserve of dp_event_report_r : signal is true;
   attribute syn_preserve of event_flags_seen_r : signal is true;
   attribute syn_preserve of event_report_pending_r : signal is true;
+  attribute syn_preserve of event_flags_latched_r : signal is true;
+  attribute syn_preserve of event_enc_valid_latched_r : signal is true;
+  attribute syn_preserve of event_enc_src_latched_r : signal is true;
+  attribute syn_preserve of event_enc_data_latched_r : signal is true;
   attribute syn_preserve of label_index_r : signal is true;
   attribute syn_preserve of nibble_index_r : signal is true;
   attribute syn_preserve of nibble_stop_r : signal is true;
@@ -234,11 +246,11 @@ begin
   dp_load_base_o    <= dp_load_base_r;
   dp_load_enc_o     <= dp_load_enc_r;
   dp_event_report_o <= dp_event_report_r;
-  dp_event_enc_valid_o <= event_enc_valid_w;
+  dp_event_enc_valid_o <= event_enc_valid_latched_r when dp_event_report_r = '1' else event_enc_valid_w;
   dp_tm_count_o     <= TM_TRANSACTION_COUNT_i;
-  dp_flags_o        <= event_flags_w;
-  dp_enc_src_o      <= event_enc_src_w;
-  dp_enc_data_o     <= event_enc_data_w;
+  dp_flags_o        <= event_flags_latched_r when dp_event_report_r = '1' else event_flags_w;
+  dp_enc_src_o      <= event_enc_src_latched_r when dp_event_report_r = '1' else event_enc_src_w;
+  dp_enc_data_o     <= event_enc_data_latched_r when dp_event_report_r = '1' else event_enc_data_w;
   dp_nibble_index_o <= nibble_index_r;
   dp_label_sel_o    <= dp_label_sel_w;
   dp_label_index_o  <= label_index_r;
@@ -393,6 +405,10 @@ begin
         dp_event_report_r <= '0';
         event_flags_seen_r <= (others => '0');
         event_report_pending_r <= '0';
+        event_flags_latched_r <= (others => '0');
+        event_enc_valid_latched_r <= '0';
+        event_enc_src_latched_r <= (others => '0');
+        event_enc_data_latched_r <= (others => '0');
         nibble_index_r <= to_unsigned(C_BASE_TM_NIBBLE_START, 5);
         nibble_stop_r  <= to_unsigned(C_BASE_TM_NIBBLE_STOP, 5);
         label_index_r  <= 1;
@@ -407,6 +423,10 @@ begin
         if tm_done_rise_i = '1' then
           if f_has_new_error_flags(event_flags_w, event_flags_seen_r) then
             event_report_pending_r <= '1';
+            event_flags_latched_r <= event_flags_w;
+            event_enc_valid_latched_r <= event_enc_valid_w;
+            event_enc_src_latched_r <= event_enc_src_w;
+            event_enc_data_latched_r <= event_enc_data_w;
           end if;
           event_flags_seen_r <= event_flags_w;
         end if;
