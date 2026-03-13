@@ -57,13 +57,13 @@ package xina_ni_ft_pkg is
   constant c_ENABLE_TG_CTRL_TMR              : boolean := true;
   constant c_ENABLE_TG_HAMMING_PROTECTION    : boolean := true;
   constant c_ENABLE_TG_HAMMING_DOUBLE_DETECT : boolean := true;
-  constant c_ENABLE_TG_HAMMING_INJECT_ERROR  : boolean := true; -- INJECTION
+  constant c_ENABLE_TG_HAMMING_INJECT_ERROR  : boolean := false; -- Fault INJECTION
 
   -- TM.
   constant c_ENABLE_TM_CTRL_TMR              : boolean := true;
   constant c_ENABLE_TM_HAMMING_PROTECTION    : boolean := true;
   constant c_ENABLE_TM_HAMMING_DOUBLE_DETECT : boolean := true;
-  constant c_ENABLE_TM_HAMMING_INJECT_ERROR  : boolean := true; -- INJECTION
+  constant c_ENABLE_TM_HAMMING_INJECT_ERROR  : boolean := false; -- Fault INJECTION
   constant c_ENABLE_TM_TXN_COUNTER_HAMMING   : boolean := true;
   constant c_TM_TRANSACTION_COUNTER_WIDTH     : natural := 32;
   -- Number of TM completed packets between periodic UART reports.
@@ -75,7 +75,7 @@ package xina_ni_ft_pkg is
   constant c_ENABLE_LB_CTRL_TMR              : boolean := true;
   constant c_ENABLE_LB_HAMMING_PROTECTION    : boolean := true;
   constant c_ENABLE_LB_HAMMING_DOUBLE_DETECT : boolean := true;
-  constant c_ENABLE_LB_HAMMING_INJECT_ERROR  : boolean := true; -- INJECTION
+  constant c_ENABLE_LB_HAMMING_INJECT_ERROR  : boolean := false; -- Fault INJECTION
 
   -- Hamming FIFO control-state TMR (stage_valid + fifo_count in buffer_fifo_ham).
   constant c_ENABLE_HAM_FIFO_CTRL_TMR : boolean := true;
