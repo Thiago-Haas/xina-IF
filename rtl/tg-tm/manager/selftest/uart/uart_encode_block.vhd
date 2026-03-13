@@ -122,21 +122,6 @@ entity selftest_obs_uart_encode_block is
 end entity;
 
 architecture rtl of selftest_obs_uart_encode_block is
-  signal dp_load_base_w  : std_logic;
-  signal dp_load_enc_w   : std_logic;
-  signal dp_event_report_w : std_logic;
-  signal dp_event_enc_valid_w : std_logic;
-  signal dp_pending_enc_line_w : std_logic;
-  signal dp_report_has_flags_w : std_logic;
-  signal dp_tm_count_w   : std_logic_vector(c_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
-  signal dp_flags_w      : std_logic_vector(c_TM_UART_FLAGS_WIDTH - 1 downto 0);
-  signal dp_enc_src_w    : std_logic_vector(3 downto 0);
-  signal dp_enc_data_w   : std_logic_vector(79 downto 0);
-  signal dp_nibble_index_w : unsigned(4 downto 0);
-  signal dp_label_sel_w   : std_logic_vector(2 downto 0);
-  signal dp_label_index_w : natural range 1 to 8;
-  signal dp_hex_char_w    : std_logic_vector(7 downto 0);
-  signal dp_label_char_w  : std_logic_vector(7 downto 0);
   signal uart_command_ctrl_tmr_error_w : std_logic;
 begin
   uart_rready_o <= '1';
@@ -176,9 +161,9 @@ begin
       );
   end block;
 
-  b_uart_encode_control: block
+  b_uart_encode_core: block
   begin
-    u_uart_encode_ctrl: entity work.selftest_obs_uart_encode_ctrl
+    u_uart_encode_core: entity work.selftest_obs_uart_encode_core_block
       generic map(
         G_REPORT_PERIOD_PACKETS => G_REPORT_PERIOD_PACKETS
       )
@@ -239,46 +224,7 @@ begin
         uart_tready_i => uart_tready_i,
         uart_tdone_i  => uart_tdone_i,
         uart_tstart_o => uart_tstart_o,
-        uart_tdata_o  => uart_tdata_o,
-        dp_hex_char_i   => dp_hex_char_w,
-        dp_label_char_i => dp_label_char_w,
-        dp_load_base_o  => dp_load_base_w,
-        dp_load_enc_o   => dp_load_enc_w,
-        dp_event_report_o => dp_event_report_w,
-        dp_event_enc_valid_o => dp_event_enc_valid_w,
-        dp_pending_enc_line_i => dp_pending_enc_line_w,
-        dp_report_has_flags_i => dp_report_has_flags_w,
-        dp_tm_count_o   => dp_tm_count_w,
-        dp_flags_o      => dp_flags_w,
-        dp_enc_src_o    => dp_enc_src_w,
-        dp_enc_data_o   => dp_enc_data_w,
-        dp_nibble_index_o => dp_nibble_index_w,
-        dp_label_sel_o  => dp_label_sel_w,
-        dp_label_index_o => dp_label_index_w
-      );
-  end block;
-
-  b_uart_encode_datapath: block
-  begin
-    u_uart_encode_dp: entity work.selftest_obs_uart_encode_datapath
-      port map(
-        ACLK    => ACLK,
-        ARESETn => ARESETn,
-        load_base_i  => dp_load_base_w,
-        load_enc_i   => dp_load_enc_w,
-        event_report_i => dp_event_report_w,
-        event_enc_valid_i => dp_event_enc_valid_w,
-        tm_count_i   => dp_tm_count_w,
-        flags_i      => dp_flags_w,
-        enc_src_i    => dp_enc_src_w,
-        enc_data_i   => dp_enc_data_w,
-        nibble_index_i => dp_nibble_index_w,
-        label_sel_i    => dp_label_sel_w,
-        label_index_i  => dp_label_index_w,
-        pending_enc_line_o => dp_pending_enc_line_w,
-        report_has_flags_o => dp_report_has_flags_w,
-        hex_char_o     => dp_hex_char_w,
-        label_char_o   => dp_label_char_w
+        uart_tdata_o  => uart_tdata_o
       );
   end block;
 end architecture;

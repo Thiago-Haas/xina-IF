@@ -16,6 +16,9 @@ entity selftest_obs_uart_encode_ctrl is
     ARESETn : in  std_logic;
 
     tm_done_i : in std_logic;
+    tm_done_rise_i : in std_logic;
+    period_report_due_i : in std_logic;
+    period_report_consume_o : out std_logic;
 
     -- Observability inputs used for UART report
     tm_comparison_mismatch_i : in  std_logic;
@@ -151,14 +154,10 @@ architecture rtl of selftest_obs_uart_encode_ctrl is
   signal uart_tstart_r     : std_logic := '0';
   signal uart_tdata_r      : std_logic_vector(7 downto 0) := (others => '0');
 
-  signal tm_done_d_r       : std_logic := '0';
-  signal tm_done_rise_w    : std_logic;
   signal any_error_w       : std_logic;
   signal dp_load_base_r    : std_logic := '0';
   signal dp_load_enc_r     : std_logic := '0';
   signal dp_event_report_r : std_logic := '0';
-  signal report_counter_r   : integer range 0 to G_REPORT_PERIOD_PACKETS - 1 := 0;
-  signal period_report_due_r : std_logic := '0';
   signal event_flags_w      : std_logic_vector(c_TM_UART_FLAGS_WIDTH - 1 downto 0);
   signal event_enc_valid_w  : std_logic;
   signal event_enc_src_w    : std_logic_vector(3 downto 0);
@@ -186,9 +185,6 @@ architecture rtl of selftest_obs_uart_encode_ctrl is
   attribute DONT_TOUCH of label_index_r : signal is "TRUE";
   attribute DONT_TOUCH of nibble_index_r : signal is "TRUE";
   attribute DONT_TOUCH of nibble_stop_r : signal is "TRUE";
-  attribute DONT_TOUCH of period_report_due_r : signal is "TRUE";
-  attribute DONT_TOUCH of report_counter_r : signal is "TRUE";
-  attribute DONT_TOUCH of tm_done_d_r : signal is "TRUE";
   attribute DONT_TOUCH of tx_phase_r : signal is "TRUE";
   attribute DONT_TOUCH of tx_state_r : signal is "TRUE";
   attribute DONT_TOUCH of uart_tdata_r : signal is "TRUE";
@@ -202,9 +198,6 @@ architecture rtl of selftest_obs_uart_encode_ctrl is
   attribute syn_preserve of label_index_r : signal is true;
   attribute syn_preserve of nibble_index_r : signal is true;
   attribute syn_preserve of nibble_stop_r : signal is true;
-  attribute syn_preserve of period_report_due_r : signal is true;
-  attribute syn_preserve of report_counter_r : signal is true;
-  attribute syn_preserve of tm_done_d_r : signal is true;
   attribute syn_preserve of tx_phase_r : signal is true;
   attribute syn_preserve of tx_state_r : signal is true;
   attribute syn_preserve of uart_tdata_r : signal is true;
@@ -230,7 +223,7 @@ begin
   dp_label_sel_o    <= dp_label_sel_w;
   dp_label_index_o  <= label_index_r;
 
-  tm_done_rise_w <= tm_done_i and (not tm_done_d_r);
+  period_report_consume_o <= dp_load_base_r when tx_state_r = S_IDLE else '0';
   any_error_w <=
     tm_comparison_mismatch_i or NI_CORRUPT_PACKET_i or
     OBS_TM_TMR_CTRL_ERROR_i or
@@ -378,31 +371,17 @@ begin
         label_index_r  <= 1;
         uart_tstart_r  <= '0';
         uart_tdata_r   <= (others => '0');
-        tm_done_d_r    <= '0';
-        report_counter_r   <= 0;
-        period_report_due_r <= '0';
       else
-        tm_done_d_r    <= tm_done_i;
         uart_tstart_r  <= '0';
         dp_load_base_r <= '0';
         dp_load_enc_r  <= '0';
         dp_event_report_r <= '0';
 
-        if tm_done_rise_w = '1' then
-          if report_counter_r = G_REPORT_PERIOD_PACKETS - 1 then
-            report_counter_r    <= 0;
-            period_report_due_r <= '1';
-          else
-            report_counter_r <= report_counter_r + 1;
-          end if;
-        end if;
-
         case tx_state_r is
           when S_IDLE =>
-            v_is_event  := ((tm_done_rise_w = '1') and (any_error_w = '1'));
-            v_do_report := (period_report_due_r = '1') or v_is_event;
+            v_is_event  := ((tm_done_rise_i = '1') and (any_error_w = '1'));
+            v_do_report := (period_report_due_i = '1') or v_is_event;
             if v_do_report then
-              period_report_due_r <= '0';
               if v_is_event then
                 dp_event_report_r <= '1';
               else
