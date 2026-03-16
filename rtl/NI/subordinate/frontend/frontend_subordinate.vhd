@@ -95,7 +95,7 @@ begin
     -- Injection.
 
     -- Registering transaction information.
-    registering: process(all)
+    registering: process(ACLK)
     begin
         if (rising_edge(ACLK)) then
             if (VALID_SEND_DATA_w = '1') then

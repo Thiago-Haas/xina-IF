@@ -25,17 +25,17 @@ entity backend_manager_reception_h_interface_reg is
 end backend_manager_reception_h_interface_reg;
 
 architecture rtl of backend_manager_reception_h_interface_reg is
-    signal H_INTERFACE_r : std_logic_vector(c_FLIT_WIDTH - 1 downto 0) := (others => '0');
+    signal H_INTERFACE_w : std_logic_vector(c_FLIT_WIDTH - 1 downto 0) := (others => '0');
     signal H_INTERFACE_enc_w : std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, p_HAMMING_DETECT_DOUBLE) - 1 downto 0) := (others => '0');
     signal HAM_SINGLE_w    : std_logic := '0';
     signal HAM_DOUBLE_w    : std_logic := '0';
 
   -- Xilinx attributes to prevent optimization of TMR
   attribute DONT_TOUCH : string;
-  attribute DONT_TOUCH of H_INTERFACE_r : signal is "TRUE";
+  attribute DONT_TOUCH of H_INTERFACE_w : signal is "TRUE";
   -- Synplify attributes to prevent optimization of TMR
   attribute syn_preserve : boolean;
-  attribute syn_preserve of H_INTERFACE_r : signal is true;
+  attribute syn_preserve of H_INTERFACE_w : signal is true;
 begin
     gen_ham : if p_USE_HAMMING generate
         u_H_INTERFACE_HAM: entity work.hamming_register
@@ -55,7 +55,7 @@ begin
                 single_err_o => HAM_SINGLE_w,
                 double_err_o => HAM_DOUBLE_w,
                 enc_data_o   => H_INTERFACE_enc_w,
-                data_o       => H_INTERFACE_r
+                data_o       => H_INTERFACE_w
             );
     end generate;
 
@@ -64,19 +64,19 @@ begin
         begin
             if rising_edge(ACLK) then
                 if ARESETn = '0' then
-                    H_INTERFACE_r <= (others => '0');
+                    H_INTERFACE_w <= (others => '0');
                 elsif WRITE_EN_i = '1' then
-                    H_INTERFACE_r <= DATA_i;
+                    H_INTERFACE_w <= DATA_i;
                 end if;
             end if;
         end process;
 
         HAM_SINGLE_w <= '0';
         HAM_DOUBLE_w <= '0';
-        H_INTERFACE_enc_w <= (H_INTERFACE_enc_w'left downto c_FLIT_WIDTH => '0') & H_INTERFACE_r;
+        H_INTERFACE_enc_w <= (H_INTERFACE_enc_w'left downto c_FLIT_WIDTH => '0') & H_INTERFACE_w;
     end generate;
 
-    DATA_o <= H_INTERFACE_r;
+    DATA_o <= H_INTERFACE_w;
     OBS_HAM_SINGLE_ERR_o <= HAM_SINGLE_w;
     OBS_HAM_DOUBLE_ERR_o <= HAM_DOUBLE_w;
     OBS_HAM_ENC_DATA_o   <= H_INTERFACE_enc_w;

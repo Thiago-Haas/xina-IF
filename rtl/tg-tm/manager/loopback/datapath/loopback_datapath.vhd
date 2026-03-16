@@ -42,7 +42,7 @@ architecture rtl of loopback_datapath is
   -- width = 32 + get_ecc_size(32, p_USE_LB_HAMMING_DOUBLE_DETECT)
   signal enc_payload_w : std_logic_vector(32 + work.hamming_pkg.get_ecc_size(32, p_USE_LB_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
-  signal payload_dec_r : std_logic_vector(31 downto 0);
+  signal payload_dec_w : std_logic_vector(31 downto 0);
 
 
 
@@ -50,10 +50,10 @@ architecture rtl of loopback_datapath is
 
   -- Xilinx attributes to prevent optimization of TMR
   attribute DONT_TOUCH : string;
-  attribute DONT_TOUCH of payload_dec_r : signal is "TRUE";
+  attribute DONT_TOUCH of payload_dec_w : signal is "TRUE";
   -- Synplify attributes to prevent optimization of TMR
   attribute syn_preserve : boolean;
-  attribute syn_preserve of payload_dec_r : signal is true;
+  attribute syn_preserve of payload_dec_w : signal is true;
 begin
   ------------------------------------------------------------------------------
   -- Capture condition: payload at fixed flit index 4 when ctrl=0
@@ -88,7 +88,7 @@ begin
       single_err_o => single_err_w,
       double_err_o => double_err_w,
       enc_data_o   => enc_payload_w,
-      data_o       => payload_dec_r
+      data_o       => payload_dec_w
     );
 
   -- outputs
@@ -97,6 +97,6 @@ begin
   ham_buffer_enc_data_o <= enc_payload_w;
 
   -- for READ responses, always drive the (decoded) payload
-  rd_payload_o <= payload_dec_r;
+  rd_payload_o <= payload_dec_w;
 
 end architecture;

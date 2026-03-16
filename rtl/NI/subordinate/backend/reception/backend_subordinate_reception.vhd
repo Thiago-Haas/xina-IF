@@ -73,7 +73,7 @@ architecture rtl of backend_subordinate_reception is
 
 begin
     -- Registering headers.
-    registering: process(all)
+    registering: process(ACLK)
     begin
         if (rising_edge(ACLK)) then
             if (WRITE_H_SRC_REG_w)       then H_SRC_r_w       <= FLIT_w; end if;

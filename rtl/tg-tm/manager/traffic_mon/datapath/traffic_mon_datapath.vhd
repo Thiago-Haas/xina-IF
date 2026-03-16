@@ -61,7 +61,7 @@ end traffic_mon_datapath;
 
 architecture rtl of traffic_mon_datapath is
   -- expected word register (optionally protected)
-  signal expected_r : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
+  signal expected_w : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
   signal expected_d_w : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
   signal exp_we_w     : std_logic := '0';
   signal ham_single_w : std_logic := '0';
@@ -95,10 +95,10 @@ architecture rtl of traffic_mon_datapath is
 
   -- Xilinx attributes to prevent optimization of TMR
   attribute DONT_TOUCH : string;
-  attribute DONT_TOUCH of expected_r : signal is "TRUE";
+  attribute DONT_TOUCH of expected_w : signal is "TRUE";
   -- Synplify attributes to prevent optimization of TMR
   attribute syn_preserve : boolean;
-  attribute syn_preserve of expected_r : signal is true;
+  attribute syn_preserve of expected_w : signal is true;
 begin
   -- Constant fields
   ARADDR  <= INPUT_ADDRESS(c_AXI_ADDR_WIDTH - 1 downto 0);
@@ -107,7 +107,7 @@ begin
   ARBURST <= p_BURST;
 
   -- debug
-  expected_value_o <= expected_r;
+  expected_value_o <= expected_w;
   ham_single_err_o <= ham_single_w;
   ham_double_err_o <= ham_double_w;
   ham_buffer_enc_data_o <= expected_enc_w;
@@ -124,7 +124,7 @@ begin
   --  * step: feed current expected, compute next expected = next(expected)
   --  * idle: feed current expected (no state update)
   lfsr_input_w <= init_value_w when (do_init_w = '1') else
-                  expected_r;
+                  expected_w;
 
   u_LFSR: entity work.traffic_mon_datapath_lfsr
     generic map(
@@ -143,7 +143,7 @@ begin
     port map(
       check_pulse_i => do_step_w,
 
-      expected_i => expected_r,
+      expected_i => expected_w,
       rdata_i    => RDATA,
 
       lfsr_comparison_mismatch_o => lfsr_comparison_mismatch_o
@@ -172,22 +172,22 @@ begin
         single_err_o => ham_single_w,
         double_err_o => ham_double_w,
         enc_data_o   => expected_enc_w,
-        data_o       => expected_r
+        data_o       => expected_w
       );
   end generate;
 
   gen_no_ham : if not p_USE_TM_HAMMING generate
     ham_single_w <= '0';
     ham_double_w <= '0';
-    expected_enc_w <= (expected_enc_w'left downto c_AXI_DATA_WIDTH => '0') & expected_r;
+    expected_enc_w <= (expected_enc_w'left downto c_AXI_DATA_WIDTH => '0') & expected_w;
     process(ACLK)
     begin
       if rising_edge(ACLK) then
         if ARESETn = '0' then
-          expected_r <= (others => '0');
+          expected_w <= (others => '0');
         else
           if exp_we_w = '1' then
-            expected_r <= expected_d_w;
+            expected_w <= expected_d_w;
           end if;
         end if;
       end if;

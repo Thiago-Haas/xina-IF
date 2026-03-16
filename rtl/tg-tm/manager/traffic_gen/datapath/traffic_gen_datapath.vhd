@@ -9,7 +9,7 @@ use work.xina_ni_ft_pkg.all;
 --  * NO external override ports
 --  * NO init-value generic / no helper functions
 --  * AW fields are constants (single-beat INCR burst)
---  * ONE data register (wdata_r) acts as both WDATA output and LFSR state
+--  * ONE decoded state word (wdata_w) acts as both WDATA output and LFSR state
 --  * Seed is inserted into LSBs of an all-zero init word
 entity traffic_gen_datapath is
   generic (
@@ -48,7 +48,7 @@ end traffic_gen_datapath;
 
 architecture rtl of traffic_gen_datapath is
   -- Stored payload/LFSR state (optionally protected by Hamming register)
-  signal wdata_r  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
+  signal wdata_w  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
   signal single_err_w : std_logic;
   signal double_err_w : std_logic;
   -- Not used externally; handy for debug visibility if you ever need it.
@@ -65,10 +65,10 @@ architecture rtl of traffic_gen_datapath is
 
   -- Xilinx attributes to prevent optimization of TMR
   attribute DONT_TOUCH : string;
-  attribute DONT_TOUCH of wdata_r : signal is "TRUE";
+  attribute DONT_TOUCH of wdata_w : signal is "TRUE";
   -- Synplify attributes to prevent optimization of TMR
   attribute syn_preserve : boolean;
-  attribute syn_preserve of wdata_r : signal is true;
+  attribute syn_preserve of wdata_w : signal is true;
 begin
   -- Constant fields
   AWADDR  <= INPUT_ADDRESS(c_AXI_ADDR_WIDTH - 1 downto 0);
@@ -80,7 +80,7 @@ begin
   WLAST <= '1';
 
   -- Payload comes from the state register
-  WDATA <= wdata_r;
+  WDATA <= wdata_w;
 
   -- Controller provides a single-cycle seed pulse (only once after reset)
   do_step_w <= wbeat_pulse_i;
@@ -99,7 +99,7 @@ begin
   end process;
 
   -- Feed init value only when seeding; otherwise feed the current (decoded) state.
-  lfsr_input_w <= init_value_w when (seed_pulse_i = '1') else wdata_r;
+  lfsr_input_w <= init_value_w when (seed_pulse_i = '1') else wdata_w;
 
   u_LFSR: entity work.traffic_gen_datapath_lfsr
     generic map(
@@ -129,7 +129,7 @@ begin
       single_err_o => single_err_w,
       double_err_o => double_err_w,
       enc_data_o   => enc_state_w,
-      data_o       => wdata_r
+      data_o       => wdata_w
     );
 
   -- observation outputs
