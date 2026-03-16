@@ -16,3 +16,4 @@ quartus_project/simulation
 /rtl/reports
 /rtl/tools
 /rtl/xsim.dir
+/test
