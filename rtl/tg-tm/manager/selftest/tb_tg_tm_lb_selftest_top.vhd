@@ -39,7 +39,7 @@ architecture tb of tb_tg_tm_lb_selftest_top is
   signal host_tdata  : std_logic_vector(7 downto 0) := (others => '0');
   signal host_tdone  : std_logic;
   signal host_rdone  : std_logic;
-  signal host_rdone_d_r : std_logic := '0';
+  signal host_rdone_d : std_logic := '0';
   signal host_rdata  : std_logic_vector(7 downto 0);
   signal host_rerr   : std_logic;
   signal host_uart_tx : std_logic;
@@ -47,8 +47,8 @@ architecture tb of tb_tg_tm_lb_selftest_top is
 
   signal rx_count : integer := 0;
   signal tx_toggle_count : integer := 0;
-  signal tm_decoded_count_r : integer := 0;
-  signal clk_cycle_count_r : integer := 0;
+  signal tm_decoded_count : std_logic_vector(31 downto 0) := (others => '0');
+  signal clk_cycle_count : std_logic_vector(31 downto 0) := (others => '0');
   file f_tb_uart_log : text open write_mode is "/home/haas/Documents/GitHub/xina-IF/ModelSim/NI-FT-OBS-MNG-3000/log/tb_uart_console.txt";
 
   function f_byte_to_char(b : std_logic_vector(7 downto 0)) return character is
@@ -154,14 +154,14 @@ architecture tb of tb_tg_tm_lb_selftest_top is
 
   -- Xilinx attributes to prevent optimization of TMR
   attribute DONT_TOUCH : string;
-  attribute DONT_TOUCH of tm_decoded_count_r : signal is "TRUE";
-  attribute DONT_TOUCH of clk_cycle_count_r : signal is "TRUE";
-  attribute DONT_TOUCH of host_rdone_d_r : signal is "TRUE";
+  attribute DONT_TOUCH of tm_decoded_count : signal is "TRUE";
+  attribute DONT_TOUCH of clk_cycle_count : signal is "TRUE";
+  attribute DONT_TOUCH of host_rdone_d : signal is "TRUE";
   -- Synplify attributes to prevent optimization of TMR
   attribute syn_preserve : boolean;
-  attribute syn_preserve of tm_decoded_count_r : signal is true;
-  attribute syn_preserve of clk_cycle_count_r : signal is true;
-  attribute syn_preserve of host_rdone_d_r : signal is true;
+  attribute syn_preserve of tm_decoded_count : signal is true;
+  attribute syn_preserve of clk_cycle_count : signal is true;
+  attribute syn_preserve of host_rdone_d : signal is true;
 begin
 
   -- clock
@@ -217,17 +217,17 @@ begin
     if rising_edge(ACLK) then
       if ARESETn = '0' then
         rx_count <= 0;
-        tm_decoded_count_r <= 0;
-        clk_cycle_count_r <= 0;
-        host_rdone_d_r <= '0';
+        tm_decoded_count <= (others => '0');
+        clk_cycle_count <= (others => '0');
+        host_rdone_d <= '0';
         v_len := 0;
         v_line_start_cycle := 0;
         v_line_start_time := 0 ns;
       else
-        clk_cycle_count_r <= clk_cycle_count_r + 1;
-        host_rdone_d_r <= host_rdone;
+        clk_cycle_count <= std_logic_vector(unsigned(clk_cycle_count) + 1);
+        host_rdone_d <= host_rdone;
 
-        if (host_rdone = '1') and (host_rdone_d_r = '0') and (host_rerr = '0') then
+        if (host_rdone = '1') and (host_rdone_d = '0') and (host_rerr = '0') then
           rx_count <= rx_count + 1;
           v_byte := to_integer(unsigned(host_rdata));
 
@@ -253,7 +253,7 @@ begin
                  f_is_hex_string(v_line(4 to 3 + C_TM_HEX_DIGITS)) and
                  f_is_hex_string(v_line(4 + C_TM_HEX_DIGITS + C_LABEL_FLAGS_LEN to C_TM_FLAGS_LINE_LEN)) then
                 v_tm_dec := f_hex_to_integer(v_line(4 to 3 + C_TM_HEX_DIGITS));
-                tm_decoded_count_r <= v_tm_dec;
+                tm_decoded_count <= std_logic_vector(to_unsigned(v_tm_dec, tm_decoded_count'length));
                 v_flags_bin := f_hex_to_bin_string(v_line(4 + C_TM_HEX_DIGITS + C_LABEL_FLAGS_LEN to C_TM_FLAGS_LINE_LEN));
                 write(v_msg, string'("UART_DECODE TM_DEC="));
                 write(v_msg, integer'image(v_tm_dec));
@@ -265,7 +265,7 @@ begin
                     (v_line(1 to 3) = "TM=") and
                     f_is_hex_string(v_line(4 to 3 + C_TM_HEX_DIGITS)) then
                 v_tm_dec := f_hex_to_integer(v_line(4 to 3 + C_TM_HEX_DIGITS));
-                tm_decoded_count_r <= v_tm_dec;
+                tm_decoded_count <= std_logic_vector(to_unsigned(v_tm_dec, tm_decoded_count'length));
                 write(v_msg, string'("UART_DECODE TM_DEC="));
                 write(v_msg, integer'image(v_tm_dec));
                 p_tb_log(v_msg.all);
@@ -283,7 +283,7 @@ begin
             null; -- ignore CR
           else
             if v_len = 0 then
-              v_line_start_cycle := clk_cycle_count_r;
+              v_line_start_cycle := to_integer(unsigned(clk_cycle_count));
               v_line_start_time := now;
             end if;
             if v_len < 256 then
@@ -291,7 +291,7 @@ begin
               v_line(v_len) := f_byte_to_char(host_rdata);
             end if;
           end if;
-        elsif (host_rdone = '1') and (host_rdone_d_r = '0') and (host_rerr = '1') then
+        elsif (host_rdone = '1') and (host_rdone_d = '0') and (host_rerr = '1') then
           -- Still report raw traffic even with RX error to help debug UART framing.
           rx_count <= rx_count + 1;
           write(v_msg, string'("RX framing/parity error RAW_BYTE="));
@@ -327,7 +327,7 @@ begin
       if ARESETn = '0' then
         stop_issued <= '0';
       elsif stop_issued = '0' then
-        if tm_decoded_count_r >= C_TM_PAYLOAD_STOP_COUNT then
+        if unsigned(tm_decoded_count) >= to_unsigned(C_TM_PAYLOAD_STOP_COUNT, tm_decoded_count'length) then
           stop_issued <= '1';
           p_tb_log("stop condition reached: TM payload count=" &
                    integer'image(C_TM_PAYLOAD_STOP_COUNT) &

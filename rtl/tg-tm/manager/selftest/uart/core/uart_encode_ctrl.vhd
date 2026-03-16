@@ -147,9 +147,9 @@ architecture rtl of selftest_obs_uart_encode_ctrl is
   signal tx_phase_r      : std_logic_vector(2 downto 0) := PH_BASE_TM_LABEL;
   signal wait_source_r   : std_logic_vector(1 downto 0) := WS_LABEL;
 
-  signal nibble_index_r    : unsigned(4 downto 0) := to_unsigned(C_BASE_TM_NIBBLE_START, 5);
-  signal nibble_stop_r     : unsigned(4 downto 0) := to_unsigned(C_BASE_TM_NIBBLE_STOP, 5);
-  signal label_index_r     : natural range 1 to 8 := 1;
+  signal nibble_index_r    : std_logic_vector(4 downto 0) := std_logic_vector(to_unsigned(C_BASE_TM_NIBBLE_START, 5));
+  signal nibble_stop_r     : std_logic_vector(4 downto 0) := std_logic_vector(to_unsigned(C_BASE_TM_NIBBLE_STOP, 5));
+  signal label_index_r     : std_logic_vector(2 downto 0) := "001";
 
   signal dp_label_sel_w    : std_logic_vector(2 downto 0);
   signal uart_tstart_r     : std_logic := '0';
@@ -251,9 +251,9 @@ begin
   dp_flags_o        <= event_flags_latched_r when dp_event_report_r = '1' else event_flags_w;
   dp_enc_src_o      <= event_enc_src_latched_r when dp_event_report_r = '1' else event_enc_src_w;
   dp_enc_data_o     <= event_enc_data_latched_r when dp_event_report_r = '1' else event_enc_data_w;
-  dp_nibble_index_o <= nibble_index_r;
+  dp_nibble_index_o <= unsigned(nibble_index_r);
   dp_label_sel_o    <= dp_label_sel_w;
-  dp_label_index_o  <= label_index_r;
+  dp_label_index_o  <= to_integer(unsigned(label_index_r));
 
   -- Consume the periodic report request as soon as a base report is launched.
   -- Gating with S_IDLE prevents the pulse from ever being observed because
@@ -409,9 +409,9 @@ begin
         event_enc_valid_latched_r <= '0';
         event_enc_src_latched_r <= (others => '0');
         event_enc_data_latched_r <= (others => '0');
-        nibble_index_r <= to_unsigned(C_BASE_TM_NIBBLE_START, 5);
-        nibble_stop_r  <= to_unsigned(C_BASE_TM_NIBBLE_STOP, 5);
-        label_index_r  <= 1;
+        nibble_index_r <= std_logic_vector(to_unsigned(C_BASE_TM_NIBBLE_START, 5));
+        nibble_stop_r  <= std_logic_vector(to_unsigned(C_BASE_TM_NIBBLE_STOP, 5));
+        label_index_r  <= "001";
         uart_tstart_r  <= '0';
         uart_tdata_r   <= (others => '0');
       else
@@ -445,7 +445,7 @@ begin
               dp_load_base_r <= '1';
 
               tx_phase_r    <= PH_BASE_TM_LABEL;
-              label_index_r <= 1;
+              label_index_r <= "001";
               tx_state_r    <= S_SEND_LABEL;
             end if;
 
@@ -490,43 +490,43 @@ begin
                 when WS_LABEL =>
                   case tx_phase_r is
                     when PH_BASE_TM_LABEL =>
-                      if label_index_r < C_LABEL_TM'length then
-                        label_index_r <= label_index_r + 1;
+                      if unsigned(label_index_r) < to_unsigned(C_LABEL_TM'length, label_index_r'length) then
+                        label_index_r <= std_logic_vector(unsigned(label_index_r) + 1);
                         tx_state_r    <= S_SEND_LABEL;
                       else
                         tx_phase_r    <= PH_BASE_TM_HEX;
-                        nibble_index_r <= to_unsigned(C_BASE_TM_NIBBLE_START, 5);
-                        nibble_stop_r  <= to_unsigned(C_BASE_TM_NIBBLE_STOP, 5);
+                        nibble_index_r <= std_logic_vector(to_unsigned(C_BASE_TM_NIBBLE_START, 5));
+                        nibble_stop_r  <= std_logic_vector(to_unsigned(C_BASE_TM_NIBBLE_STOP, 5));
                         tx_state_r    <= S_SEND_HEX;
                       end if;
                     when PH_BASE_FLAGS_LABEL =>
-                      if label_index_r < C_LABEL_FLAGS'length then
-                        label_index_r <= label_index_r + 1;
+                      if unsigned(label_index_r) < to_unsigned(C_LABEL_FLAGS'length, label_index_r'length) then
+                        label_index_r <= std_logic_vector(unsigned(label_index_r) + 1);
                         tx_state_r    <= S_SEND_LABEL;
                       else
                         tx_phase_r     <= PH_BASE_FLAGS_HEX;
-                        nibble_index_r <= to_unsigned(C_BASE_FLAGS_NIBBLE_START, 5);
-                        nibble_stop_r  <= to_unsigned(C_BASE_FLAGS_NIBBLE_STOP, 5);
+                        nibble_index_r <= std_logic_vector(to_unsigned(C_BASE_FLAGS_NIBBLE_START, 5));
+                        nibble_stop_r  <= std_logic_vector(to_unsigned(C_BASE_FLAGS_NIBBLE_STOP, 5));
                         tx_state_r     <= S_SEND_HEX;
                       end if;
                     when PH_ENC_LABEL =>
-                      if label_index_r < C_LABEL_ENC'length then
-                        label_index_r <= label_index_r + 1;
+                      if unsigned(label_index_r) < to_unsigned(C_LABEL_ENC'length, label_index_r'length) then
+                        label_index_r <= std_logic_vector(unsigned(label_index_r) + 1);
                         tx_state_r    <= S_SEND_LABEL;
                       else
                         tx_phase_r     <= PH_ENC_SRC_HEX;
-                        nibble_index_r <= to_unsigned(C_ENC_SRC_NIBBLE_START, 5);
-                        nibble_stop_r  <= to_unsigned(C_ENC_SRC_NIBBLE_STOP, 5);
+                        nibble_index_r <= std_logic_vector(to_unsigned(C_ENC_SRC_NIBBLE_START, 5));
+                        nibble_stop_r  <= std_logic_vector(to_unsigned(C_ENC_SRC_NIBBLE_STOP, 5));
                         tx_state_r     <= S_SEND_HEX;
                       end if;
                     when PH_ENC_DATA_LABEL =>
-                      if label_index_r < C_LABEL_DATA'length then
-                        label_index_r <= label_index_r + 1;
+                      if unsigned(label_index_r) < to_unsigned(C_LABEL_DATA'length, label_index_r'length) then
+                        label_index_r <= std_logic_vector(unsigned(label_index_r) + 1);
                         tx_state_r    <= S_SEND_LABEL;
                       else
                         tx_phase_r     <= PH_ENC_DATA_HEX;
-                        nibble_index_r <= to_unsigned(C_ENC_DATA_NIBBLE_START, 5);
-                        nibble_stop_r  <= to_unsigned(C_ENC_DATA_NIBBLE_STOP, 5);
+                        nibble_index_r <= std_logic_vector(to_unsigned(C_ENC_DATA_NIBBLE_START, 5));
+                        nibble_stop_r  <= std_logic_vector(to_unsigned(C_ENC_DATA_NIBBLE_STOP, 5));
                         tx_state_r     <= S_SEND_HEX;
                       end if;
                     when others =>
@@ -534,15 +534,15 @@ begin
                   end case;
 
                 when WS_HEX =>
-                  if nibble_index_r /= nibble_stop_r then
-                    nibble_index_r <= nibble_index_r - 1;
+                  if unsigned(nibble_index_r) /= unsigned(nibble_stop_r) then
+                    nibble_index_r <= std_logic_vector(unsigned(nibble_index_r) - 1);
                     tx_state_r     <= S_SEND_HEX;
                   else
                     case tx_phase_r is
                       when PH_BASE_TM_HEX =>
                         if dp_report_has_flags_i = '1' then
                           tx_phase_r    <= PH_BASE_FLAGS_LABEL;
-                          label_index_r <= 1;
+                          label_index_r <= "001";
                           tx_state_r    <= S_SEND_LABEL;
                         else
                           tx_state_r <= S_SEND_LF;
@@ -551,7 +551,7 @@ begin
                         tx_state_r <= S_SEND_LF;
                       when PH_ENC_SRC_HEX =>
                         tx_phase_r    <= PH_ENC_DATA_LABEL;
-                        label_index_r <= 1;
+                        label_index_r <= "001";
                         tx_state_r    <= S_SEND_LABEL;
                       when PH_ENC_DATA_HEX =>
                         tx_state_r <= S_SEND_LF;
@@ -565,7 +565,7 @@ begin
                     if dp_pending_enc_line_i = '1' then
                       dp_load_enc_r      <= '1';
                       tx_phase_r         <= PH_ENC_LABEL;
-                      label_index_r      <= 1;
+                      label_index_r      <= "001";
                       tx_state_r         <= S_SEND_LABEL;
                     else
                       tx_state_r <= S_IDLE;

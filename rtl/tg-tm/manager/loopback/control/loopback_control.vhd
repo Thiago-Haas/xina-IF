@@ -41,7 +41,7 @@ architecture rtl of loopback_control is
   constant C_TX_PHASE_CKS : std_logic_vector(2 downto 0) := "100";
   signal tx_phase_r : std_logic_vector(2 downto 0) := C_TX_PHASE_H0;
 
-  signal cap_idx_r       : unsigned(5 downto 0) := (others => '0');
+  signal cap_idx_r       : std_logic_vector(5 downto 0) := (others => '0');
   signal rx_seen_first_r : std_logic := '0';
   signal seen_last_r     : std_logic := '0';
 
@@ -84,7 +84,7 @@ begin
   lin_ack_o       <= lin_ack_r;
   cap_en_o        <= cap_en_r;
   cap_flit_ctrl_o <= lin_ctrl_i;
-  cap_idx_o       <= cap_idx_r;
+  cap_idx_o       <= unsigned(cap_idx_r);
   tx_next_is_read_o <= tx_next_is_read_r;
 
   lout_val_o <= '1' when st_r = C_ST_TX_WAIT_ACCEPT else
@@ -132,7 +132,7 @@ begin
                 cap_idx_r   <= (others => '0');
               else
                 rx_seen_first_r <= '1';
-                cap_idx_r <= cap_idx_r + 1;
+                cap_idx_r <= std_logic_vector(unsigned(cap_idx_r) + 1);
               end if;
               lin_ack_r <= '1';
               st_r <= C_ST_RX_ACK_HI;

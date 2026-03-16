@@ -27,7 +27,7 @@ end entity;
 
 architecture rtl of buffer_fifo_ham_ctrl is
   signal stage_valid_r : std_logic := '0';
-  signal fifo_count_r  : unsigned(integer(ceil(log2(real(p_BUFFER_DEPTH)))) downto 0) := (others => '0');
+  signal fifo_count_r  : std_logic_vector(integer(ceil(log2(real(p_BUFFER_DEPTH)))) downto 0) := (others => '0');
 
   signal fifo_write_ok_w : std_logic;
   signal fifo_read_ok_w  : std_logic;
@@ -48,8 +48,8 @@ architecture rtl of buffer_fifo_ham_ctrl is
   attribute syn_preserve of fifo_count_r : signal is true;
   attribute syn_preserve of stage_valid_r : signal is true;
 begin
-  fifo_read_ok_w  <= '1' when (fifo_count_r /= 0) else '0';
-  fifo_write_ok_w <= '1' when (fifo_count_r /= p_BUFFER_DEPTH) else '0';
+  fifo_read_ok_w  <= '1' when (unsigned(fifo_count_r) /= 0) else '0';
+  fifo_write_ok_w <= '1' when (unsigned(fifo_count_r) /= p_BUFFER_DEPTH) else '0';
 
   stage_load_w    <= WRITE_REQ_i and (not stage_valid_r);
   stage_push_w    <= stage_valid_r and fifo_write_ok_w;
@@ -63,7 +63,7 @@ begin
   FIFO_DO_READ_o  <= fifo_do_read_w;
   FIFO_WRITE_OK_o <= fifo_write_ok_w;
   FIFO_READ_OK_o  <= fifo_read_ok_w;
-  FIFO_COUNT_o    <= fifo_count_r;
+  FIFO_COUNT_o    <= unsigned(fifo_count_r);
 
   p_ctrl : process (ACLK, ARESET)
     variable v_count : unsigned(fifo_count_r'range);
@@ -78,14 +78,13 @@ begin
         stage_valid_r <= '0';
       end if;
 
-      v_count := fifo_count_r;
+      v_count := unsigned(fifo_count_r);
       if (fifo_do_write_w = '1') and (fifo_do_read_w = '0') then
         v_count := v_count + 1;
       elsif (fifo_do_write_w = '0') and (fifo_do_read_w = '1') then
         v_count := v_count - 1;
       end if;
-      fifo_count_r <= v_count;
+      fifo_count_r <= std_logic_vector(v_count);
     end if;
   end process;
 end architecture;
-

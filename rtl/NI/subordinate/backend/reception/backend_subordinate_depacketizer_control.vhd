@@ -46,7 +46,7 @@ architecture rtl of backend_subordinate_depacketizer_control is
     signal state_w_r    : std_logic_vector(3 downto 0);
     signal next_state_w : std_logic_vector(3 downto 0);
 
-    signal PAYLOAD_COUNTER_r: unsigned(7 downto 0) := to_unsigned(255, 8);
+    signal PAYLOAD_COUNTER_r: std_logic_vector(7 downto 0) := (others => '1');
     signal set_payload_counter_w: std_logic := '0';
     signal subtract_payload_counter_w: std_logic := '0';
 
@@ -97,7 +97,7 @@ begin
 
             when "0100" => if (READY_RECEIVE_PACKET_i = '1') then next_state_w <= "0101"; else next_state_w <= "0100"; end if;
 
-            when "0101" => if (PAYLOAD_COUNTER_r = to_unsigned(0, 8) and READY_RECEIVE_DATA_i = '1' and READ_OK_BUFFER_i = '1') then
+            when "0101" => if (unsigned(PAYLOAD_COUNTER_r) = to_unsigned(0, 8) and READY_RECEIVE_DATA_i = '1' and READ_OK_BUFFER_i = '1') then
                              next_state_w <= "0111";
                            else
                              next_state_w <= "0101";
@@ -119,12 +119,12 @@ begin
     process (all)
     begin
         if (ARESETn = '0') then
-            PAYLOAD_COUNTER_r <= to_unsigned(255, 8);
+            PAYLOAD_COUNTER_r <= (others => '1');
         elsif (rising_edge(ACLK)) then
             if (set_payload_counter_w = '1') then
-                PAYLOAD_COUNTER_r <= unsigned(H_INTERFACE_i(14 downto 7));
+                PAYLOAD_COUNTER_r <= H_INTERFACE_i(14 downto 7);
             elsif (subtract_payload_counter_w = '1') then
-                PAYLOAD_COUNTER_r <= PAYLOAD_COUNTER_r - 1;
+                PAYLOAD_COUNTER_r <= std_logic_vector(unsigned(PAYLOAD_COUNTER_r) - 1);
             end if;
         end if;
     end process;
@@ -150,7 +150,7 @@ begin
 
     VALID_RECEIVE_DATA_o <= '1' when (state_w_r = "0101" and READ_OK_BUFFER_i = '1') else '0';
 
-    LAST_RECEIVE_DATA_o  <= '1' when (state_w_r = "0101" and READ_OK_BUFFER_i = '1' and PAYLOAD_COUNTER_r = to_unsigned(0, 8)) else '0';
+    LAST_RECEIVE_DATA_o  <= '1' when (state_w_r = "0101" and READ_OK_BUFFER_i = '1' and unsigned(PAYLOAD_COUNTER_r) = to_unsigned(0, 8)) else '0';
 
     HAS_REQUEST_PACKET_o <= '1' when (state_w_r = "1000") else '0';
 

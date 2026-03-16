@@ -23,7 +23,20 @@ end entity;
 
 architecture rtl of selftest_obs_uart_encode_critical is
   signal tm_done_d_r        : std_logic := '0';
-  signal report_counter_r   : integer range 0 to G_REPORT_PERIOD_PACKETS - 1 := 0;
+  function f_counter_width(max_value : positive) return natural is
+    variable width_v : natural := 1;
+    variable limit_v : natural := 2;
+  begin
+    while limit_v < max_value loop
+      width_v := width_v + 1;
+      limit_v := limit_v * 2;
+    end loop;
+    return width_v;
+  end function;
+
+  constant C_REPORT_COUNTER_WIDTH : natural := f_counter_width(G_REPORT_PERIOD_PACKETS);
+
+  signal report_counter_r   : std_logic_vector(C_REPORT_COUNTER_WIDTH - 1 downto 0) := (others => '0');
   signal period_report_due_r : std_logic := '0';
 
   attribute DONT_TOUCH : string;
@@ -43,7 +56,7 @@ begin
     if rising_edge(ACLK) then
       if ARESETn = '0' then
         tm_done_d_r         <= '0';
-        report_counter_r    <= 0;
+        report_counter_r    <= (others => '0');
         period_report_due_r <= '0';
       else
         tm_done_d_r <= tm_done_i;
@@ -53,11 +66,11 @@ begin
         end if;
 
         if (tm_done_i = '1') and (tm_done_d_r = '0') then
-          if report_counter_r = G_REPORT_PERIOD_PACKETS - 1 then
-            report_counter_r    <= 0;
+          if unsigned(report_counter_r) = to_unsigned(G_REPORT_PERIOD_PACKETS - 1, C_REPORT_COUNTER_WIDTH) then
+            report_counter_r    <= (others => '0');
             period_report_due_r <= '1';
           else
-            report_counter_r <= report_counter_r + 1;
+            report_counter_r <= std_logic_vector(unsigned(report_counter_r) + 1);
           end if;
         end if;
       end if;

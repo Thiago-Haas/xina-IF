@@ -37,7 +37,7 @@ architecture rtl of backend_manager_depacketizer_control is
     signal state_w_r    : std_logic_vector(2 downto 0);
     signal next_state_w : std_logic_vector(2 downto 0);
 
-    signal payload_counter_r: unsigned(7 downto 0) := to_unsigned(255, 8);
+    signal payload_counter_r: std_logic_vector(7 downto 0) := (others => '1');
     signal set_payload_counter_r: std_logic := '0';
     signal subtract_payload_counter_r: std_logic := '0';
 
@@ -88,7 +88,7 @@ begin
                             next_state_w <= "010";
                           end if;
 
-            when "011" => if (payload_counter_r = to_unsigned(0, 8) and READY_RECEIVE_DATA_i = '1' and READ_OK_BUFFER_i = '1') then
+            when "011" => if (unsigned(payload_counter_r) = to_unsigned(0, 8) and READY_RECEIVE_DATA_i = '1' and READ_OK_BUFFER_i = '1') then
                             next_state_w <= "101";
                           else
                             next_state_w <= "011";
@@ -109,12 +109,12 @@ begin
     process (all)
     begin
       if (ARESETn = '0') then
-        payload_counter_r <= to_unsigned(255, 8);
+        payload_counter_r <= (others => '1');
       elsif (rising_edge(ACLK)) then
         if (set_payload_counter_r = '1') then
-          payload_counter_r <= unsigned(FLIT_i(14 downto 7));
+          payload_counter_r <= FLIT_i(14 downto 7);
         elsif (subtract_payload_counter_r = '1') then
-          payload_counter_r <= payload_counter_r - 1;
+          payload_counter_r <= std_logic_vector(unsigned(payload_counter_r) - 1);
         end if;
       end if;
     end process;
@@ -131,7 +131,7 @@ begin
                                      (state_w_r = "011" and READ_OK_BUFFER_i = '1')
                                      else '0';
 
-    LAST_RECEIVE_DATA_o  <= '1' when (state_w_r = "011" and READ_OK_BUFFER_i = '1' and payload_counter_r = to_unsigned(0, 8)) else '0';
+    LAST_RECEIVE_DATA_o  <= '1' when (state_w_r = "011" and READ_OK_BUFFER_i = '1' and unsigned(payload_counter_r) = to_unsigned(0, 8)) else '0';
 
     READ_BUFFER_o <= '1' when (state_w_r = "000") or
                               (state_w_r = "001") or
