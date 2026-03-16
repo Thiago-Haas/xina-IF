@@ -38,8 +38,8 @@ architecture rtl of backend_manager_depacketizer_control is
     signal next_state_w : std_logic_vector(2 downto 0);
 
     signal payload_counter_r: std_logic_vector(7 downto 0) := (others => '1');
-    signal set_payload_counter_r: std_logic := '0';
-    signal subtract_payload_counter_r: std_logic := '0';
+    signal set_payload_counter_w: std_logic := '0';
+    signal subtract_payload_counter_w: std_logic := '0';
 
 
 
@@ -48,15 +48,15 @@ architecture rtl of backend_manager_depacketizer_control is
   -- Xilinx attributes to prevent optimization of TMR
   attribute DONT_TOUCH : string;
   attribute DONT_TOUCH of payload_counter_r : signal is "TRUE";
-  attribute DONT_TOUCH of set_payload_counter_r : signal is "TRUE";
+  attribute DONT_TOUCH of set_payload_counter_w : signal is "TRUE";
   attribute DONT_TOUCH of state_w_r : signal is "TRUE";
-  attribute DONT_TOUCH of subtract_payload_counter_r : signal is "TRUE";
+  attribute DONT_TOUCH of subtract_payload_counter_w : signal is "TRUE";
   -- Synplify attributes to prevent optimization of TMR
   attribute syn_preserve : boolean;
   attribute syn_preserve of payload_counter_r : signal is true;
-  attribute syn_preserve of set_payload_counter_r : signal is true;
+  attribute syn_preserve of set_payload_counter_w : signal is true;
   attribute syn_preserve of state_w_r : signal is true;
-  attribute syn_preserve of subtract_payload_counter_r : signal is true;
+  attribute syn_preserve of subtract_payload_counter_w : signal is true;
 begin
     ---------------------------------------------------------------------------------------------
     -- Update current state on clock rising edge.
@@ -111,9 +111,9 @@ begin
       if (ARESETn = '0') then
         payload_counter_r <= (others => '1');
       elsif (rising_edge(ACLK)) then
-        if (set_payload_counter_r = '1') then
+        if (set_payload_counter_w = '1') then
           payload_counter_r <= FLIT_i(14 downto 7);
-        elsif (subtract_payload_counter_r = '1') then
+        elsif (subtract_payload_counter_w = '1') then
           payload_counter_r <= std_logic_vector(unsigned(payload_counter_r) - 1);
         end if;
       end if;
@@ -121,8 +121,8 @@ begin
 
     ---------------------------------------------------------------------------------------------
     -- Internal signals.
-    set_payload_counter_r      <= '1' when (state_w_r = "010") else '0';
-    subtract_payload_counter_r <= '1' when (state_w_r = "011" and READ_OK_BUFFER_i = '1' and READY_RECEIVE_DATA_i = '1') else '0';
+    set_payload_counter_w      <= '1' when (state_w_r = "010") else '0';
+    subtract_payload_counter_w <= '1' when (state_w_r = "011" and READ_OK_BUFFER_i = '1' and READY_RECEIVE_DATA_i = '1') else '0';
 
     ---------------------------------------------------------------------------------------------
     -- Output values.
