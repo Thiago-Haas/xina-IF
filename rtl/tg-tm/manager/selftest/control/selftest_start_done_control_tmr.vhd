@@ -52,9 +52,9 @@ architecture rtl of selftest_start_done_control_tmr is
   end function;
 begin
   gen_ctrl : for i in 0 to 2 generate
-    attribute DONT_TOUCH of u_obs_ctrl : label is "TRUE";
-        attribute syn_preserve of u_obs_ctrl : label is true;
-    attribute KEEP_HIERARCHY of u_obs_ctrl : label is "TRUE";
+    attribute DONT_TOUCH of u_selftest_start_done_control : label is "TRUE";
+        attribute syn_preserve of u_selftest_start_done_control : label is true;
+    attribute KEEP_HIERARCHY of u_selftest_start_done_control : label is "TRUE";
   begin
     u_selftest_start_done_control: entity work.selftest_start_done_control
       port map(

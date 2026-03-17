@@ -82,9 +82,9 @@ begin
 
   -- 3 replicated controllers
   gen_ctrl : for i in 0 to 2 generate
-    attribute DONT_TOUCH of u_CTRL : label is "TRUE";
-        attribute syn_preserve of u_CTRL : label is true;
-    attribute KEEP_HIERARCHY of u_CTRL : label is "TRUE";
+    attribute DONT_TOUCH of u_traffic_gen_control : label is "TRUE";
+        attribute syn_preserve of u_traffic_gen_control : label is true;
+    attribute KEEP_HIERARCHY of u_traffic_gen_control : label is "TRUE";
   begin
     u_traffic_gen_control: entity work.traffic_gen_control
       port map (

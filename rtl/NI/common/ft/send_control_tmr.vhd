@@ -44,17 +44,17 @@ architecture rtl of send_control_tmr is
 begin
 
     gen_TMR : for i in 2 downto 0 generate
-        attribute DONT_TOUCH of u_SEND_CONTROL : label is "TRUE";
-        attribute syn_preserve of u_SEND_CONTROL : label is true;
-        attribute KEEP_HIERARCHY of u_SEND_CONTROL : label is "TRUE";
+        attribute DONT_TOUCH of u_send_control : label is "TRUE";
+        attribute syn_preserve of u_send_control : label is true;
+        attribute KEEP_HIERARCHY of u_send_control : label is "TRUE";
         attribute syn_radhardlevel : string;
         attribute syn_keep         : boolean;
         attribute syn_safe_case    : boolean;
         attribute syn_noprune      : boolean;
-        attribute syn_radhardlevel of u_SEND_CONTROL : label is "tmr";
-        attribute syn_keep         of u_SEND_CONTROL : label is TRUE;
-        attribute syn_safe_case    of u_SEND_CONTROL : label is TRUE;
-        attribute syn_noprune      of u_SEND_CONTROL : label is TRUE;
+        attribute syn_radhardlevel of u_send_control : label is "tmr";
+        attribute syn_keep         of u_send_control : label is TRUE;
+        attribute syn_safe_case    of u_send_control : label is TRUE;
+        attribute syn_noprune      of u_send_control : label is TRUE;
     begin
         u_send_control: entity work.send_control
             port map(

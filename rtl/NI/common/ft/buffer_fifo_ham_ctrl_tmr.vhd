@@ -74,9 +74,9 @@ architecture rtl of buffer_fifo_ham_ctrl_tmr is
   signal fifo_count_w    : tmr_cnt_t;
 begin
   gen_ctrl : for i in 0 to 2 generate
-    attribute DONT_TOUCH of u_ctrl : label is "TRUE";
-        attribute syn_preserve of u_ctrl : label is true;
-    attribute KEEP_HIERARCHY of u_ctrl : label is "TRUE";
+    attribute DONT_TOUCH of u_buffer_fifo_ham_ctrl : label is "TRUE";
+        attribute syn_preserve of u_buffer_fifo_ham_ctrl : label is true;
+    attribute KEEP_HIERARCHY of u_buffer_fifo_ham_ctrl : label is "TRUE";
   begin
     u_buffer_fifo_ham_ctrl: entity work.buffer_fifo_ham_ctrl
       generic map(

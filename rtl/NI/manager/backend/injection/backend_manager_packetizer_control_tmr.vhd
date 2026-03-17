@@ -72,17 +72,17 @@ architecture rtl of backend_manager_packetizer_control_tmr is
 begin
 
     gen_TMR : for i in 2 downto 0 generate
-        attribute DONT_TOUCH of u_PACKETIZER_CONTROL : label is "TRUE";
-        attribute syn_preserve of u_PACKETIZER_CONTROL : label is true;
-        attribute KEEP_HIERARCHY of u_PACKETIZER_CONTROL : label is "TRUE";
+        attribute DONT_TOUCH of u_backend_manager_packetizer_control : label is "TRUE";
+        attribute syn_preserve of u_backend_manager_packetizer_control : label is true;
+        attribute KEEP_HIERARCHY of u_backend_manager_packetizer_control : label is "TRUE";
         attribute syn_radhardlevel : string;
         attribute syn_keep         : boolean;
         attribute syn_safe_case    : boolean;
         attribute syn_noprune      : boolean;
-        attribute syn_radhardlevel of u_PACKETIZER_CONTROL : label is "tmr";
-        attribute syn_keep         of u_PACKETIZER_CONTROL : label is TRUE;
-        attribute syn_safe_case    of u_PACKETIZER_CONTROL : label is TRUE;
-        attribute syn_noprune      of u_PACKETIZER_CONTROL : label is TRUE;
+        attribute syn_radhardlevel of u_backend_manager_packetizer_control : label is "tmr";
+        attribute syn_keep         of u_backend_manager_packetizer_control : label is TRUE;
+        attribute syn_safe_case    of u_backend_manager_packetizer_control : label is TRUE;
+        attribute syn_noprune      of u_backend_manager_packetizer_control : label is TRUE;
     begin
         u_backend_manager_packetizer_control: entity work.backend_manager_packetizer_control
             port map(

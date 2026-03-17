@@ -75,9 +75,9 @@ architecture rtl of traffic_mon_control_tmr is
 begin
 
   gen_ctrl : for i in 0 to 2 generate
-    attribute DONT_TOUCH of u_CTRL : label is "TRUE";
-        attribute syn_preserve of u_CTRL : label is true;
-    attribute KEEP_HIERARCHY of u_CTRL : label is "TRUE";
+    attribute DONT_TOUCH of u_traffic_mon_control : label is "TRUE";
+        attribute syn_preserve of u_traffic_mon_control : label is true;
+    attribute KEEP_HIERARCHY of u_traffic_mon_control : label is "TRUE";
   begin
     u_traffic_mon_control: entity work.traffic_mon_control
       port map(

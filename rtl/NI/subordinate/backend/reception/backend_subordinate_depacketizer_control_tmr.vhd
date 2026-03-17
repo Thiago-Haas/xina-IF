@@ -64,9 +64,9 @@ architecture rtl of backend_subordinate_depacketizer_control_tmr is
 begin
     TMR:
     for i in 2 downto 0 generate
-        attribute DONT_TOUCH of u_DEPACKETIZER_CONTROL : label is "TRUE";
-        attribute syn_preserve of u_DEPACKETIZER_CONTROL : label is true;
-        attribute KEEP_HIERARCHY of u_DEPACKETIZER_CONTROL : label is "TRUE";
+        attribute DONT_TOUCH of u_backend_subordinate_depacketizer_control : label is "TRUE";
+        attribute syn_preserve of u_backend_subordinate_depacketizer_control : label is true;
+        attribute KEEP_HIERARCHY of u_backend_subordinate_depacketizer_control : label is "TRUE";
     begin
         u_backend_subordinate_depacketizer_control: entity work.backend_subordinate_depacketizer_control
             port map(

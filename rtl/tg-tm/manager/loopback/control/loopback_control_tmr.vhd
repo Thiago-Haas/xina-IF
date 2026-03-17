@@ -107,9 +107,9 @@ architecture rtl of loopback_control_tmr is
 begin
 
   gen_rep : for i in 0 to 2 generate
-    attribute DONT_TOUCH of u_ctrl : label is "TRUE";
-        attribute syn_preserve of u_ctrl : label is true;
-    attribute KEEP_HIERARCHY of u_ctrl : label is "TRUE";
+    attribute DONT_TOUCH of u_loopback_control : label is "TRUE";
+        attribute syn_preserve of u_loopback_control : label is true;
+    attribute KEEP_HIERARCHY of u_loopback_control : label is "TRUE";
   begin
     u_loopback_control: entity work.loopback_control
       port map(

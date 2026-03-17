@@ -44,17 +44,17 @@ architecture rtl of receive_control_tmr is
 begin
 
     gen_TMR : for i in 2 downto 0 generate
-        attribute DONT_TOUCH of u_RECEIVE_CONTROL : label is "TRUE";
-        attribute syn_preserve of u_RECEIVE_CONTROL : label is true;
-        attribute KEEP_HIERARCHY of u_RECEIVE_CONTROL : label is "TRUE";
+        attribute DONT_TOUCH of u_receive_control : label is "TRUE";
+        attribute syn_preserve of u_receive_control : label is true;
+        attribute KEEP_HIERARCHY of u_receive_control : label is "TRUE";
         attribute syn_radhardlevel : string;
         attribute syn_keep         : boolean;
         attribute syn_safe_case    : boolean;
         attribute syn_noprune      : boolean;
-        attribute syn_radhardlevel of u_RECEIVE_CONTROL : label is "tmr";
-        attribute syn_keep         of u_RECEIVE_CONTROL : label is TRUE;
-        attribute syn_safe_case    of u_RECEIVE_CONTROL : label is TRUE;
-        attribute syn_noprune      of u_RECEIVE_CONTROL : label is TRUE;
+        attribute syn_radhardlevel of u_receive_control : label is "tmr";
+        attribute syn_keep         of u_receive_control : label is TRUE;
+        attribute syn_safe_case    of u_receive_control : label is TRUE;
+        attribute syn_noprune      of u_receive_control : label is TRUE;
     begin
         u_receive_control: entity work.receive_control
             port map(
