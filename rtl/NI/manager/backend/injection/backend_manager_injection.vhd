@@ -192,7 +192,7 @@ begin
 
                 CHECKSUM_o      => CHECKSUM_w,
 
-                correct_error_i => '0',
+                correct_error_i => OBS_INJ_HAM_INTEGRITY_CORRECT_ERROR_i,
                 error_o         => open,
 
                 OBS_HAM_INTEGRITY_CORRECT_ERROR_i => OBS_INJ_HAM_INTEGRITY_CORRECT_ERROR_i,

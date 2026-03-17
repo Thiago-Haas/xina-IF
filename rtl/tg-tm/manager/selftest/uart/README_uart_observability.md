@@ -32,11 +32,11 @@ TM=00002710
 
 ### Event base line
 ```text
-TM=<TM_HEX> FLAGS=<8_HEX>\n
+TM=<TM_HEX> FLAGS=<10_HEX>\n
 ```
 Example:
 ```text
-TM=000000fe FLAGS=1010000
+TM=000000fe FLAGS=0001010000
 ```
 
 ### Optional event encoded-data line (only if a Hamming source is selected)
@@ -49,56 +49,61 @@ ENC SRC=<1_HEX> DATA=<20_HEX>\n
 Base internal frame in UART encode control:
 
 ```text
-bit [83:0] fault_data
+bit [103:0] fault_data
 
- [83 ....................... 64][63 ................. 32][31 ............ 0]
+ [103 ...................... 72][71 ................. 40][39 ............ 0]
  +----------------------------+-------------------------+------------------+
- | reserved (zeros)           | TM transaction count    | FLAGS[31:0]      |
+ | reserved (zeros)           | TM transaction count    | FLAGS[39:0]      |
  +----------------------------+-------------------------+------------------+
 ```
 
 `TM` is placed in `fault_data(C_BASE_TM_MSB downto C_BASE_TM_LSB)`, where:
-- `C_BASE_TM_LSB = c_TM_UART_FLAGS_WIDTH` (currently `32`)
+- `C_BASE_TM_LSB = c_TM_UART_FLAGS_WIDTH` (currently `40`)
 - `C_BASE_TM_MSB = C_BASE_TM_LSB + c_TM_TRANSACTION_COUNTER_WIDTH - 1`
 
-## 4) FLAGS Bit Map (28 bits)
+## 4) FLAGS Bit Map (37 used bits in a 40-bit vector)
 
-`FLAGS` is printed as 8 hex chars (32 bits). Bit mapping:
-
-| FLAG bit | Signal |
-|---|---|
-| 31..29 | Reserved (0) |
-| 28 | `i_OBS_START_DONE_CTRL_TMR_ERROR` |
+`FLAGS` is printed as 10 hex chars (40 bits). Bit mapping:
 
 | FLAG bit | Signal |
 |---|---|
-| 27 | `i_tm_comparison_mismatch` |
-| 26 | `i_NI_CORRUPT_PACKET` |
-| 25 | `i_OBS_TM_TMR_CTRL_ERROR` |
-| 24 | `i_OBS_TM_HAM_BUFFER_SINGLE_ERR` |
-| 23 | `i_OBS_TM_HAM_BUFFER_DOUBLE_ERR` |
-| 22 | `i_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR` |
-| 21 | `i_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR` |
-| 20 | `i_OBS_LB_TMR_CTRL_ERROR` |
-| 19 | `i_OBS_LB_HAM_BUFFER_SINGLE_ERR` |
-| 18 | `i_OBS_LB_HAM_BUFFER_DOUBLE_ERR` |
-| 17 | `i_OBS_TG_TMR_CTRL_ERROR` |
-| 16 | `i_OBS_TG_HAM_BUFFER_SINGLE_ERR` |
-| 15 | `i_OBS_TG_HAM_BUFFER_DOUBLE_ERR` |
-| 14 | `i_OBS_FE_INJ_META_HDR_SINGLE_ERR` |
-| 13 | `i_OBS_FE_INJ_META_HDR_DOUBLE_ERR` |
-| 12 | `i_OBS_FE_INJ_ADDR_SINGLE_ERR` |
-| 11 | `i_OBS_FE_INJ_ADDR_DOUBLE_ERR` |
-| 10 | `i_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR` |
-| 9  | `i_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR` |
-| 8  | `i_OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_ERROR` |
-| 7  | `i_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR` |
-| 6  | `i_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR` |
-| 5  | `i_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR` |
-| 4  | `i_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR` |
-| 3  | `i_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR` |
-| 2  | `i_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR` |
-| 1  | `i_OBS_BE_RX_INTEGRITY_CORRUPT` |
+| 39..37 | Reserved (0) |
+| 36 | `i_OBS_UART_ENCODE_CRITICAL_TMR_ERROR` |
+| 35 | `i_OBS_UART_COMMAND_CTRL_TMR_ERROR` |
+| 34 | `i_OBS_START_DONE_CTRL_TMR_ERROR` |
+| 33 | `i_tm_comparison_mismatch` |
+| 32 | `i_NI_CORRUPT_PACKET` |
+| 31 | `i_OBS_TM_TMR_CTRL_ERROR` |
+| 30 | `i_OBS_TM_HAM_BUFFER_SINGLE_ERR` |
+| 29 | `i_OBS_TM_HAM_BUFFER_DOUBLE_ERR` |
+| 28 | `i_OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR` |
+| 27 | `i_OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR` |
+| 26 | `i_OBS_LB_TMR_CTRL_ERROR` |
+| 25 | `i_OBS_LB_HAM_BUFFER_SINGLE_ERR` |
+| 24 | `i_OBS_LB_HAM_BUFFER_DOUBLE_ERR` |
+| 23 | `i_OBS_TG_TMR_CTRL_ERROR` |
+| 22 | `i_OBS_TG_HAM_BUFFER_SINGLE_ERR` |
+| 21 | `i_OBS_TG_HAM_BUFFER_DOUBLE_ERR` |
+| 20 | `i_OBS_FE_INJ_META_HDR_SINGLE_ERR` |
+| 19 | `i_OBS_FE_INJ_META_HDR_DOUBLE_ERR` |
+| 18 | `i_OBS_FE_INJ_ADDR_SINGLE_ERR` |
+| 17 | `i_OBS_FE_INJ_ADDR_DOUBLE_ERR` |
+| 16 | `i_OBS_BE_INJ_HAM_BUFFER_SINGLE_ERR` |
+| 15 | `i_OBS_BE_INJ_HAM_BUFFER_DOUBLE_ERR` |
+| 14 | `i_OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_ERROR` |
+| 13 | `i_OBS_BE_INJ_HAM_INTEGRITY_SINGLE_ERR` |
+| 12 | `i_OBS_BE_INJ_HAM_INTEGRITY_DOUBLE_ERR` |
+| 11 | `i_OBS_BE_INJ_TMR_FLOW_CTRL_ERROR` |
+| 10 | `i_OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR` |
+| 9  | `i_OBS_BE_RX_HAM_BUFFER_SINGLE_ERR` |
+| 8  | `i_OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR` |
+| 7  | `i_OBS_BE_RX_TMR_DEPKTZ_CTRL_ERROR` |
+| 6  | `i_OBS_BE_RX_TMR_HAM_BUFFER_CTRL_ERROR` |
+| 5  | `i_OBS_BE_RX_HAM_INTERFACE_HDR_SINGLE_ERR` |
+| 4  | `i_OBS_BE_RX_HAM_INTERFACE_HDR_DOUBLE_ERR` |
+| 3  | `i_OBS_BE_RX_INTEGRITY_CORRUPT` |
+| 2  | `i_OBS_BE_RX_HAM_INTEGRITY_SINGLE_ERR` |
+| 1  | `i_OBS_BE_RX_HAM_INTEGRITY_DOUBLE_ERR` |
 | 0  | `i_OBS_BE_RX_TMR_FLOW_CTRL_ERROR` |
 
 ## 5) ENC Source (`SRC`) Map

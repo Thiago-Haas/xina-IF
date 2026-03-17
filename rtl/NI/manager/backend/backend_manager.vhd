@@ -93,6 +93,8 @@ entity backend_manager is
         OBS_BE_RX_HAM_BUFFER_SINGLE_ERR_o     : out std_logic;
         OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR_o     : out std_logic;
         OBS_BE_RX_HAM_BUFFER_ENC_DATA_o       : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, DETECT_DOUBLE) - 1 downto 0);
+        OBS_BE_RX_TMR_DEPKTZ_CTRL_CORRECT_ERROR_i     : in  std_logic := '1';
+        OBS_BE_RX_TMR_DEPKTZ_CTRL_ERROR_o             : out std_logic;
         OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i : in  std_logic := '1';
         OBS_BE_RX_TMR_HAM_BUFFER_CTRL_ERROR_o         : out std_logic;
         OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR_i : in std_logic := '1';
@@ -206,6 +208,8 @@ begin
             OBS_RX_HAM_BUFFER_SINGLE_ERR_o    => OBS_BE_RX_HAM_BUFFER_SINGLE_ERR_o,
             OBS_RX_HAM_BUFFER_DOUBLE_ERR_o    => OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR_o,
             OBS_RX_HAM_BUFFER_ENC_DATA_o      => OBS_BE_RX_HAM_BUFFER_ENC_DATA_o,
+            OBS_RX_TMR_DEPKTZ_CTRL_CORRECT_ERROR_i => OBS_BE_RX_TMR_DEPKTZ_CTRL_CORRECT_ERROR_i,
+            OBS_RX_TMR_DEPKTZ_CTRL_ERROR_o         => OBS_BE_RX_TMR_DEPKTZ_CTRL_ERROR_o,
             OBS_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i => OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i,
             OBS_RX_TMR_HAM_BUFFER_CTRL_ERROR_o         => OBS_BE_RX_TMR_HAM_BUFFER_CTRL_ERROR_o,
             OBS_RX_HAM_INTERFACE_HDR_CORRECT_ERROR_i => OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR_i,

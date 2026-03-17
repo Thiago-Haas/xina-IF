@@ -26,6 +26,7 @@ entity selftest_uart_command_datapath is
     OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR_o : out std_logic;
 
     OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR_o : out std_logic;
+    OBS_BE_RX_TMR_DEPKTZ_CTRL_CORRECT_ERROR_o : out std_logic;
     OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_o : out std_logic;
     OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR_o : out std_logic;
     OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR_o : out std_logic;
@@ -58,6 +59,7 @@ begin
   OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR_o <= command_enable_i;
 
   OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR_o <= command_enable_i;
+  OBS_BE_RX_TMR_DEPKTZ_CTRL_CORRECT_ERROR_o <= command_enable_i;
   OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_o <= command_enable_i;
   OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR_o <= command_enable_i;
   OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR_o <= command_enable_i;

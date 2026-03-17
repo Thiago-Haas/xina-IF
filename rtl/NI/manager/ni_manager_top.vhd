@@ -125,6 +125,8 @@ entity ni_manager_top is
         OBS_BE_RX_HAM_BUFFER_SINGLE_ERR_o     : out std_logic;
         OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR_o     : out std_logic;
         OBS_BE_RX_HAM_BUFFER_ENC_DATA_o       : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, DETECT_DOUBLE) - 1 downto 0);
+        OBS_BE_RX_TMR_DEPKTZ_CTRL_CORRECT_ERROR_i     : in  std_logic := '1';
+        OBS_BE_RX_TMR_DEPKTZ_CTRL_ERROR_o             : out std_logic;
         OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i : in  std_logic := '1';
         OBS_BE_RX_TMR_HAM_BUFFER_CTRL_ERROR_o         : out std_logic;
         OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR_i : in std_logic := '1';
@@ -178,6 +180,7 @@ architecture rtl of ni_manager_top is
     signal OBS_BE_INJ_TMR_FLOW_CTRL_ERROR_w : std_logic;
     signal OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR_w : std_logic;
     signal OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_ERROR_w : std_logic;
+    signal OBS_BE_RX_TMR_DEPKTZ_CTRL_ERROR_w      : std_logic;
     signal OBS_BE_RX_TMR_HAM_BUFFER_CTRL_ERROR_w  : std_logic;
     signal OBS_BE_RX_INTEGRITY_CORRUPT_w    : std_logic;
     signal OBS_BE_RX_TMR_FLOW_CTRL_ERROR_w  : std_logic;
@@ -355,6 +358,8 @@ begin
             OBS_BE_RX_HAM_BUFFER_SINGLE_ERR_o     => OBS_BE_RX_HAM_BUFFER_SINGLE_ERR_o,
             OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR_o     => OBS_BE_RX_HAM_BUFFER_DOUBLE_ERR_o,
             OBS_BE_RX_HAM_BUFFER_ENC_DATA_o       => OBS_BE_RX_HAM_BUFFER_ENC_DATA_o,
+            OBS_BE_RX_TMR_DEPKTZ_CTRL_CORRECT_ERROR_i => OBS_BE_RX_TMR_DEPKTZ_CTRL_CORRECT_ERROR_i,
+            OBS_BE_RX_TMR_DEPKTZ_CTRL_ERROR_o         => OBS_BE_RX_TMR_DEPKTZ_CTRL_ERROR_w,
             OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i => OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i,
             OBS_BE_RX_TMR_HAM_BUFFER_CTRL_ERROR_o         => OBS_BE_RX_TMR_HAM_BUFFER_CTRL_ERROR_w,
             OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR_i => OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR_i,
@@ -375,6 +380,7 @@ begin
     OBS_BE_INJ_TMR_FLOW_CTRL_ERROR_o <= OBS_BE_INJ_TMR_FLOW_CTRL_ERROR_w;
     OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR_o <= OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR_w;
     OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_ERROR_o <= OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_ERROR_w;
+    OBS_BE_RX_TMR_DEPKTZ_CTRL_ERROR_o      <= OBS_BE_RX_TMR_DEPKTZ_CTRL_ERROR_w;
     OBS_BE_RX_TMR_HAM_BUFFER_CTRL_ERROR_o  <= OBS_BE_RX_TMR_HAM_BUFFER_CTRL_ERROR_w;
     OBS_BE_RX_INTEGRITY_CORRUPT_o    <= OBS_BE_RX_INTEGRITY_CORRUPT_w;
     OBS_BE_RX_TMR_FLOW_CTRL_ERROR_o  <= OBS_BE_RX_TMR_FLOW_CTRL_ERROR_w;

@@ -45,6 +45,8 @@ entity backend_manager_reception is
         OBS_RX_HAM_BUFFER_SINGLE_ERR_o    : out std_logic;
         OBS_RX_HAM_BUFFER_DOUBLE_ERR_o    : out std_logic;
         OBS_RX_HAM_BUFFER_ENC_DATA_o      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, DETECT_DOUBLE) - 1 downto 0);
+        OBS_RX_TMR_DEPKTZ_CTRL_CORRECT_ERROR_i     : in  std_logic := '1';
+        OBS_RX_TMR_DEPKTZ_CTRL_ERROR_o             : out std_logic := '0';
         OBS_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i : in  std_logic := '1';
         OBS_RX_TMR_HAM_BUFFER_CTRL_ERROR_o         : out std_logic := '0';
         -- Hamming (interface header register) - EXTERNAL
@@ -138,7 +140,9 @@ begin
 
                 ADD_o              => ADD_w,
                 COMPARE_o          => COMPARE_w,
-                INTEGRITY_RESETn_o => INTEGRITY_RESETn_w
+                INTEGRITY_RESETn_o => INTEGRITY_RESETn_w,
+                correct_error_i    => OBS_RX_TMR_DEPKTZ_CTRL_CORRECT_ERROR_i,
+                error_o            => OBS_RX_TMR_DEPKTZ_CTRL_ERROR_o
             );
     else generate
         u_backend_manager_depacketizer_control: entity work.backend_manager_depacketizer_control
@@ -161,6 +165,7 @@ begin
                 COMPARE_o          => COMPARE_w,
                 INTEGRITY_RESETn_o => INTEGRITY_RESETn_w
             );
+        OBS_RX_TMR_DEPKTZ_CTRL_ERROR_o <= '0';
     end generate;
 
     u_INTEGRITY_CONTROL_RECEIVE:
@@ -178,7 +183,7 @@ begin
 
                 CORRUPT_o       => OBS_RX_INTEGRITY_CORRUPT_w,
 
-                correct_error_i => '0',
+                correct_error_i => OBS_RX_HAM_INTEGRITY_CORRECT_ERROR_i,
                 error_o         => open,
 
                 OBS_HAM_INTEGRITY_CORRECT_ERROR_i => OBS_RX_HAM_INTEGRITY_CORRECT_ERROR_i,

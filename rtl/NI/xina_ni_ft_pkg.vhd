@@ -69,7 +69,7 @@ package xina_ni_ft_pkg is
   -- Number of TM completed packets between periodic UART reports.
   constant c_TM_UART_REPORT_PERIOD_PACKETS    : positive := 100;
   -- UART FLAGS field width (must stay nibble-aligned to keep TM hex formatting aligned).
-  constant c_TM_UART_FLAGS_WIDTH              : natural := 32;
+  constant c_TM_UART_FLAGS_WIDTH              : natural := 40;
 
   -- Loopback.
   constant c_ENABLE_LB_CTRL_TMR              : boolean := true;
