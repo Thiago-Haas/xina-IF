@@ -137,7 +137,7 @@ begin
       );
   end generate;
 
-  u_uart_encode_ctrl: entity work.selftest_obs_uart_encode_ctrl
+  u_selftest_obs_uart_encode_ctrl: entity work.selftest_obs_uart_encode_ctrl
     generic map(
       G_REPORT_PERIOD_PACKETS => G_REPORT_PERIOD_PACKETS
     )

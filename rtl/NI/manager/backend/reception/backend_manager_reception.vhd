@@ -94,7 +94,7 @@ architecture rtl of backend_manager_reception is
     signal READ_OK_BUFFER_w : std_logic;
 
 begin
-    u_H_INTERFACE_REG: entity work.backend_manager_reception_h_interface_reg
+    u_backend_manager_reception_h_interface_reg: entity work.backend_manager_reception_h_interface_reg
         generic map(
             p_USE_HAMMING           => p_USE_RX_INTERFACE_HDR_HAMMING,
             p_HAMMING_DETECT_DOUBLE => DETECT_DOUBLE
@@ -120,7 +120,7 @@ begin
 
     u_DEPACKETIZER_CONTROL:
     if (p_USE_RX_DEPKTZ_CTRL_TMR) generate
-        u_DEPACKETIZER_CONTROL_TMR: entity work.backend_manager_depacketizer_control_tmr
+        u_backend_manager_depacketizer_control_tmr: entity work.backend_manager_depacketizer_control_tmr
             port map(
                 ACLK    => ACLK,
                 ARESETn => ARESETn,
@@ -141,7 +141,7 @@ begin
                 INTEGRITY_RESETn_o => INTEGRITY_RESETn_w
             );
     else generate
-        u_DEPACKETIZER_CONTROL_NORMAL: entity work.backend_manager_depacketizer_control
+        u_backend_manager_depacketizer_control: entity work.backend_manager_depacketizer_control
             port map(
                 ACLK    => ACLK,
                 ARESETn => ARESETn,
@@ -165,7 +165,7 @@ begin
 
     u_INTEGRITY_CONTROL_RECEIVE:
     if (p_USE_RX_INTEGRITY_CHECK) generate
-        u_INTEGRITY_CONTROL_RECEIVE_HAM: entity work.integrity_control_receive_hamming
+        u_integrity_control_receive_hamming: entity work.integrity_control_receive_hamming
             port map(
                 ACLK    => ACLK,
                 ARESETn => INTEGRITY_RESETn_w,
@@ -200,7 +200,7 @@ begin
 
     u_BUFFER_FIFO:
     if (p_USE_RX_BUFFER_HAMMING) generate
-        u_BUFFER_FIFO_HAM: entity work.buffer_fifo_ham
+        u_buffer_fifo_ham: entity work.buffer_fifo_ham
             generic map(
                 p_DATA_WIDTH   => c_FLIT_WIDTH,
                 p_BUFFER_DEPTH => p_BUFFER_DEPTH,
@@ -229,7 +229,7 @@ begin
                 OBS_HAM_FIFO_CTRL_TMR_ERROR_o         => OBS_RX_TMR_HAM_BUFFER_CTRL_ERROR_o
             );
     else generate
-        u_BUFFER_FIFO_NORMAL: entity work.buffer_fifo
+        u_buffer_fifo: entity work.buffer_fifo
             generic map(
                 p_DATA_WIDTH   => c_FLIT_WIDTH,
                 p_BUFFER_DEPTH => p_BUFFER_DEPTH
@@ -253,7 +253,7 @@ begin
 
     u_RECEIVE_CONTROL:
     if (p_USE_RX_FLOW_CTRL_TMR) generate
-        u_RECEIVE_CONTROL_TMR: entity work.receive_control_tmr
+        u_receive_control_tmr: entity work.receive_control_tmr
             port map(
                 ACLK    => ACLK,
                 ARESETn => ARESETn,
@@ -268,7 +268,7 @@ begin
                 error_o         => OBS_RX_TMR_FLOW_CTRL_ERROR_o
             );
     else generate
-        u_RECEIVE_CONTROL_NORMAL: entity work.receive_control
+        u_receive_control: entity work.receive_control
             port map(
                 ACLK    => ACLK,
                 ARESETn => ARESETn,

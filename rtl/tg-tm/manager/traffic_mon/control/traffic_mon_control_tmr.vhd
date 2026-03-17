@@ -79,7 +79,7 @@ begin
         attribute syn_preserve of u_CTRL : label is true;
     attribute KEEP_HIERARCHY of u_CTRL : label is "TRUE";
   begin
-    u_CTRL : entity work.traffic_mon_control
+    u_traffic_mon_control: entity work.traffic_mon_control
       port map(
         ACLK    => ACLK,
         ARESETn => ARESETn,

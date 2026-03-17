@@ -61,7 +61,7 @@ architecture rtl of loopback_top is
   signal ham_enc_data_w   : std_logic_vector(32 + work.hamming_pkg.get_ecc_size(32, p_USE_LB_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
 begin
-  u_ctrl_adapter: entity work.loopback_control_adapter
+  u_loopback_control_adapter: entity work.loopback_control_adapter
     port map(
       lin_data_i       => lin_data_i,
       cap_flit_ctrl_i  => ctrl_cap_flit_ctrl_w,
@@ -72,7 +72,7 @@ begin
       lout_data_o      => lout_data_o
     );
 
-  u_dp: entity work.loopback_datapath
+  u_loopback_datapath: entity work.loopback_datapath
     generic map(
       p_USE_LB_HAMMING               => p_USE_LB_HAMMING,
       p_USE_LB_HAMMING_DOUBLE_DETECT => p_USE_LB_HAMMING_DOUBLE_DETECT,
@@ -101,7 +101,7 @@ begin
   begin
     ctrl_tmr_err_w <= '0';
 
-    u_ctrl: entity work.loopback_control
+    u_loopback_control: entity work.loopback_control
       port map(
         ACLK    => ACLK,
         ARESETn => ARESETn,
@@ -125,7 +125,7 @@ begin
 
   gen_ctrl_tmr : if p_USE_LB_CTRL_TMR generate
   begin
-    u_ctrl_tmr: entity work.loopback_control_tmr
+    u_loopback_control_tmr: entity work.loopback_control_tmr
       port map(
         ACLK    => ACLK,
         ARESETn => ARESETn,

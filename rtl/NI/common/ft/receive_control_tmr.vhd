@@ -56,7 +56,7 @@ begin
         attribute syn_safe_case    of u_RECEIVE_CONTROL : label is TRUE;
         attribute syn_noprune      of u_RECEIVE_CONTROL : label is TRUE;
     begin
-        u_RECEIVE_CONTROL: entity work.receive_control
+        u_receive_control: entity work.receive_control
             port map(
                 ACLK    => ACLK,
                 ARESETn => ARESETn,

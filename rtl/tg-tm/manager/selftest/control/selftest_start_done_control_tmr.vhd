@@ -56,7 +56,7 @@ begin
         attribute syn_preserve of u_obs_ctrl : label is true;
     attribute KEEP_HIERARCHY of u_obs_ctrl : label is "TRUE";
   begin
-    u_obs_ctrl : entity work.selftest_start_done_control
+    u_selftest_start_done_control: entity work.selftest_start_done_control
       port map(
         ACLK    => ACLK,
         ARESETn => ARESETn,

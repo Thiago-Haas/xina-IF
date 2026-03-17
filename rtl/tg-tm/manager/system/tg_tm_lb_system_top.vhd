@@ -180,7 +180,7 @@ architecture rtl of tg_tm_lb_system_top is
 begin
 
   -- TG
-  u_tg: entity work.traffic_gen_top
+  u_traffic_gen_top: entity work.traffic_gen_top
     generic map(
       p_USE_TG_CTRL_TMR              => p_USE_TG_CTRL_TMR,
       p_USE_TG_HAMMING               => p_USE_TG_HAMMING,
@@ -229,7 +229,7 @@ begin
     );
 
   -- TM
-  u_tm: entity work.traffic_mon_top
+  u_traffic_mon_top: entity work.traffic_mon_top
     generic map(
       p_USE_TM_CTRL_TMR              => p_USE_TM_CTRL_TMR,
       p_USE_TM_HAMMING               => p_USE_TM_HAMMING,
@@ -279,7 +279,7 @@ begin
     );
 
   -- Single NI manager
-  u_ni: entity work.ni_manager_top
+  u_ni_manager_top: entity work.ni_manager_top
     port map(
       ACLK    => ACLK,
       ARESETn => ARESETn,
@@ -376,7 +376,7 @@ begin
     );
 
   -- HW loopback (non-debug)
-  u_lb: entity work.loopback_top
+  u_loopback_top: entity work.loopback_top
     generic map(
       p_MEM_ADDR_BITS              => p_MEM_ADDR_BITS,
       p_USE_LB_CTRL_TMR            => p_USE_LB_CTRL_TMR,

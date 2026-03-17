@@ -148,7 +148,7 @@ begin
   ACLK <= not ACLK after c_CLK_PERIOD/2;
 
   -- TG
-  u_tg: entity work.traffic_gen_top
+  u_traffic_gen_top: entity work.traffic_gen_top
     port map(
       ACLK    => ACLK,
       ARESETn => ARESETn,
@@ -190,7 +190,7 @@ begin
     );
 
   -- TM
-  u_tm: entity work.traffic_mon_top
+  u_traffic_mon_top: entity work.traffic_mon_top
     port map(
       ACLK    => ACLK,
       ARESETn => ARESETn,
@@ -237,7 +237,7 @@ begin
     );
 
   -- NI manager
-  u_ni: entity work.ni_manager_top
+  u_ni_manager_top: entity work.ni_manager_top
     generic map(
       DETECT_DOUBLE => c_DETECT_DOUBLE
     )
@@ -336,7 +336,7 @@ begin
     );
 
   -- Loopback
-  u_lb: entity work.loopback_top
+  u_loopback_top: entity work.loopback_top
     generic map(
       p_MEM_ADDR_BITS => 10
     )

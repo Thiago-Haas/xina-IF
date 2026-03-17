@@ -100,7 +100,7 @@ architecture rtl of ni_subordinate_top is
     signal CORRUPT_RECEIVE_w: std_logic;
 
 begin
-    u_FRONTEND: entity work.frontend_subordinate
+    u_frontend_subordinate: entity work.frontend_subordinate
         port map(
             -- AMBA AXI 5 signals.
             ACLK => ACLK,
@@ -173,7 +173,7 @@ begin
             CORRUPT_RECEIVE_i => CORRUPT_RECEIVE_w
         );
 
-    u_BACKEND: entity work.backend_subordinate
+    u_backend_subordinate: entity work.backend_subordinate
         generic map(
             p_SRC_X => p_SRC_X,
             p_SRC_Y => p_SRC_Y,

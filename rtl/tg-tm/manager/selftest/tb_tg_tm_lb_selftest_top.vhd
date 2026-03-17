@@ -10,6 +10,9 @@ library std;
 -- The DUT runs self-test internally; inspect waves for internal signals.
 
 entity tb_tg_tm_lb_selftest_top is
+  generic (
+    G_ENABLE_OBS_AFTER_RESET : boolean := false
+  );
 end entity;
 
 architecture tb of tb_tg_tm_lb_selftest_top is
@@ -49,7 +52,7 @@ architecture tb of tb_tg_tm_lb_selftest_top is
   signal tx_toggle_count : integer := 0;
   signal tm_decoded_count : std_logic_vector(31 downto 0) := (others => '0');
   signal clk_cycle_count : std_logic_vector(31 downto 0) := (others => '0');
-  file f_tb_uart_log : text open write_mode is "/home/haas/Documents/GitHub/xina-IF/ModelSim/NI-FT-OBS-MNG-3000/log/tb_uart_console.txt";
+  file f_tb_uart_log : text open write_mode is "tb_uart_console.txt";
 
   function f_byte_to_char(b : std_logic_vector(7 downto 0)) return character is
     variable n : integer := to_integer(unsigned(b));
@@ -171,7 +174,7 @@ begin
   uart_rx_i <= host_uart_tx;
 
   -- DUT
-  dut: entity work.tg_tm_lb_selftest_top
+  u_tg_tm_lb_selftest_top: entity work.tg_tm_lb_selftest_top
     port map (
       ACLK    => ACLK,
       ARESETn => ARESETn,
@@ -182,7 +185,7 @@ begin
     );
 
   -- Host UART: drives commands into DUT and decodes DUT TX stream.
-  u_host_uart: entity work.uart
+  u_uart: entity work.uart
     port map(
       baud_div_i => x"0001",
       parity_i   => '0',
@@ -364,8 +367,10 @@ begin
     -- 'R' reset experiment sequencing
     uart_send(x"44"); -- D
     wait for 20 us;
-    uart_send(x"45"); -- E
-    wait for 20 us;
+    if G_ENABLE_OBS_AFTER_RESET then
+      uart_send(x"45"); -- E
+      wait for 20 us;
+    end if;
     uart_send(x"50"); -- P
     wait for 20 us;
     uart_send(x"53"); -- S

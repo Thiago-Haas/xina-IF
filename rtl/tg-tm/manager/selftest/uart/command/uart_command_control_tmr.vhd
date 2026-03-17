@@ -54,7 +54,7 @@ begin
     attribute syn_preserve of u_uart_command_ctrl : label is true;
     attribute KEEP_HIERARCHY of u_uart_command_ctrl : label is "TRUE";
   begin
-    u_uart_command_ctrl : entity work.selftest_uart_command_control
+    u_selftest_uart_command_control: entity work.selftest_uart_command_control
       port map(
         ACLK             => ACLK,
         ARESETn          => ARESETn,

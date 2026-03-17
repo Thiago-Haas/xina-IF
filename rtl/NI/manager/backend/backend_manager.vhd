@@ -115,7 +115,7 @@ end backend_manager;
 
 architecture rtl of backend_manager is
 begin
-    u_INJECTION: entity work.backend_manager_injection
+    u_backend_manager_injection: entity work.backend_manager_injection
         generic map(
             p_SRC_X => p_SRC_X,
             p_SRC_Y => p_SRC_Y,
@@ -169,7 +169,7 @@ begin
             OBS_INJ_TMR_PKTZ_CTRL_ERROR_o         => OBS_BE_INJ_TMR_PKTZ_CTRL_ERROR_o
         );
 
-    u_RECEPTION: entity work.backend_manager_reception
+    u_backend_manager_reception: entity work.backend_manager_reception
         generic map(
             p_BUFFER_DEPTH           => p_BUFFER_DEPTH,
             p_USE_RX_DEPKTZ_CTRL_TMR=> p_USE_RX_DEPKTZ_CTRL_TMR,

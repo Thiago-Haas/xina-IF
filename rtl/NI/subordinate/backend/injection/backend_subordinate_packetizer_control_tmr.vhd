@@ -54,7 +54,7 @@ begin
         attribute syn_preserve of u_PACKETIZER_CONTROL : label is true;
         attribute KEEP_HIERARCHY of u_PACKETIZER_CONTROL : label is "TRUE";
     begin
-        u_PACKETIZER_CONTROL: entity work.backend_subordinate_packetizer_control
+        u_backend_subordinate_packetizer_control: entity work.backend_subordinate_packetizer_control
             port map(
                 ACLK    => ACLK,
                 ARESETn => ARESETn,

@@ -126,7 +126,7 @@ begin
   lfsr_input_w <= init_value_w when (do_init_w = '1') else
                   expected_w;
 
-  u_LFSR: entity work.traffic_mon_datapath_lfsr
+  u_traffic_mon_datapath_lfsr: entity work.traffic_mon_datapath_lfsr
     generic map(
       p_WIDTH => c_AXI_DATA_WIDTH
     )
@@ -136,7 +136,7 @@ begin
     );
 
   -- Encapsulated minimal comparison
-  u_CMP: entity work.traffic_mon_datapath_compare
+  u_traffic_mon_datapath_compare: entity work.traffic_mon_datapath_compare
     generic map(
       p_WIDTH => c_AXI_DATA_WIDTH
     )
@@ -155,7 +155,7 @@ begin
 
   -- Optional Hamming register for the expected word
   gen_ham : if p_USE_TM_HAMMING generate
-    u_EXP_HAM : entity work.hamming_register
+    u_expected_value_hamming_register: entity work.hamming_register
       generic map(
         DATA_WIDTH     => c_AXI_DATA_WIDTH,
         HAMMING_ENABLE => true,

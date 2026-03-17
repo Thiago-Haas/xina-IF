@@ -123,7 +123,7 @@ begin
     ---------------------------------------------------------------------------------------------
     -- Injection (AXI -> backend send)
 
-    u_injection_ctrl: entity work.frontend_manager_injection_ctrl
+    u_frontend_manager_injection_ctrl: entity work.frontend_manager_injection_ctrl
       port map(
         ACLK    => ACLK,
         ARESETn => ARESETn,
@@ -150,7 +150,7 @@ begin
                 WREADY_o  => WREADY
       );
 
-    u_injection_dp: entity work.frontend_manager_injection_dp
+    u_frontend_manager_injection_dp: entity work.frontend_manager_injection_dp
       generic map(
         p_USE_HAMMING_META_HDR => p_USE_HAMMING_META_HDR,
         p_USE_HAMMING_ADDR     => p_USE_HAMMING_ADDR,
@@ -200,7 +200,7 @@ begin
     ---------------------------------------------------------------------------------------------
     -- Ejection (backend receive -> AXI)
 
-    u_ejection_ctrl: entity work.frontend_manager_ejection_ctrl
+    u_frontend_manager_ejection_ctrl: entity work.frontend_manager_ejection_ctrl
       port map(
         VALID_RECEIVE_DATA_i => VALID_RECEIVE_DATA_i,
         OPC_RECEIVE_i        => OPC_RECEIVE_i,
@@ -215,7 +215,7 @@ begin
         RVALID_EN_o => rvalid_en_w
       );
 
-    u_ejection_dp: entity work.frontend_manager_ejection_dp
+    u_frontend_manager_ejection_dp: entity work.frontend_manager_ejection_dp
       port map(
         LAST_RECEIVE_DATA_i => LAST_RECEIVE_DATA_i,
         ID_RECEIVE_i        => ID_RECEIVE_i,

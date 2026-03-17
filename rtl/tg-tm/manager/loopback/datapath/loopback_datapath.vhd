@@ -71,7 +71,7 @@ begin
   ------------------------------------------------------------------------------
   -- TG-style Hamming-protected 32-bit payload register
   ------------------------------------------------------------------------------
-  u_PAYLOAD_REG : entity work.hamming_register
+  u_payload_hamming_register: entity work.hamming_register
     generic map(
       DATA_WIDTH     => 32,
       HAMMING_ENABLE => p_USE_LB_HAMMING,

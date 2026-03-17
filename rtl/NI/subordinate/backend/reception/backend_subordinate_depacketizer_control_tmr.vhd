@@ -68,7 +68,7 @@ begin
         attribute syn_preserve of u_DEPACKETIZER_CONTROL : label is true;
         attribute KEEP_HIERARCHY of u_DEPACKETIZER_CONTROL : label is "TRUE";
     begin
-        u_DEPACKETIZER_CONTROL: entity work.backend_subordinate_depacketizer_control
+        u_backend_subordinate_depacketizer_control: entity work.backend_subordinate_depacketizer_control
             port map(
                 ACLK => ACLK,
                 ARESETn => ARESETn,

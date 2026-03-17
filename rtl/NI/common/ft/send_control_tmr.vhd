@@ -56,7 +56,7 @@ begin
         attribute syn_safe_case    of u_SEND_CONTROL : label is TRUE;
         attribute syn_noprune      of u_SEND_CONTROL : label is TRUE;
     begin
-        u_SEND_CONTROL: entity work.send_control
+        u_send_control: entity work.send_control
             port map(
                 ACLK    => ACLK,
                 ARESETn => ARESETn,

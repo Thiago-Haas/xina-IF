@@ -183,7 +183,7 @@ architecture rtl of ni_manager_top is
     signal OBS_BE_RX_TMR_FLOW_CTRL_ERROR_w  : std_logic;
 
 begin
-    u_FRONTEND: entity work.frontend_manager
+    u_frontend_manager: entity work.frontend_manager
         generic map(
             p_USE_HAMMING_META_HDR  => (p_USE_HAMMING and p_USE_FE_INJ_META_HDR_HAMMING),
             p_USE_HAMMING_ADDR      => (p_USE_HAMMING and p_USE_FE_INJ_ADDR_HAMMING),
@@ -273,7 +273,7 @@ begin
             READY_RECEIVE_DATA_o   => READY_RECEIVE_DATA_w
         );
 
-    u_BACKEND: entity work.backend_manager
+    u_backend_manager: entity work.backend_manager
         generic map(
             p_SRC_X => p_SRC_X,
             p_SRC_Y => p_SRC_Y,

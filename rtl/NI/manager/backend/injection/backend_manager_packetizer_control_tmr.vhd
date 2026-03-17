@@ -84,7 +84,7 @@ begin
         attribute syn_safe_case    of u_PACKETIZER_CONTROL : label is TRUE;
         attribute syn_noprune      of u_PACKETIZER_CONTROL : label is TRUE;
     begin
-        u_PACKETIZER_CONTROL: entity work.backend_manager_packetizer_control
+        u_backend_manager_packetizer_control: entity work.backend_manager_packetizer_control
             port map(
                 ACLK    => ACLK,
                 ARESETn => ARESETn,

@@ -78,7 +78,7 @@ begin
         attribute syn_preserve of u_ctrl : label is true;
     attribute KEEP_HIERARCHY of u_ctrl : label is "TRUE";
   begin
-    u_ctrl : entity work.buffer_fifo_ham_ctrl
+    u_buffer_fifo_ham_ctrl: entity work.buffer_fifo_ham_ctrl
       generic map(
         p_BUFFER_DEPTH => p_BUFFER_DEPTH
       )

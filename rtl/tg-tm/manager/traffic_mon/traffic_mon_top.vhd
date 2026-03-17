@@ -85,7 +85,7 @@ begin
 
   -- Controller selection: plain vs TMR
   gen_ctrl_plain : if not p_USE_TM_CTRL_TMR generate
-    u_CTRL: entity work.traffic_mon_control
+    u_traffic_mon_control: entity work.traffic_mon_control
       port map(
         ACLK    => ACLK,
         ARESETn => ARESETn,
@@ -107,7 +107,7 @@ begin
   end generate;
 
   gen_ctrl_tmr : if p_USE_TM_CTRL_TMR generate
-    u_CTRL_TMR: entity work.traffic_mon_control_tmr
+    u_traffic_mon_control_tmr: entity work.traffic_mon_control_tmr
       port map(
         ACLK    => ACLK,
         ARESETn => ARESETn,
@@ -130,7 +130,7 @@ begin
       );
   end generate;
 
-  u_DP: entity work.traffic_mon_datapath
+  u_traffic_mon_datapath: entity work.traffic_mon_datapath
     generic map(
       p_INIT_VALUE           => p_INIT_VALUE,
       p_USE_TM_HAMMING               => p_USE_TM_HAMMING,
@@ -164,7 +164,7 @@ begin
       ham_buffer_enc_data_o => ham_buffer_enc_data_w
     );
 
-  u_TM_TXN_COUNTER: entity work.traffic_mon_datapath_counter_ham
+  u_traffic_mon_datapath_counter_ham: entity work.traffic_mon_datapath_counter_ham
     generic map(
       p_TM_TXN_COUNTER_WIDTH         => p_TM_TXN_COUNTER_WIDTH,
       p_USE_TM_COUNTER_HAMMING       => p_USE_TM_TXN_COUNTER_HAMMING,

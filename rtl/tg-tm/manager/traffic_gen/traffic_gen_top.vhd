@@ -73,7 +73,7 @@ begin
 
   gen_ctrl_tmr : if p_USE_TG_CTRL_TMR generate
   begin
-    u_CTRL_TMR: entity work.traffic_gen_control_tmr
+    u_traffic_gen_control_tmr: entity work.traffic_gen_control_tmr
       port map(
         ACLK    => ACLK,
         ARESETn => ARESETn,
@@ -97,7 +97,7 @@ begin
       );
   end generate;
 
-  u_DP: entity work.traffic_gen_datapath
+  u_traffic_gen_datapath: entity work.traffic_gen_datapath
     generic map(
       p_USE_HAMMING               => p_USE_TG_HAMMING,
       p_USE_HAMMING_DOUBLE_DETECT => p_USE_TG_HAMMING_DOUBLE_DETECT,

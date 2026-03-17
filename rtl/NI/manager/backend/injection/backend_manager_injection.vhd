@@ -94,7 +94,7 @@ architecture rtl of backend_manager_injection is
     signal READ_OK_BUFFER_w : std_logic;
 
 begin
-    u_ROUTING_TABLE: entity work.backend_manager_routing_table
+    u_backend_manager_routing_table: entity work.backend_manager_routing_table
         port map(
             ACLK    => ACLK,
             ARESETn => ARESETn,
@@ -108,7 +108,7 @@ begin
 
     u_PACKETIZER_CONTROL:
     if (p_USE_INJ_PKTZ_CTRL_TMR) generate
-        u_PACKETIZER_CONTROL_TMR: entity work.backend_manager_packetizer_control_tmr
+        u_backend_manager_packetizer_control_tmr: entity work.backend_manager_packetizer_control_tmr
             port map(
                 ACLK    => ACLK,
                 ARESETn => ARESETn,
@@ -132,7 +132,7 @@ begin
                 error_o         => OBS_INJ_TMR_PKTZ_CTRL_ERROR_w
             );
     else generate
-        u_PACKETIZER_CONTROL_NORMAL: entity work.backend_manager_packetizer_control
+        u_backend_manager_packetizer_control: entity work.backend_manager_packetizer_control
             port map(
                 ACLK    => ACLK,
                 ARESETn => ARESETn,
@@ -156,7 +156,7 @@ begin
         OBS_INJ_TMR_PKTZ_CTRL_ERROR_w   <= '0';
     end generate;
 
-    u_PACKETIZER_DATAPATH: entity work.backend_manager_packetizer_datapath
+    u_backend_manager_packetizer_datapath: entity work.backend_manager_packetizer_datapath
         generic map(
             p_SRC_X => p_SRC_X,
             p_SRC_Y => p_SRC_Y
@@ -182,7 +182,7 @@ begin
 
     u_INTEGRITY_CONTROL_SEND:
     if (p_USE_INJ_INTEGRITY_CHECK) generate
-        u_INTEGRITY_CONTROL_SEND_HAM: entity work.integrity_control_send_hamming
+        u_integrity_control_send_hamming: entity work.integrity_control_send_hamming
             port map(
                 ACLK    => ACLK,
                 ARESETn => INTEGRITY_RESETn_w,
@@ -212,7 +212,7 @@ begin
 
     u_BUFFER_FIFO:
     if (p_USE_INJ_BUFFER_HAMMING) generate
-        u_BUFFER_FIFO_HAM: entity work.buffer_fifo_ham
+        u_buffer_fifo_ham: entity work.buffer_fifo_ham
             generic map(
                 p_DATA_WIDTH   => c_FLIT_WIDTH,
                 p_BUFFER_DEPTH => p_BUFFER_DEPTH,
@@ -241,7 +241,7 @@ begin
                 OBS_HAM_FIFO_CTRL_TMR_ERROR_o         => OBS_INJ_TMR_HAM_BUFFER_CTRL_ERROR_o
             );
     else generate
-        u_BUFFER_FIFO_NORMAL: entity work.buffer_fifo
+        u_buffer_fifo: entity work.buffer_fifo
             generic map(
                 p_DATA_WIDTH   => c_FLIT_WIDTH,
                 p_BUFFER_DEPTH => p_BUFFER_DEPTH
@@ -265,7 +265,7 @@ begin
 
     u_SEND_CONTROL:
     if (p_USE_INJ_FLOW_CTRL_TMR) generate
-        u_SEND_CONTROL_TMR: entity work.send_control_tmr
+        u_send_control_tmr: entity work.send_control_tmr
             port map(
                 ACLK    => ACLK,
                 ARESETn => ARESETn,
@@ -280,7 +280,7 @@ begin
                 error_o         => OBS_INJ_TMR_FLOW_CTRL_ERROR_o
             );
     else generate
-        u_SEND_CONTROL_NORMAL: entity work.send_control
+        u_send_control: entity work.send_control
             port map(
                 ACLK    => ACLK,
                 ARESETn => ARESETn,

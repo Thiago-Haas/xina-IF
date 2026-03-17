@@ -111,7 +111,7 @@ begin
         attribute syn_preserve of u_ctrl : label is true;
     attribute KEEP_HIERARCHY of u_ctrl : label is "TRUE";
   begin
-    u_ctrl : entity work.loopback_control
+    u_loopback_control: entity work.loopback_control
       port map(
         ACLK    => ACLK,
         ARESETn => ARESETn,

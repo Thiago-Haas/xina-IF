@@ -65,7 +65,7 @@ architecture rtl of backend_subordinate is
     signal HAS_FINISHED_RESPONSE_w: std_logic;
 
 begin
-    u_INJECTION: entity work.backend_subordinate_injection
+    u_backend_subordinate_injection: entity work.backend_subordinate_injection
         generic map(
             p_SRC_X => p_SRC_X,
             p_SRC_Y => p_SRC_Y,
@@ -99,7 +99,7 @@ begin
             l_in_ack_o  => l_in_ack_o
         );
 
-    u_RECEPTION: entity work.backend_subordinate_reception
+    u_backend_subordinate_reception: entity work.backend_subordinate_reception
         generic map(
             p_BUFFER_DEPTH       => p_BUFFER_DEPTH,
             p_USE_TMR_PACKETIZER => p_USE_TMR_PACKETIZER,

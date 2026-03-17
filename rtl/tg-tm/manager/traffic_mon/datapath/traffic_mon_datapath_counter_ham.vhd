@@ -36,7 +36,7 @@ architecture rtl of traffic_mon_datapath_counter_ham is
 begin
   counter_next_w <= std_logic_vector(unsigned(counter_data_r_w) + 1);
 
-  u_TM_COUNTER_HAM: entity work.hamming_register
+  u_transaction_counter_hamming_register: entity work.hamming_register
     generic map(
       DATA_WIDTH     => p_TM_TXN_COUNTER_WIDTH,
       HAMMING_ENABLE => p_USE_TM_COUNTER_HAMMING,

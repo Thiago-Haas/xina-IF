@@ -101,7 +101,7 @@ begin
   -- Feed init value only when seeding; otherwise feed the current (decoded) state.
   lfsr_input_w <= init_value_w when (seed_pulse_i = '1') else wdata_w;
 
-  u_LFSR: entity work.traffic_gen_datapath_lfsr
+  u_traffic_gen_datapath_lfsr: entity work.traffic_gen_datapath_lfsr
     generic map(
       p_WIDTH => c_AXI_DATA_WIDTH
     )
@@ -112,7 +112,7 @@ begin
 
   -- Optional Hamming-protected state register.
   -- The decoded output is used as both WDATA and feedback into the LFSR.
-  u_STATE_REG : entity work.hamming_register
+  u_state_hamming_register: entity work.hamming_register
     generic map(
       DATA_WIDTH     => c_AXI_DATA_WIDTH,
       HAMMING_ENABLE => p_USE_HAMMING,

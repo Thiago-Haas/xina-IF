@@ -42,7 +42,7 @@ architecture rtl of integrity_control_receive_hamming is
 begin
     CHECKSUM_ham_next_w <= std_logic_vector(unsigned(CHECKSUM_ham_r_w) + unsigned(VALUE_ADD_i));
 
-    u_CHECKSUM_HAM_REG: entity work.hamming_register
+    u_checksum_hamming_register: entity work.hamming_register
         generic map(
             DATA_WIDTH     => c_AXI_DATA_WIDTH,
             HAMMING_ENABLE => true,

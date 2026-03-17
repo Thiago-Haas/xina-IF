@@ -133,7 +133,7 @@ architecture rtl of tg_tm_lb_selftest_top is
 
 begin
 
-  u_top_uart: entity work.uart
+  u_uart: entity work.uart
     port map(
       baud_div_i => uart_baud_div_w,
       parity_i   => uart_parity_w,
@@ -185,7 +185,7 @@ begin
       );
   end generate;
 
-  u_seed_addr_constants: entity work.selftest_seed_addr_constants
+  u_selftest_seed_addr_constants: entity work.selftest_seed_addr_constants
     port map (
       tg_addr_o => tg_addr_w,
       tg_seed_o => tg_seed_w,
@@ -193,7 +193,7 @@ begin
       tm_seed_o => tm_seed_w
     );
 
-  u_obs_uart_encode_block: entity work.selftest_obs_uart_encode_block
+  u_selftest_obs_uart_encode_block: entity work.selftest_obs_uart_encode_block
     port map (
       ACLK    => ACLK,
       ARESETn => ARESETn,
@@ -292,7 +292,7 @@ begin
       experiment_reset_pulse_o => experiment_reset_pulse_w
     );
 
-  u_tg_tm_lb_system_dut: entity work.tg_tm_lb_system_top
+  u_tg_tm_lb_system_top: entity work.tg_tm_lb_system_top
     port map (
       ACLK    => ACLK,
       ARESETn => ARESETn,

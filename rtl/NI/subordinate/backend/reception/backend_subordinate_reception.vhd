@@ -89,7 +89,7 @@ begin
 
     u_DEPACKETIZER_CONTROL:
     if (p_USE_TMR_PACKETIZER) generate
-        u_DEPACKETIZER_CONTROL_TMR: entity work.backend_subordinate_depacketizer_control_tmr
+        u_backend_subordinate_depacketizer_control_tmr: entity work.backend_subordinate_depacketizer_control_tmr
             port map(
                 ACLK => ACLK,
                 ARESETn => ARESETn,
@@ -118,7 +118,7 @@ begin
                 INTEGRITY_RESETn_o => INTEGRITY_RESETn_w
             );
     else generate
-        u_DEPACKETIZER_CONTROL_NORMAL: entity work.backend_subordinate_depacketizer_control
+        u_backend_subordinate_depacketizer_control: entity work.backend_subordinate_depacketizer_control
             port map(
                 ACLK => ACLK,
                 ARESETn => ARESETn,
@@ -150,7 +150,7 @@ begin
 
     u_INTEGRITY_CONTROL_RECEIVE:
     if (p_USE_INTEGRITY and p_USE_TMR_INTEGRITY) generate
-        u_INTEGRITY_CONTROL_RECEIVE_HAM: entity work.integrity_control_receive_hamming
+        u_integrity_control_receive_hamming: entity work.integrity_control_receive_hamming
             port map(
                 ACLK    => ACLK,
                 ARESETn => INTEGRITY_RESETn_w,
@@ -169,7 +169,7 @@ begin
                 OBS_HAM_INTEGRITY_ENC_DATA_o      => open
             );
     elsif (p_USE_INTEGRITY) generate
-        u_INTEGRITY_CONTROL_RECEIVE_NORMAL: entity work.integrity_control_receive
+        u_integrity_control_receive: entity work.integrity_control_receive
             port map(
                 ACLK    => ACLK,
                 ARESETn => INTEGRITY_RESETn_w,
@@ -185,7 +185,7 @@ begin
 
     u_BUFFER_FIFO:
     if (p_USE_HAMMING) generate
-        u_BUFFER_FIFO_HAM: entity work.buffer_fifo_ham
+        u_buffer_fifo_ham: entity work.buffer_fifo_ham
             generic map(
                 p_DATA_WIDTH   => c_FLIT_WIDTH,
                 p_BUFFER_DEPTH => p_BUFFER_DEPTH
@@ -206,7 +206,7 @@ begin
                 OBS_HAM_FIFO_CTRL_TMR_ERROR_o         => open
             );
     else generate
-        u_BUFFER_FIFO_NORMAL: entity work.buffer_fifo
+        u_buffer_fifo: entity work.buffer_fifo
             generic map(
                 p_DATA_WIDTH   => c_FLIT_WIDTH,
                 p_BUFFER_DEPTH => p_BUFFER_DEPTH
@@ -227,7 +227,7 @@ begin
 
     u_RECEIVE_CONTROL:
     if (p_USE_TMR_FLOW) generate
-        u_RECEIVE_CONTROL_TMR: entity work.receive_control_TMR
+        u_receive_control_tmr: entity work.receive_control_TMR
             port map(
                 ACLK    => ACLK,
                 ARESETn => ARESETn,
@@ -239,7 +239,7 @@ begin
                 l_out_ack_i => l_out_ack_i
             );
     else generate
-        u_RECEIVE_CONTROL_NORMAL: entity work.receive_control
+        u_receive_control: entity work.receive_control
             port map(
                 ACLK    => ACLK,
                 ARESETn => ARESETn,

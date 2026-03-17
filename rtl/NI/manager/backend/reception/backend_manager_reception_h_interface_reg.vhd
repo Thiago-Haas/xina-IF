@@ -38,7 +38,7 @@ architecture rtl of backend_manager_reception_h_interface_reg is
   attribute syn_preserve of H_INTERFACE_w : signal is true;
 begin
     gen_ham : if p_USE_HAMMING generate
-        u_H_INTERFACE_HAM: entity work.hamming_register
+        u_h_interface_hamming_register: entity work.hamming_register
             generic map(
                 DATA_WIDTH     => c_FLIT_WIDTH,
                 HAMMING_ENABLE => true,
