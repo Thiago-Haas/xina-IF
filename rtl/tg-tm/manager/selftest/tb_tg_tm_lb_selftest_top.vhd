@@ -323,7 +323,7 @@ begin
     end if;
   end process;
 
-  -- Stop simulation exactly when TM payload count reaches 262,144 (1 MiB for 32-bit payloads).
+  -- Stop simulation exactly when TM payload count reaches 2,560 (10 KiB for 32-bit payloads).
   p_stop_at_target_payload_count: process(ACLK)
   begin
     if rising_edge(ACLK) then
