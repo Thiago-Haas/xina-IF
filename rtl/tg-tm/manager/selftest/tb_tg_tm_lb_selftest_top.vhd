@@ -11,7 +11,7 @@ library std;
 
 entity tb_tg_tm_lb_selftest_top is
   generic (
-    G_ENABLE_OBS_AFTER_RESET : boolean := false
+    G_ENABLE_OBS_AFTER_RESET : boolean := TRUE
   );
 end entity;
 
