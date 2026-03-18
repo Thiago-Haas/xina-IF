@@ -365,10 +365,11 @@ begin
     -- 'P' pause experiment
     -- 'S' start experiment
     -- 'R' reset experiment sequencing
-    uart_send(x"44"); -- D
-    wait for 20 us;
     if G_ENABLE_OBS_AFTER_RESET then
       uart_send(x"45"); -- E
+      wait for 20 us;
+    else
+      uart_send(x"44"); -- D
       wait for 20 us;
     end if;
     uart_send(x"50"); -- P

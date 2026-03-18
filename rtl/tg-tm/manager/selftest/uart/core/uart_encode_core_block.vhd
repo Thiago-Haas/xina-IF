@@ -102,7 +102,9 @@ architecture rtl of selftest_obs_uart_encode_core_block is
   signal dp_hex_char_w    : std_logic_vector(7 downto 0);
   signal dp_label_char_w  : std_logic_vector(7 downto 0);
 begin
-  uart_encode_critical_tmr_correct_enable_w <= OBS_UART_ENCODE_CRITICAL_TMR_CORRECT_ERROR_i when c_ENABLE_OBS_UART_ENCODE_CRITICAL_TMR_CORRECTION else '0';
+  -- Keep the UART critical encode trigger protected independently from the
+  -- OBS enable commands so fault reporting itself remains robust.
+  uart_encode_critical_tmr_correct_enable_w <= '1' when c_ENABLE_OBS_UART_ENCODE_CRITICAL_TMR_CORRECTION else '0';
 
   gen_uart_encode_critical_plain : if not p_USE_UART_ENCODE_CRITICAL_TMR generate
   begin

@@ -3,10 +3,11 @@
 This document summarizes which FT blocks are controlled by the selftest UART commands `D` and `E`, where they live in the RTL, what hierarchical block name they use in simulation, and which `FLAGS` output bit(s) represent their error reporting.
 
 Current behavior:
-- `D` drives the correction fanout low
-- `E` drives the correction fanout high
-- the testbench currently sends `D` after reset by default
-- it only sends `E` if `G_ENABLE_OBS_AFTER_RESET = true`
+- `D` drives the DUT correction fanout low
+- `E` drives the DUT correction fanout high
+- the testbench currently defaults `G_ENABLE_OBS_AFTER_RESET` to `TRUE`
+- with that default, the testbench sends `E` after reset and does not send an initial `D` first
+- if `G_ENABLE_OBS_AFTER_RESET = FALSE`, the testbench sends `D` after reset instead
 
 Main control path:
 1. `tb_tg_tm_lb_selftest_top` sends `D` / `E`
@@ -30,6 +31,7 @@ Notes:
 - Bits `39..37` are reserved.
 - All manager-side correction paths now follow `D` / `E`; none remain hardwired disabled.
 - Backend reception depacketizer control TMR is now surfaced into the same observability map as the other FT blocks.
+- The two internal selftest UART FT shells are now always corrected when their compile-time enables are on: `UART command control TMR` and `UART encode critical path TMR`. They no longer depend on `D` / `E` at runtime, so the control-and-report path stays protected while the DUT blocks remain command-controlled.
 
 ---
 
@@ -106,13 +108,15 @@ Notes:
 
 ## UART
 
+These two FT shells are special: they are part of the selftest UART control/report path itself, so they are kept always corrected at runtime (subject to their compile-time enables) rather than being disabled by `D`.
+
 | FT block | Type | OBS control signal | FLAGS bit(s) | RTL file | Hierarchical block in sim/logs |
 | --- | --- | --- | --- | --- | --- |
-| UART command control | TMR | `OBS_UART_COMMAND_CTRL_TMR_CORRECT_ERROR_o` fanout source | `35` | [uart_command_control_tmr.vhd](/home/haas/Documents/GitHub/xina-IF/rtl/tg-tm/manager/selftest/uart/command/uart_command_control_tmr.vhd) | `u_tg_tm_lb_selftest_top/u_selftest_obs_uart_encode_block/u_obs_enable_block/u_uart_command_control_tmr` |
-| UART encode critical path | TMR | `OBS_UART_ENCODE_CRITICAL_TMR_CORRECT_ERROR_o` fanout source | `36` | [uart_encode_critical_tmr.vhd](/home/haas/Documents/GitHub/xina-IF/rtl/tg-tm/manager/selftest/uart/core/uart_encode_critical_tmr.vhd) | `u_tg_tm_lb_selftest_top/u_selftest_obs_uart_encode_block/u_uart_encode_core/u_uart_encode_critical_tmr` |
+| UART command control | TMR | always-corrected internal UART shell (not runtime-controlled by `D` / `E`) | `35` | [uart_command_control_tmr.vhd](/home/haas/Documents/GitHub/xina-IF/rtl/tg-tm/manager/selftest/uart/command/uart_command_control_tmr.vhd) | `u_tg_tm_lb_selftest_top/u_selftest_obs_uart_encode_block/u_obs_enable_block/u_uart_command_control_tmr` |
+| UART encode critical path | TMR | always-corrected internal UART shell (not runtime-controlled by `D` / `E`) | `36` | [uart_encode_critical_tmr.vhd](/home/haas/Documents/GitHub/xina-IF/rtl/tg-tm/manager/selftest/uart/core/uart_encode_critical_tmr.vhd) | `u_tg_tm_lb_selftest_top/u_selftest_obs_uart_encode_block/u_uart_encode_core/u_uart_encode_critical_tmr` |
 
 ---
 
 ## Summary
 
-All FT correction paths used by the manager/selftest flow are now controlled by `D` / `E`, and all of the FT error sources surfaced into the selftest UART path now have dedicated `FLAGS` bits.
+All FT correction paths used by the manager/selftest flow are now surfaced into the selftest UART path with dedicated `FLAGS` bits. DUT-side FT correction paths remain controlled by `D` / `E`, while the two internal selftest UART FT shells (`UART command control TMR` and `UART encode critical path TMR`) are kept always corrected at runtime.
