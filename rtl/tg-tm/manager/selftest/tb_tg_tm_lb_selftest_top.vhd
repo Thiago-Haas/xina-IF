@@ -51,7 +51,9 @@ architecture tb of tb_tg_tm_lb_selftest_top is
   signal rx_count : integer := 0;
   signal tx_toggle_count : integer := 0;
   signal tm_decoded_count : std_logic_vector(31 downto 0) := (others => '0');
+  signal tm_decoded_count_int : integer := 0;
   signal clk_cycle_count : std_logic_vector(31 downto 0) := (others => '0');
+  signal last_uart_capture_time_ns : integer := 0;
   file f_tb_uart_log : text open write_mode is "tb_uart_console.txt";
 
   function f_byte_to_char(b : std_logic_vector(7 downto 0)) return character is
@@ -158,12 +160,16 @@ architecture tb of tb_tg_tm_lb_selftest_top is
   -- Xilinx attributes to prevent optimization of TMR
   attribute DONT_TOUCH : string;
   attribute DONT_TOUCH of tm_decoded_count : signal is "TRUE";
+  attribute DONT_TOUCH of tm_decoded_count_int : signal is "TRUE";
   attribute DONT_TOUCH of clk_cycle_count : signal is "TRUE";
+  attribute DONT_TOUCH of last_uart_capture_time_ns : signal is "TRUE";
   attribute DONT_TOUCH of host_rdone_d : signal is "TRUE";
   -- Synplify attributes to prevent optimization of TMR
   attribute syn_preserve : boolean;
   attribute syn_preserve of tm_decoded_count : signal is true;
+  attribute syn_preserve of tm_decoded_count_int : signal is true;
   attribute syn_preserve of clk_cycle_count : signal is true;
+  attribute syn_preserve of last_uart_capture_time_ns : signal is true;
   attribute syn_preserve of host_rdone_d : signal is true;
 begin
 
@@ -221,7 +227,9 @@ begin
       if ARESETn = '0' then
         rx_count <= 0;
         tm_decoded_count <= (others => '0');
+        tm_decoded_count_int <= 0;
         clk_cycle_count <= (others => '0');
+        last_uart_capture_time_ns <= 0;
         host_rdone_d <= '0';
         v_len := 0;
         v_line_start_cycle := 0;
@@ -242,6 +250,7 @@ begin
               write(v_msg, integer'image(v_line_start_cycle));
               p_tb_log(v_msg.all);
               deallocate(v_msg);
+              last_uart_capture_time_ns <= integer(v_line_start_time / 1 ns);
 
               write(v_msg, string'("RX DATA="));
               write(v_msg, v_line(1 to v_len));
@@ -257,6 +266,7 @@ begin
                  f_is_hex_string(v_line(4 + C_TM_HEX_DIGITS + C_LABEL_FLAGS_LEN to C_TM_FLAGS_LINE_LEN)) then
                 v_tm_dec := f_hex_to_integer(v_line(4 to 3 + C_TM_HEX_DIGITS));
                 tm_decoded_count <= std_logic_vector(to_unsigned(v_tm_dec, tm_decoded_count'length));
+                tm_decoded_count_int <= v_tm_dec;
                 v_flags_bin := f_hex_to_bin_string(v_line(4 + C_TM_HEX_DIGITS + C_LABEL_FLAGS_LEN to C_TM_FLAGS_LINE_LEN));
                 write(v_msg, string'("UART_DECODE TM_DEC="));
                 write(v_msg, integer'image(v_tm_dec));
@@ -269,6 +279,7 @@ begin
                     f_is_hex_string(v_line(4 to 3 + C_TM_HEX_DIGITS)) then
                 v_tm_dec := f_hex_to_integer(v_line(4 to 3 + C_TM_HEX_DIGITS));
                 tm_decoded_count <= std_logic_vector(to_unsigned(v_tm_dec, tm_decoded_count'length));
+                tm_decoded_count_int <= v_tm_dec;
                 write(v_msg, string'("UART_DECODE TM_DEC="));
                 write(v_msg, integer'image(v_tm_dec));
                 p_tb_log(v_msg.all);
@@ -323,7 +334,9 @@ begin
     end if;
   end process;
 
-  -- Stop simulation exactly when TM payload count reaches 2,560 (10 KiB for 32-bit payloads).
+  -- Mark completion when TM payload count reaches 2,560 (10 KiB for 32-bit payloads).
+  -- The TCL harness owns final termination so it can allow a bounded UART drain
+  -- period after the target is reached instead of stopping the simulator here.
   p_stop_at_target_payload_count: process(ACLK)
   begin
     if rising_edge(ACLK) then
@@ -335,7 +348,6 @@ begin
           p_tb_log("stop condition reached: TM payload count=" &
                    integer'image(C_TM_PAYLOAD_STOP_COUNT) &
                    " (" & integer'image(C_TM_STOP_TOTAL_BYTES) & " bytes, 10 KiB).");
-          std.env.stop;
         end if;
       end if;
     end if;
