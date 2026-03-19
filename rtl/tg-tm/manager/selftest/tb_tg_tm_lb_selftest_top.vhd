@@ -11,7 +11,10 @@ library std;
 
 entity tb_tg_tm_lb_selftest_top is
   generic (
-    G_ENABLE_OBS_AFTER_RESET : boolean := TRUE
+    G_ENABLE_OBS_AFTER_RESET : boolean := TRUE;
+    G_STOP_SIM_ON_TARGET : boolean := TRUE;
+    G_STOP_TIMEOUT_NS    : natural := 3699847;
+    G_POST_STOP_GRACE_NS : natural := 100000
   );
 end entity;
 
@@ -47,6 +50,8 @@ architecture tb of tb_tg_tm_lb_selftest_top is
   signal host_rerr   : std_logic;
   signal host_uart_tx : std_logic;
   signal stop_issued : std_logic := '0';
+  signal deadline_hit : std_logic := '0';
+  signal stop_complete : std_logic := '0';
 
   signal rx_count : integer := 0;
   signal tx_toggle_count : integer := 0;
@@ -54,6 +59,7 @@ architecture tb of tb_tg_tm_lb_selftest_top is
   signal tm_decoded_count_int : integer := 0;
   signal clk_cycle_count : std_logic_vector(31 downto 0) := (others => '0');
   signal last_uart_capture_time_ns : integer := 0;
+  signal stop_target_time_ns : integer := 0;
   file f_tb_uart_log : text open write_mode is "tb_uart_console.txt";
 
   function f_byte_to_char(b : std_logic_vector(7 downto 0)) return character is
@@ -163,6 +169,9 @@ architecture tb of tb_tg_tm_lb_selftest_top is
   attribute DONT_TOUCH of tm_decoded_count_int : signal is "TRUE";
   attribute DONT_TOUCH of clk_cycle_count : signal is "TRUE";
   attribute DONT_TOUCH of last_uart_capture_time_ns : signal is "TRUE";
+  attribute DONT_TOUCH of stop_target_time_ns : signal is "TRUE";
+  attribute DONT_TOUCH of deadline_hit : signal is "TRUE";
+  attribute DONT_TOUCH of stop_complete : signal is "TRUE";
   attribute DONT_TOUCH of host_rdone_d : signal is "TRUE";
   -- Synplify attributes to prevent optimization of TMR
   attribute syn_preserve : boolean;
@@ -170,6 +179,9 @@ architecture tb of tb_tg_tm_lb_selftest_top is
   attribute syn_preserve of tm_decoded_count_int : signal is true;
   attribute syn_preserve of clk_cycle_count : signal is true;
   attribute syn_preserve of last_uart_capture_time_ns : signal is true;
+  attribute syn_preserve of stop_target_time_ns : signal is true;
+  attribute syn_preserve of deadline_hit : signal is true;
+  attribute syn_preserve of stop_complete : signal is true;
   attribute syn_preserve of host_rdone_d : signal is true;
 begin
 
@@ -334,20 +346,63 @@ begin
     end if;
   end process;
 
-  -- Mark completion when TM payload count reaches 2,560 (10 KiB for 32-bit payloads).
-  -- The TCL harness owns final termination so it can allow a bounded UART drain
-  -- period after the target is reached instead of stopping the simulator here.
+  -- Own end-of-run control inside the TB:
+  -- 1) latch target reach at 10 KiB,
+  -- 2) allow a bounded UART drain window after the last captured UART line,
+  -- 3) stop on either drained completion or a hard timing deadline.
   p_stop_at_target_payload_count: process(ACLK)
+    variable v_now_ns : integer;
+    variable v_drain_reference_ns : integer;
   begin
     if rising_edge(ACLK) then
+      v_now_ns := integer(now / 1 ns);
       if ARESETn = '0' then
         stop_issued <= '0';
-      elsif stop_issued = '0' then
-        if unsigned(tm_decoded_count) >= to_unsigned(C_TM_PAYLOAD_STOP_COUNT, tm_decoded_count'length) then
-          stop_issued <= '1';
-          p_tb_log("stop condition reached: TM payload count=" &
-                   integer'image(C_TM_PAYLOAD_STOP_COUNT) &
-                   " (" & integer'image(C_TM_STOP_TOTAL_BYTES) & " bytes, 10 KiB).");
+        deadline_hit <= '0';
+        stop_complete <= '0';
+        stop_target_time_ns <= 0;
+      elsif stop_complete = '0' then
+        if stop_issued = '0' then
+          if unsigned(tm_decoded_count) >= to_unsigned(C_TM_PAYLOAD_STOP_COUNT, tm_decoded_count'length) then
+            stop_issued <= '1';
+            stop_target_time_ns <= v_now_ns;
+            p_tb_log("stop condition reached: TM payload count=" &
+                     integer'image(C_TM_PAYLOAD_STOP_COUNT) &
+                     " (" & integer'image(C_TM_STOP_TOTAL_BYTES) & " bytes, 10 KiB).");
+          elsif v_now_ns >= integer(G_STOP_TIMEOUT_NS) then
+            deadline_hit <= '1';
+            stop_complete <= '1';
+            p_tb_log("timing deadline reached before TM payload target: TM payload count=" &
+                     integer'image(tm_decoded_count_int) &
+                     " deadline_ns=" & integer'image(G_STOP_TIMEOUT_NS) & ".");
+            if G_STOP_SIM_ON_TARGET then
+              std.env.stop;
+            end if;
+          end if;
+        else
+          v_drain_reference_ns := stop_target_time_ns;
+          if last_uart_capture_time_ns > v_drain_reference_ns then
+            v_drain_reference_ns := last_uart_capture_time_ns;
+          end if;
+
+          if v_now_ns >= integer(G_STOP_TIMEOUT_NS) then
+            deadline_hit <= '1';
+            stop_complete <= '1';
+            p_tb_log("timing deadline reached during post-stop UART drain: TM payload count=" &
+                     integer'image(tm_decoded_count_int) &
+                     " deadline_ns=" & integer'image(G_STOP_TIMEOUT_NS) & ".");
+            if G_STOP_SIM_ON_TARGET then
+              std.env.stop;
+            end if;
+          elsif v_now_ns >= v_drain_reference_ns + integer(G_POST_STOP_GRACE_NS) then
+            stop_complete <= '1';
+            p_tb_log("post-stop UART drain complete: final TM payload count=" &
+                     integer'image(tm_decoded_count_int) &
+                     " grace_ns=" & integer'image(G_POST_STOP_GRACE_NS) & ".");
+            if G_STOP_SIM_ON_TARGET then
+              std.env.stop;
+            end if;
+          end if;
         end if;
       end if;
     end if;
