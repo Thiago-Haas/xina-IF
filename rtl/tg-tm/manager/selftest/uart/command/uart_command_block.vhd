@@ -60,7 +60,7 @@ begin
   -- Keep the UART command TMR shell protected independently from the
   -- user-controlled OBS enable fanout. Otherwise a 'D' command disables the
   -- very block that must later decode 'E' to re-enable protection.
-  uart_command_ctrl_tmr_correct_enable_gate_w <= '1' when c_ENABLE_OBS_UART_COMMAND_CTRL_TMR_CORRECTION else '0';
+  uart_command_ctrl_tmr_correct_enable_gate_w <= '1';
 
   b_uart_command_control_plain : if not p_USE_UART_COMMAND_CTRL_TMR generate
   begin
