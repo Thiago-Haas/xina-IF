@@ -72,6 +72,7 @@ entity backend_manager_reception is
 end backend_manager_reception;
 
 architecture rtl of backend_manager_reception is
+
     signal ARESET_w: std_logic;
 
     -- Depacketizer.
@@ -145,6 +146,7 @@ begin
                 error_o            => OBS_RX_TMR_DEPKTZ_CTRL_ERROR_o
             );
     else generate
+    begin
         u_backend_manager_depacketizer_control: entity work.backend_manager_depacketizer_control
             port map(
                 ACLK    => ACLK,
@@ -234,6 +236,7 @@ begin
                 OBS_HAM_FIFO_CTRL_TMR_ERROR_o         => OBS_RX_TMR_HAM_BUFFER_CTRL_ERROR_o
             );
     else generate
+    begin
         u_buffer_fifo: entity work.buffer_fifo
             generic map(
                 p_DATA_WIDTH   => c_FLIT_WIDTH,
@@ -273,6 +276,7 @@ begin
                 error_o         => OBS_RX_TMR_FLOW_CTRL_ERROR_o
             );
     else generate
+    begin
         u_receive_control: entity work.receive_control
             port map(
                 ACLK    => ACLK,

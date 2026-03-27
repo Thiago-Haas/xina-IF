@@ -70,6 +70,7 @@ entity backend_manager_injection is
 end backend_manager_injection;
 
 architecture rtl of backend_manager_injection is
+
     signal ARESET_w: std_logic;
 
     -- Routing table.
@@ -132,6 +133,7 @@ begin
                 error_o         => OBS_INJ_TMR_PKTZ_CTRL_ERROR_w
             );
     else generate
+    begin
         u_backend_manager_packetizer_control: entity work.backend_manager_packetizer_control
             port map(
                 ACLK    => ACLK,
@@ -241,6 +243,7 @@ begin
                 OBS_HAM_FIFO_CTRL_TMR_ERROR_o         => OBS_INJ_TMR_HAM_BUFFER_CTRL_ERROR_o
             );
     else generate
+    begin
         u_buffer_fifo: entity work.buffer_fifo
             generic map(
                 p_DATA_WIDTH   => c_FLIT_WIDTH,
@@ -280,6 +283,7 @@ begin
                 error_o         => OBS_INJ_TMR_FLOW_CTRL_ERROR_o
             );
     else generate
+    begin
         u_send_control: entity work.send_control
             port map(
                 ACLK    => ACLK,

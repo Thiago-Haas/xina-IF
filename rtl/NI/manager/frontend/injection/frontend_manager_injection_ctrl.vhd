@@ -55,6 +55,14 @@ architecture rtl of frontend_manager_injection_ctrl is
   signal cap_aw_w : std_logic;
   signal cap_ar_w : std_logic;
 
+  attribute DONT_TOUCH : string;
+  attribute DONT_TOUCH of cap_aw_w : signal is "TRUE";
+  attribute DONT_TOUCH of cap_ar_w : signal is "TRUE";
+
+  attribute syn_preserve : boolean;
+  attribute syn_preserve of cap_aw_w : signal is true;
+  attribute syn_preserve of cap_ar_w : signal is true;
+
 begin
 
   ---------------------------------------------------------------------------------------------

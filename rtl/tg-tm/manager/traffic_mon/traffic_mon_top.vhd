@@ -69,6 +69,9 @@ entity traffic_mon_top is
 end traffic_mon_top;
 
 architecture rtl of traffic_mon_top is
+  attribute DONT_TOUCH : string;
+  attribute syn_preserve : boolean;
+  attribute KEEP_HIERARCHY : string;
   signal read_done_w       : std_logic;
   signal hs_comb_w       : std_logic;
   signal seed_pulse_w      : std_logic;
@@ -85,6 +88,10 @@ begin
 
   -- Controller selection: plain vs TMR
   gen_ctrl_plain : if not p_USE_TM_CTRL_TMR generate
+    attribute DONT_TOUCH of u_traffic_mon_control : label is "TRUE";
+    attribute syn_preserve of u_traffic_mon_control : label is true;
+    attribute KEEP_HIERARCHY of u_traffic_mon_control : label is "TRUE";
+  begin
     u_traffic_mon_control: entity work.traffic_mon_control
       port map(
         ACLK    => ACLK,

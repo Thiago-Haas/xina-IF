@@ -118,6 +118,20 @@ architecture rtl of frontend_manager is
     signal bvalid_en_w : std_logic;
     signal rvalid_en_w : std_logic;
 
+    attribute DONT_TOUCH : string;
+    attribute DONT_TOUCH of cap_aw_w : signal is "TRUE";
+    attribute DONT_TOUCH of cap_ar_w : signal is "TRUE";
+    attribute DONT_TOUCH of opc_send_w : signal is "TRUE";
+    attribute DONT_TOUCH of bvalid_en_w : signal is "TRUE";
+    attribute DONT_TOUCH of rvalid_en_w : signal is "TRUE";
+
+    attribute syn_preserve : boolean;
+    attribute syn_preserve of cap_aw_w : signal is true;
+    attribute syn_preserve of cap_ar_w : signal is true;
+    attribute syn_preserve of opc_send_w : signal is true;
+    attribute syn_preserve of bvalid_en_w : signal is true;
+    attribute syn_preserve of rvalid_en_w : signal is true;
+
 begin
 
     ---------------------------------------------------------------------------------------------

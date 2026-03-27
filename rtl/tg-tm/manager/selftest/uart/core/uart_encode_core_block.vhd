@@ -81,6 +81,9 @@ entity selftest_obs_uart_encode_core_block is
 end entity;
 
 architecture rtl of selftest_obs_uart_encode_core_block is
+  attribute DONT_TOUCH : string;
+  attribute syn_preserve : boolean;
+  attribute KEEP_HIERARCHY : string;
   signal critical_tm_done_rise_w    : std_logic;
   signal critical_period_due_w      : std_logic;
   signal critical_report_consume_w  : std_logic;
@@ -107,6 +110,9 @@ begin
   uart_encode_critical_tmr_correct_enable_w <= '1';
 
   gen_uart_encode_critical_plain : if not p_USE_UART_ENCODE_CRITICAL_TMR generate
+    attribute DONT_TOUCH of u_uart_encode_critical : label is "TRUE";
+    attribute syn_preserve of u_uart_encode_critical : label is true;
+    attribute KEEP_HIERARCHY of u_uart_encode_critical : label is "TRUE";
   begin
     u_uart_encode_critical: entity work.selftest_obs_uart_encode_critical
       generic map(

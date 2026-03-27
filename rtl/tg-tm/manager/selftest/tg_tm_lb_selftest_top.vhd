@@ -20,6 +20,9 @@ entity tg_tm_lb_selftest_top is
 end entity;
 
 architecture rtl of tg_tm_lb_selftest_top is
+  attribute DONT_TOUCH : string;
+  attribute syn_preserve : boolean;
+  attribute KEEP_HIERARCHY : string;
 
   -- TG/TM control between observation block and DUT
   signal tg_start_w : std_logic;
@@ -157,6 +160,10 @@ begin
     );
 
   gen_start_done_ctrl_plain : if not c_ENABLE_OBS_START_DONE_CTRL_TMR generate
+    attribute DONT_TOUCH of u_start_done_control : label is "TRUE";
+    attribute syn_preserve of u_start_done_control : label is true;
+    attribute KEEP_HIERARCHY of u_start_done_control : label is "TRUE";
+  begin
     u_start_done_control: entity work.selftest_start_done_control
       port map (
         ACLK    => ACLK,

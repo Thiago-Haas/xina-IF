@@ -33,9 +33,11 @@ architecture rtl of backend_manager_reception_h_interface_reg is
   -- Xilinx attributes to prevent optimization of TMR
   attribute DONT_TOUCH : string;
   attribute DONT_TOUCH of H_INTERFACE_w : signal is "TRUE";
+  attribute DONT_TOUCH of H_INTERFACE_enc_w : signal is "TRUE";
   -- Synplify attributes to prevent optimization of TMR
   attribute syn_preserve : boolean;
   attribute syn_preserve of H_INTERFACE_w : signal is true;
+  attribute syn_preserve of H_INTERFACE_enc_w : signal is true;
 begin
     gen_ham : if p_USE_HAMMING generate
         u_h_interface_hamming_register: entity work.hamming_register

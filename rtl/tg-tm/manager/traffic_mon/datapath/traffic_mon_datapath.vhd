@@ -96,9 +96,11 @@ architecture rtl of traffic_mon_datapath is
   -- Xilinx attributes to prevent optimization of TMR
   attribute DONT_TOUCH : string;
   attribute DONT_TOUCH of expected_w : signal is "TRUE";
+  attribute DONT_TOUCH of expected_enc_w : signal is "TRUE";
   -- Synplify attributes to prevent optimization of TMR
   attribute syn_preserve : boolean;
   attribute syn_preserve of expected_w : signal is true;
+  attribute syn_preserve of expected_enc_w : signal is true;
 begin
   -- Constant fields
   ARADDR  <= INPUT_ADDRESS(c_AXI_ADDR_WIDTH - 1 downto 0);

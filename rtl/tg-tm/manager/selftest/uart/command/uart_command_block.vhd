@@ -52,6 +52,9 @@ entity selftest_uart_command_block is
 end entity;
 
 architecture rtl of selftest_uart_command_block is
+  attribute DONT_TOUCH : string;
+  attribute syn_preserve : boolean;
+  attribute KEEP_HIERARCHY : string;
   signal command_enable_w : std_logic;
   signal uart_command_ctrl_tmr_error_w : std_logic;
   signal uart_command_ctrl_tmr_correct_enable_w : std_logic;
@@ -63,6 +66,9 @@ begin
   uart_command_ctrl_tmr_correct_enable_gate_w <= '1';
 
   b_uart_command_control_plain : if not p_USE_UART_COMMAND_CTRL_TMR generate
+    attribute DONT_TOUCH of u_uart_command_control : label is "TRUE";
+    attribute syn_preserve of u_uart_command_control : label is true;
+    attribute KEEP_HIERARCHY of u_uart_command_control : label is "TRUE";
   begin
     u_uart_command_control: entity work.selftest_uart_command_control
       port map(

@@ -30,6 +30,14 @@ architecture rtl of buffer_fifo is
   signal FIFO_r_w    : FIFO_TYPE;
   signal READ_PTR_w: unsigned(integer(ceil(log2(real(p_BUFFER_DEPTH)))) downto 0) := (others => '0');
 
+  attribute DONT_TOUCH : string;
+  attribute DONT_TOUCH of FIFO_r_w : signal is "TRUE";
+  attribute DONT_TOUCH of READ_PTR_w : signal is "TRUE";
+
+  attribute syn_preserve : boolean;
+  attribute syn_preserve of FIFO_r_w : signal is true;
+  attribute syn_preserve of READ_PTR_w : signal is true;
+
 begin
     process (all)
         variable var_READ_PTR: unsigned(integer(ceil(log2(real(p_BUFFER_DEPTH)))) downto 0) := (others => '0');

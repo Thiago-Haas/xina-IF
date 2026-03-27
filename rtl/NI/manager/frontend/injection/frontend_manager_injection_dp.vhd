@@ -115,6 +115,18 @@ architecture rtl of frontend_manager_injection_dp is
   signal addr_double_err_w : std_logic;
   signal addr_enc_w        : std_logic_vector(c_AXI_ADDR_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_ADDR_WIDTH, p_HAMMING_DETECT_DOUBLE) - 1 downto 0);
 
+  attribute DONT_TOUCH : string;
+  attribute DONT_TOUCH of meta_hdr_out_w : signal is "TRUE";
+  attribute DONT_TOUCH of meta_hdr_enc_w : signal is "TRUE";
+  attribute DONT_TOUCH of addr_out_w : signal is "TRUE";
+  attribute DONT_TOUCH of addr_enc_w : signal is "TRUE";
+
+  attribute syn_preserve : boolean;
+  attribute syn_preserve of meta_hdr_out_w : signal is true;
+  attribute syn_preserve of meta_hdr_enc_w : signal is true;
+  attribute syn_preserve of addr_out_w : signal is true;
+  attribute syn_preserve of addr_enc_w : signal is true;
+
 begin
 
   ---------------------------------------------------------------------------------------------

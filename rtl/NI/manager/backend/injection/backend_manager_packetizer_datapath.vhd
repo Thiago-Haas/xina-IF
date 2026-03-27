@@ -41,6 +41,18 @@ architecture rtl of backend_manager_packetizer_datapath is
     signal FLIT_PAYLOAD_w : std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
     signal FLIT_TRAILER_w : std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
 
+    attribute DONT_TOUCH : string;
+    attribute DONT_TOUCH of FLIT_H_INTERFACE_w : signal is "TRUE";
+    attribute DONT_TOUCH of FLIT_H_ADDRESS_w : signal is "TRUE";
+    attribute DONT_TOUCH of FLIT_PAYLOAD_w : signal is "TRUE";
+    attribute DONT_TOUCH of FLIT_TRAILER_w : signal is "TRUE";
+
+    attribute syn_preserve : boolean;
+    attribute syn_preserve of FLIT_H_INTERFACE_w : signal is true;
+    attribute syn_preserve of FLIT_H_ADDRESS_w : signal is true;
+    attribute syn_preserve of FLIT_PAYLOAD_w : signal is true;
+    attribute syn_preserve of FLIT_TRAILER_w : signal is true;
+
 begin
     FLIT_H_DEST_w      <= '1' & DEST_X_i & DEST_Y_i;
     FLIT_H_SRC_w       <= '0' & p_SRC_X  & p_SRC_Y;

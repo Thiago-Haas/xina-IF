@@ -28,20 +28,42 @@ entity frontend_manager_ejection_ctrl is
 end entity;
 
 architecture rtl of frontend_manager_ejection_ctrl is
+
+  signal ready_receive_packet_w : std_logic;
+  signal ready_receive_data_w   : std_logic;
+  signal bvalid_en_w            : std_logic;
+  signal rvalid_en_w            : std_logic;
+
+  attribute DONT_TOUCH : string;
+  attribute DONT_TOUCH of ready_receive_packet_w : signal is "TRUE";
+  attribute DONT_TOUCH of ready_receive_data_w : signal is "TRUE";
+  attribute DONT_TOUCH of bvalid_en_w : signal is "TRUE";
+  attribute DONT_TOUCH of rvalid_en_w : signal is "TRUE";
+
+  attribute syn_preserve : boolean;
+  attribute syn_preserve of ready_receive_packet_w : signal is true;
+  attribute syn_preserve of ready_receive_data_w : signal is true;
+  attribute syn_preserve of bvalid_en_w : signal is true;
+  attribute syn_preserve of rvalid_en_w : signal is true;
 begin
 
   ---------------------------------------------------------------------------------------------
   -- Ready back to backend (preserve original behaviour)
 
-  READY_RECEIVE_PACKET_o <= '1' when (OPC_RECEIVE_i = '0' and BREADY = '1') or
+  ready_receive_packet_w <= '1' when (OPC_RECEIVE_i = '0' and BREADY = '1') or
                                      (OPC_RECEIVE_i = '1' and RREADY = '1') else '0';
 
-  READY_RECEIVE_DATA_o <= RREADY;
+  ready_receive_data_w <= RREADY;
 
   ---------------------------------------------------------------------------------------------
   -- Enables to drive AXI channels (preserve original behaviour)
 
-  BVALID_EN_o <= '1' when (OPC_RECEIVE_i = '0' and VALID_RECEIVE_DATA_i = '1') else '0';
-  RVALID_EN_o <= '1' when (OPC_RECEIVE_i = '1' and VALID_RECEIVE_DATA_i = '1') else '0';
+  bvalid_en_w <= '1' when (OPC_RECEIVE_i = '0' and VALID_RECEIVE_DATA_i = '1') else '0';
+  rvalid_en_w <= '1' when (OPC_RECEIVE_i = '1' and VALID_RECEIVE_DATA_i = '1') else '0';
+
+  READY_RECEIVE_PACKET_o <= ready_receive_packet_w;
+  READY_RECEIVE_DATA_o   <= ready_receive_data_w;
+  BVALID_EN_o            <= bvalid_en_w;
+  RVALID_EN_o            <= rvalid_en_w;
 
 end architecture;

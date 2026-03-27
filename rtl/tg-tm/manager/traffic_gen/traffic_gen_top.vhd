@@ -57,6 +57,9 @@ entity traffic_gen_top is
 end traffic_gen_top;
 
 architecture rtl of traffic_gen_top is
+  attribute DONT_TOUCH : string;
+  attribute syn_preserve : boolean;
+  attribute KEEP_HIERARCHY : string;
   signal write_done_w      : std_logic;
   signal seed_pulse_w      : std_logic;
   signal wbeat_pulse_w     : std_logic;
@@ -67,7 +70,25 @@ architecture rtl of traffic_gen_top is
 begin
 
   gen_ctrl_plain : if (not p_USE_TG_CTRL_TMR) generate
-    
+    attribute DONT_TOUCH of u_traffic_gen_control : label is "TRUE";
+    attribute syn_preserve of u_traffic_gen_control : label is true;
+    attribute KEEP_HIERARCHY of u_traffic_gen_control : label is "TRUE";
+  begin
+    u_traffic_gen_control: entity work.traffic_gen_control
+      port map(
+        ACLK    => ACLK,
+        ARESETn => ARESETn,
+        start_i => start_i,
+        done_o  => write_done_w,
+        AWREADY => AWREADY,
+        WREADY  => WREADY,
+        BVALID  => BVALID,
+        AWVALID => AWVALID,
+        WVALID  => WVALID,
+        BREADY  => BREADY,
+        seed_pulse_o  => seed_pulse_w,
+        wbeat_pulse_o => wbeat_pulse_w
+      );
     ctrl_tmr_err_w <= '0';
   end generate;
 

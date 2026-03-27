@@ -66,9 +66,11 @@ architecture rtl of traffic_gen_datapath is
   -- Xilinx attributes to prevent optimization of TMR
   attribute DONT_TOUCH : string;
   attribute DONT_TOUCH of wdata_w : signal is "TRUE";
+  attribute DONT_TOUCH of enc_state_w : signal is "TRUE";
   -- Synplify attributes to prevent optimization of TMR
   attribute syn_preserve : boolean;
   attribute syn_preserve of wdata_w : signal is true;
+  attribute syn_preserve of enc_state_w : signal is true;
 begin
   -- Constant fields
   AWADDR  <= INPUT_ADDRESS(c_AXI_ADDR_WIDTH - 1 downto 0);

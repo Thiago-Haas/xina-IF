@@ -42,6 +42,9 @@ entity loopback_top is
 end entity;
 
 architecture rtl of loopback_top is
+  attribute DONT_TOUCH : string;
+  attribute syn_preserve : boolean;
+  attribute KEEP_HIERARCHY : string;
 
   -- Control-domain signals
   signal ctrl_cap_en_w          : std_logic;
@@ -98,6 +101,9 @@ begin
     );
 
   gen_ctrl_plain : if (not p_USE_LB_CTRL_TMR) generate
+    attribute DONT_TOUCH of u_loopback_control : label is "TRUE";
+    attribute syn_preserve of u_loopback_control : label is true;
+    attribute KEEP_HIERARCHY of u_loopback_control : label is "TRUE";
   begin
     ctrl_tmr_err_w <= '0';
 

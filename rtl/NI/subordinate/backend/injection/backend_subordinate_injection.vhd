@@ -60,6 +60,10 @@ architecture rtl of backend_subordinate_injection is
     signal WRITE_OK_BUFFER_w: std_logic;
     signal READ_BUFFER_w    : std_logic;
     signal READ_OK_BUFFER_w : std_logic;
+
+    attribute DONT_TOUCH : string;
+    attribute syn_preserve : boolean;
+    attribute KEEP_HIERARCHY : string;
 begin
     u_PACKETIZER_CONTROL:
     if (p_USE_TMR_PACKETIZER) generate
@@ -84,6 +88,10 @@ begin
                 INTEGRITY_RESETn_o => INTEGRITY_RESETn_w
             );
     else generate
+        attribute DONT_TOUCH of u_backend_subordinate_packetizer_control : label is "TRUE";
+        attribute syn_preserve of u_backend_subordinate_packetizer_control : label is true;
+        attribute KEEP_HIERARCHY of u_backend_subordinate_packetizer_control : label is "TRUE";
+    begin
         u_backend_subordinate_packetizer_control: entity work.backend_subordinate_packetizer_control
             port map(
                 ACLK    => ACLK,
@@ -180,6 +188,10 @@ begin
                 OBS_HAM_FIFO_CTRL_TMR_ERROR_o         => open
             );
     else generate
+        attribute DONT_TOUCH of u_buffer_fifo : label is "TRUE";
+        attribute syn_preserve of u_buffer_fifo : label is true;
+        attribute KEEP_HIERARCHY of u_buffer_fifo : label is "TRUE";
+    begin
         u_buffer_fifo: entity work.buffer_fifo
             generic map(
                 p_DATA_WIDTH   => c_FLIT_WIDTH,
@@ -213,6 +225,10 @@ begin
                 l_in_ack_o  => l_in_ack_o
             );
     else generate
+        attribute DONT_TOUCH of u_send_control : label is "TRUE";
+        attribute syn_preserve of u_send_control : label is true;
+        attribute KEEP_HIERARCHY of u_send_control : label is "TRUE";
+    begin
         u_send_control: entity work.send_control
             port map(
                 ACLK    => ACLK,

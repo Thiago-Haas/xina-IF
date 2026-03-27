@@ -69,6 +69,7 @@ architecture rtl of buffer_fifo_ham is
 
   -- Xilinx attributes to prevent optimization of TMR
   attribute DONT_TOUCH : string;
+  attribute KEEP_HIERARCHY : string;
   attribute DONT_TOUCH of enc_reg_word_r : signal is "TRUE";
   attribute DONT_TOUCH of fifo_mem_r : signal is "TRUE";
   -- Synplify attributes to prevent optimization of TMR
@@ -78,6 +79,9 @@ architecture rtl of buffer_fifo_ham is
 begin
 
   gen_ctrl_plain : if not p_USE_HAM_FIFO_CTRL_TMR generate
+    attribute DONT_TOUCH of u_buffer_fifo_ham_ctrl : label is "TRUE";
+    attribute syn_preserve of u_buffer_fifo_ham_ctrl : label is true;
+    attribute KEEP_HIERARCHY of u_buffer_fifo_ham_ctrl : label is "TRUE";
   begin
     u_buffer_fifo_ham_ctrl: entity work.buffer_fifo_ham_ctrl
       generic map(
