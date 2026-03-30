@@ -80,70 +80,129 @@ entity frontend_subordinate is
 end frontend_subordinate;
 
 architecture rtl of frontend_subordinate is
-    signal VALID_SEND_DATA_w: std_logic;
-    signal STATUS_SEND_r : std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
+    signal valid_send_data_w : std_logic;
+    signal last_send_data_w  : std_logic;
+    signal data_send_w       : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+    signal status_send_w     : std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
 
+    signal ready_receive_packet_w : std_logic;
+    signal ready_receive_data_w   : std_logic;
+    signal awvalid_en_w           : std_logic;
+    signal wvalid_en_w            : std_logic;
+    signal arvalid_en_w           : std_logic;
 
-  -- Xilinx attributes to prevent optimization of TMR
-  attribute DONT_TOUCH : string;
-  attribute DONT_TOUCH of STATUS_SEND_r : signal is "TRUE";
-  -- Synplify attributes to prevent optimization of TMR
-  attribute syn_preserve : boolean;
-  attribute syn_preserve of STATUS_SEND_r : signal is true;
+    attribute DONT_TOUCH : string;
+    attribute DONT_TOUCH of valid_send_data_w : signal is "TRUE";
+    attribute DONT_TOUCH of last_send_data_w : signal is "TRUE";
+    attribute DONT_TOUCH of data_send_w : signal is "TRUE";
+    attribute DONT_TOUCH of status_send_w : signal is "TRUE";
+    attribute DONT_TOUCH of ready_receive_packet_w : signal is "TRUE";
+    attribute DONT_TOUCH of ready_receive_data_w : signal is "TRUE";
+    attribute DONT_TOUCH of awvalid_en_w : signal is "TRUE";
+    attribute DONT_TOUCH of wvalid_en_w : signal is "TRUE";
+    attribute DONT_TOUCH of arvalid_en_w : signal is "TRUE";
+
+    attribute syn_preserve : boolean;
+    attribute syn_preserve of valid_send_data_w : signal is true;
+    attribute syn_preserve of last_send_data_w : signal is true;
+    attribute syn_preserve of data_send_w : signal is true;
+    attribute syn_preserve of status_send_w : signal is true;
+    attribute syn_preserve of ready_receive_packet_w : signal is true;
+    attribute syn_preserve of ready_receive_data_w : signal is true;
+    attribute syn_preserve of awvalid_en_w : signal is true;
+    attribute syn_preserve of wvalid_en_w : signal is true;
+    attribute syn_preserve of arvalid_en_w : signal is true;
 begin
-    ---------------------------------------------------------------------------------------------
-    -- Injection.
+    u_frontend_subordinate_injection_ctrl: entity work.frontend_subordinate_injection_ctrl
+        port map(
+            BVALID_i => BVALID,
+            RVALID_i => RVALID,
+            RLAST_i  => RLAST,
 
-    -- Registering transaction information.
-    registering: process(ACLK)
-    begin
-        if (rising_edge(ACLK)) then
-            if (VALID_SEND_DATA_w = '1') then
-                if (BVALID = '1') then
-                    -- Registering write signals.
-                    STATUS_SEND_r <= BRESP;
-                elsif (RVALID = '1') then
-                    -- Registering read signals.
-                    STATUS_SEND_r <= RRESP;
-                end if;
-            end if;
-        end if;
-    end process registering;
+            READY_SEND_DATA_i => READY_SEND_DATA_i,
+            OPC_RECEIVE_i     => OPC_RECEIVE_i,
 
-    STATUS_SEND_o <= STATUS_SEND_r;
+            VALID_SEND_DATA_o => valid_send_data_w,
+            LAST_SEND_DATA_o  => last_send_data_w,
 
-    -- Control information.
-    VALID_SEND_DATA_w   <= '1' when (BVALID = '1' or RVALID = '1') else '0';
-    VALID_SEND_DATA_o   <= VALID_SEND_DATA_w;
+            BREADY_o => BREADY,
+            RREADY_o => RREADY
+        );
 
-    LAST_SEND_DATA_o    <= RLAST;
-    DATA_SEND_o         <= RDATA when (RVALID = '1') else (c_AXI_DATA_WIDTH - 1 downto 0 => '0');
+    u_frontend_subordinate_injection_dp: entity work.frontend_subordinate_injection_dp
+        port map(
+            ACLK    => ACLK,
+            ARESETn => ARESETn,
 
-    -- Ready information to IP.
-    BREADY <= '1' when (OPC_RECEIVE_i = '0' and READY_SEND_DATA_i = '1') else '0';
-    RREADY <= '1' when (OPC_RECEIVE_i = '1' and READY_SEND_DATA_i = '1') else '0';
+            VALID_SEND_DATA_i => valid_send_data_w,
+            BVALID_i          => BVALID,
+            BRESP_i           => BRESP,
+            RVALID_i          => RVALID,
+            RRESP_i           => RRESP,
+            RDATA_i           => RDATA,
 
-    ---------------------------------------------------------------------------------------------
-    -- Reception.
-    READY_RECEIVE_PACKET_o <= '1' when (OPC_RECEIVE_i = '0' and AWREADY = '1') or
-                                       (OPC_RECEIVE_i = '1' and ARREADY = '1') else '0';
-    READY_RECEIVE_DATA_o   <= WREADY;
+            DATA_SEND_o   => data_send_w,
+            STATUS_SEND_o => status_send_w
+        );
 
-    AWVALID <= '1' when (OPC_RECEIVE_i = '0' and VALID_RECEIVE_PACKET_i = '1') else '0';
-    AWID    <= ID_RECEIVE_i when (OPC_RECEIVE_i = '0' and VALID_RECEIVE_PACKET_i = '1') else (c_AXI_ID_WIDTH - 1 downto 0 => '0');
-    AWADDR  <= ADDRESS_RECEIVE_i & (0 to c_AXI_DATA_WIDTH - 1 => '0') when (OPC_RECEIVE_i = '0' and VALID_RECEIVE_PACKET_i = '1') else (c_AXI_ADDR_WIDTH - 1 downto 0 => '0');
-    AWLEN   <= LEN_RECEIVE_i when (OPC_RECEIVE_i = '0' and VALID_RECEIVE_PACKET_i = '1') else (7 downto 0 => '0');
-    AWBURST <= BURST_RECEIVE_i when (OPC_RECEIVE_i = '0' and VALID_RECEIVE_PACKET_i = '1') else (1 downto 0 => '0');
+    u_frontend_subordinate_reception_ctrl: entity work.frontend_subordinate_reception_ctrl
+        port map(
+            OPC_RECEIVE_i          => OPC_RECEIVE_i,
+            VALID_RECEIVE_PACKET_i => VALID_RECEIVE_PACKET_i,
+            VALID_RECEIVE_DATA_i   => VALID_RECEIVE_DATA_i,
 
-    WVALID <= '1' when (OPC_RECEIVE_i = '0' and VALID_RECEIVE_DATA_i = '1') else '0';
-    WDATA  <= DATA_RECEIVE_i when (VALID_RECEIVE_DATA_i = '1') else (c_AXI_DATA_WIDTH - 1 downto 0 => '0');
-    WLAST  <= LAST_RECEIVE_DATA_i;
+            AWREADY_i => AWREADY,
+            ARREADY_i => ARREADY,
+            WREADY_i  => WREADY,
 
-    ARVALID <= '1' when (OPC_RECEIVE_i = '1' and VALID_RECEIVE_PACKET_i = '1') else '0';
-    ARID    <= ID_RECEIVE_i when (OPC_RECEIVE_i = '1' and VALID_RECEIVE_PACKET_i = '1') else (c_AXI_ID_WIDTH - 1 downto 0 => '0');
-    ARADDR  <= ADDRESS_RECEIVE_i & (0 to c_AXI_DATA_WIDTH - 1 => '0') when (OPC_RECEIVE_i = '1' and VALID_RECEIVE_PACKET_i = '1') else (c_AXI_ADDR_WIDTH - 1 downto 0 => '0');
-    ARLEN   <= LEN_RECEIVE_i when (OPC_RECEIVE_i = '1' and VALID_RECEIVE_PACKET_i = '1') else (7 downto 0 => '0');
-    ARBURST <= BURST_RECEIVE_i when (OPC_RECEIVE_i = '1' and VALID_RECEIVE_PACKET_i = '1') else (1 downto 0 => '0');
+            READY_RECEIVE_PACKET_o => ready_receive_packet_w,
+            READY_RECEIVE_DATA_o   => ready_receive_data_w,
 
-    CORRUPT_PACKET <= CORRUPT_RECEIVE_i;
+            AWVALID_EN_o => awvalid_en_w,
+            WVALID_EN_o  => wvalid_en_w,
+            ARVALID_EN_o => arvalid_en_w
+        );
+
+    u_frontend_subordinate_reception_dp: entity work.frontend_subordinate_reception_dp
+        port map(
+            VALID_RECEIVE_DATA_i => VALID_RECEIVE_DATA_i,
+            LAST_RECEIVE_DATA_i  => LAST_RECEIVE_DATA_i,
+
+            ID_RECEIVE_i      => ID_RECEIVE_i,
+            LEN_RECEIVE_i     => LEN_RECEIVE_i,
+            BURST_RECEIVE_i   => BURST_RECEIVE_i,
+            OPC_RECEIVE_i     => OPC_RECEIVE_i,
+            ADDRESS_RECEIVE_i => ADDRESS_RECEIVE_i,
+            DATA_RECEIVE_i    => DATA_RECEIVE_i,
+            CORRUPT_RECEIVE_i => CORRUPT_RECEIVE_i,
+
+            AWVALID_EN_i => awvalid_en_w,
+            WVALID_EN_i  => wvalid_en_w,
+            ARVALID_EN_i => arvalid_en_w,
+
+            AWVALID_o => AWVALID,
+            AWID_o    => AWID,
+            AWADDR_o  => AWADDR,
+            AWLEN_o   => AWLEN,
+            AWBURST_o => AWBURST,
+
+            WVALID_o => WVALID,
+            WDATA_o  => WDATA,
+            WLAST_o  => WLAST,
+
+            ARVALID_o => ARVALID,
+            ARID_o    => ARID,
+            ARADDR_o  => ARADDR,
+            ARLEN_o   => ARLEN,
+            ARBURST_o => ARBURST,
+
+            CORRUPT_PACKET_o => CORRUPT_PACKET
+        );
+
+    VALID_SEND_DATA_o     <= valid_send_data_w;
+    LAST_SEND_DATA_o      <= last_send_data_w;
+    DATA_SEND_o           <= data_send_w;
+    STATUS_SEND_o         <= status_send_w;
+    READY_RECEIVE_PACKET_o <= ready_receive_packet_w;
+    READY_RECEIVE_DATA_o   <= ready_receive_data_w;
 end rtl;
