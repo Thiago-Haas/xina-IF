@@ -1,9 +1,0 @@
--- Package definitions moved to rtl/packages/.
---
--- Use these package files instead:
---   * packages/xina_noc_pkg.vhd
---   * packages/xina_manager_ni_pkg.vhd
---   * packages/xina_subordinate_ni_pkg.vhd
---
--- This file intentionally contains no VHDL design units. It remains only as a
--- migration note for old project file lists that used to reference it.
