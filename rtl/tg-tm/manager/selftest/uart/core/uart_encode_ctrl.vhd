@@ -2,7 +2,8 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 
-use work.xina_ni_ft_pkg.all;
+use work.xina_noc_pkg.all;
+use work.xina_manager_ni_pkg.all;
 
 -- UART manager for closed-box self-test:
 -- * encodes fault/status vector as labeled ASCII text + LF

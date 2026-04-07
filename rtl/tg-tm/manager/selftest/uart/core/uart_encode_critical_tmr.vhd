@@ -1,7 +1,8 @@
 library IEEE;
 use IEEE.std_logic_1164.all;
 
-use work.xina_ni_ft_pkg.all;
+use work.xina_noc_pkg.all;
+use work.xina_manager_ni_pkg.all;
 
 -- TMR wrapper for selftest_obs_uart_encode_critical.
 entity selftest_obs_uart_encode_critical_tmr is

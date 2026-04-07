@@ -2,7 +2,8 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 
 library work;
-use work.xina_ni_ft_pkg.all;
+use work.xina_noc_pkg.all;
+use work.xina_subordinate_ni_pkg.all;
 
 entity frontend_subordinate_reception_dp is
     port(

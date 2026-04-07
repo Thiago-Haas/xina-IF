@@ -1,7 +1,8 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-use work.xina_ni_ft_pkg.all;
+use work.xina_noc_pkg.all;
+use work.xina_manager_ni_pkg.all;
 
 -- Control-side adapter kept outside TMR:
 --  * rebuilds captured flit for loopback_datapath

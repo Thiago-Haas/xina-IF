@@ -2,7 +2,8 @@ library IEEE;
 library work;
 
 use IEEE.std_logic_1164.all;
-use work.xina_ni_ft_pkg.all;
+use work.xina_noc_pkg.all;
+use work.xina_subordinate_ni_pkg.all;
 
 entity backend_subordinate_packetizer_control_tmr is
     port(
@@ -27,7 +28,11 @@ entity backend_subordinate_packetizer_control_tmr is
 
         -- Integrity control.
         ADD_o: out std_logic;
-        INTEGRITY_RESETn_o: out std_logic
+        INTEGRITY_RESETn_o: out std_logic;
+
+        -- Hardening.
+        correct_error_i : in  std_logic := '1';
+        error_o         : out std_logic := '0'
     );
 end backend_subordinate_packetizer_control_tmr;
 
@@ -46,6 +51,20 @@ architecture rtl of backend_subordinate_packetizer_control_tmr is
 
     signal ADD_w: t_BIT_VECTOR;
     signal INTEGRITY_RESETn_w: t_BIT_VECTOR;
+
+    signal corr_READY_SEND_DATA_w       : std_logic;
+    signal corr_WRITE_BUFFER_w          : std_logic;
+    signal corr_HAS_FINISHED_RESPONSE_w : std_logic;
+    signal corr_ADD_w                   : std_logic;
+    signal corr_INTEGRITY_RESETn_w      : std_logic;
+    signal corr_FLIT_SELECTOR_w         : std_logic_vector(2 downto 0);
+
+    signal error_READY_SEND_DATA_w       : std_logic;
+    signal error_WRITE_BUFFER_w          : std_logic;
+    signal error_HAS_FINISHED_RESPONSE_w : std_logic;
+    signal error_ADD_w                   : std_logic;
+    signal error_INTEGRITY_RESETn_w      : std_logic;
+    signal error_FLIT_SELECTOR_w         : std_logic_vector(2 downto 0);
 
 begin
     TMR:
@@ -69,34 +88,77 @@ begin
                 HAS_FINISHED_RESPONSE_o => HAS_FINISHED_RESPONSE_w(i),
 
                 WRITE_OK_BUFFER_i => WRITE_OK_BUFFER_i,
-                WRITE_BUFFER_o    => WRITE_BUFFER_w(i)
+                WRITE_BUFFER_o    => WRITE_BUFFER_w(i),
+
+                ADD_o              => ADD_w(i),
+                INTEGRITY_RESETn_o => INTEGRITY_RESETn_w(i)
             );
     end generate;
 
-    READY_SEND_DATA_o <= (READY_SEND_DATA_w(0) and READY_SEND_DATA_w(1)) or
-                         (READY_SEND_DATA_w(0) and READY_SEND_DATA_w(2)) or
-                         (READY_SEND_DATA_w(1) and READY_SEND_DATA_w(2));
+    corr_READY_SEND_DATA_w <= (READY_SEND_DATA_w(0) and READY_SEND_DATA_w(1)) or
+                              (READY_SEND_DATA_w(0) and READY_SEND_DATA_w(2)) or
+                              (READY_SEND_DATA_w(1) and READY_SEND_DATA_w(2));
 
-    WRITE_BUFFER_o <= (WRITE_BUFFER_w(0) and WRITE_BUFFER_w(1)) or
-                      (WRITE_BUFFER_w(0) and WRITE_BUFFER_w(2)) or
-                      (WRITE_BUFFER_w(1) and WRITE_BUFFER_w(2));
+    corr_WRITE_BUFFER_w <= (WRITE_BUFFER_w(0) and WRITE_BUFFER_w(1)) or
+                           (WRITE_BUFFER_w(0) and WRITE_BUFFER_w(2)) or
+                           (WRITE_BUFFER_w(1) and WRITE_BUFFER_w(2));
 
-    ADD_o <= (ADD_w(0) and ADD_w(1)) or
-             (ADD_w(0) and ADD_w(2)) or
-             (ADD_w(1) and ADD_w(2));
+    corr_ADD_w <= (ADD_w(0) and ADD_w(1)) or
+                  (ADD_w(0) and ADD_w(2)) or
+                  (ADD_w(1) and ADD_w(2));
 
-    INTEGRITY_RESETn_o <= (INTEGRITY_RESETn_w(0) and INTEGRITY_RESETn_w(1)) or
-                          (INTEGRITY_RESETn_w(0) and INTEGRITY_RESETn_w(2)) or
-                          (INTEGRITY_RESETn_w(1) and INTEGRITY_RESETn_w(2));
+    corr_INTEGRITY_RESETn_w <= (INTEGRITY_RESETn_w(0) and INTEGRITY_RESETn_w(1)) or
+                               (INTEGRITY_RESETn_w(0) and INTEGRITY_RESETn_w(2)) or
+                               (INTEGRITY_RESETn_w(1) and INTEGRITY_RESETn_w(2));
 
     TMR_FLIT_SELECTOR:
     for i in 2 downto 0 generate
-        FLIT_SELECTOR_o(i) <= (FLIT_SELECTOR_w(0)(i) and FLIT_SELECTOR_w(1)(i)) or
-                              (FLIT_SELECTOR_w(0)(i) and FLIT_SELECTOR_w(2)(i)) or
-                              (FLIT_SELECTOR_w(1)(i) and FLIT_SELECTOR_w(2)(i));
+        corr_FLIT_SELECTOR_w(i) <= (FLIT_SELECTOR_w(0)(i) and FLIT_SELECTOR_w(1)(i)) or
+                                   (FLIT_SELECTOR_w(0)(i) and FLIT_SELECTOR_w(2)(i)) or
+                                   (FLIT_SELECTOR_w(1)(i) and FLIT_SELECTOR_w(2)(i));
+
+        error_FLIT_SELECTOR_w(i) <= (FLIT_SELECTOR_w(0)(i) xor FLIT_SELECTOR_w(1)(i)) or
+                                    (FLIT_SELECTOR_w(0)(i) xor FLIT_SELECTOR_w(2)(i)) or
+                                    (FLIT_SELECTOR_w(1)(i) xor FLIT_SELECTOR_w(2)(i));
     end generate;
 
-    HAS_FINISHED_RESPONSE_o <= (HAS_FINISHED_RESPONSE_w(0) and HAS_FINISHED_RESPONSE_w(1)) or
-                               (HAS_FINISHED_RESPONSE_w(0) and HAS_FINISHED_RESPONSE_w(2)) or
-                               (HAS_FINISHED_RESPONSE_w(1) and HAS_FINISHED_RESPONSE_w(2));
+    corr_HAS_FINISHED_RESPONSE_w <= (HAS_FINISHED_RESPONSE_w(0) and HAS_FINISHED_RESPONSE_w(1)) or
+                                    (HAS_FINISHED_RESPONSE_w(0) and HAS_FINISHED_RESPONSE_w(2)) or
+                                    (HAS_FINISHED_RESPONSE_w(1) and HAS_FINISHED_RESPONSE_w(2));
+
+    error_READY_SEND_DATA_w <= (READY_SEND_DATA_w(0) xor READY_SEND_DATA_w(1)) or
+                               (READY_SEND_DATA_w(0) xor READY_SEND_DATA_w(2)) or
+                               (READY_SEND_DATA_w(1) xor READY_SEND_DATA_w(2));
+
+    error_WRITE_BUFFER_w <= (WRITE_BUFFER_w(0) xor WRITE_BUFFER_w(1)) or
+                            (WRITE_BUFFER_w(0) xor WRITE_BUFFER_w(2)) or
+                            (WRITE_BUFFER_w(1) xor WRITE_BUFFER_w(2));
+
+    error_ADD_w <= (ADD_w(0) xor ADD_w(1)) or
+                   (ADD_w(0) xor ADD_w(2)) or
+                   (ADD_w(1) xor ADD_w(2));
+
+    error_INTEGRITY_RESETn_w <= (INTEGRITY_RESETn_w(0) xor INTEGRITY_RESETn_w(1)) or
+                                (INTEGRITY_RESETn_w(0) xor INTEGRITY_RESETn_w(2)) or
+                                (INTEGRITY_RESETn_w(1) xor INTEGRITY_RESETn_w(2));
+
+    error_HAS_FINISHED_RESPONSE_w <= (HAS_FINISHED_RESPONSE_w(0) xor HAS_FINISHED_RESPONSE_w(1)) or
+                                     (HAS_FINISHED_RESPONSE_w(0) xor HAS_FINISHED_RESPONSE_w(2)) or
+                                     (HAS_FINISHED_RESPONSE_w(1) xor HAS_FINISHED_RESPONSE_w(2));
+
+    error_o <= error_READY_SEND_DATA_w or
+               error_WRITE_BUFFER_w or
+               error_ADD_w or
+               error_INTEGRITY_RESETn_w or
+               error_HAS_FINISHED_RESPONSE_w or
+               error_FLIT_SELECTOR_w(0) or
+               error_FLIT_SELECTOR_w(1) or
+               error_FLIT_SELECTOR_w(2);
+
+    READY_SEND_DATA_o       <= corr_READY_SEND_DATA_w       when correct_error_i = '1' else READY_SEND_DATA_w(0);
+    WRITE_BUFFER_o          <= corr_WRITE_BUFFER_w          when correct_error_i = '1' else WRITE_BUFFER_w(0);
+    ADD_o                   <= corr_ADD_w                   when correct_error_i = '1' else ADD_w(0);
+    INTEGRITY_RESETn_o      <= corr_INTEGRITY_RESETn_w      when correct_error_i = '1' else INTEGRITY_RESETn_w(0);
+    FLIT_SELECTOR_o         <= corr_FLIT_SELECTOR_w         when correct_error_i = '1' else FLIT_SELECTOR_w(0);
+    HAS_FINISHED_RESPONSE_o <= corr_HAS_FINISHED_RESPONSE_w when correct_error_i = '1' else HAS_FINISHED_RESPONSE_w(0);
 end rtl;

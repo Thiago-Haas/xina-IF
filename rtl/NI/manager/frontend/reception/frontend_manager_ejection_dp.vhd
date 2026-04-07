@@ -2,7 +2,8 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 
 library work;
-use work.xina_ni_ft_pkg.all;
+use work.xina_noc_pkg.all;
+use work.xina_manager_ni_pkg.all;
 
 -- Ejection datapath (backend receive -> AXI)
 --  * Routes backend receive fields onto AXI B/R channels.

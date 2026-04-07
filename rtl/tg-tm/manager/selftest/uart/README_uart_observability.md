@@ -15,7 +15,7 @@ So the console can use the same byte decoding logic for both.
 ## 2) UART Line Formats
 
 `TM` width is parameterized by:
-- `c_TM_TRANSACTION_COUNTER_WIDTH` in [`NI_obs/xina_ni_ft_pkg.vhd`](../../NI_obs/xina_ni_ft_pkg.vhd)
+- `c_TM_TRANSACTION_COUNTER_WIDTH` in `xina_manager_ni_pkg` (`rtl/packages/xina_manager_ni_pkg.vhd`)
 - Current value: `32`, so `TM` is 8 hex digits.
 
 Hex digits used for `TM`:

@@ -4,7 +4,7 @@ use ieee.numeric_std.all;
 use ieee.math_real.all;
 
 use work.hamming_pkg.all;
-use work.xina_ni_ft_pkg.all;
+use work.xina_noc_pkg.all;
 
 entity buffer_fifo_ham is
   generic (

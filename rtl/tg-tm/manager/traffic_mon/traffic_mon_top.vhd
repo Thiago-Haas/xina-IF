@@ -3,7 +3,8 @@ library work;
 
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
-use work.xina_ni_ft_pkg.all;
+use work.xina_noc_pkg.all;
+use work.xina_manager_ni_pkg.all;
 
 -- Top for the read phase (AR/R) with minimal comparator output.
 entity traffic_mon_top is

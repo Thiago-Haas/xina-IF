@@ -2,7 +2,8 @@ library IEEE;
 library work;
 
 use IEEE.std_logic_1164.all;
-use work.xina_ni_ft_pkg.all;
+use work.xina_noc_pkg.all;
+use work.xina_subordinate_ni_pkg.all;
 
 entity backend_subordinate_injection is
     generic(
@@ -39,7 +40,27 @@ entity backend_subordinate_injection is
         -- XINA signals.
         l_in_data_i: out std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
         l_in_val_i : out std_logic;
-        l_in_ack_o : in std_logic
+        l_in_ack_o : in std_logic;
+
+        -- Injection FIFO Hamming.
+        OBS_SUB_INJ_HAM_BUFFER_CORRECT_ERROR_i : in  std_logic := '1';
+        OBS_SUB_INJ_HAM_BUFFER_SINGLE_ERR_o    : out std_logic := '0';
+        OBS_SUB_INJ_HAM_BUFFER_DOUBLE_ERR_o    : out std_logic := '0';
+        OBS_SUB_INJ_HAM_BUFFER_ENC_DATA_o      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
+        OBS_SUB_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i : in  std_logic := '1';
+        OBS_SUB_INJ_TMR_HAM_BUFFER_CTRL_ERROR_o         : out std_logic := '0';
+
+        -- Injection integrity checksum Hamming.
+        OBS_SUB_INJ_HAM_INTEGRITY_CORRECT_ERROR_i : in  std_logic := '1';
+        OBS_SUB_INJ_HAM_INTEGRITY_SINGLE_ERR_o    : out std_logic := '0';
+        OBS_SUB_INJ_HAM_INTEGRITY_DOUBLE_ERR_o    : out std_logic := '0';
+        OBS_SUB_INJ_HAM_INTEGRITY_ENC_DATA_o      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
+
+        -- Injection flow and packetizer TMR.
+        OBS_SUB_INJ_TMR_FLOW_CTRL_CORRECT_ERROR_i : in  std_logic := '0';
+        OBS_SUB_INJ_TMR_FLOW_CTRL_ERROR_o         : out std_logic := '0';
+        OBS_SUB_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR_i : in  std_logic := '0';
+        OBS_SUB_INJ_TMR_PKTZ_CTRL_ERROR_o         : out std_logic := '0'
     );
 end backend_subordinate_injection;
 
@@ -85,7 +106,10 @@ begin
                 WRITE_BUFFER_o    => WRITE_BUFFER_w,
 
                 ADD_o => ADD_w,
-                INTEGRITY_RESETn_o => INTEGRITY_RESETn_w
+                INTEGRITY_RESETn_o => INTEGRITY_RESETn_w,
+
+                correct_error_i => OBS_SUB_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR_i,
+                error_o         => OBS_SUB_INJ_TMR_PKTZ_CTRL_ERROR_o
             );
     else generate
         attribute DONT_TOUCH of u_backend_subordinate_packetizer_control : label is "TRUE";
@@ -112,6 +136,8 @@ begin
                 ADD_o => ADD_w,
                 INTEGRITY_RESETn_o => INTEGRITY_RESETn_w
             );
+
+        OBS_SUB_INJ_TMR_PKTZ_CTRL_ERROR_o <= '0';
     end generate;
 
     u_backend_subordinate_packetizer_datapath: entity work.backend_subordinate_packetizer_datapath
@@ -145,12 +171,12 @@ begin
                 VALUE_ADD_i => FLIT_w(c_AXI_DATA_WIDTH - 1 downto 0),
 
                 CHECKSUM_o => CHECKSUM_w,
-                correct_error_i => '0',
+                correct_error_i => OBS_SUB_INJ_HAM_INTEGRITY_CORRECT_ERROR_i,
                 error_o         => open,
-                OBS_HAM_INTEGRITY_CORRECT_ERROR_i => '0',
-                OBS_HAM_INTEGRITY_SINGLE_ERR_o    => open,
-                OBS_HAM_INTEGRITY_DOUBLE_ERR_o    => open,
-                OBS_HAM_INTEGRITY_ENC_DATA_o      => open
+                OBS_HAM_INTEGRITY_CORRECT_ERROR_i => OBS_SUB_INJ_HAM_INTEGRITY_CORRECT_ERROR_i,
+                OBS_HAM_INTEGRITY_SINGLE_ERR_o    => OBS_SUB_INJ_HAM_INTEGRITY_SINGLE_ERR_o,
+                OBS_HAM_INTEGRITY_DOUBLE_ERR_o    => OBS_SUB_INJ_HAM_INTEGRITY_DOUBLE_ERR_o,
+                OBS_HAM_INTEGRITY_ENC_DATA_o      => OBS_SUB_INJ_HAM_INTEGRITY_ENC_DATA_o
             );
     elsif (p_USE_INTEGRITY) generate
         u_integrity_control_send: entity work.integrity_control_send
@@ -163,6 +189,14 @@ begin
 
                 CHECKSUM_o => CHECKSUM_w
             );
+
+        OBS_SUB_INJ_HAM_INTEGRITY_SINGLE_ERR_o <= '0';
+        OBS_SUB_INJ_HAM_INTEGRITY_DOUBLE_ERR_o <= '0';
+        OBS_SUB_INJ_HAM_INTEGRITY_ENC_DATA_o   <= (others => '0');
+    else generate
+        OBS_SUB_INJ_HAM_INTEGRITY_SINGLE_ERR_o <= '0';
+        OBS_SUB_INJ_HAM_INTEGRITY_DOUBLE_ERR_o <= '0';
+        OBS_SUB_INJ_HAM_INTEGRITY_ENC_DATA_o   <= (others => '0');
     end generate;
 
     u_BUFFER_FIFO:
@@ -183,9 +217,12 @@ begin
                 WRITE_OK_o => WRITE_OK_BUFFER_w,
                 WRITE_i    => WRITE_BUFFER_w,
                 DATA_i     => FLIT_w,
-                enc_stage_data_o => open,
-                OBS_HAM_FIFO_CTRL_TMR_CORRECT_ERROR_i => '1',
-                OBS_HAM_FIFO_CTRL_TMR_ERROR_o         => open
+                correct_error_i => OBS_SUB_INJ_HAM_BUFFER_CORRECT_ERROR_i,
+                single_err_o    => OBS_SUB_INJ_HAM_BUFFER_SINGLE_ERR_o,
+                double_err_o    => OBS_SUB_INJ_HAM_BUFFER_DOUBLE_ERR_o,
+                enc_stage_data_o => OBS_SUB_INJ_HAM_BUFFER_ENC_DATA_o,
+                OBS_HAM_FIFO_CTRL_TMR_CORRECT_ERROR_i => OBS_SUB_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i,
+                OBS_HAM_FIFO_CTRL_TMR_ERROR_o         => OBS_SUB_INJ_TMR_HAM_BUFFER_CTRL_ERROR_o
             );
     else generate
         attribute DONT_TOUCH of u_buffer_fifo : label is "TRUE";
@@ -209,6 +246,11 @@ begin
                 WRITE_i    => WRITE_BUFFER_w,
                 DATA_i     => FLIT_w
             );
+
+        OBS_SUB_INJ_HAM_BUFFER_SINGLE_ERR_o <= '0';
+        OBS_SUB_INJ_HAM_BUFFER_DOUBLE_ERR_o <= '0';
+        OBS_SUB_INJ_HAM_BUFFER_ENC_DATA_o   <= (others => '0');
+        OBS_SUB_INJ_TMR_HAM_BUFFER_CTRL_ERROR_o <= '0';
     end generate;
 
     u_SEND_CONTROL:
@@ -222,7 +264,10 @@ begin
                 READ_BUFFER_o    => READ_BUFFER_w,
 
                 l_in_val_i  => l_in_val_i,
-                l_in_ack_o  => l_in_ack_o
+                l_in_ack_o  => l_in_ack_o,
+
+                correct_error_i => OBS_SUB_INJ_TMR_FLOW_CTRL_CORRECT_ERROR_i,
+                error_o         => OBS_SUB_INJ_TMR_FLOW_CTRL_ERROR_o
             );
     else generate
         attribute DONT_TOUCH of u_send_control : label is "TRUE";
@@ -240,6 +285,8 @@ begin
                 l_in_val_i  => l_in_val_i,
                 l_in_ack_o  => l_in_ack_o
             );
+
+        OBS_SUB_INJ_TMR_FLOW_CTRL_ERROR_o <= '0';
     end generate;
 
     ARESET_w <= not ARESETn;

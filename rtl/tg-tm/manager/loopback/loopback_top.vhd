@@ -2,7 +2,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-use work.xina_ni_ft_pkg.all;
+use work.xina_noc_pkg.all;
+use work.xina_manager_ni_pkg.all;
 
 -- Synthesizable NoC-side loopback (subordinate emulator) for the combined TG/TM+NI top.
 -- Split into controller + datapath, with optional ECC hardening (TMR on ctrl, Hamming on DP reg).

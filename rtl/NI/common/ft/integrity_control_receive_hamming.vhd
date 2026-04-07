@@ -3,7 +3,7 @@ library work;
 
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
-use work.xina_ni_ft_pkg.all;
+use work.xina_noc_pkg.all;
 
 entity integrity_control_receive_hamming is
     port(

@@ -2,7 +2,8 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 use std.textio.all;
-use work.xina_ni_ft_pkg.all;
+use work.xina_noc_pkg.all;
+use work.xina_manager_ni_pkg.all;
 
 library std;
 
@@ -11,7 +12,7 @@ library std;
 
 entity tb_tg_tm_lb_selftest_top is
   generic (
-    G_ENABLE_OBS_AFTER_RESET : boolean := TRUE;
+    G_ENABLE_OBS_AFTER_RESET : boolean := FALSE;
     G_STOP_SIM_ON_TARGET : boolean := TRUE;
     G_STOP_TIMEOUT_NS    : natural := 3699847;
     G_POST_STOP_GRACE_NS : natural := 100000

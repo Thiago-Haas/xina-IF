@@ -2,7 +2,8 @@ library IEEE;
 library work;
 
 use IEEE.std_logic_1164.all;
-use work.xina_ni_ft_pkg.all;
+use work.xina_noc_pkg.all;
+use work.xina_subordinate_ni_pkg.all;
 
 entity ni_subordinate_top is
     generic(
@@ -10,11 +11,11 @@ entity ni_subordinate_top is
         p_SRC_Y: std_logic_vector((c_AXI_ADDR_WIDTH / 4) - 1 downto 0) := (others => '0');
 
         p_BUFFER_DEPTH      : positive := c_BUFFER_DEPTH;
-        p_USE_TMR_PACKETIZER: boolean  := c_ENABLE_TMR_PACKETIZER;
-        p_USE_TMR_FLOW      : boolean  := c_ENABLE_TMR_FLOW_CTRL;
-        p_USE_TMR_INTEGRITY : boolean  := c_ENABLE_TMR_INTEGRITY_CHECK;
-        p_USE_HAMMING       : boolean  := c_ENABLE_HAMMING_PROTECTION;
-        p_USE_INTEGRITY     : boolean  := c_ENABLE_INTEGRITY_CHECK
+        p_USE_TMR_PACKETIZER: boolean  := c_ENABLE_SUB_TMR_PACKETIZER;
+        p_USE_TMR_FLOW      : boolean  := c_ENABLE_SUB_TMR_FLOW_CTRL;
+        p_USE_TMR_INTEGRITY : boolean  := c_ENABLE_SUB_TMR_INTEGRITY_CHECK;
+        p_USE_HAMMING       : boolean  := c_ENABLE_SUB_HAMMING_PROTECTION;
+        p_USE_INTEGRITY     : boolean  := c_ENABLE_SUB_INTEGRITY_CHECK
     );
 
     port(
@@ -69,7 +70,39 @@ entity ni_subordinate_top is
         l_in_ack_o  : in std_logic;
         l_out_data_o: in std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
         l_out_val_o : in std_logic;
-        l_out_ack_i : out std_logic
+        l_out_ack_i : out std_logic;
+
+        -- Subordinate backend injection FT observability/correction.
+        OBS_SUB_INJ_HAM_BUFFER_CORRECT_ERROR_i : in  std_logic := '1';
+        OBS_SUB_INJ_HAM_BUFFER_SINGLE_ERR_o    : out std_logic := '0';
+        OBS_SUB_INJ_HAM_BUFFER_DOUBLE_ERR_o    : out std_logic := '0';
+        OBS_SUB_INJ_HAM_BUFFER_ENC_DATA_o      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
+        OBS_SUB_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i : in  std_logic := '1';
+        OBS_SUB_INJ_TMR_HAM_BUFFER_CTRL_ERROR_o         : out std_logic := '0';
+        OBS_SUB_INJ_HAM_INTEGRITY_CORRECT_ERROR_i : in  std_logic := '1';
+        OBS_SUB_INJ_HAM_INTEGRITY_SINGLE_ERR_o    : out std_logic := '0';
+        OBS_SUB_INJ_HAM_INTEGRITY_DOUBLE_ERR_o    : out std_logic := '0';
+        OBS_SUB_INJ_HAM_INTEGRITY_ENC_DATA_o      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
+        OBS_SUB_INJ_TMR_FLOW_CTRL_CORRECT_ERROR_i : in  std_logic := '0';
+        OBS_SUB_INJ_TMR_FLOW_CTRL_ERROR_o         : out std_logic := '0';
+        OBS_SUB_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR_i : in  std_logic := '0';
+        OBS_SUB_INJ_TMR_PKTZ_CTRL_ERROR_o         : out std_logic := '0';
+
+        -- Subordinate backend reception FT observability/correction.
+        OBS_SUB_RX_HAM_BUFFER_CORRECT_ERROR_i : in  std_logic := '1';
+        OBS_SUB_RX_HAM_BUFFER_SINGLE_ERR_o    : out std_logic := '0';
+        OBS_SUB_RX_HAM_BUFFER_DOUBLE_ERR_o    : out std_logic := '0';
+        OBS_SUB_RX_HAM_BUFFER_ENC_DATA_o      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
+        OBS_SUB_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i : in  std_logic := '1';
+        OBS_SUB_RX_TMR_HAM_BUFFER_CTRL_ERROR_o         : out std_logic := '0';
+        OBS_SUB_RX_HAM_INTEGRITY_CORRECT_ERROR_i : in  std_logic := '1';
+        OBS_SUB_RX_HAM_INTEGRITY_SINGLE_ERR_o    : out std_logic := '0';
+        OBS_SUB_RX_HAM_INTEGRITY_DOUBLE_ERR_o    : out std_logic := '0';
+        OBS_SUB_RX_HAM_INTEGRITY_ENC_DATA_o      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
+        OBS_SUB_RX_TMR_FLOW_CTRL_CORRECT_ERROR_i : in  std_logic := '0';
+        OBS_SUB_RX_TMR_FLOW_CTRL_ERROR_o         : out std_logic := '0';
+        OBS_SUB_RX_TMR_DEPKTZ_CTRL_CORRECT_ERROR_i : in  std_logic := '0';
+        OBS_SUB_RX_TMR_DEPKTZ_CTRL_ERROR_o         : out std_logic := '0'
     );
 end ni_subordinate_top;
 
@@ -222,6 +255,36 @@ begin
             l_in_ack_o   => l_in_ack_o,
             l_out_data_o => l_out_data_o,
             l_out_val_o  => l_out_val_o,
-            l_out_ack_i  => l_out_ack_i
+            l_out_ack_i  => l_out_ack_i,
+
+            OBS_SUB_INJ_HAM_BUFFER_CORRECT_ERROR_i => OBS_SUB_INJ_HAM_BUFFER_CORRECT_ERROR_i,
+            OBS_SUB_INJ_HAM_BUFFER_SINGLE_ERR_o    => OBS_SUB_INJ_HAM_BUFFER_SINGLE_ERR_o,
+            OBS_SUB_INJ_HAM_BUFFER_DOUBLE_ERR_o    => OBS_SUB_INJ_HAM_BUFFER_DOUBLE_ERR_o,
+            OBS_SUB_INJ_HAM_BUFFER_ENC_DATA_o      => OBS_SUB_INJ_HAM_BUFFER_ENC_DATA_o,
+            OBS_SUB_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i => OBS_SUB_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i,
+            OBS_SUB_INJ_TMR_HAM_BUFFER_CTRL_ERROR_o         => OBS_SUB_INJ_TMR_HAM_BUFFER_CTRL_ERROR_o,
+            OBS_SUB_INJ_HAM_INTEGRITY_CORRECT_ERROR_i => OBS_SUB_INJ_HAM_INTEGRITY_CORRECT_ERROR_i,
+            OBS_SUB_INJ_HAM_INTEGRITY_SINGLE_ERR_o    => OBS_SUB_INJ_HAM_INTEGRITY_SINGLE_ERR_o,
+            OBS_SUB_INJ_HAM_INTEGRITY_DOUBLE_ERR_o    => OBS_SUB_INJ_HAM_INTEGRITY_DOUBLE_ERR_o,
+            OBS_SUB_INJ_HAM_INTEGRITY_ENC_DATA_o      => OBS_SUB_INJ_HAM_INTEGRITY_ENC_DATA_o,
+            OBS_SUB_INJ_TMR_FLOW_CTRL_CORRECT_ERROR_i => OBS_SUB_INJ_TMR_FLOW_CTRL_CORRECT_ERROR_i,
+            OBS_SUB_INJ_TMR_FLOW_CTRL_ERROR_o         => OBS_SUB_INJ_TMR_FLOW_CTRL_ERROR_o,
+            OBS_SUB_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR_i => OBS_SUB_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR_i,
+            OBS_SUB_INJ_TMR_PKTZ_CTRL_ERROR_o         => OBS_SUB_INJ_TMR_PKTZ_CTRL_ERROR_o,
+
+            OBS_SUB_RX_HAM_BUFFER_CORRECT_ERROR_i => OBS_SUB_RX_HAM_BUFFER_CORRECT_ERROR_i,
+            OBS_SUB_RX_HAM_BUFFER_SINGLE_ERR_o    => OBS_SUB_RX_HAM_BUFFER_SINGLE_ERR_o,
+            OBS_SUB_RX_HAM_BUFFER_DOUBLE_ERR_o    => OBS_SUB_RX_HAM_BUFFER_DOUBLE_ERR_o,
+            OBS_SUB_RX_HAM_BUFFER_ENC_DATA_o      => OBS_SUB_RX_HAM_BUFFER_ENC_DATA_o,
+            OBS_SUB_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i => OBS_SUB_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i,
+            OBS_SUB_RX_TMR_HAM_BUFFER_CTRL_ERROR_o         => OBS_SUB_RX_TMR_HAM_BUFFER_CTRL_ERROR_o,
+            OBS_SUB_RX_HAM_INTEGRITY_CORRECT_ERROR_i => OBS_SUB_RX_HAM_INTEGRITY_CORRECT_ERROR_i,
+            OBS_SUB_RX_HAM_INTEGRITY_SINGLE_ERR_o    => OBS_SUB_RX_HAM_INTEGRITY_SINGLE_ERR_o,
+            OBS_SUB_RX_HAM_INTEGRITY_DOUBLE_ERR_o    => OBS_SUB_RX_HAM_INTEGRITY_DOUBLE_ERR_o,
+            OBS_SUB_RX_HAM_INTEGRITY_ENC_DATA_o      => OBS_SUB_RX_HAM_INTEGRITY_ENC_DATA_o,
+            OBS_SUB_RX_TMR_FLOW_CTRL_CORRECT_ERROR_i => OBS_SUB_RX_TMR_FLOW_CTRL_CORRECT_ERROR_i,
+            OBS_SUB_RX_TMR_FLOW_CTRL_ERROR_o         => OBS_SUB_RX_TMR_FLOW_CTRL_ERROR_o,
+            OBS_SUB_RX_TMR_DEPKTZ_CTRL_CORRECT_ERROR_i => OBS_SUB_RX_TMR_DEPKTZ_CTRL_CORRECT_ERROR_i,
+            OBS_SUB_RX_TMR_DEPKTZ_CTRL_ERROR_o         => OBS_SUB_RX_TMR_DEPKTZ_CTRL_ERROR_o
         );
 end rtl;

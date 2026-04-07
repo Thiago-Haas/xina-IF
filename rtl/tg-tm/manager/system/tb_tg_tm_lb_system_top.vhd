@@ -5,7 +5,8 @@ use IEEE.numeric_std.all;
 library std;
 use std.env.all;
 
-use work.xina_ni_ft_pkg.all;
+use work.xina_noc_pkg.all;
+use work.xina_manager_ni_pkg.all;
 
 entity tb_tg_tm_lb_system_top is
   port(

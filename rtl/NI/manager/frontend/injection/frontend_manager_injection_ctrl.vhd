@@ -2,7 +2,8 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 
 library work;
-use work.xina_ni_ft_pkg.all;
+use work.xina_noc_pkg.all;
+use work.xina_manager_ni_pkg.all;
 
 -- Injection controller (AXI -> backend send)
 --  * Generates AXI ready signals.
