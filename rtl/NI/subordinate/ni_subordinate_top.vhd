@@ -72,6 +72,10 @@ entity ni_subordinate_top is
         l_out_val_o : in std_logic;
         l_out_ack_i : out std_logic;
 
+        -- Subordinate frontend injection FT observability/correction.
+        OBS_SUB_FE_INJ_TMR_STATUS_CORRECT_ERROR_i : in  std_logic := '1';
+        OBS_SUB_FE_INJ_TMR_STATUS_ERROR_o         : out std_logic := '0';
+
         -- Subordinate backend injection FT observability/correction.
         OBS_SUB_INJ_HAM_BUFFER_CORRECT_ERROR_i : in  std_logic := '1';
         OBS_SUB_INJ_HAM_BUFFER_SINGLE_ERR_o    : out std_logic := '0';
@@ -187,6 +191,8 @@ begin
 
             DATA_SEND_o   => DATA_SEND_w,
             STATUS_SEND_o => STATUS_SEND_w,
+            OBS_SUB_FE_INJ_TMR_STATUS_CORRECT_ERROR_i => OBS_SUB_FE_INJ_TMR_STATUS_CORRECT_ERROR_i,
+            OBS_SUB_FE_INJ_TMR_STATUS_ERROR_o         => OBS_SUB_FE_INJ_TMR_STATUS_ERROR_o,
 
             -- Backend signals (reception).
             READY_RECEIVE_PACKET_o => READY_RECEIVE_PACKET_w,

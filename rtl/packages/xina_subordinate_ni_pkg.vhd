@@ -17,6 +17,7 @@ package xina_subordinate_ni_pkg is
   -- package-level shape used by the manager side.
   constant c_ENABLE_SUB_FE_INJ_META_HDR_HAMMING : boolean := true;
   constant c_ENABLE_SUB_FE_INJ_ADDR_HAMMING     : boolean := true;
+  constant c_ENABLE_SUB_FE_INJ_STATUS_TMR       : boolean := true;
 
   -- Backend injection.
   constant c_ENABLE_SUB_BE_INJ_BUFFER_HAMMING  : boolean := true;

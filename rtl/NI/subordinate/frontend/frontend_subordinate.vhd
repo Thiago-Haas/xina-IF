@@ -18,7 +18,7 @@ entity frontend_subordinate is
             AWID   : out std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
             AWADDR : out std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
             AWLEN  : out std_logic_vector(7 downto 0) := (others => '0');
-            AWSIZE : out std_logic_vector(2 downto 0) := std_logic_vector(to_unsigned(c_AXI_DATA_WIDTH / 8, 3));
+            AWSIZE : out std_logic_vector(2 downto 0);
             AWBURST: out std_logic_vector(1 downto 0) := "01";
 
             -- Write data signals.
@@ -39,7 +39,7 @@ entity frontend_subordinate is
             ARID   : out std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0) := (others => '0');
             ARADDR : out std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0) := (others => '0');
             ARLEN  : out std_logic_vector(7 downto 0) := (others => '0');
-            ARSIZE : out std_logic_vector(2 downto 0) := std_logic_vector(to_unsigned(c_AXI_DATA_WIDTH / 8, 3));
+            ARSIZE : out std_logic_vector(2 downto 0);
             ARBURST: out std_logic_vector(1 downto 0) := "01";
 
             -- Read response/data signals.
@@ -61,6 +61,10 @@ entity frontend_subordinate is
         DATA_SEND_o  : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
         STATUS_SEND_o: out std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
 
+        -- Frontend injection response-status TMR.
+        OBS_SUB_FE_INJ_TMR_STATUS_CORRECT_ERROR_i : in  std_logic := '1';
+        OBS_SUB_FE_INJ_TMR_STATUS_ERROR_o         : out std_logic := '0';
+
         -- Backend signals (reception).
         VALID_RECEIVE_PACKET_i: in std_logic;
         VALID_RECEIVE_DATA_i  : in std_logic;
@@ -81,6 +85,11 @@ entity frontend_subordinate is
 end frontend_subordinate;
 
 architecture rtl of frontend_subordinate is
+    -- AXI SIZE encodes log2(bytes/beat), not bytes/beat. The manager-side test
+    -- traffic is fixed to one 32-bit beat, so the subordinate frontend mirrors
+    -- that as a constant field.
+    constant C_AXI_SIZE_32BIT : std_logic_vector(2 downto 0) := "010";
+
     signal valid_send_data_w : std_logic;
     signal last_send_data_w  : std_logic;
     signal data_send_w       : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
@@ -114,6 +123,9 @@ architecture rtl of frontend_subordinate is
     attribute syn_preserve of wvalid_en_w : signal is true;
     attribute syn_preserve of arvalid_en_w : signal is true;
 begin
+    AWSIZE <= C_AXI_SIZE_32BIT;
+    ARSIZE <= C_AXI_SIZE_32BIT;
+
     u_frontend_subordinate_injection_ctrl: entity work.frontend_subordinate_injection_ctrl
         port map(
             BVALID_i => BVALID,
@@ -141,6 +153,8 @@ begin
             RVALID_i          => RVALID,
             RRESP_i           => RRESP,
             RDATA_i           => RDATA,
+            STATUS_TMR_CORRECT_ERROR_i => OBS_SUB_FE_INJ_TMR_STATUS_CORRECT_ERROR_i,
+            STATUS_TMR_ERROR_o         => OBS_SUB_FE_INJ_TMR_STATUS_ERROR_o,
 
             DATA_SEND_o   => data_send_w,
             STATUS_SEND_o => status_send_w
