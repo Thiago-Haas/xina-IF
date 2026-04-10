@@ -30,6 +30,26 @@ entity hamming_register is
 end entity;
 
 architecture arch of hamming_register is
+  function single_error_mask(width : positive) return std_logic_vector is
+    variable mask_v : std_logic_vector(width - 1 downto 0) := (others => '0');
+    variable bit_v  : natural := 15;
+  begin
+    if bit_v >= width then
+      bit_v := width - 1;
+    end if;
+    mask_v(bit_v) := '1';
+    return mask_v;
+  end function;
+
+  function double_error_mask(width : positive) return std_logic_vector is
+    variable mask_v : std_logic_vector(width - 1 downto 0) := (others => '0');
+  begin
+    mask_v(width - 1) := '1';
+    if width > 1 then
+      mask_v(width - 2) := '1';
+    end if;
+    return mask_v;
+  end function;
 begin
 
   -----------------------------------------------------------------------------------------------
@@ -107,8 +127,8 @@ begin
           end if;
         end if;
       end process;
-      wdata_w <= enc_w xor ("000" & x"000008000") when inj_counter_r = ("00" & (inj_counter_r'length-3 downto 0 => '1')) else -- inject one bit error
-                 enc_w xor ("110" & x"000000000") when inj_counter_r = ("01" & (inj_counter_r'length-3 downto 0 => '1')) else -- inject two bit errors in parity data
+      wdata_w <= enc_w xor single_error_mask(REG_DATA_WIDTH) when inj_counter_r = ("00" & (inj_counter_r'length-3 downto 0 => '1')) else -- inject one bit error
+                 enc_w xor double_error_mask(REG_DATA_WIDTH) when inj_counter_r = ("01" & (inj_counter_r'length-3 downto 0 => '1')) else -- inject two bit errors
                  enc_w;
     else generate
       wdata_w <= enc_w;

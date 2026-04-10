@@ -15,8 +15,8 @@ entity subordinate_noc_traffic_gen_control is
     l_out_ack_i : in  std_logic;
     l_out_val_o : out std_logic;
 
-    load_request_o : out std_logic;
     step_lfsr_o    : out std_logic;
+    lfsr_seeded_o  : out std_logic;
     flit_idx_o     : out unsigned(2 downto 0)
   );
 end entity;
@@ -30,8 +30,8 @@ architecture rtl of subordinate_noc_traffic_gen_control is
   signal state_r    : std_logic_vector(1 downto 0) := C_ST_IDLE;
   signal flit_idx_r : unsigned(2 downto 0) := (others => '0');
   signal is_read_r  : std_logic := '0';
-  signal load_request_r : std_logic := '0';
   signal step_lfsr_r    : std_logic := '0';
+  signal lfsr_seeded_r  : std_logic := '0';
 
   signal last_idx_w : unsigned(2 downto 0);
 begin
@@ -40,27 +40,32 @@ begin
 
   l_out_val_o <= '1' when state_r = C_ST_WAIT_ACK else '0';
   done_o <= '1' when state_r = C_ST_DONE else '0';
-  load_request_o <= load_request_r;
   step_lfsr_o <= step_lfsr_r;
+  lfsr_seeded_o <= lfsr_seeded_r;
   flit_idx_o <= flit_idx_r;
 
   process(ACLK)
   begin
     if rising_edge(ACLK) then
-      load_request_r <= '0';
       step_lfsr_r <= '0';
 
       if ARESETn = '0' then
         state_r <= C_ST_IDLE;
         flit_idx_r <= (others => '0');
         is_read_r <= '0';
+        lfsr_seeded_r <= '0';
       else
+        -- Mark seeded one cycle after the step pulse is issued, so the
+        -- datapath still uses seed_i for the first LFSR step.
+        if step_lfsr_r = '1' then
+          lfsr_seeded_r <= '1';
+        end if;
+
         case state_r is
           when C_ST_IDLE =>
             if start_i = '1' then
               is_read_r <= is_read_i;
               flit_idx_r <= (others => '0');
-              load_request_r <= '1';
               step_lfsr_r <= not is_read_i;
               state_r <= C_ST_WAIT_ACK;
             end if;

@@ -3,9 +3,15 @@ use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 
 use work.xina_noc_pkg.all;
+use work.xina_subordinate_ni_pkg.all;
 
 -- Checks manager-side NoC response flits emitted by the subordinate NI.
 entity subordinate_noc_traffic_mon_datapath is
+  generic(
+    p_USE_HAMMING               : boolean := c_ENABLE_SUB_TM_LFSR_HAMMING;
+    p_USE_HAMMING_DOUBLE_DETECT : boolean := c_ENABLE_SUB_TM_LFSR_HAMMING_DOUBLE_DETECT;
+    p_USE_HAMMING_INJECT_ERROR  : boolean := c_ENABLE_SUB_TM_LFSR_HAMMING_INJECT_ERROR
+  );
   port(
     ACLK    : in  std_logic;
     ARESETn : in  std_logic;
@@ -16,33 +22,42 @@ entity subordinate_noc_traffic_mon_datapath is
 
     load_expected_i : in std_logic;
     step_lfsr_i     : in std_logic;
+    lfsr_seeded_i   : in std_logic;
     accept_flit_i   : in std_logic;
     flit_idx_i      : in unsigned(2 downto 0);
 
     l_in_data_i : in std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-    mismatch_o  : out std_logic
+    mismatch_o  : out std_logic;
+
+    OBS_SUB_TM_HAM_LFSR_CORRECT_ERROR_i : in  std_logic := '1';
+    OBS_SUB_TM_HAM_LFSR_SINGLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_TM_HAM_LFSR_DOUBLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_TM_HAM_LFSR_ENC_DATA_o      : out std_logic_vector(c_AXI_DATA_WIDTH + 1 + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH + 1, p_USE_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0')
   );
 end entity;
 
 architecture rtl of subordinate_noc_traffic_mon_datapath is
-  signal expected_id_r      : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0) := (others => '0');
-  signal expected_payload_r : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
-  signal mismatch_r         : std_logic := '0';
-  signal checksum_r         : unsigned(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
+  signal mismatch_w         : std_logic_vector(0 downto 0);
+  signal mismatch_next_w    : std_logic_vector(0 downto 0);
+  signal mismatch_write_en_w: std_logic;
 
-  signal lfsr_state_r  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
-  signal lfsr_seeded_r : std_logic := '0';
+  signal lfsr_state_w  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
   signal lfsr_input_w  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
   signal lfsr_next_w   : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+  signal lfsr_single_err_w : std_logic;
+  signal lfsr_double_err_w : std_logic;
+  signal protected_state_w      : std_logic_vector(c_AXI_DATA_WIDTH downto 0);
+  signal protected_state_next_w : std_logic_vector(c_AXI_DATA_WIDTH downto 0);
+  signal protected_state_we_w   : std_logic;
+  signal protected_state_enc_w  : std_logic_vector(c_AXI_DATA_WIDTH + 1 + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH + 1, p_USE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
   signal flit_payload_w : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
-  signal last_idx_w     : unsigned(2 downto 0);
 begin
   flit_payload_w <= l_in_data_i(c_AXI_DATA_WIDTH - 1 downto 0);
-  last_idx_w <= to_unsigned(3, last_idx_w'length) when is_read_i = '0' else
-                to_unsigned(4, last_idx_w'length);
+  lfsr_state_w <= protected_state_w(c_AXI_DATA_WIDTH - 1 downto 0);
+  mismatch_w(0) <= protected_state_w(c_AXI_DATA_WIDTH);
 
-  lfsr_input_w <= seed_i when lfsr_seeded_r = '0' else lfsr_state_r;
+  lfsr_input_w <= seed_i when lfsr_seeded_i = '0' else lfsr_state_w;
 
   u_lfsr: entity work.subordinate_noc_traffic_mon_lfsr
     generic map(
@@ -53,61 +68,65 @@ begin
       next_o => lfsr_next_w
     );
 
-  mismatch_o <= mismatch_r;
+  mismatch_o <= mismatch_w(0);
 
-  process(ACLK)
+  process(mismatch_w, load_expected_i, accept_flit_i, flit_idx_i, flit_payload_w, expected_id_i, is_read_i, lfsr_state_w)
+    variable mismatch_v : std_logic;
   begin
-    if rising_edge(ACLK) then
-      if ARESETn = '0' then
-        expected_id_r <= (others => '0');
-        expected_payload_r <= (others => '0');
-        mismatch_r <= '0';
-        checksum_r <= (others => '0');
-        lfsr_state_r <= (others => '0');
-        lfsr_seeded_r <= '0';
-      else
-        if load_expected_i = '1' then
-          expected_id_r <= expected_id_i;
-          mismatch_r <= '0';
-          checksum_r <= (others => '0');
-          if step_lfsr_i = '1' then
-            expected_payload_r <= lfsr_next_w;
-          else
-            expected_payload_r <= (others => '0');
-          end if;
+    mismatch_v := mismatch_w(0);
+
+    if load_expected_i = '1' then
+      mismatch_v := '0';
+    end if;
+
+    if accept_flit_i = '1' then
+      if flit_idx_i = to_unsigned(2, flit_idx_i'length) then
+        if flit_payload_w(19 downto 15) /= expected_id_i then
+          mismatch_v := '1';
         end if;
-
-        if step_lfsr_i = '1' then
-          lfsr_state_r <= lfsr_next_w;
-          lfsr_seeded_r <= '1';
+        if flit_payload_w(1) /= is_read_i then
+          mismatch_v := '1';
         end if;
-
-        if accept_flit_i = '1' then
-          if flit_idx_i /= last_idx_w then
-            checksum_r <= checksum_r + unsigned(flit_payload_w);
-          end if;
-
-          if flit_idx_i = to_unsigned(2, flit_idx_i'length) then
-            if flit_payload_w(19 downto 15) /= expected_id_r then
-              mismatch_r <= '1';
-            end if;
-            if flit_payload_w(1) /= is_read_i then
-              mismatch_r <= '1';
-            end if;
-            if flit_payload_w(4 downto 2) /= "000" then
-              mismatch_r <= '1';
-            end if;
-          elsif flit_idx_i = to_unsigned(3, flit_idx_i'length) and is_read_i = '1' then
-            if flit_payload_w /= expected_payload_r then
-              mismatch_r <= '1';
-            end if;
-          elsif flit_idx_i = last_idx_w then
-            if checksum_r /= unsigned(flit_payload_w) then
-              mismatch_r <= '1';
-            end if;
-          end if;
+        if flit_payload_w(4 downto 2) /= "000" then
+          mismatch_v := '1';
+        end if;
+      elsif flit_idx_i = to_unsigned(3, flit_idx_i'length) and is_read_i = '1' then
+        if flit_payload_w /= lfsr_state_w then
+          mismatch_v := '1';
         end if;
       end if;
     end if;
+
+    mismatch_next_w(0) <= mismatch_v;
   end process;
+
+  mismatch_write_en_w <= load_expected_i or accept_flit_i;
+
+  protected_state_we_w <= step_lfsr_i or mismatch_write_en_w;
+  protected_state_next_w <= mismatch_next_w(0) & lfsr_next_w when step_lfsr_i = '1' else
+                            mismatch_next_w(0) & lfsr_state_w;
+
+  u_lfsr_state_hamming_register: entity work.hamming_register
+    generic map(
+      DATA_WIDTH     => c_AXI_DATA_WIDTH + 1,
+      HAMMING_ENABLE => p_USE_HAMMING,
+      DETECT_DOUBLE  => p_USE_HAMMING_DOUBLE_DETECT,
+      RESET_VALUE    => (c_AXI_DATA_WIDTH downto 0 => '0'),
+      INJECT_ERROR   => p_USE_HAMMING_INJECT_ERROR
+    )
+    port map(
+      correct_en_i => OBS_SUB_TM_HAM_LFSR_CORRECT_ERROR_i,
+      write_en_i   => protected_state_we_w,
+      data_i       => protected_state_next_w,
+      rstn_i       => ARESETn,
+      clk_i        => ACLK,
+      single_err_o => lfsr_single_err_w,
+      double_err_o => lfsr_double_err_w,
+      enc_data_o   => protected_state_enc_w,
+      data_o       => protected_state_w
+    );
+
+  OBS_SUB_TM_HAM_LFSR_SINGLE_ERR_o <= lfsr_single_err_w;
+  OBS_SUB_TM_HAM_LFSR_DOUBLE_ERR_o <= lfsr_double_err_w;
+  OBS_SUB_TM_HAM_LFSR_ENC_DATA_o   <= protected_state_enc_w;
 end architecture;

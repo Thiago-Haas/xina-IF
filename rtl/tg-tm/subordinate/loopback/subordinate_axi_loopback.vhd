@@ -2,12 +2,13 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 
 use work.xina_noc_pkg.all;
+use work.xina_subordinate_ni_pkg.all;
 
 -- Minimal AXI slave loopback for the subordinate NI system test.
 -- Wrapper split into control and datapath, matching the TG/TM organization.
 entity subordinate_axi_loopback is
   generic(
-    p_MEM_ADDR_BITS : natural := 10
+    p_USE_TMR_CTRL  : boolean := c_ENABLE_SUB_LB_CTRL_TMR
   );
   port(
     ACLK    : in  std_logic;
@@ -44,7 +45,22 @@ entity subordinate_axi_loopback is
     RDATA  : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
     RLAST  : out std_logic;
     RID    : out std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
-    RRESP  : out std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0)
+    RRESP  : out std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
+
+    OBS_SUB_LB_TMR_CTRL_CORRECT_ERROR_i : in  std_logic := '1';
+    OBS_SUB_LB_TMR_CTRL_ERROR_o         : out std_logic := '0';
+    OBS_SUB_LB_HAM_PAYLOAD_CORRECT_ERROR_i : in  std_logic := '1';
+    OBS_SUB_LB_HAM_PAYLOAD_SINGLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_LB_HAM_PAYLOAD_DOUBLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_LB_HAM_PAYLOAD_ENC_DATA_o      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_SUB_LB_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
+    OBS_SUB_LB_HAM_RDATA_CORRECT_ERROR_i   : in  std_logic := '1';
+    OBS_SUB_LB_HAM_RDATA_SINGLE_ERR_o      : out std_logic := '0';
+    OBS_SUB_LB_HAM_RDATA_DOUBLE_ERR_o      : out std_logic := '0';
+    OBS_SUB_LB_HAM_RDATA_ENC_DATA_o        : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_SUB_LB_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
+    OBS_SUB_LB_HAM_ID_STATE_CORRECT_ERROR_i : in  std_logic := '1';
+    OBS_SUB_LB_HAM_ID_STATE_SINGLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_LB_HAM_ID_STATE_DOUBLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_LB_HAM_ID_STATE_ENC_DATA_o      : out std_logic_vector((3 * c_AXI_ID_WIDTH) + work.hamming_pkg.get_ecc_size(3 * c_AXI_ID_WIDTH, c_ENABLE_SUB_LB_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0')
   );
 end entity;
 
@@ -56,31 +72,55 @@ architecture rtl of subordinate_axi_loopback is
 begin
   RLAST <= rvalid_w;
 
-  u_control: entity work.subordinate_axi_loopback_control
-    port map(
-      ACLK => ACLK,
-      ARESETn => ARESETn,
-      AWVALID => AWVALID,
-      AWREADY => AWREADY,
-      WVALID => WVALID,
-      WREADY => WREADY,
-      BVALID => BVALID,
-      BREADY => BREADY,
-      ARVALID => ARVALID,
-      ARREADY => ARREADY,
-      RVALID => rvalid_w,
-      RREADY => RREADY,
-      aw_accept_o => aw_accept_w,
-      w_accept_o => w_accept_w,
-      ar_accept_o => ar_accept_w
-    );
+  gen_control_plain : if not p_USE_TMR_CTRL generate
+    u_control: entity work.subordinate_axi_loopback_control
+      port map(
+        ACLK => ACLK,
+        ARESETn => ARESETn,
+        AWVALID => AWVALID,
+        AWREADY => AWREADY,
+        WVALID => WVALID,
+        WREADY => WREADY,
+        BVALID => BVALID,
+        BREADY => BREADY,
+        ARVALID => ARVALID,
+        ARREADY => ARREADY,
+        RVALID => rvalid_w,
+        RREADY => RREADY,
+        aw_accept_o => aw_accept_w,
+        w_accept_o => w_accept_w,
+        ar_accept_o => ar_accept_w
+      );
+
+    OBS_SUB_LB_TMR_CTRL_ERROR_o <= '0';
+  end generate;
+
+  gen_control_tmr : if p_USE_TMR_CTRL generate
+    u_control_tmr: entity work.subordinate_axi_loopback_control_tmr
+      port map(
+        ACLK => ACLK,
+        ARESETn => ARESETn,
+        AWVALID => AWVALID,
+        AWREADY => AWREADY,
+        WVALID => WVALID,
+        WREADY => WREADY,
+        BVALID => BVALID,
+        BREADY => BREADY,
+        ARVALID => ARVALID,
+        ARREADY => ARREADY,
+        RVALID => rvalid_w,
+        RREADY => RREADY,
+        aw_accept_o => aw_accept_w,
+        w_accept_o => w_accept_w,
+        ar_accept_o => ar_accept_w,
+        correct_enable_i => OBS_SUB_LB_TMR_CTRL_CORRECT_ERROR_i,
+        error_o => OBS_SUB_LB_TMR_CTRL_ERROR_o
+      );
+  end generate;
 
   RVALID <= rvalid_w;
 
   u_datapath: entity work.subordinate_axi_loopback_datapath
-    generic map(
-      p_MEM_ADDR_BITS => p_MEM_ADDR_BITS
-    )
     port map(
       ACLK => ACLK,
       ARESETn => ARESETn,
@@ -88,21 +128,25 @@ begin
       w_accept_i => w_accept_w,
       ar_accept_i => ar_accept_w,
       AWID => AWID,
-      AWADDR => AWADDR,
-      AWLEN => AWLEN,
-      AWSIZE => AWSIZE,
-      AWBURST => AWBURST,
       WDATA => WDATA,
       WLAST => WLAST,
       BID => BID,
       BRESP => BRESP,
       ARID => ARID,
-      ARADDR => ARADDR,
-      ARLEN => ARLEN,
-      ARSIZE => ARSIZE,
-      ARBURST => ARBURST,
       RDATA => RDATA,
       RID => RID,
-      RRESP => RRESP
+      RRESP => RRESP,
+      OBS_SUB_LB_HAM_PAYLOAD_CORRECT_ERROR_i => OBS_SUB_LB_HAM_PAYLOAD_CORRECT_ERROR_i,
+      OBS_SUB_LB_HAM_PAYLOAD_SINGLE_ERR_o    => OBS_SUB_LB_HAM_PAYLOAD_SINGLE_ERR_o,
+      OBS_SUB_LB_HAM_PAYLOAD_DOUBLE_ERR_o    => OBS_SUB_LB_HAM_PAYLOAD_DOUBLE_ERR_o,
+      OBS_SUB_LB_HAM_PAYLOAD_ENC_DATA_o      => OBS_SUB_LB_HAM_PAYLOAD_ENC_DATA_o,
+      OBS_SUB_LB_HAM_RDATA_CORRECT_ERROR_i   => OBS_SUB_LB_HAM_RDATA_CORRECT_ERROR_i,
+      OBS_SUB_LB_HAM_RDATA_SINGLE_ERR_o      => OBS_SUB_LB_HAM_RDATA_SINGLE_ERR_o,
+      OBS_SUB_LB_HAM_RDATA_DOUBLE_ERR_o      => OBS_SUB_LB_HAM_RDATA_DOUBLE_ERR_o,
+      OBS_SUB_LB_HAM_RDATA_ENC_DATA_o        => OBS_SUB_LB_HAM_RDATA_ENC_DATA_o,
+      OBS_SUB_LB_HAM_ID_STATE_CORRECT_ERROR_i => OBS_SUB_LB_HAM_ID_STATE_CORRECT_ERROR_i,
+      OBS_SUB_LB_HAM_ID_STATE_SINGLE_ERR_o    => OBS_SUB_LB_HAM_ID_STATE_SINGLE_ERR_o,
+      OBS_SUB_LB_HAM_ID_STATE_DOUBLE_ERR_o    => OBS_SUB_LB_HAM_ID_STATE_DOUBLE_ERR_o,
+      OBS_SUB_LB_HAM_ID_STATE_ENC_DATA_o      => OBS_SUB_LB_HAM_ID_STATE_ENC_DATA_o
     );
 end architecture;

@@ -31,6 +31,24 @@ entity subordinate_noc_loopback is
     done_o     : out std_logic;
     mismatch_o : out std_logic;
 
+    OBS_SUB_TG_TMR_CTRL_CORRECT_ERROR_i : in  std_logic := '1';
+    OBS_SUB_TG_TMR_CTRL_ERROR_o         : out std_logic := '0';
+    OBS_SUB_TG_HAM_LFSR_CORRECT_ERROR_i : in  std_logic := '1';
+    OBS_SUB_TG_HAM_LFSR_SINGLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_TG_HAM_LFSR_DOUBLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_TG_HAM_LFSR_ENC_DATA_o      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_SUB_TG_LFSR_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
+    OBS_SUB_TM_TMR_CTRL_CORRECT_ERROR_i : in  std_logic := '1';
+    OBS_SUB_TM_TMR_CTRL_ERROR_o         : out std_logic := '0';
+    OBS_SUB_TM_HAM_LFSR_CORRECT_ERROR_i : in  std_logic := '1';
+    OBS_SUB_TM_HAM_LFSR_SINGLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_TM_HAM_LFSR_DOUBLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_TM_HAM_LFSR_ENC_DATA_o      : out std_logic_vector(c_AXI_DATA_WIDTH + 1 + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH + 1, c_ENABLE_SUB_TM_LFSR_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
+    OBS_SUB_TM_HAM_COUNTER_CORRECT_ERROR_i : in  std_logic := '1';
+    OBS_SUB_TM_HAM_COUNTER_SINGLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_TM_HAM_COUNTER_DOUBLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_TM_HAM_COUNTER_ENC_DATA_o      : out std_logic_vector(c_SUB_TM_TRANSACTION_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(c_SUB_TM_TRANSACTION_COUNTER_WIDTH, c_ENABLE_SUB_TM_LFSR_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
+    TM_TRANSACTION_COUNT_o                 : out std_logic_vector(c_SUB_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
+
     -- Request stream from the emulated manager/NoC into the subordinate NI.
     noc_req_data_o : out std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
     noc_req_val_o  : out std_logic;
@@ -67,7 +85,13 @@ begin
       done_o => gen_done_w,
       l_out_data_o => noc_req_data_o,
       l_out_val_o  => noc_req_val_o,
-      l_out_ack_i  => noc_req_ack_i
+      l_out_ack_i  => noc_req_ack_i,
+      OBS_SUB_TG_TMR_CTRL_CORRECT_ERROR_i => OBS_SUB_TG_TMR_CTRL_CORRECT_ERROR_i,
+      OBS_SUB_TG_TMR_CTRL_ERROR_o         => OBS_SUB_TG_TMR_CTRL_ERROR_o,
+      OBS_SUB_TG_HAM_LFSR_CORRECT_ERROR_i => OBS_SUB_TG_HAM_LFSR_CORRECT_ERROR_i,
+      OBS_SUB_TG_HAM_LFSR_SINGLE_ERR_o    => OBS_SUB_TG_HAM_LFSR_SINGLE_ERR_o,
+      OBS_SUB_TG_HAM_LFSR_DOUBLE_ERR_o    => OBS_SUB_TG_HAM_LFSR_DOUBLE_ERR_o,
+      OBS_SUB_TG_HAM_LFSR_ENC_DATA_o      => OBS_SUB_TG_HAM_LFSR_ENC_DATA_o
     );
 
   u_response_mon: entity work.subordinate_noc_traffic_mon_top
@@ -82,7 +106,18 @@ begin
       mismatch_o => mismatch_o,
       l_in_data_i => noc_resp_data_i,
       l_in_val_i  => noc_resp_val_i,
-      l_in_ack_o  => noc_resp_ack_o
+      l_in_ack_o  => noc_resp_ack_o,
+      OBS_SUB_TM_TMR_CTRL_CORRECT_ERROR_i => OBS_SUB_TM_TMR_CTRL_CORRECT_ERROR_i,
+      OBS_SUB_TM_TMR_CTRL_ERROR_o         => OBS_SUB_TM_TMR_CTRL_ERROR_o,
+      OBS_SUB_TM_HAM_LFSR_CORRECT_ERROR_i => OBS_SUB_TM_HAM_LFSR_CORRECT_ERROR_i,
+      OBS_SUB_TM_HAM_LFSR_SINGLE_ERR_o    => OBS_SUB_TM_HAM_LFSR_SINGLE_ERR_o,
+      OBS_SUB_TM_HAM_LFSR_DOUBLE_ERR_o    => OBS_SUB_TM_HAM_LFSR_DOUBLE_ERR_o,
+      OBS_SUB_TM_HAM_LFSR_ENC_DATA_o      => OBS_SUB_TM_HAM_LFSR_ENC_DATA_o,
+      OBS_SUB_TM_HAM_COUNTER_CORRECT_ERROR_i => OBS_SUB_TM_HAM_COUNTER_CORRECT_ERROR_i,
+      OBS_SUB_TM_HAM_COUNTER_SINGLE_ERR_o    => OBS_SUB_TM_HAM_COUNTER_SINGLE_ERR_o,
+      OBS_SUB_TM_HAM_COUNTER_DOUBLE_ERR_o    => OBS_SUB_TM_HAM_COUNTER_DOUBLE_ERR_o,
+      OBS_SUB_TM_HAM_COUNTER_ENC_DATA_o      => OBS_SUB_TM_HAM_COUNTER_ENC_DATA_o,
+      TM_TRANSACTION_COUNT_o                 => TM_TRANSACTION_COUNT_o
     );
 
   process(ACLK)

@@ -3,13 +3,19 @@ use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 
 use work.xina_noc_pkg.all;
+use work.xina_subordinate_ni_pkg.all;
 
 -- Datapath/storage for the subordinate AXI loopback. The control block owns
--- handshakes; this block owns memory contents, ID return fields, and traffic
--- shape checks for the manager-style one-beat accesses.
+-- handshakes; this block owns the single payload slot and ID return fields.
 entity subordinate_axi_loopback_datapath is
   generic(
-    p_MEM_ADDR_BITS : natural := 10
+    p_USE_PAYLOAD_HAMMING : boolean := c_ENABLE_SUB_LB_PAYLOAD_HAMMING;
+    p_USE_RDATA_HAMMING   : boolean := c_ENABLE_SUB_LB_RDATA_HAMMING;
+    p_USE_ID_STATE_HAMMING : boolean := c_ENABLE_SUB_LB_ID_STATE_HAMMING;
+    p_USE_HAMMING_DOUBLE_DETECT : boolean := c_ENABLE_SUB_LB_HAMMING_DOUBLE_DETECT;
+    p_USE_PAYLOAD_HAMMING_INJECT_ERROR : boolean := c_ENABLE_SUB_LB_PAYLOAD_HAMMING_INJECT_ERROR;
+    p_USE_RDATA_HAMMING_INJECT_ERROR   : boolean := c_ENABLE_SUB_LB_RDATA_HAMMING_INJECT_ERROR;
+    p_USE_ID_STATE_HAMMING_INJECT_ERROR : boolean := c_ENABLE_SUB_LB_ID_STATE_HAMMING_INJECT_ERROR
   );
   port(
     ACLK    : in  std_logic;
@@ -20,10 +26,6 @@ entity subordinate_axi_loopback_datapath is
     ar_accept_i : in std_logic;
 
     AWID    : in  std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
-    AWADDR  : in  std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
-    AWLEN   : in  std_logic_vector(7 downto 0);
-    AWSIZE  : in  std_logic_vector(2 downto 0);
-    AWBURST : in  std_logic_vector(1 downto 0);
 
     WDATA  : in  std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
     WLAST  : in  std_logic;
@@ -32,102 +34,160 @@ entity subordinate_axi_loopback_datapath is
     BRESP  : out std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
 
     ARID    : in  std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
-    ARADDR  : in  std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
-    ARLEN   : in  std_logic_vector(7 downto 0);
-    ARSIZE  : in  std_logic_vector(2 downto 0);
-    ARBURST : in  std_logic_vector(1 downto 0);
 
     RDATA  : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
     RID    : out std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
-    RRESP  : out std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0)
+    RRESP  : out std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
+
+    OBS_SUB_LB_HAM_PAYLOAD_CORRECT_ERROR_i : in  std_logic := '1';
+    OBS_SUB_LB_HAM_PAYLOAD_SINGLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_LB_HAM_PAYLOAD_DOUBLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_LB_HAM_PAYLOAD_ENC_DATA_o      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
+    OBS_SUB_LB_HAM_RDATA_CORRECT_ERROR_i   : in  std_logic := '1';
+    OBS_SUB_LB_HAM_RDATA_SINGLE_ERR_o      : out std_logic := '0';
+    OBS_SUB_LB_HAM_RDATA_DOUBLE_ERR_o      : out std_logic := '0';
+    OBS_SUB_LB_HAM_RDATA_ENC_DATA_o        : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
+    OBS_SUB_LB_HAM_ID_STATE_CORRECT_ERROR_i : in  std_logic := '1';
+    OBS_SUB_LB_HAM_ID_STATE_SINGLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_LB_HAM_ID_STATE_DOUBLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_LB_HAM_ID_STATE_ENC_DATA_o      : out std_logic_vector((3 * c_AXI_ID_WIDTH) + work.hamming_pkg.get_ecc_size(3 * c_AXI_ID_WIDTH, p_USE_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0')
   );
 end entity;
 
 architecture rtl of subordinate_axi_loopback_datapath is
-  constant C_DEPTH : natural := 2 ** p_MEM_ADDR_BITS;
   constant C_AXI_RESP_OKAY : std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0) := (others => '0');
-  constant C_AXI_LEN_ONE_BEAT : std_logic_vector(7 downto 0) := x"00";
-  constant C_AXI_BURST_INCR : std_logic_vector(1 downto 0) := "01";
-  -- AXI SIZE encoding is log2(bytes/beat). The current XINA setup uses 32-bit
-  -- data, so manager-style traffic is one 4-byte beat: SIZE = 2.
-  constant C_AXI_SIZE_32BIT : std_logic_vector(2 downto 0) := "010";
+  constant C_ID_STATE_WIDTH : natural := 3 * c_AXI_ID_WIDTH;
 
-  type mem_t is array (0 to C_DEPTH - 1) of std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+  signal payload_w     : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+  signal rdata_w       : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+  signal id_state_w    : std_logic_vector(C_ID_STATE_WIDTH - 1 downto 0);
+  signal id_state_next_w : std_logic_vector(C_ID_STATE_WIDTH - 1 downto 0);
+  signal id_state_we_w : std_logic;
 
-  signal mem_r : mem_t := (others => (others => '0'));
-  -- Keep only the memory index between AW and W. The full AXI address and the
-  -- unused burst fields are not retained by this one-beat loopback model.
-  signal write_index_r : unsigned(p_MEM_ADDR_BITS - 1 downto 0) := (others => '0');
-  signal write_id_r    : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0) := (others => '0');
-  signal bid_r         : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0) := (others => '0');
-  signal rid_r         : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0) := (others => '0');
-  signal rdata_r       : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := (others => '0');
+  signal write_id_w    : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
+  signal bid_w         : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
+  signal rid_w         : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
 
-  function addr_index(addr : std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0)) return unsigned is
-    variable idx_v : unsigned(p_MEM_ADDR_BITS - 1 downto 0);
-  begin
-    -- The NoC request carries the upper AXI address word in its address flit.
-    -- Use the low bits of that carried word as the local memory index so
-    -- consecutive manager-style addresses map to consecutive loopback entries.
-    idx_v := unsigned(addr(c_AXI_DATA_WIDTH + p_MEM_ADDR_BITS - 1 downto c_AXI_DATA_WIDTH));
-    return idx_v;
-  end function;
+  signal payload_single_err_w : std_logic;
+  signal payload_double_err_w : std_logic;
+  signal payload_enc_data_w   : std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+  signal rdata_single_err_w   : std_logic;
+  signal rdata_double_err_w   : std_logic;
+  signal rdata_enc_data_w     : std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+  signal id_state_single_err_w : std_logic;
+  signal id_state_double_err_w : std_logic;
+  signal id_state_enc_data_w   : std_logic_vector(C_ID_STATE_WIDTH + work.hamming_pkg.get_ecc_size(C_ID_STATE_WIDTH, p_USE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 begin
-  BID   <= bid_r;
+  write_id_w <= id_state_w((3 * c_AXI_ID_WIDTH) - 1 downto 2 * c_AXI_ID_WIDTH);
+  bid_w      <= id_state_w((2 * c_AXI_ID_WIDTH) - 1 downto c_AXI_ID_WIDTH);
+  rid_w      <= id_state_w(c_AXI_ID_WIDTH - 1 downto 0);
+
+  BID   <= bid_w;
   BRESP <= C_AXI_RESP_OKAY;
-  RID   <= rid_r;
-  RDATA <= rdata_r;
+  RID   <= rid_w;
+  RDATA <= rdata_w;
   RRESP <= C_AXI_RESP_OKAY;
+
+  process(id_state_w, aw_accept_i, w_accept_i, ar_accept_i, AWID, ARID, write_id_w)
+    variable id_state_v : std_logic_vector(C_ID_STATE_WIDTH - 1 downto 0);
+  begin
+    id_state_v := id_state_w;
+
+    if aw_accept_i = '1' then
+      id_state_v((3 * c_AXI_ID_WIDTH) - 1 downto 2 * c_AXI_ID_WIDTH) := AWID;
+    end if;
+
+    if w_accept_i = '1' then
+      id_state_v((2 * c_AXI_ID_WIDTH) - 1 downto c_AXI_ID_WIDTH) := write_id_w;
+    end if;
+
+    if ar_accept_i = '1' then
+      id_state_v(c_AXI_ID_WIDTH - 1 downto 0) := ARID;
+    end if;
+
+    id_state_next_w <= id_state_v;
+  end process;
+
+  id_state_we_w <= aw_accept_i or w_accept_i or ar_accept_i;
 
   process(ACLK)
   begin
     if rising_edge(ACLK) then
-      if ARESETn = '0' then
-        write_index_r <= (others => '0');
-        write_id_r <= (others => '0');
-        bid_r <= (others => '0');
-        rid_r <= (others => '0');
-        rdata_r <= (others => '0');
-      else
-        if aw_accept_i = '1' then
-          assert AWLEN = C_AXI_LEN_ONE_BEAT
-            report "subordinate_axi_loopback expects one-beat AWLEN=0 traffic"
-            severity warning;
-          assert AWSIZE = C_AXI_SIZE_32BIT
-            report "subordinate_axi_loopback expects 32-bit AWSIZE=2 traffic"
-            severity warning;
-          assert AWBURST = C_AXI_BURST_INCR
-            report "subordinate_axi_loopback expects manager-style AWBURST=INCR"
-            severity warning;
-
-          write_index_r <= addr_index(AWADDR);
-          write_id_r <= AWID;
-        end if;
-
-        if w_accept_i = '1' then
-          assert WLAST = '1'
-            report "subordinate_axi_loopback expects one-beat WLAST=1 traffic"
-            severity warning;
-
-          mem_r(to_integer(write_index_r)) <= WDATA;
-          bid_r <= write_id_r;
-        end if;
-
-        if ar_accept_i = '1' then
-          assert ARLEN = C_AXI_LEN_ONE_BEAT
-            report "subordinate_axi_loopback expects one-beat ARLEN=0 traffic"
-            severity warning;
-          assert ARSIZE = C_AXI_SIZE_32BIT
-            report "subordinate_axi_loopback expects 32-bit ARSIZE=2 traffic"
-            severity warning;
-          assert ARBURST = C_AXI_BURST_INCR
-            report "subordinate_axi_loopback expects manager-style ARBURST=INCR"
-            severity warning;
-
-          rid_r <= ARID;
-          rdata_r <= mem_r(to_integer(addr_index(ARADDR)));
-        end if;
+      if w_accept_i = '1' then
+        assert WLAST = '1'
+          report "subordinate_axi_loopback expects one-beat WLAST=1 traffic"
+          severity warning;
       end if;
     end if;
   end process;
+
+  u_payload_hamming_register: entity work.hamming_register
+    generic map(
+      DATA_WIDTH     => c_AXI_DATA_WIDTH,
+      HAMMING_ENABLE => p_USE_PAYLOAD_HAMMING,
+      DETECT_DOUBLE  => p_USE_HAMMING_DOUBLE_DETECT,
+      RESET_VALUE    => (c_AXI_DATA_WIDTH - 1 downto 0 => '0'),
+      INJECT_ERROR   => p_USE_PAYLOAD_HAMMING_INJECT_ERROR
+    )
+    port map(
+      correct_en_i => OBS_SUB_LB_HAM_PAYLOAD_CORRECT_ERROR_i,
+      write_en_i   => w_accept_i,
+      data_i       => WDATA,
+      rstn_i       => ARESETn,
+      clk_i        => ACLK,
+      single_err_o => payload_single_err_w,
+      double_err_o => payload_double_err_w,
+      enc_data_o   => payload_enc_data_w,
+      data_o       => payload_w
+    );
+
+  u_rdata_hamming_register: entity work.hamming_register
+    generic map(
+      DATA_WIDTH     => c_AXI_DATA_WIDTH,
+      HAMMING_ENABLE => p_USE_RDATA_HAMMING,
+      DETECT_DOUBLE  => p_USE_HAMMING_DOUBLE_DETECT,
+      RESET_VALUE    => (c_AXI_DATA_WIDTH - 1 downto 0 => '0'),
+      INJECT_ERROR   => p_USE_RDATA_HAMMING_INJECT_ERROR
+    )
+    port map(
+      correct_en_i => OBS_SUB_LB_HAM_RDATA_CORRECT_ERROR_i,
+      write_en_i   => ar_accept_i,
+      data_i       => payload_w,
+      rstn_i       => ARESETn,
+      clk_i        => ACLK,
+      single_err_o => rdata_single_err_w,
+      double_err_o => rdata_double_err_w,
+      enc_data_o   => rdata_enc_data_w,
+      data_o       => rdata_w
+    );
+
+  u_id_state_hamming_register: entity work.hamming_register
+    generic map(
+      DATA_WIDTH     => C_ID_STATE_WIDTH,
+      HAMMING_ENABLE => p_USE_ID_STATE_HAMMING,
+      DETECT_DOUBLE  => p_USE_HAMMING_DOUBLE_DETECT,
+      RESET_VALUE    => (C_ID_STATE_WIDTH - 1 downto 0 => '0'),
+      INJECT_ERROR   => p_USE_ID_STATE_HAMMING_INJECT_ERROR
+    )
+    port map(
+      correct_en_i => OBS_SUB_LB_HAM_ID_STATE_CORRECT_ERROR_i,
+      write_en_i   => id_state_we_w,
+      data_i       => id_state_next_w,
+      rstn_i       => ARESETn,
+      clk_i        => ACLK,
+      single_err_o => id_state_single_err_w,
+      double_err_o => id_state_double_err_w,
+      enc_data_o   => id_state_enc_data_w,
+      data_o       => id_state_w
+    );
+
+  OBS_SUB_LB_HAM_PAYLOAD_SINGLE_ERR_o <= payload_single_err_w;
+  OBS_SUB_LB_HAM_PAYLOAD_DOUBLE_ERR_o <= payload_double_err_w;
+  OBS_SUB_LB_HAM_PAYLOAD_ENC_DATA_o   <= payload_enc_data_w;
+  OBS_SUB_LB_HAM_RDATA_SINGLE_ERR_o   <= rdata_single_err_w;
+  OBS_SUB_LB_HAM_RDATA_DOUBLE_ERR_o   <= rdata_double_err_w;
+  OBS_SUB_LB_HAM_RDATA_ENC_DATA_o     <= rdata_enc_data_w;
+  OBS_SUB_LB_HAM_ID_STATE_SINGLE_ERR_o <= id_state_single_err_w;
+  OBS_SUB_LB_HAM_ID_STATE_DOUBLE_ERR_o <= id_state_double_err_w;
+  OBS_SUB_LB_HAM_ID_STATE_ENC_DATA_o   <= id_state_enc_data_w;
 end architecture;

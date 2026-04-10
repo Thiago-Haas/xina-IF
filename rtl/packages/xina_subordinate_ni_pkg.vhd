@@ -19,6 +19,26 @@ package xina_subordinate_ni_pkg is
   constant c_ENABLE_SUB_FE_INJ_ADDR_HAMMING     : boolean := true;
   constant c_ENABLE_SUB_FE_INJ_STATUS_TMR       : boolean := true;
 
+  -- Closed subordinate endpoint controllers used by the isolation TG/TM/LB.
+  constant c_ENABLE_SUB_TG_CTRL_TMR : boolean := true;
+  constant c_ENABLE_SUB_TM_CTRL_TMR : boolean := true;
+  constant c_ENABLE_SUB_LB_CTRL_TMR : boolean := true;
+  constant c_ENABLE_SUB_TG_LFSR_HAMMING : boolean := true;
+  constant c_ENABLE_SUB_TG_LFSR_HAMMING_DOUBLE_DETECT : boolean := true;
+  constant c_ENABLE_SUB_TG_LFSR_HAMMING_INJECT_ERROR  : boolean := false; -- Fault INJECTION
+  constant c_ENABLE_SUB_TM_LFSR_HAMMING : boolean := true;
+  constant c_ENABLE_SUB_TM_LFSR_HAMMING_DOUBLE_DETECT : boolean := true;
+  constant c_ENABLE_SUB_TM_LFSR_HAMMING_INJECT_ERROR  : boolean := false; -- Fault INJECTION
+  constant c_ENABLE_SUB_TM_TXN_COUNTER_HAMMING : boolean := true;
+  constant c_SUB_TM_TRANSACTION_COUNTER_WIDTH  : natural := 32;
+  constant c_ENABLE_SUB_LB_PAYLOAD_HAMMING : boolean := true;
+  constant c_ENABLE_SUB_LB_RDATA_HAMMING   : boolean := true;
+  constant c_ENABLE_SUB_LB_ID_STATE_HAMMING : boolean := true;
+  constant c_ENABLE_SUB_LB_HAMMING_DOUBLE_DETECT : boolean := true;
+  constant c_ENABLE_SUB_LB_PAYLOAD_HAMMING_INJECT_ERROR : boolean := false; -- Fault INJECTION
+  constant c_ENABLE_SUB_LB_RDATA_HAMMING_INJECT_ERROR   : boolean := false; -- Fault INJECTION
+  constant c_ENABLE_SUB_LB_ID_STATE_HAMMING_INJECT_ERROR : boolean := false; -- Fault INJECTION
+
   -- Backend injection.
   constant c_ENABLE_SUB_BE_INJ_BUFFER_HAMMING  : boolean := true;
   constant c_ENABLE_SUB_BE_INJ_PKTZ_CTRL_TMR   : boolean := true;
