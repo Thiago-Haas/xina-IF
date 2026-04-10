@@ -26,7 +26,20 @@ entity subordinate_tg_tm_lb_system_top is
     corrupt_packet_o : out std_logic;
 
     OBS_SUB_FE_INJ_TMR_STATUS_CORRECT_ERROR_i : in  std_logic := '1';
-    OBS_SUB_FE_INJ_TMR_STATUS_ERROR_o         : out std_logic := '0'
+    OBS_SUB_FE_INJ_TMR_STATUS_ERROR_o         : out std_logic := '0';
+
+    OBS_SUB_RX_HAM_H_SRC_CORRECT_ERROR_i : in  std_logic := '1';
+    OBS_SUB_RX_HAM_H_SRC_SINGLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_RX_HAM_H_SRC_DOUBLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_RX_HAM_H_SRC_ENC_DATA_o      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
+    OBS_SUB_RX_HAM_H_INTERFACE_CORRECT_ERROR_i : in  std_logic := '1';
+    OBS_SUB_RX_HAM_H_INTERFACE_SINGLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_RX_HAM_H_INTERFACE_DOUBLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_RX_HAM_H_INTERFACE_ENC_DATA_o      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
+    OBS_SUB_RX_HAM_H_ADDRESS_CORRECT_ERROR_i : in  std_logic := '1';
+    OBS_SUB_RX_HAM_H_ADDRESS_SINGLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_RX_HAM_H_ADDRESS_DOUBLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_RX_HAM_H_ADDRESS_ENC_DATA_o      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0')
   );
 end entity;
 
@@ -138,6 +151,18 @@ begin
 
       OBS_SUB_FE_INJ_TMR_STATUS_CORRECT_ERROR_i => OBS_SUB_FE_INJ_TMR_STATUS_CORRECT_ERROR_i,
       OBS_SUB_FE_INJ_TMR_STATUS_ERROR_o         => OBS_SUB_FE_INJ_TMR_STATUS_ERROR_o,
+      OBS_SUB_RX_HAM_H_SRC_CORRECT_ERROR_i => OBS_SUB_RX_HAM_H_SRC_CORRECT_ERROR_i,
+      OBS_SUB_RX_HAM_H_SRC_SINGLE_ERR_o    => OBS_SUB_RX_HAM_H_SRC_SINGLE_ERR_o,
+      OBS_SUB_RX_HAM_H_SRC_DOUBLE_ERR_o    => OBS_SUB_RX_HAM_H_SRC_DOUBLE_ERR_o,
+      OBS_SUB_RX_HAM_H_SRC_ENC_DATA_o      => OBS_SUB_RX_HAM_H_SRC_ENC_DATA_o,
+      OBS_SUB_RX_HAM_H_INTERFACE_CORRECT_ERROR_i => OBS_SUB_RX_HAM_H_INTERFACE_CORRECT_ERROR_i,
+      OBS_SUB_RX_HAM_H_INTERFACE_SINGLE_ERR_o    => OBS_SUB_RX_HAM_H_INTERFACE_SINGLE_ERR_o,
+      OBS_SUB_RX_HAM_H_INTERFACE_DOUBLE_ERR_o    => OBS_SUB_RX_HAM_H_INTERFACE_DOUBLE_ERR_o,
+      OBS_SUB_RX_HAM_H_INTERFACE_ENC_DATA_o      => OBS_SUB_RX_HAM_H_INTERFACE_ENC_DATA_o,
+      OBS_SUB_RX_HAM_H_ADDRESS_CORRECT_ERROR_i => OBS_SUB_RX_HAM_H_ADDRESS_CORRECT_ERROR_i,
+      OBS_SUB_RX_HAM_H_ADDRESS_SINGLE_ERR_o    => OBS_SUB_RX_HAM_H_ADDRESS_SINGLE_ERR_o,
+      OBS_SUB_RX_HAM_H_ADDRESS_DOUBLE_ERR_o    => OBS_SUB_RX_HAM_H_ADDRESS_DOUBLE_ERR_o,
+      OBS_SUB_RX_HAM_H_ADDRESS_ENC_DATA_o      => OBS_SUB_RX_HAM_H_ADDRESS_ENC_DATA_o,
 
       l_in_data_i  => resp_data,
       l_in_val_i   => resp_val,

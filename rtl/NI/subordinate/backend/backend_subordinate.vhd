@@ -15,6 +15,9 @@ entity backend_subordinate is
         p_USE_TMR_FLOW      : boolean;
         p_USE_TMR_INTEGRITY : boolean;
         p_USE_HAMMING       : boolean;
+        p_USE_RX_HAM_H_SRC      : boolean := c_ENABLE_SUB_BE_RX_SRC_HDR_HAMMING;
+        p_USE_RX_HAM_H_INTERFACE: boolean := c_ENABLE_SUB_BE_RX_INTERFACE_HDR_HAMMING;
+        p_USE_RX_HAM_H_ADDRESS  : boolean := c_ENABLE_SUB_BE_RX_ADDRESS_HDR_HAMMING;
         p_USE_INTEGRITY     : boolean
     );
 
@@ -79,6 +82,18 @@ entity backend_subordinate is
         OBS_SUB_RX_HAM_BUFFER_ENC_DATA_o      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
         OBS_SUB_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i : in  std_logic := '1';
         OBS_SUB_RX_TMR_HAM_BUFFER_CTRL_ERROR_o         : out std_logic := '0';
+        OBS_SUB_RX_HAM_H_SRC_CORRECT_ERROR_i : in  std_logic := '1';
+        OBS_SUB_RX_HAM_H_SRC_SINGLE_ERR_o    : out std_logic := '0';
+        OBS_SUB_RX_HAM_H_SRC_DOUBLE_ERR_o    : out std_logic := '0';
+        OBS_SUB_RX_HAM_H_SRC_ENC_DATA_o      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
+        OBS_SUB_RX_HAM_H_INTERFACE_CORRECT_ERROR_i : in  std_logic := '1';
+        OBS_SUB_RX_HAM_H_INTERFACE_SINGLE_ERR_o    : out std_logic := '0';
+        OBS_SUB_RX_HAM_H_INTERFACE_DOUBLE_ERR_o    : out std_logic := '0';
+        OBS_SUB_RX_HAM_H_INTERFACE_ENC_DATA_o      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
+        OBS_SUB_RX_HAM_H_ADDRESS_CORRECT_ERROR_i : in  std_logic := '1';
+        OBS_SUB_RX_HAM_H_ADDRESS_SINGLE_ERR_o    : out std_logic := '0';
+        OBS_SUB_RX_HAM_H_ADDRESS_DOUBLE_ERR_o    : out std_logic := '0';
+        OBS_SUB_RX_HAM_H_ADDRESS_ENC_DATA_o      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
         OBS_SUB_RX_HAM_INTEGRITY_CORRECT_ERROR_i : in  std_logic := '1';
         OBS_SUB_RX_HAM_INTEGRITY_SINGLE_ERR_o    : out std_logic := '0';
         OBS_SUB_RX_HAM_INTEGRITY_DOUBLE_ERR_o    : out std_logic := '0';
@@ -154,6 +169,9 @@ begin
             p_USE_TMR_FLOW       => p_USE_TMR_FLOW,
             p_USE_TMR_INTEGRITY  => p_USE_TMR_INTEGRITY,
             p_USE_HAMMING        => p_USE_HAMMING,
+            p_USE_HAM_H_SRC      => p_USE_RX_HAM_H_SRC,
+            p_USE_HAM_H_INTERFACE => p_USE_RX_HAM_H_INTERFACE,
+            p_USE_HAM_H_ADDRESS  => p_USE_RX_HAM_H_ADDRESS,
             p_USE_INTEGRITY      => p_USE_INTEGRITY
         )
 
@@ -187,6 +205,18 @@ begin
             OBS_SUB_RX_HAM_BUFFER_ENC_DATA_o      => OBS_SUB_RX_HAM_BUFFER_ENC_DATA_o,
             OBS_SUB_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i => OBS_SUB_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i,
             OBS_SUB_RX_TMR_HAM_BUFFER_CTRL_ERROR_o         => OBS_SUB_RX_TMR_HAM_BUFFER_CTRL_ERROR_o,
+            OBS_SUB_RX_HAM_H_SRC_CORRECT_ERROR_i => OBS_SUB_RX_HAM_H_SRC_CORRECT_ERROR_i,
+            OBS_SUB_RX_HAM_H_SRC_SINGLE_ERR_o    => OBS_SUB_RX_HAM_H_SRC_SINGLE_ERR_o,
+            OBS_SUB_RX_HAM_H_SRC_DOUBLE_ERR_o    => OBS_SUB_RX_HAM_H_SRC_DOUBLE_ERR_o,
+            OBS_SUB_RX_HAM_H_SRC_ENC_DATA_o      => OBS_SUB_RX_HAM_H_SRC_ENC_DATA_o,
+            OBS_SUB_RX_HAM_H_INTERFACE_CORRECT_ERROR_i => OBS_SUB_RX_HAM_H_INTERFACE_CORRECT_ERROR_i,
+            OBS_SUB_RX_HAM_H_INTERFACE_SINGLE_ERR_o    => OBS_SUB_RX_HAM_H_INTERFACE_SINGLE_ERR_o,
+            OBS_SUB_RX_HAM_H_INTERFACE_DOUBLE_ERR_o    => OBS_SUB_RX_HAM_H_INTERFACE_DOUBLE_ERR_o,
+            OBS_SUB_RX_HAM_H_INTERFACE_ENC_DATA_o      => OBS_SUB_RX_HAM_H_INTERFACE_ENC_DATA_o,
+            OBS_SUB_RX_HAM_H_ADDRESS_CORRECT_ERROR_i => OBS_SUB_RX_HAM_H_ADDRESS_CORRECT_ERROR_i,
+            OBS_SUB_RX_HAM_H_ADDRESS_SINGLE_ERR_o    => OBS_SUB_RX_HAM_H_ADDRESS_SINGLE_ERR_o,
+            OBS_SUB_RX_HAM_H_ADDRESS_DOUBLE_ERR_o    => OBS_SUB_RX_HAM_H_ADDRESS_DOUBLE_ERR_o,
+            OBS_SUB_RX_HAM_H_ADDRESS_ENC_DATA_o      => OBS_SUB_RX_HAM_H_ADDRESS_ENC_DATA_o,
             OBS_SUB_RX_HAM_INTEGRITY_CORRECT_ERROR_i => OBS_SUB_RX_HAM_INTEGRITY_CORRECT_ERROR_i,
             OBS_SUB_RX_HAM_INTEGRITY_SINGLE_ERR_o    => OBS_SUB_RX_HAM_INTEGRITY_SINGLE_ERR_o,
             OBS_SUB_RX_HAM_INTEGRITY_DOUBLE_ERR_o    => OBS_SUB_RX_HAM_INTEGRITY_DOUBLE_ERR_o,

@@ -34,12 +34,7 @@ architecture rtl of receive_control_tmr is
 
     signal WRITE_BUFFER_w : t_BIT_VECTOR;
     signal l_out_ack_i_w  : t_BIT_VECTOR;
-
-    signal corr_WRITE_BUFFER_w : std_logic;
-    signal corr_l_out_ack_i_w  : std_logic;
-
-    signal error_WRITE_BUFFER_w : std_logic;
-    signal error_l_out_ack_i_w  : std_logic;
+    signal corr_bundle_w : std_logic_vector(1 downto 0);
 
 begin
 
@@ -69,30 +64,21 @@ begin
             );
     end generate;
 
-    -- Majority vote (corrected outputs)
-    corr_WRITE_BUFFER_w <= (WRITE_BUFFER_w(2) and WRITE_BUFFER_w(1)) or
-                           (WRITE_BUFFER_w(2) and WRITE_BUFFER_w(0)) or
-                           (WRITE_BUFFER_w(1) and WRITE_BUFFER_w(0));
+    u_receive_control_tmr_voter: entity work.tmr_voter_block
+        generic map(
+            p_WIDTH => 2
+        )
+        port map(
+            A_i => WRITE_BUFFER_w(0) & l_out_ack_i_w(0),
+            B_i => WRITE_BUFFER_w(1) & l_out_ack_i_w(1),
+            C_i => WRITE_BUFFER_w(2) & l_out_ack_i_w(2),
+            correct_enable_i => correct_error_i,
+            corrected_o => corr_bundle_w,
+            error_bits_o => open,
+            error_o => error_o
+        );
 
-    corr_l_out_ack_i_w  <= (l_out_ack_i_w(2) and l_out_ack_i_w(1)) or
-                           (l_out_ack_i_w(2) and l_out_ack_i_w(0)) or
-                           (l_out_ack_i_w(1) and l_out_ack_i_w(0));
-
-    -- Error detection: any mismatch among replicas
-    error_WRITE_BUFFER_w <= (WRITE_BUFFER_w(2) xor WRITE_BUFFER_w(1)) or
-                            (WRITE_BUFFER_w(2) xor WRITE_BUFFER_w(0)) or
-                            (WRITE_BUFFER_w(1) xor WRITE_BUFFER_w(0));
-
-    error_l_out_ack_i_w  <= (l_out_ack_i_w(2) xor l_out_ack_i_w(1)) or
-                            (l_out_ack_i_w(2) xor l_out_ack_i_w(0)) or
-                            (l_out_ack_i_w(1) xor l_out_ack_i_w(0));
-
-    -- Aggregate error flag
-    error_o <= error_WRITE_BUFFER_w or error_l_out_ack_i_w;
-
-    -- Output selection matches control_tmr pattern:
-    -- if correction enabled -> majority, else -> replica 0.
-    WRITE_BUFFER_o <= corr_WRITE_BUFFER_w when correct_error_i = '1' else WRITE_BUFFER_w(0);
-    l_out_ack_i    <= corr_l_out_ack_i_w  when correct_error_i = '1' else l_out_ack_i_w(0);
+    WRITE_BUFFER_o <= corr_bundle_w(1);
+    l_out_ack_i    <= corr_bundle_w(0);
 
 end rtl;

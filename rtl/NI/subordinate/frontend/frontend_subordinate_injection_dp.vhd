@@ -36,7 +36,7 @@ begin
     status_in_w <= BRESP_i when BVALID_i = '1' else
                    RRESP_i;
 
-    u_response_status_register: entity work.small_tmr_register
+    u_response_status_register: entity work.tmr_register
         generic map(
             p_WIDTH => c_AXI_RESP_WIDTH,
             p_USE_TMR => p_USE_STATUS_TMR

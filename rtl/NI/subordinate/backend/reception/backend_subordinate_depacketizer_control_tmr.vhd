@@ -66,29 +66,11 @@ architecture rtl of backend_subordinate_depacketizer_control_tmr is
     signal COMPARE_w: t_BIT_VECTOR;
     signal INTEGRITY_RESETn_w: t_BIT_VECTOR;
 
-    signal corr_VALID_RECEIVE_PACKET_w   : std_logic;
-    signal corr_VALID_RECEIVE_DATA_w     : std_logic;
-    signal corr_LAST_RECEIVE_DATA_w      : std_logic;
-    signal corr_HAS_REQUEST_PACKET_w     : std_logic;
-    signal corr_READ_BUFFER_w            : std_logic;
-    signal corr_WRITE_H_SRC_REG_w        : std_logic;
-    signal corr_WRITE_H_INTERFACE_REG_w  : std_logic;
-    signal corr_WRITE_H_ADDRESS_REG_w    : std_logic;
-    signal corr_ADD_w                    : std_logic;
-    signal corr_COMPARE_w                : std_logic;
-    signal corr_INTEGRITY_RESETn_w       : std_logic;
-
-    signal error_VALID_RECEIVE_PACKET_w   : std_logic;
-    signal error_VALID_RECEIVE_DATA_w     : std_logic;
-    signal error_LAST_RECEIVE_DATA_w      : std_logic;
-    signal error_HAS_REQUEST_PACKET_w     : std_logic;
-    signal error_READ_BUFFER_w            : std_logic;
-    signal error_WRITE_H_SRC_REG_w        : std_logic;
-    signal error_WRITE_H_INTERFACE_REG_w  : std_logic;
-    signal error_WRITE_H_ADDRESS_REG_w    : std_logic;
-    signal error_ADD_w                    : std_logic;
-    signal error_COMPARE_w                : std_logic;
-    signal error_INTEGRITY_RESETn_w       : std_logic;
+    constant c_TMR_VOTE_WIDTH : positive := 11;
+    signal bundle_a_w         : std_logic_vector(c_TMR_VOTE_WIDTH - 1 downto 0);
+    signal bundle_b_w         : std_logic_vector(c_TMR_VOTE_WIDTH - 1 downto 0);
+    signal bundle_c_w         : std_logic_vector(c_TMR_VOTE_WIDTH - 1 downto 0);
+    signal corr_bundle_w      : std_logic_vector(c_TMR_VOTE_WIDTH - 1 downto 0);
 
 begin
     TMR:
@@ -127,115 +109,65 @@ begin
             );
     end generate;
 
-    corr_VALID_RECEIVE_PACKET_w <= (VALID_RECEIVE_PACKET_w(0) and VALID_RECEIVE_PACKET_w(1)) or
-                                   (VALID_RECEIVE_PACKET_w(0) and VALID_RECEIVE_PACKET_w(2)) or
-                                   (VALID_RECEIVE_PACKET_w(1) and VALID_RECEIVE_PACKET_w(2));
+    bundle_a_w <= VALID_RECEIVE_PACKET_w(0) &
+                  VALID_RECEIVE_DATA_w(0) &
+                  LAST_RECEIVE_DATA_w(0) &
+                  HAS_REQUEST_PACKET_w(0) &
+                  READ_BUFFER_w(0) &
+                  WRITE_H_SRC_REG_w(0) &
+                  WRITE_H_INTERFACE_REG_w(0) &
+                  WRITE_H_ADDRESS_REG_w(0) &
+                  ADD_w(0) &
+                  COMPARE_w(0) &
+                  INTEGRITY_RESETn_w(0);
 
-    corr_VALID_RECEIVE_DATA_w <= (VALID_RECEIVE_DATA_w(0) and VALID_RECEIVE_DATA_w(1)) or
-                                 (VALID_RECEIVE_DATA_w(0) and VALID_RECEIVE_DATA_w(2)) or
-                                 (VALID_RECEIVE_DATA_w(1) and VALID_RECEIVE_DATA_w(2));
+    bundle_b_w <= VALID_RECEIVE_PACKET_w(1) &
+                  VALID_RECEIVE_DATA_w(1) &
+                  LAST_RECEIVE_DATA_w(1) &
+                  HAS_REQUEST_PACKET_w(1) &
+                  READ_BUFFER_w(1) &
+                  WRITE_H_SRC_REG_w(1) &
+                  WRITE_H_INTERFACE_REG_w(1) &
+                  WRITE_H_ADDRESS_REG_w(1) &
+                  ADD_w(1) &
+                  COMPARE_w(1) &
+                  INTEGRITY_RESETn_w(1);
 
-    corr_LAST_RECEIVE_DATA_w <= (LAST_RECEIVE_DATA_w(0) and LAST_RECEIVE_DATA_w(1)) or
-                                (LAST_RECEIVE_DATA_w(0) and LAST_RECEIVE_DATA_w(2)) or
-                                (LAST_RECEIVE_DATA_w(1) and LAST_RECEIVE_DATA_w(2));
+    bundle_c_w <= VALID_RECEIVE_PACKET_w(2) &
+                  VALID_RECEIVE_DATA_w(2) &
+                  LAST_RECEIVE_DATA_w(2) &
+                  HAS_REQUEST_PACKET_w(2) &
+                  READ_BUFFER_w(2) &
+                  WRITE_H_SRC_REG_w(2) &
+                  WRITE_H_INTERFACE_REG_w(2) &
+                  WRITE_H_ADDRESS_REG_w(2) &
+                  ADD_w(2) &
+                  COMPARE_w(2) &
+                  INTEGRITY_RESETn_w(2);
 
-    corr_HAS_REQUEST_PACKET_w <= (HAS_REQUEST_PACKET_w(0) and HAS_REQUEST_PACKET_w(1)) or
-                                 (HAS_REQUEST_PACKET_w(0) and HAS_REQUEST_PACKET_w(2)) or
-                                 (HAS_REQUEST_PACKET_w(1) and HAS_REQUEST_PACKET_w(2));
+    u_depacketizer_tmr_voter: entity work.tmr_voter_block
+        generic map(
+            p_WIDTH => c_TMR_VOTE_WIDTH
+        )
+        port map(
+            A_i => bundle_a_w,
+            B_i => bundle_b_w,
+            C_i => bundle_c_w,
+            correct_enable_i => correct_error_i,
+            corrected_o => corr_bundle_w,
+            error_bits_o => open,
+            error_o => error_o
+        );
 
-    corr_READ_BUFFER_w <= (READ_BUFFER_w(0) and READ_BUFFER_w(1)) or
-                          (READ_BUFFER_w(0) and READ_BUFFER_w(2)) or
-                          (READ_BUFFER_w(1) and READ_BUFFER_w(2));
-
-    corr_WRITE_H_SRC_REG_w <= (WRITE_H_SRC_REG_w(0) and WRITE_H_SRC_REG_w(1)) or
-                              (WRITE_H_SRC_REG_w(0) and WRITE_H_SRC_REG_w(2)) or
-                              (WRITE_H_SRC_REG_w(1) and WRITE_H_SRC_REG_w(2));
-
-    corr_WRITE_H_INTERFACE_REG_w <= (WRITE_H_INTERFACE_REG_w(0) and WRITE_H_INTERFACE_REG_w(1)) or
-                                    (WRITE_H_INTERFACE_REG_w(0) and WRITE_H_INTERFACE_REG_w(2)) or
-                                    (WRITE_H_INTERFACE_REG_w(1) and WRITE_H_INTERFACE_REG_w(2));
-
-    corr_WRITE_H_ADDRESS_REG_w <= (WRITE_H_ADDRESS_REG_w(0) and WRITE_H_ADDRESS_REG_w(1)) or
-                                  (WRITE_H_ADDRESS_REG_w(0) and WRITE_H_ADDRESS_REG_w(2)) or
-                                  (WRITE_H_ADDRESS_REG_w(1) and WRITE_H_ADDRESS_REG_w(2));
-
-    corr_ADD_w <= (ADD_w(0) and ADD_w(1)) or
-                  (ADD_w(0) and ADD_w(2)) or
-                  (ADD_w(1) and ADD_w(2));
-
-    corr_COMPARE_w <= (COMPARE_w(0) and COMPARE_w(1)) or
-                      (COMPARE_w(0) and COMPARE_w(2)) or
-                      (COMPARE_w(1) and COMPARE_w(2));
-
-    corr_INTEGRITY_RESETn_w <= (INTEGRITY_RESETn_w(0) and INTEGRITY_RESETn_w(1)) or
-                               (INTEGRITY_RESETn_w(0) and INTEGRITY_RESETn_w(2)) or
-                               (INTEGRITY_RESETn_w(1) and INTEGRITY_RESETn_w(2));
-
-    error_VALID_RECEIVE_PACKET_w <= (VALID_RECEIVE_PACKET_w(0) xor VALID_RECEIVE_PACKET_w(1)) or
-                                    (VALID_RECEIVE_PACKET_w(0) xor VALID_RECEIVE_PACKET_w(2)) or
-                                    (VALID_RECEIVE_PACKET_w(1) xor VALID_RECEIVE_PACKET_w(2));
-
-    error_VALID_RECEIVE_DATA_w <= (VALID_RECEIVE_DATA_w(0) xor VALID_RECEIVE_DATA_w(1)) or
-                                  (VALID_RECEIVE_DATA_w(0) xor VALID_RECEIVE_DATA_w(2)) or
-                                  (VALID_RECEIVE_DATA_w(1) xor VALID_RECEIVE_DATA_w(2));
-
-    error_LAST_RECEIVE_DATA_w <= (LAST_RECEIVE_DATA_w(0) xor LAST_RECEIVE_DATA_w(1)) or
-                                 (LAST_RECEIVE_DATA_w(0) xor LAST_RECEIVE_DATA_w(2)) or
-                                 (LAST_RECEIVE_DATA_w(1) xor LAST_RECEIVE_DATA_w(2));
-
-    error_HAS_REQUEST_PACKET_w <= (HAS_REQUEST_PACKET_w(0) xor HAS_REQUEST_PACKET_w(1)) or
-                                  (HAS_REQUEST_PACKET_w(0) xor HAS_REQUEST_PACKET_w(2)) or
-                                  (HAS_REQUEST_PACKET_w(1) xor HAS_REQUEST_PACKET_w(2));
-
-    error_READ_BUFFER_w <= (READ_BUFFER_w(0) xor READ_BUFFER_w(1)) or
-                           (READ_BUFFER_w(0) xor READ_BUFFER_w(2)) or
-                           (READ_BUFFER_w(1) xor READ_BUFFER_w(2));
-
-    error_WRITE_H_SRC_REG_w <= (WRITE_H_SRC_REG_w(0) xor WRITE_H_SRC_REG_w(1)) or
-                               (WRITE_H_SRC_REG_w(0) xor WRITE_H_SRC_REG_w(2)) or
-                               (WRITE_H_SRC_REG_w(1) xor WRITE_H_SRC_REG_w(2));
-
-    error_WRITE_H_INTERFACE_REG_w <= (WRITE_H_INTERFACE_REG_w(0) xor WRITE_H_INTERFACE_REG_w(1)) or
-                                     (WRITE_H_INTERFACE_REG_w(0) xor WRITE_H_INTERFACE_REG_w(2)) or
-                                     (WRITE_H_INTERFACE_REG_w(1) xor WRITE_H_INTERFACE_REG_w(2));
-
-    error_WRITE_H_ADDRESS_REG_w <= (WRITE_H_ADDRESS_REG_w(0) xor WRITE_H_ADDRESS_REG_w(1)) or
-                                   (WRITE_H_ADDRESS_REG_w(0) xor WRITE_H_ADDRESS_REG_w(2)) or
-                                   (WRITE_H_ADDRESS_REG_w(1) xor WRITE_H_ADDRESS_REG_w(2));
-
-    error_ADD_w <= (ADD_w(0) xor ADD_w(1)) or
-                   (ADD_w(0) xor ADD_w(2)) or
-                   (ADD_w(1) xor ADD_w(2));
-
-    error_COMPARE_w <= (COMPARE_w(0) xor COMPARE_w(1)) or
-                       (COMPARE_w(0) xor COMPARE_w(2)) or
-                       (COMPARE_w(1) xor COMPARE_w(2));
-
-    error_INTEGRITY_RESETn_w <= (INTEGRITY_RESETn_w(0) xor INTEGRITY_RESETn_w(1)) or
-                                (INTEGRITY_RESETn_w(0) xor INTEGRITY_RESETn_w(2)) or
-                                (INTEGRITY_RESETn_w(1) xor INTEGRITY_RESETn_w(2));
-
-    error_o <= error_VALID_RECEIVE_PACKET_w or
-               error_VALID_RECEIVE_DATA_w or
-               error_LAST_RECEIVE_DATA_w or
-               error_HAS_REQUEST_PACKET_w or
-               error_READ_BUFFER_w or
-               error_WRITE_H_SRC_REG_w or
-               error_WRITE_H_INTERFACE_REG_w or
-               error_WRITE_H_ADDRESS_REG_w or
-               error_ADD_w or
-               error_COMPARE_w or
-               error_INTEGRITY_RESETn_w;
-
-    VALID_RECEIVE_PACKET_o <= corr_VALID_RECEIVE_PACKET_w  when correct_error_i = '1' else VALID_RECEIVE_PACKET_w(0);
-    VALID_RECEIVE_DATA_o   <= corr_VALID_RECEIVE_DATA_w    when correct_error_i = '1' else VALID_RECEIVE_DATA_w(0);
-    LAST_RECEIVE_DATA_o    <= corr_LAST_RECEIVE_DATA_w     when correct_error_i = '1' else LAST_RECEIVE_DATA_w(0);
-    HAS_REQUEST_PACKET_o   <= corr_HAS_REQUEST_PACKET_w    when correct_error_i = '1' else HAS_REQUEST_PACKET_w(0);
-    READ_BUFFER_o          <= corr_READ_BUFFER_w           when correct_error_i = '1' else READ_BUFFER_w(0);
-    WRITE_H_SRC_REG_o      <= corr_WRITE_H_SRC_REG_w       when correct_error_i = '1' else WRITE_H_SRC_REG_w(0);
-    WRITE_H_INTERFACE_REG_o <= corr_WRITE_H_INTERFACE_REG_w when correct_error_i = '1' else WRITE_H_INTERFACE_REG_w(0);
-    WRITE_H_ADDRESS_REG_o  <= corr_WRITE_H_ADDRESS_REG_w   when correct_error_i = '1' else WRITE_H_ADDRESS_REG_w(0);
-    ADD_o                  <= corr_ADD_w                   when correct_error_i = '1' else ADD_w(0);
-    COMPARE_o              <= corr_COMPARE_w               when correct_error_i = '1' else COMPARE_w(0);
-    INTEGRITY_RESETn_o     <= corr_INTEGRITY_RESETn_w      when correct_error_i = '1' else INTEGRITY_RESETn_w(0);
+    VALID_RECEIVE_PACKET_o  <= corr_bundle_w(10);
+    VALID_RECEIVE_DATA_o    <= corr_bundle_w(9);
+    LAST_RECEIVE_DATA_o     <= corr_bundle_w(8);
+    HAS_REQUEST_PACKET_o    <= corr_bundle_w(7);
+    READ_BUFFER_o           <= corr_bundle_w(6);
+    WRITE_H_SRC_REG_o       <= corr_bundle_w(5);
+    WRITE_H_INTERFACE_REG_o <= corr_bundle_w(4);
+    WRITE_H_ADDRESS_REG_o   <= corr_bundle_w(3);
+    ADD_o                   <= corr_bundle_w(2);
+    COMPARE_o               <= corr_bundle_w(1);
+    INTEGRITY_RESETn_o      <= corr_bundle_w(0);
 end rtl;

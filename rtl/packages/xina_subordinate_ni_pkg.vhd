@@ -28,7 +28,9 @@ package xina_subordinate_ni_pkg is
 
   -- Backend reception.
   constant c_ENABLE_SUB_BE_RX_BUFFER_HAMMING        : boolean := true;
+  constant c_ENABLE_SUB_BE_RX_SRC_HDR_HAMMING       : boolean := true;
   constant c_ENABLE_SUB_BE_RX_INTERFACE_HDR_HAMMING : boolean := true;
+  constant c_ENABLE_SUB_BE_RX_ADDRESS_HDR_HAMMING   : boolean := true;
   constant c_ENABLE_SUB_BE_RX_DEPKTZ_CTRL_TMR       : boolean := true;
   constant c_ENABLE_SUB_BE_RX_FLOW_CTRL_TMR         : boolean := true;
   constant c_ENABLE_SUB_BE_RX_INTEGRITY_CHECK       : boolean := true;

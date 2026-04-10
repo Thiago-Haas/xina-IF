@@ -52,19 +52,12 @@ architecture rtl of backend_subordinate_packetizer_control_tmr is
     signal ADD_w: t_BIT_VECTOR;
     signal INTEGRITY_RESETn_w: t_BIT_VECTOR;
 
-    signal corr_READY_SEND_DATA_w       : std_logic;
-    signal corr_WRITE_BUFFER_w          : std_logic;
-    signal corr_HAS_FINISHED_RESPONSE_w : std_logic;
-    signal corr_ADD_w                   : std_logic;
-    signal corr_INTEGRITY_RESETn_w      : std_logic;
-    signal corr_FLIT_SELECTOR_w         : std_logic_vector(2 downto 0);
-
-    signal error_READY_SEND_DATA_w       : std_logic;
-    signal error_WRITE_BUFFER_w          : std_logic;
-    signal error_HAS_FINISHED_RESPONSE_w : std_logic;
-    signal error_ADD_w                   : std_logic;
-    signal error_INTEGRITY_RESETn_w      : std_logic;
-    signal error_FLIT_SELECTOR_w         : std_logic_vector(2 downto 0);
+    constant c_TMR_VOTE_WIDTH : positive := 8;
+    signal bundle_a_w         : std_logic_vector(c_TMR_VOTE_WIDTH - 1 downto 0);
+    signal bundle_b_w         : std_logic_vector(c_TMR_VOTE_WIDTH - 1 downto 0);
+    signal bundle_c_w         : std_logic_vector(c_TMR_VOTE_WIDTH - 1 downto 0);
+    signal corr_bundle_w      : std_logic_vector(c_TMR_VOTE_WIDTH - 1 downto 0);
+    signal error_bits_w       : std_logic_vector(c_TMR_VOTE_WIDTH - 1 downto 0);
 
 begin
     TMR:
@@ -95,70 +88,45 @@ begin
             );
     end generate;
 
-    corr_READY_SEND_DATA_w <= (READY_SEND_DATA_w(0) and READY_SEND_DATA_w(1)) or
-                              (READY_SEND_DATA_w(0) and READY_SEND_DATA_w(2)) or
-                              (READY_SEND_DATA_w(1) and READY_SEND_DATA_w(2));
+    bundle_a_w <= READY_SEND_DATA_w(0) &
+                  WRITE_BUFFER_w(0) &
+                  ADD_w(0) &
+                  INTEGRITY_RESETn_w(0) &
+                  FLIT_SELECTOR_w(0) &
+                  HAS_FINISHED_RESPONSE_w(0);
 
-    corr_WRITE_BUFFER_w <= (WRITE_BUFFER_w(0) and WRITE_BUFFER_w(1)) or
-                           (WRITE_BUFFER_w(0) and WRITE_BUFFER_w(2)) or
-                           (WRITE_BUFFER_w(1) and WRITE_BUFFER_w(2));
+    bundle_b_w <= READY_SEND_DATA_w(1) &
+                  WRITE_BUFFER_w(1) &
+                  ADD_w(1) &
+                  INTEGRITY_RESETn_w(1) &
+                  FLIT_SELECTOR_w(1) &
+                  HAS_FINISHED_RESPONSE_w(1);
 
-    corr_ADD_w <= (ADD_w(0) and ADD_w(1)) or
-                  (ADD_w(0) and ADD_w(2)) or
-                  (ADD_w(1) and ADD_w(2));
+    bundle_c_w <= READY_SEND_DATA_w(2) &
+                  WRITE_BUFFER_w(2) &
+                  ADD_w(2) &
+                  INTEGRITY_RESETn_w(2) &
+                  FLIT_SELECTOR_w(2) &
+                  HAS_FINISHED_RESPONSE_w(2);
 
-    corr_INTEGRITY_RESETn_w <= (INTEGRITY_RESETn_w(0) and INTEGRITY_RESETn_w(1)) or
-                               (INTEGRITY_RESETn_w(0) and INTEGRITY_RESETn_w(2)) or
-                               (INTEGRITY_RESETn_w(1) and INTEGRITY_RESETn_w(2));
+    u_packetizer_tmr_voter: entity work.tmr_voter_block
+        generic map(
+            p_WIDTH => c_TMR_VOTE_WIDTH
+        )
+        port map(
+            A_i => bundle_a_w,
+            B_i => bundle_b_w,
+            C_i => bundle_c_w,
+            correct_enable_i => correct_error_i,
+            corrected_o => corr_bundle_w,
+            error_bits_o => error_bits_w,
+            error_o => error_o
+        );
 
-    TMR_FLIT_SELECTOR:
-    for i in 2 downto 0 generate
-        corr_FLIT_SELECTOR_w(i) <= (FLIT_SELECTOR_w(0)(i) and FLIT_SELECTOR_w(1)(i)) or
-                                   (FLIT_SELECTOR_w(0)(i) and FLIT_SELECTOR_w(2)(i)) or
-                                   (FLIT_SELECTOR_w(1)(i) and FLIT_SELECTOR_w(2)(i));
-
-        error_FLIT_SELECTOR_w(i) <= (FLIT_SELECTOR_w(0)(i) xor FLIT_SELECTOR_w(1)(i)) or
-                                    (FLIT_SELECTOR_w(0)(i) xor FLIT_SELECTOR_w(2)(i)) or
-                                    (FLIT_SELECTOR_w(1)(i) xor FLIT_SELECTOR_w(2)(i));
-    end generate;
-
-    corr_HAS_FINISHED_RESPONSE_w <= (HAS_FINISHED_RESPONSE_w(0) and HAS_FINISHED_RESPONSE_w(1)) or
-                                    (HAS_FINISHED_RESPONSE_w(0) and HAS_FINISHED_RESPONSE_w(2)) or
-                                    (HAS_FINISHED_RESPONSE_w(1) and HAS_FINISHED_RESPONSE_w(2));
-
-    error_READY_SEND_DATA_w <= (READY_SEND_DATA_w(0) xor READY_SEND_DATA_w(1)) or
-                               (READY_SEND_DATA_w(0) xor READY_SEND_DATA_w(2)) or
-                               (READY_SEND_DATA_w(1) xor READY_SEND_DATA_w(2));
-
-    error_WRITE_BUFFER_w <= (WRITE_BUFFER_w(0) xor WRITE_BUFFER_w(1)) or
-                            (WRITE_BUFFER_w(0) xor WRITE_BUFFER_w(2)) or
-                            (WRITE_BUFFER_w(1) xor WRITE_BUFFER_w(2));
-
-    error_ADD_w <= (ADD_w(0) xor ADD_w(1)) or
-                   (ADD_w(0) xor ADD_w(2)) or
-                   (ADD_w(1) xor ADD_w(2));
-
-    error_INTEGRITY_RESETn_w <= (INTEGRITY_RESETn_w(0) xor INTEGRITY_RESETn_w(1)) or
-                                (INTEGRITY_RESETn_w(0) xor INTEGRITY_RESETn_w(2)) or
-                                (INTEGRITY_RESETn_w(1) xor INTEGRITY_RESETn_w(2));
-
-    error_HAS_FINISHED_RESPONSE_w <= (HAS_FINISHED_RESPONSE_w(0) xor HAS_FINISHED_RESPONSE_w(1)) or
-                                     (HAS_FINISHED_RESPONSE_w(0) xor HAS_FINISHED_RESPONSE_w(2)) or
-                                     (HAS_FINISHED_RESPONSE_w(1) xor HAS_FINISHED_RESPONSE_w(2));
-
-    error_o <= error_READY_SEND_DATA_w or
-               error_WRITE_BUFFER_w or
-               error_ADD_w or
-               error_INTEGRITY_RESETn_w or
-               error_HAS_FINISHED_RESPONSE_w or
-               error_FLIT_SELECTOR_w(0) or
-               error_FLIT_SELECTOR_w(1) or
-               error_FLIT_SELECTOR_w(2);
-
-    READY_SEND_DATA_o       <= corr_READY_SEND_DATA_w       when correct_error_i = '1' else READY_SEND_DATA_w(0);
-    WRITE_BUFFER_o          <= corr_WRITE_BUFFER_w          when correct_error_i = '1' else WRITE_BUFFER_w(0);
-    ADD_o                   <= corr_ADD_w                   when correct_error_i = '1' else ADD_w(0);
-    INTEGRITY_RESETn_o      <= corr_INTEGRITY_RESETn_w      when correct_error_i = '1' else INTEGRITY_RESETn_w(0);
-    FLIT_SELECTOR_o         <= corr_FLIT_SELECTOR_w         when correct_error_i = '1' else FLIT_SELECTOR_w(0);
-    HAS_FINISHED_RESPONSE_o <= corr_HAS_FINISHED_RESPONSE_w when correct_error_i = '1' else HAS_FINISHED_RESPONSE_w(0);
+    READY_SEND_DATA_o       <= corr_bundle_w(7);
+    WRITE_BUFFER_o          <= corr_bundle_w(6);
+    ADD_o                   <= corr_bundle_w(5);
+    INTEGRITY_RESETn_o      <= corr_bundle_w(4);
+    FLIT_SELECTOR_o         <= corr_bundle_w(3 downto 1);
+    HAS_FINISHED_RESPONSE_o <= corr_bundle_w(0);
 end rtl;

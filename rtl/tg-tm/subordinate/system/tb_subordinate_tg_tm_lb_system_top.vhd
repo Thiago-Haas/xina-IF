@@ -31,6 +31,12 @@ architecture tb of tb_subordinate_tg_tm_lb_system_top is
   signal mismatch : std_logic;
   signal corrupt_packet : std_logic;
   signal status_tmr_error : std_logic;
+  signal h_src_single_err : std_logic;
+  signal h_src_double_err : std_logic;
+  signal h_interface_single_err : std_logic;
+  signal h_interface_double_err : std_logic;
+  signal h_address_single_err : std_logic;
+  signal h_address_double_err : std_logic;
 begin
   ACLK <= not ACLK after C_CLK_PERIOD / 2;
 
@@ -46,7 +52,13 @@ begin
       done_o => done,
       mismatch_o => mismatch,
       corrupt_packet_o => corrupt_packet,
-      OBS_SUB_FE_INJ_TMR_STATUS_ERROR_o => status_tmr_error
+      OBS_SUB_FE_INJ_TMR_STATUS_ERROR_o => status_tmr_error,
+      OBS_SUB_RX_HAM_H_SRC_SINGLE_ERR_o => h_src_single_err,
+      OBS_SUB_RX_HAM_H_SRC_DOUBLE_ERR_o => h_src_double_err,
+      OBS_SUB_RX_HAM_H_INTERFACE_SINGLE_ERR_o => h_interface_single_err,
+      OBS_SUB_RX_HAM_H_INTERFACE_DOUBLE_ERR_o => h_interface_double_err,
+      OBS_SUB_RX_HAM_H_ADDRESS_SINGLE_ERR_o => h_address_single_err,
+      OBS_SUB_RX_HAM_H_ADDRESS_DOUBLE_ERR_o => h_address_double_err
     );
 
   stim: process
@@ -103,6 +115,12 @@ begin
 
     assert corrupt_packet = '0' report "subordinate corrupt packet flag asserted" severity failure;
     assert status_tmr_error = '0' report "subordinate status TMR error asserted" severity failure;
+    assert h_src_single_err = '0' report "subordinate H_SRC Hamming single error asserted" severity failure;
+    assert h_src_double_err = '0' report "subordinate H_SRC Hamming double error asserted" severity failure;
+    assert h_interface_single_err = '0' report "subordinate H_INTERFACE Hamming single error asserted" severity failure;
+    assert h_interface_double_err = '0' report "subordinate H_INTERFACE Hamming double error asserted" severity failure;
+    assert h_address_single_err = '0' report "subordinate H_ADDRESS Hamming single error asserted" severity failure;
+    assert h_address_double_err = '0' report "subordinate H_ADDRESS Hamming double error asserted" severity failure;
     std.env.stop;
     wait;
   end process;

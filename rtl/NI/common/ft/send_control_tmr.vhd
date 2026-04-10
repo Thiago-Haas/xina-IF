@@ -34,12 +34,7 @@ architecture rtl of send_control_tmr is
 
     signal READ_BUFFER_w: t_BIT_VECTOR;
     signal l_in_val_i_w : t_BIT_VECTOR;
-
-    signal corr_READ_BUFFER_w : std_logic;
-    signal corr_l_in_val_i_w  : std_logic;
-
-    signal error_READ_BUFFER_w : std_logic;
-    signal error_l_in_val_i_w  : std_logic;
+    signal corr_bundle_w : std_logic_vector(1 downto 0);
 
 begin
 
@@ -69,28 +64,20 @@ begin
             );
     end generate;
 
-    -- Majority vote (corrected outputs)
-    corr_READ_BUFFER_w <= (READ_BUFFER_w(2) and READ_BUFFER_w(1)) or
-                          (READ_BUFFER_w(2) and READ_BUFFER_w(0)) or
-                          (READ_BUFFER_w(1) and READ_BUFFER_w(0));
+    u_send_control_tmr_voter: entity work.tmr_voter_block
+        generic map(
+            p_WIDTH => 2
+        )
+        port map(
+            A_i => READ_BUFFER_w(0) & l_in_val_i_w(0),
+            B_i => READ_BUFFER_w(1) & l_in_val_i_w(1),
+            C_i => READ_BUFFER_w(2) & l_in_val_i_w(2),
+            correct_enable_i => correct_error_i,
+            corrected_o => corr_bundle_w,
+            error_bits_o => open,
+            error_o => error_o
+        );
 
-    corr_l_in_val_i_w  <= (l_in_val_i_w(2) and l_in_val_i_w(1)) or
-                          (l_in_val_i_w(2) and l_in_val_i_w(0)) or
-                          (l_in_val_i_w(1) and l_in_val_i_w(0));
-
-    -- Error detection: any mismatch among replicas
-    error_READ_BUFFER_w <= (READ_BUFFER_w(2) xor READ_BUFFER_w(1)) or
-                           (READ_BUFFER_w(2) xor READ_BUFFER_w(0)) or
-                           (READ_BUFFER_w(1) xor READ_BUFFER_w(0));
-
-    error_l_in_val_i_w  <= (l_in_val_i_w(2) xor l_in_val_i_w(1)) or
-                           (l_in_val_i_w(2) xor l_in_val_i_w(0)) or
-                           (l_in_val_i_w(1) xor l_in_val_i_w(0));
-
-    error_o <= error_READ_BUFFER_w or error_l_in_val_i_w;
-
-    -- Output selection matches control_tmr pattern:
-    -- if correction enabled -> majority, else -> replica 0.
-    READ_BUFFER_o <= corr_READ_BUFFER_w when correct_error_i = '1' else READ_BUFFER_w(0);
-    l_in_val_i    <= corr_l_in_val_i_w  when correct_error_i = '1' else l_in_val_i_w(0);
+    READ_BUFFER_o <= corr_bundle_w(1);
+    l_in_val_i    <= corr_bundle_w(0);
 end rtl;

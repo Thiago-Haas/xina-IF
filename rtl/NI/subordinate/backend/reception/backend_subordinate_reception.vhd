@@ -12,6 +12,9 @@ entity backend_subordinate_reception is
         p_USE_TMR_FLOW      : boolean;
         p_USE_TMR_INTEGRITY : boolean;
         p_USE_HAMMING       : boolean;
+        p_USE_HAM_H_SRC     : boolean := c_ENABLE_SUB_BE_RX_SRC_HDR_HAMMING;
+        p_USE_HAM_H_INTERFACE: boolean := c_ENABLE_SUB_BE_RX_INTERFACE_HDR_HAMMING;
+        p_USE_HAM_H_ADDRESS : boolean := c_ENABLE_SUB_BE_RX_ADDRESS_HDR_HAMMING;
         p_USE_INTEGRITY     : boolean
     );
 
@@ -51,6 +54,18 @@ entity backend_subordinate_reception is
         OBS_SUB_RX_HAM_BUFFER_ENC_DATA_o      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
         OBS_SUB_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_i : in  std_logic := '1';
         OBS_SUB_RX_TMR_HAM_BUFFER_CTRL_ERROR_o         : out std_logic := '0';
+        OBS_SUB_RX_HAM_H_SRC_CORRECT_ERROR_i : in  std_logic := '1';
+        OBS_SUB_RX_HAM_H_SRC_SINGLE_ERR_o    : out std_logic := '0';
+        OBS_SUB_RX_HAM_H_SRC_DOUBLE_ERR_o    : out std_logic := '0';
+        OBS_SUB_RX_HAM_H_SRC_ENC_DATA_o      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
+        OBS_SUB_RX_HAM_H_INTERFACE_CORRECT_ERROR_i : in  std_logic := '1';
+        OBS_SUB_RX_HAM_H_INTERFACE_SINGLE_ERR_o    : out std_logic := '0';
+        OBS_SUB_RX_HAM_H_INTERFACE_DOUBLE_ERR_o    : out std_logic := '0';
+        OBS_SUB_RX_HAM_H_INTERFACE_ENC_DATA_o      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
+        OBS_SUB_RX_HAM_H_ADDRESS_CORRECT_ERROR_i : in  std_logic := '1';
+        OBS_SUB_RX_HAM_H_ADDRESS_SINGLE_ERR_o    : out std_logic := '0';
+        OBS_SUB_RX_HAM_H_ADDRESS_DOUBLE_ERR_o    : out std_logic := '0';
+        OBS_SUB_RX_HAM_H_ADDRESS_ENC_DATA_o      : out std_logic_vector(c_FLIT_WIDTH + work.hamming_pkg.get_ecc_size(c_FLIT_WIDTH, c_ENABLE_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
 
         -- Reception integrity checksum Hamming.
         OBS_SUB_RX_HAM_INTEGRITY_CORRECT_ERROR_i : in  std_logic := '1';
@@ -97,15 +112,65 @@ architecture rtl of backend_subordinate_reception is
     attribute KEEP_HIERARCHY : string;
 
 begin
-    -- Registering headers.
-    registering: process(ACLK)
-    begin
-        if (rising_edge(ACLK)) then
-            if (WRITE_H_SRC_REG_w)       then H_SRC_r_w       <= FLIT_w; end if;
-            if (WRITE_H_INTERFACE_REG_w) then H_INTERFACE_r_w <= FLIT_w; end if;
-            if (WRITE_H_ADDRESS_REG_w)   then H_ADDRESS_r_w   <= FLIT_w; end if;
-        end if;
-    end process registering;
+    u_h_src_hamming_register: entity work.hamming_register
+        generic map(
+            DATA_WIDTH     => c_FLIT_WIDTH,
+            HAMMING_ENABLE => p_USE_HAM_H_SRC,
+            DETECT_DOUBLE  => c_ENABLE_HAMMING_DOUBLE_DETECT,
+            RESET_VALUE    => (c_FLIT_WIDTH - 1 downto 0 => '0'),
+            INJECT_ERROR   => false
+        )
+        port map(
+            correct_en_i => OBS_SUB_RX_HAM_H_SRC_CORRECT_ERROR_i,
+            write_en_i   => WRITE_H_SRC_REG_w,
+            data_i       => FLIT_w,
+            rstn_i       => ARESETn,
+            clk_i        => ACLK,
+            single_err_o => OBS_SUB_RX_HAM_H_SRC_SINGLE_ERR_o,
+            double_err_o => OBS_SUB_RX_HAM_H_SRC_DOUBLE_ERR_o,
+            enc_data_o   => OBS_SUB_RX_HAM_H_SRC_ENC_DATA_o,
+            data_o       => H_SRC_r_w
+        );
+
+    u_h_interface_hamming_register: entity work.hamming_register
+        generic map(
+            DATA_WIDTH     => c_FLIT_WIDTH,
+            HAMMING_ENABLE => p_USE_HAM_H_INTERFACE,
+            DETECT_DOUBLE  => c_ENABLE_HAMMING_DOUBLE_DETECT,
+            RESET_VALUE    => (c_FLIT_WIDTH - 1 downto 0 => '0'),
+            INJECT_ERROR   => false
+        )
+        port map(
+            correct_en_i => OBS_SUB_RX_HAM_H_INTERFACE_CORRECT_ERROR_i,
+            write_en_i   => WRITE_H_INTERFACE_REG_w,
+            data_i       => FLIT_w,
+            rstn_i       => ARESETn,
+            clk_i        => ACLK,
+            single_err_o => OBS_SUB_RX_HAM_H_INTERFACE_SINGLE_ERR_o,
+            double_err_o => OBS_SUB_RX_HAM_H_INTERFACE_DOUBLE_ERR_o,
+            enc_data_o   => OBS_SUB_RX_HAM_H_INTERFACE_ENC_DATA_o,
+            data_o       => H_INTERFACE_r_w
+        );
+
+    u_h_address_hamming_register: entity work.hamming_register
+        generic map(
+            DATA_WIDTH     => c_FLIT_WIDTH,
+            HAMMING_ENABLE => p_USE_HAM_H_ADDRESS,
+            DETECT_DOUBLE  => c_ENABLE_HAMMING_DOUBLE_DETECT,
+            RESET_VALUE    => (c_FLIT_WIDTH - 1 downto 0 => '0'),
+            INJECT_ERROR   => false
+        )
+        port map(
+            correct_en_i => OBS_SUB_RX_HAM_H_ADDRESS_CORRECT_ERROR_i,
+            write_en_i   => WRITE_H_ADDRESS_REG_w,
+            data_i       => FLIT_w,
+            rstn_i       => ARESETn,
+            clk_i        => ACLK,
+            single_err_o => OBS_SUB_RX_HAM_H_ADDRESS_SINGLE_ERR_o,
+            double_err_o => OBS_SUB_RX_HAM_H_ADDRESS_DOUBLE_ERR_o,
+            enc_data_o   => OBS_SUB_RX_HAM_H_ADDRESS_ENC_DATA_o,
+            data_o       => H_ADDRESS_r_w
+        );
 
     H_SRC_RECEIVE_o       <= H_SRC_r_w;
     H_INTERFACE_RECEIVE_o <= H_INTERFACE_r_w;
