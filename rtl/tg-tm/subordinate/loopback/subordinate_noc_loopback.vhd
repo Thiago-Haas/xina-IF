@@ -48,6 +48,8 @@ entity subordinate_noc_loopback is
     OBS_SUB_TM_HAM_COUNTER_DOUBLE_ERR_o    : out std_logic := '0';
     OBS_SUB_TM_HAM_COUNTER_ENC_DATA_o      : out std_logic_vector(c_SUB_TM_TRANSACTION_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(c_SUB_TM_TRANSACTION_COUNTER_WIDTH, c_ENABLE_SUB_TM_LFSR_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
     TM_TRANSACTION_COUNT_o                 : out std_logic_vector(c_SUB_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
+    OBS_SUB_NOC_LB_TMR_DONE_CTRL_CORRECT_ERROR_i : in  std_logic := '1';
+    OBS_SUB_NOC_LB_TMR_DONE_CTRL_ERROR_o         : out std_logic := '0';
 
     -- Request stream from the emulated manager/NoC into the subordinate NI.
     noc_req_data_o : out std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
@@ -64,8 +66,6 @@ end entity;
 architecture rtl of subordinate_noc_loopback is
   signal gen_done_w : std_logic;
   signal mon_done_w : std_logic;
-  signal gen_done_seen_r : std_logic := '0';
-  signal mon_done_seen_r : std_logic := '0';
 begin
   u_request_gen: entity work.subordinate_noc_traffic_gen_top
     generic map(
@@ -120,25 +120,15 @@ begin
       TM_TRANSACTION_COUNT_o                 => TM_TRANSACTION_COUNT_o
     );
 
-  process(ACLK)
-  begin
-    if rising_edge(ACLK) then
-      if ARESETn = '0' then
-        gen_done_seen_r <= '0';
-        mon_done_seen_r <= '0';
-      elsif start_i = '1' then
-        gen_done_seen_r <= '0';
-        mon_done_seen_r <= '0';
-      else
-        if gen_done_w = '1' then
-          gen_done_seen_r <= '1';
-        end if;
-        if mon_done_w = '1' then
-          mon_done_seen_r <= '1';
-        end if;
-      end if;
-    end if;
-  end process;
-
-  done_o <= gen_done_seen_r and mon_done_seen_r;
+  u_done_control: entity work.subordinate_noc_loopback_done_control_tmr
+    port map(
+      ACLK    => ACLK,
+      ARESETn => ARESETn,
+      start_i    => start_i,
+      gen_done_i => gen_done_w,
+      mon_done_i => mon_done_w,
+      done_o     => done_o,
+      correct_enable_i => OBS_SUB_NOC_LB_TMR_DONE_CTRL_CORRECT_ERROR_i,
+      error_o          => OBS_SUB_NOC_LB_TMR_DONE_CTRL_ERROR_o
+    );
 end architecture;

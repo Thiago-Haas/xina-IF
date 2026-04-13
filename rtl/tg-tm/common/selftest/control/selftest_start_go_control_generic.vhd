@@ -1,27 +1,24 @@
 library IEEE;
 use IEEE.std_logic_1164.all;
-use IEEE.numeric_std.all;
 
-use work.xina_noc_pkg.all;
-
--- Subordinate self-test sequencer.
--- Generates one start pulse per transaction and alternates write/read requests
--- so the isolated subordinate path sees the same request/response rhythm.
-entity subordinate_selftest_start_go_control is
+-- Generic self-test sequencer.
+-- Generates one start pulse per transaction and alternates write/read
+-- requests while the experiment is enabled.
+entity selftest_start_go_control_generic is
   port (
     ACLK    : in  std_logic;
     ARESETn : in  std_logic;
 
     experiment_run_enable_i  : in  std_logic;
     experiment_reset_pulse_i : in  std_logic;
-    done_i : in  std_logic;
+    done_i                   : in  std_logic;
 
     start_o   : out std_logic;
     is_read_o : out std_logic
   );
 end entity;
 
-architecture rtl of subordinate_selftest_start_go_control is
+architecture rtl of selftest_start_go_control_generic is
   constant C_ST_IDLE      : std_logic_vector(2 downto 0) := "000";
   constant C_ST_ISSUE     : std_logic_vector(2 downto 0) := "001";
   constant C_ST_WAIT_DONE : std_logic_vector(2 downto 0) := "010";

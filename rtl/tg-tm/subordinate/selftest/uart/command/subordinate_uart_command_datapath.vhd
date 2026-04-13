@@ -12,6 +12,7 @@ entity subordinate_uart_command_datapath is
     OBS_SUB_TM_HAM_LFSR_CORRECT_ERROR_o : out std_logic;
     OBS_SUB_TM_HAM_COUNTER_CORRECT_ERROR_o : out std_logic;
     OBS_SUB_LB_TMR_CTRL_CORRECT_ERROR_o : out std_logic;
+    OBS_SUB_NOC_LB_TMR_DONE_CTRL_CORRECT_ERROR_o : out std_logic;
     OBS_SUB_LB_HAM_PAYLOAD_CORRECT_ERROR_o : out std_logic;
     OBS_SUB_LB_HAM_RDATA_CORRECT_ERROR_o : out std_logic;
     OBS_SUB_LB_HAM_ID_STATE_CORRECT_ERROR_o : out std_logic;
@@ -45,6 +46,7 @@ begin
   OBS_SUB_TM_HAM_LFSR_CORRECT_ERROR_o <= correction_enable_i;
   OBS_SUB_TM_HAM_COUNTER_CORRECT_ERROR_o <= correction_enable_i;
   OBS_SUB_LB_TMR_CTRL_CORRECT_ERROR_o <= correction_enable_i;
+  OBS_SUB_NOC_LB_TMR_DONE_CTRL_CORRECT_ERROR_o <= correction_enable_i;
   OBS_SUB_LB_HAM_PAYLOAD_CORRECT_ERROR_o <= correction_enable_i;
   OBS_SUB_LB_HAM_RDATA_CORRECT_ERROR_o <= correction_enable_i;
   OBS_SUB_LB_HAM_ID_STATE_CORRECT_ERROR_o <= correction_enable_i;

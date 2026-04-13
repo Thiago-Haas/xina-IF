@@ -39,6 +39,8 @@ entity subordinate_tg_tm_lb_system_top is
     OBS_SUB_TM_HAM_COUNTER_DOUBLE_ERR_o    : out std_logic := '0';
     OBS_SUB_TM_HAM_COUNTER_ENC_DATA_o      : out std_logic_vector(c_SUB_TM_TRANSACTION_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(c_SUB_TM_TRANSACTION_COUNTER_WIDTH, c_ENABLE_SUB_TM_LFSR_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
     TM_TRANSACTION_COUNT_o                 : out std_logic_vector(c_SUB_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
+    OBS_SUB_NOC_LB_TMR_DONE_CTRL_CORRECT_ERROR_i : in  std_logic := '1';
+    OBS_SUB_NOC_LB_TMR_DONE_CTRL_ERROR_o         : out std_logic := '0';
     OBS_SUB_LB_TMR_CTRL_CORRECT_ERROR_i : in  std_logic := '1';
     OBS_SUB_LB_TMR_CTRL_ERROR_o         : out std_logic := '0';
     OBS_SUB_LB_HAM_PAYLOAD_CORRECT_ERROR_i : in  std_logic := '1';
@@ -142,13 +144,8 @@ architecture rtl of subordinate_tg_tm_lb_system_top is
   signal rid    : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
   signal rresp  : std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
 
-  signal noc_tg_done : std_logic;
-  signal noc_tm_done : std_logic;
-  signal noc_tg_done_seen_r : std_logic := '0';
-  signal noc_tm_done_seen_r : std_logic := '0';
-
 begin
-  u_subordinate_noc_traffic_gen_top: entity work.subordinate_noc_traffic_gen_top
+  u_subordinate_noc_loopback: entity work.subordinate_noc_loopback
     port map(
       ACLK    => ACLK,
       ARESETn => ARESETn,
@@ -157,16 +154,33 @@ begin
       id_i => id_i,
       address_i => address_i,
       seed_i => seed_i,
-      done_o => noc_tg_done,
-      l_out_data_o => req_data,
-      l_out_val_o  => req_val,
-      l_out_ack_i  => req_ack,
+      done_o => done_o,
+      mismatch_o => mismatch_o,
       OBS_SUB_TG_TMR_CTRL_CORRECT_ERROR_i => OBS_SUB_TG_TMR_CTRL_CORRECT_ERROR_i,
       OBS_SUB_TG_TMR_CTRL_ERROR_o         => OBS_SUB_TG_TMR_CTRL_ERROR_o,
       OBS_SUB_TG_HAM_LFSR_CORRECT_ERROR_i => OBS_SUB_TG_HAM_LFSR_CORRECT_ERROR_i,
       OBS_SUB_TG_HAM_LFSR_SINGLE_ERR_o    => OBS_SUB_TG_HAM_LFSR_SINGLE_ERR_o,
       OBS_SUB_TG_HAM_LFSR_DOUBLE_ERR_o    => OBS_SUB_TG_HAM_LFSR_DOUBLE_ERR_o,
-      OBS_SUB_TG_HAM_LFSR_ENC_DATA_o      => OBS_SUB_TG_HAM_LFSR_ENC_DATA_o
+      OBS_SUB_TG_HAM_LFSR_ENC_DATA_o      => OBS_SUB_TG_HAM_LFSR_ENC_DATA_o,
+      OBS_SUB_TM_TMR_CTRL_CORRECT_ERROR_i => OBS_SUB_TM_TMR_CTRL_CORRECT_ERROR_i,
+      OBS_SUB_TM_TMR_CTRL_ERROR_o         => OBS_SUB_TM_TMR_CTRL_ERROR_o,
+      OBS_SUB_TM_HAM_LFSR_CORRECT_ERROR_i => OBS_SUB_TM_HAM_LFSR_CORRECT_ERROR_i,
+      OBS_SUB_TM_HAM_LFSR_SINGLE_ERR_o    => OBS_SUB_TM_HAM_LFSR_SINGLE_ERR_o,
+      OBS_SUB_TM_HAM_LFSR_DOUBLE_ERR_o    => OBS_SUB_TM_HAM_LFSR_DOUBLE_ERR_o,
+      OBS_SUB_TM_HAM_LFSR_ENC_DATA_o      => OBS_SUB_TM_HAM_LFSR_ENC_DATA_o,
+      OBS_SUB_TM_HAM_COUNTER_CORRECT_ERROR_i => OBS_SUB_TM_HAM_COUNTER_CORRECT_ERROR_i,
+      OBS_SUB_TM_HAM_COUNTER_SINGLE_ERR_o    => OBS_SUB_TM_HAM_COUNTER_SINGLE_ERR_o,
+      OBS_SUB_TM_HAM_COUNTER_DOUBLE_ERR_o    => OBS_SUB_TM_HAM_COUNTER_DOUBLE_ERR_o,
+      OBS_SUB_TM_HAM_COUNTER_ENC_DATA_o      => OBS_SUB_TM_HAM_COUNTER_ENC_DATA_o,
+      TM_TRANSACTION_COUNT_o                 => TM_TRANSACTION_COUNT_o,
+      OBS_SUB_NOC_LB_TMR_DONE_CTRL_CORRECT_ERROR_i => OBS_SUB_NOC_LB_TMR_DONE_CTRL_CORRECT_ERROR_i,
+      OBS_SUB_NOC_LB_TMR_DONE_CTRL_ERROR_o         => OBS_SUB_NOC_LB_TMR_DONE_CTRL_ERROR_o,
+      noc_req_data_o => req_data,
+      noc_req_val_o  => req_val,
+      noc_req_ack_i  => req_ack,
+      noc_resp_data_i => resp_data,
+      noc_resp_val_i  => resp_val,
+      noc_resp_ack_o  => resp_ack
     );
 
   u_ni_subordinate_top: entity work.ni_subordinate_top
@@ -312,53 +326,5 @@ begin
       OBS_SUB_LB_HAM_ID_STATE_DOUBLE_ERR_o    => OBS_SUB_LB_HAM_ID_STATE_DOUBLE_ERR_o,
       OBS_SUB_LB_HAM_ID_STATE_ENC_DATA_o      => OBS_SUB_LB_HAM_ID_STATE_ENC_DATA_o
     );
-
-  u_subordinate_noc_traffic_mon_top: entity work.subordinate_noc_traffic_mon_top
-    port map(
-      ACLK    => ACLK,
-      ARESETn => ARESETn,
-      start_i => start_i,
-      is_read_i => is_read_i,
-      expected_id_i => id_i,
-      seed_i => seed_i,
-      done_o => noc_tm_done,
-      mismatch_o => mismatch_o,
-      l_in_data_i => resp_data,
-      l_in_val_i  => resp_val,
-      l_in_ack_o  => resp_ack,
-      OBS_SUB_TM_TMR_CTRL_CORRECT_ERROR_i => OBS_SUB_TM_TMR_CTRL_CORRECT_ERROR_i,
-      OBS_SUB_TM_TMR_CTRL_ERROR_o         => OBS_SUB_TM_TMR_CTRL_ERROR_o,
-      OBS_SUB_TM_HAM_LFSR_CORRECT_ERROR_i => OBS_SUB_TM_HAM_LFSR_CORRECT_ERROR_i,
-      OBS_SUB_TM_HAM_LFSR_SINGLE_ERR_o    => OBS_SUB_TM_HAM_LFSR_SINGLE_ERR_o,
-      OBS_SUB_TM_HAM_LFSR_DOUBLE_ERR_o    => OBS_SUB_TM_HAM_LFSR_DOUBLE_ERR_o,
-      OBS_SUB_TM_HAM_LFSR_ENC_DATA_o      => OBS_SUB_TM_HAM_LFSR_ENC_DATA_o,
-      OBS_SUB_TM_HAM_COUNTER_CORRECT_ERROR_i => OBS_SUB_TM_HAM_COUNTER_CORRECT_ERROR_i,
-      OBS_SUB_TM_HAM_COUNTER_SINGLE_ERR_o    => OBS_SUB_TM_HAM_COUNTER_SINGLE_ERR_o,
-      OBS_SUB_TM_HAM_COUNTER_DOUBLE_ERR_o    => OBS_SUB_TM_HAM_COUNTER_DOUBLE_ERR_o,
-      OBS_SUB_TM_HAM_COUNTER_ENC_DATA_o      => OBS_SUB_TM_HAM_COUNTER_ENC_DATA_o,
-      TM_TRANSACTION_COUNT_o                 => TM_TRANSACTION_COUNT_o
-    );
-
-  process(ACLK)
-  begin
-    if rising_edge(ACLK) then
-      if ARESETn = '0' then
-        noc_tg_done_seen_r <= '0';
-        noc_tm_done_seen_r <= '0';
-      elsif start_i = '1' then
-        noc_tg_done_seen_r <= '0';
-        noc_tm_done_seen_r <= '0';
-      else
-        if noc_tg_done = '1' then
-          noc_tg_done_seen_r <= '1';
-        end if;
-        if noc_tm_done = '1' then
-          noc_tm_done_seen_r <= '1';
-        end if;
-      end if;
-    end if;
-  end process;
-
-  done_o <= noc_tg_done_seen_r and noc_tm_done_seen_r;
 
 end architecture;

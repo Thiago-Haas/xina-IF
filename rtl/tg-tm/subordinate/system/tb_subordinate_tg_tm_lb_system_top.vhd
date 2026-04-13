@@ -39,6 +39,7 @@ architecture tb of tb_subordinate_tg_tm_lb_system_top is
   signal tm_counter_single_err : std_logic;
   signal tm_counter_double_err : std_logic;
   signal tm_transaction_count : std_logic_vector(c_SUB_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
+  signal noc_lb_done_tmr_error : std_logic;
   signal lb_payload_single_err : std_logic;
   signal lb_payload_double_err : std_logic;
   signal lb_rdata_single_err : std_logic;
@@ -76,6 +77,7 @@ begin
       OBS_SUB_TM_HAM_COUNTER_SINGLE_ERR_o => tm_counter_single_err,
       OBS_SUB_TM_HAM_COUNTER_DOUBLE_ERR_o => tm_counter_double_err,
       TM_TRANSACTION_COUNT_o => tm_transaction_count,
+      OBS_SUB_NOC_LB_TMR_DONE_CTRL_ERROR_o => noc_lb_done_tmr_error,
       OBS_SUB_LB_TMR_CTRL_ERROR_o => lb_tmr_error,
       OBS_SUB_LB_HAM_PAYLOAD_SINGLE_ERR_o => lb_payload_single_err,
       OBS_SUB_LB_HAM_PAYLOAD_DOUBLE_ERR_o => lb_payload_double_err,
@@ -144,6 +146,7 @@ begin
     assert tm_counter_double_err = '0' report "subordinate TM transaction counter Hamming double error asserted" severity failure;
     assert unsigned(tm_transaction_count) = to_unsigned(2 * C_NUM_ITERS, tm_transaction_count'length)
       report "subordinate TM transaction count mismatch" severity failure;
+    assert noc_lb_done_tmr_error = '0' report "subordinate NoC loopback done controller TMR error asserted" severity failure;
     assert lb_tmr_error = '0' report "subordinate loopback control TMR error asserted" severity failure;
     assert lb_payload_single_err = '0' report "subordinate loopback payload Hamming single error asserted" severity failure;
     assert lb_payload_double_err = '0' report "subordinate loopback payload Hamming double error asserted" severity failure;

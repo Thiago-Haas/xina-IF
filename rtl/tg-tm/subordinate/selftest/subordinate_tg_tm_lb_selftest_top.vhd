@@ -21,17 +21,14 @@ end entity;
 architecture rtl of subordinate_tg_tm_lb_selftest_top is
   constant C_SELFTEST_ADDR : std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0) := x"00000100_00000000";
   constant C_SELFTEST_SEED : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := x"1ACEB00C";
+  constant C_SELFTEST_ID   : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0) := (others => '0');
 
   signal start_w   : std_logic;
   signal is_read_w : std_logic;
-  signal id_w      : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
   signal done_w    : std_logic;
 
   signal mismatch_w       : std_logic;
   signal corrupt_packet_w : std_logic;
-
-  signal experiment_run_enable_w  : std_logic;
-  signal experiment_reset_pulse_w : std_logic;
 
   signal uart_baud_div_w : std_logic_vector(15 downto 0);
   signal uart_parity_w   : std_logic;
@@ -51,6 +48,7 @@ architecture rtl of subordinate_tg_tm_lb_selftest_top is
   signal obs_tm_ham_correct_w       : std_logic;
   signal obs_tm_counter_correct_w   : std_logic;
   signal obs_lb_tmr_correct_w       : std_logic;
+  signal obs_noc_lb_done_correct_w  : std_logic;
   signal obs_lb_payload_correct_w   : std_logic;
   signal obs_lb_rdata_correct_w     : std_logic;
   signal obs_lb_id_correct_w        : std_logic;
@@ -69,10 +67,6 @@ architecture rtl of subordinate_tg_tm_lb_selftest_top is
   signal obs_sub_rx_integrity_correct_w : std_logic;
   signal obs_sub_rx_flow_correct_w : std_logic;
   signal obs_sub_rx_depktz_correct_w : std_logic;
-  signal obs_uart_tm_count_correct_w : std_logic;
-  signal obs_uart_flags_seen_correct_w : std_logic;
-  signal obs_uart_event_flags_correct_w : std_logic;
-  signal obs_uart_report_flags_correct_w : std_logic;
   signal obs_uart_command_ctrl_error_w : std_logic;
   signal obs_uart_encode_critical_error_w : std_logic;
   signal obs_uart_tm_count_single_w : std_logic;
@@ -92,6 +86,7 @@ architecture rtl of subordinate_tg_tm_lb_selftest_top is
   signal obs_tm_state_double_w  : std_logic;
   signal obs_tm_counter_single_w : std_logic;
   signal obs_tm_counter_double_w : std_logic;
+  signal obs_noc_lb_done_error_w : std_logic;
   signal tm_transaction_count_w : std_logic_vector(c_SUB_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
 
   signal obs_lb_tmr_error_w      : std_logic;
@@ -147,6 +142,7 @@ architecture rtl of subordinate_tg_tm_lb_selftest_top is
   attribute DONT_TOUCH of obs_tm_state_double_w : signal is "TRUE";
   attribute DONT_TOUCH of obs_tm_counter_single_w : signal is "TRUE";
   attribute DONT_TOUCH of obs_tm_counter_double_w : signal is "TRUE";
+  attribute DONT_TOUCH of obs_noc_lb_done_error_w : signal is "TRUE";
   attribute DONT_TOUCH of obs_lb_tmr_error_w : signal is "TRUE";
   attribute DONT_TOUCH of obs_lb_payload_single_w : signal is "TRUE";
   attribute DONT_TOUCH of obs_lb_payload_double_w : signal is "TRUE";
@@ -196,6 +192,7 @@ architecture rtl of subordinate_tg_tm_lb_selftest_top is
   attribute syn_preserve of obs_tm_state_double_w : signal is true;
   attribute syn_preserve of obs_tm_counter_single_w : signal is true;
   attribute syn_preserve of obs_tm_counter_double_w : signal is true;
+  attribute syn_preserve of obs_noc_lb_done_error_w : signal is true;
   attribute syn_preserve of obs_lb_tmr_error_w : signal is true;
   attribute syn_preserve of obs_lb_payload_single_w : signal is true;
   attribute syn_preserve of obs_lb_payload_double_w : signal is true;
@@ -247,45 +244,6 @@ begin
       uart_rts_o => uart_rts_o
     );
 
-  gen_start_go_plain : if not c_ENABLE_SUB_OBS_START_GO_CTRL_TMR generate
-    attribute DONT_TOUCH : string;
-    attribute syn_preserve : boolean;
-    attribute KEEP_HIERARCHY : string;
-    attribute DONT_TOUCH of u_start_go_control : label is "TRUE";
-    attribute syn_preserve of u_start_go_control : label is true;
-    attribute KEEP_HIERARCHY of u_start_go_control : label is "TRUE";
-  begin
-    u_start_go_control: entity work.subordinate_selftest_start_go_control
-      port map(
-        ACLK    => ACLK,
-        ARESETn => ARESETn,
-        experiment_run_enable_i  => experiment_run_enable_w,
-        experiment_reset_pulse_i => experiment_reset_pulse_w,
-        done_i => done_w,
-        start_o => start_w,
-        is_read_o => is_read_w,
-        id_o => id_w
-      );
-    obs_start_go_error_w <= '0';
-  end generate;
-
-  gen_start_go_tmr : if c_ENABLE_SUB_OBS_START_GO_CTRL_TMR generate
-  begin
-    u_start_go_control_tmr: entity work.subordinate_selftest_start_go_control_tmr
-      port map(
-        ACLK    => ACLK,
-        ARESETn => ARESETn,
-        experiment_run_enable_i  => experiment_run_enable_w,
-        experiment_reset_pulse_i => experiment_reset_pulse_w,
-        done_i => done_w,
-        start_o => start_w,
-        is_read_o => is_read_w,
-        id_o => id_w,
-        correct_enable_i => obs_start_go_correct_w,
-        error_o => obs_start_go_error_w
-      );
-  end generate;
-
   u_uart_obs: entity work.subordinate_uart_obs_block
     generic map(
       G_REPORT_PERIOD_PACKETS => 100
@@ -298,8 +256,6 @@ begin
       mismatch_i => mismatch_w,
       corrupt_packet_i => corrupt_packet_w,
       OBS_SUB_UART_ENCODE_CRITICAL_TMR_ERROR_i => obs_uart_encode_critical_error_w,
-      OBS_SUB_UART_COMMAND_CTRL_TMR_ERROR_i => obs_uart_command_ctrl_error_w,
-      OBS_SUB_START_GO_CTRL_TMR_ERROR_i => obs_start_go_error_w,
       OBS_SUB_RX_TMR_DEPKTZ_CTRL_ERROR_i => obs_sub_rx_depktz_error_w,
       OBS_SUB_RX_TMR_FLOW_CTRL_ERROR_i => obs_sub_rx_flow_error_w,
       OBS_SUB_RX_HAM_INTEGRITY_DOUBLE_ERR_i => obs_sub_rx_integrity_double_w,
@@ -324,6 +280,7 @@ begin
       OBS_SUB_TG_HAM_LFSR_DOUBLE_ERR_i => obs_tg_lfsr_double_w,
       OBS_SUB_TG_HAM_LFSR_SINGLE_ERR_i => obs_tg_lfsr_single_w,
       OBS_SUB_TG_TMR_CTRL_ERROR_i => obs_tg_tmr_error_w,
+      OBS_SUB_NOC_LB_TMR_DONE_CTRL_ERROR_i => obs_noc_lb_done_error_w,
       OBS_SUB_LB_HAM_ID_STATE_DOUBLE_ERR_i => obs_lb_id_double_w,
       OBS_SUB_LB_HAM_ID_STATE_SINGLE_ERR_i => obs_lb_id_single_w,
       OBS_SUB_LB_HAM_RDATA_DOUBLE_ERR_i => obs_lb_rdata_double_w,
@@ -342,6 +299,7 @@ begin
       OBS_SUB_TM_HAM_LFSR_CORRECT_ERROR_o => obs_tm_ham_correct_w,
       OBS_SUB_TM_HAM_COUNTER_CORRECT_ERROR_o => obs_tm_counter_correct_w,
       OBS_SUB_LB_TMR_CTRL_CORRECT_ERROR_o => obs_lb_tmr_correct_w,
+      OBS_SUB_NOC_LB_TMR_DONE_CTRL_CORRECT_ERROR_o => obs_noc_lb_done_correct_w,
       OBS_SUB_LB_HAM_PAYLOAD_CORRECT_ERROR_o => obs_lb_payload_correct_w,
       OBS_SUB_LB_HAM_RDATA_CORRECT_ERROR_o => obs_lb_rdata_correct_w,
       OBS_SUB_LB_HAM_ID_STATE_CORRECT_ERROR_o => obs_lb_id_correct_w,
@@ -368,14 +326,13 @@ begin
       OBS_SUB_UART_HAM_EVENT_FLAGS_DOUBLE_ERR_o => obs_uart_event_flags_double_w,
       OBS_SUB_UART_HAM_REPORT_FLAGS_SINGLE_ERR_o => obs_uart_report_flags_single_w,
       OBS_SUB_UART_HAM_REPORT_FLAGS_DOUBLE_ERR_o => obs_uart_report_flags_double_w,
-      OBS_SUB_UART_HAM_TM_COUNT_CORRECT_ERROR_o => obs_uart_tm_count_correct_w,
-      OBS_SUB_UART_HAM_FLAGS_SEEN_CORRECT_ERROR_o => obs_uart_flags_seen_correct_w,
-      OBS_SUB_UART_HAM_EVENT_FLAGS_CORRECT_ERROR_o => obs_uart_event_flags_correct_w,
-      OBS_SUB_UART_HAM_REPORT_FLAGS_CORRECT_ERROR_o => obs_uart_report_flags_correct_w,
       OBS_SUB_UART_COMMAND_CTRL_TMR_ERROR_o => obs_uart_command_ctrl_error_w,
+      OBS_SUB_START_GO_CTRL_TMR_ERROR_o => obs_start_go_error_w,
       OBS_SUB_UART_ENCODE_CRITICAL_TMR_ERROR_o => obs_uart_encode_critical_error_w,
-      experiment_run_enable_o => experiment_run_enable_w,
-      experiment_reset_pulse_o => experiment_reset_pulse_w,
+      experiment_run_enable_o => open,
+      experiment_reset_pulse_o => open,
+      start_o => start_w,
+      is_read_o => is_read_w,
       uart_baud_div_o => uart_baud_div_w,
       uart_parity_o   => uart_parity_w,
       uart_rtscts_o   => uart_rtscts_w,
@@ -395,7 +352,7 @@ begin
       ARESETn => ARESETn,
       start_i => start_w,
       is_read_i => is_read_w,
-      id_i => id_w,
+      id_i => C_SELFTEST_ID,
       address_i => C_SELFTEST_ADDR,
       seed_i => C_SELFTEST_SEED,
       done_o => done_w,
@@ -418,6 +375,8 @@ begin
       OBS_SUB_TM_HAM_COUNTER_DOUBLE_ERR_o => obs_tm_counter_double_w,
       OBS_SUB_TM_HAM_COUNTER_ENC_DATA_o => open,
       TM_TRANSACTION_COUNT_o => tm_transaction_count_w,
+      OBS_SUB_NOC_LB_TMR_DONE_CTRL_CORRECT_ERROR_i => obs_noc_lb_done_correct_w,
+      OBS_SUB_NOC_LB_TMR_DONE_CTRL_ERROR_o => obs_noc_lb_done_error_w,
       OBS_SUB_LB_TMR_CTRL_CORRECT_ERROR_i => obs_lb_tmr_correct_w,
       OBS_SUB_LB_TMR_CTRL_ERROR_o => obs_lb_tmr_error_w,
       OBS_SUB_LB_HAM_PAYLOAD_CORRECT_ERROR_i => obs_lb_payload_correct_w,

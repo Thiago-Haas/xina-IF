@@ -1,17 +1,15 @@
 library IEEE;
 use IEEE.std_logic_1164.all;
 
-use work.xina_noc_pkg.all;
-
--- TMR wrapper for subordinate_selftest_start_go_control.
-entity subordinate_selftest_start_go_control_tmr is
+-- TMR wrapper for selftest_start_go_control_generic.
+entity selftest_start_go_control_generic_tmr is
   port (
     ACLK    : in  std_logic;
     ARESETn : in  std_logic;
 
     experiment_run_enable_i  : in  std_logic;
     experiment_reset_pulse_i : in  std_logic;
-    done_i : in  std_logic;
+    done_i                   : in  std_logic;
 
     start_o   : out std_logic;
     is_read_o : out std_logic;
@@ -21,17 +19,17 @@ entity subordinate_selftest_start_go_control_tmr is
   );
 end entity;
 
-architecture rtl of subordinate_selftest_start_go_control_tmr is
+architecture rtl of selftest_start_go_control_generic_tmr is
   constant C_VOTER_WIDTH : positive := 2;
 
   type tmr_sl_t is array (2 downto 0) of std_logic;
 
-  signal start_w : tmr_sl_t;
-  signal is_read_w : tmr_sl_t;
-  signal voter_a_w : std_logic_vector(C_VOTER_WIDTH - 1 downto 0);
-  signal voter_b_w : std_logic_vector(C_VOTER_WIDTH - 1 downto 0);
-  signal voter_c_w : std_logic_vector(C_VOTER_WIDTH - 1 downto 0);
-  signal corrected_w : std_logic_vector(C_VOTER_WIDTH - 1 downto 0);
+  signal start_w      : tmr_sl_t;
+  signal is_read_w    : tmr_sl_t;
+  signal voter_a_w    : std_logic_vector(C_VOTER_WIDTH - 1 downto 0);
+  signal voter_b_w    : std_logic_vector(C_VOTER_WIDTH - 1 downto 0);
+  signal voter_c_w    : std_logic_vector(C_VOTER_WIDTH - 1 downto 0);
+  signal corrected_w  : std_logic_vector(C_VOTER_WIDTH - 1 downto 0);
   signal error_bits_w : std_logic_vector(C_VOTER_WIDTH - 1 downto 0);
 
   attribute DONT_TOUCH : string;
@@ -43,15 +41,15 @@ begin
     attribute syn_preserve of u_control : label is true;
     attribute KEEP_HIERARCHY of u_control : label is "TRUE";
   begin
-    u_control: entity work.subordinate_selftest_start_go_control
+    u_control: entity work.selftest_start_go_control_generic
       port map(
         ACLK    => ACLK,
         ARESETn => ARESETn,
         experiment_run_enable_i  => experiment_run_enable_i,
         experiment_reset_pulse_i => experiment_reset_pulse_i,
-        done_i => done_i,
-        start_o => start_w(i),
-        is_read_o => is_read_w(i)
+        done_i                   => done_i,
+        start_o                  => start_w(i),
+        is_read_o                => is_read_w(i)
       );
   end generate;
 
