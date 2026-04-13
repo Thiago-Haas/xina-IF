@@ -31,6 +31,20 @@ package xina_subordinate_ni_pkg is
   constant c_ENABLE_SUB_TM_LFSR_HAMMING_INJECT_ERROR  : boolean := false; -- Fault INJECTION
   constant c_ENABLE_SUB_TM_TXN_COUNTER_HAMMING : boolean := true;
   constant c_SUB_TM_TRANSACTION_COUNTER_WIDTH  : natural := 32;
+  -- UART FLAGS field width. Keep nibble-aligned like the manager OBS report.
+  constant c_SUB_TM_UART_FLAGS_WIDTH           : natural := 52;
+  constant c_ENABLE_SUB_OBS_START_GO_CTRL_TMR  : boolean := true;
+  constant c_ENABLE_SUB_OBS_UART_COMMAND_CTRL_TMR    : boolean := true;
+  constant c_ENABLE_SUB_OBS_UART_ENCODE_CRITICAL_TMR : boolean := true;
+  constant c_ENABLE_SUB_OBS_UART_TM_COUNT_HAMMING : boolean := true;
+  constant c_ENABLE_SUB_OBS_UART_FLAGS_SEEN_HAMMING : boolean := true;
+  constant c_ENABLE_SUB_OBS_UART_EVENT_FLAGS_HAMMING : boolean := true;
+  constant c_ENABLE_SUB_OBS_UART_REPORT_FLAGS_HAMMING : boolean := true;
+  constant c_ENABLE_SUB_OBS_UART_HAMMING_DOUBLE_DETECT : boolean := true;
+  constant c_ENABLE_SUB_OBS_UART_TM_COUNT_HAMMING_INJECT_ERROR : boolean := false; -- Fault INJECTION
+  constant c_ENABLE_SUB_OBS_UART_FLAGS_SEEN_HAMMING_INJECT_ERROR : boolean := false; -- Fault INJECTION
+  constant c_ENABLE_SUB_OBS_UART_EVENT_FLAGS_HAMMING_INJECT_ERROR : boolean := false; -- Fault INJECTION
+  constant c_ENABLE_SUB_OBS_UART_REPORT_FLAGS_HAMMING_INJECT_ERROR : boolean := false; -- Fault INJECTION
   constant c_ENABLE_SUB_LB_PAYLOAD_HAMMING : boolean := true;
   constant c_ENABLE_SUB_LB_RDATA_HAMMING   : boolean := true;
   constant c_ENABLE_SUB_LB_ID_STATE_HAMMING : boolean := true;

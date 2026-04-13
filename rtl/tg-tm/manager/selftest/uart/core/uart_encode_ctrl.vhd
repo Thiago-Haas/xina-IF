@@ -121,6 +121,7 @@ architecture rtl of selftest_obs_uart_encode_ctrl is
   constant C_ENC_SRC_NIBBLE_STOP     : natural := 20;
   constant C_ENC_DATA_NIBBLE_START   : natural := 19;
   constant C_ENC_DATA_NIBBLE_STOP    : natural := 0;
+  constant C_MANAGER_FLAGS_RESERVED_PAD : std_logic_vector(2 downto 0) := "000";
 
   constant C_LABEL_TM    : string := "TM=";
   constant C_LABEL_FLAGS : string := " FLAGS=";
@@ -285,8 +286,9 @@ begin
     OBS_UART_COMMAND_CTRL_TMR_ERROR_i or
     OBS_UART_ENCODE_CRITICAL_TMR_ERROR_i;
 
+  -- Upper FLAGS bits are reserved so the UART report remains nibble-aligned.
   event_flags_w <=
-    (39 downto 37 => "000") &
+    C_MANAGER_FLAGS_RESERVED_PAD &
     OBS_UART_ENCODE_CRITICAL_TMR_ERROR_i &
     OBS_UART_COMMAND_CTRL_TMR_ERROR_i &
     OBS_START_DONE_CTRL_TMR_ERROR_i &

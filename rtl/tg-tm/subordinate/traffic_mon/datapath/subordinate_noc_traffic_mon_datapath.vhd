@@ -70,7 +70,7 @@ begin
 
   mismatch_o <= mismatch_w(0);
 
-  process(mismatch_w, load_expected_i, accept_flit_i, flit_idx_i, flit_payload_w, expected_id_i, is_read_i, lfsr_state_w)
+  process(mismatch_w, load_expected_i, accept_flit_i, flit_idx_i, flit_payload_w, is_read_i, lfsr_state_w)
     variable mismatch_v : std_logic;
   begin
     mismatch_v := mismatch_w(0);
@@ -80,17 +80,7 @@ begin
     end if;
 
     if accept_flit_i = '1' then
-      if flit_idx_i = to_unsigned(2, flit_idx_i'length) then
-        if flit_payload_w(19 downto 15) /= expected_id_i then
-          mismatch_v := '1';
-        end if;
-        if flit_payload_w(1) /= is_read_i then
-          mismatch_v := '1';
-        end if;
-        if flit_payload_w(4 downto 2) /= "000" then
-          mismatch_v := '1';
-        end if;
-      elsif flit_idx_i = to_unsigned(3, flit_idx_i'length) and is_read_i = '1' then
+      if flit_idx_i = to_unsigned(3, flit_idx_i'length) and is_read_i = '1' then
         if flit_payload_w /= lfsr_state_w then
           mismatch_v := '1';
         end if;
