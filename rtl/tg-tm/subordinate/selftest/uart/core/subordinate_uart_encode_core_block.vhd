@@ -55,7 +55,6 @@ architecture rtl of subordinate_uart_encode_core_block is
   attribute KEEP_HIERARCHY : string;
   signal char_index_w : unsigned(5 downto 0);
   signal tm_done_rise_w : std_logic;
-  signal period_report_due_w : std_logic;
   signal period_report_consume_w : std_logic;
   signal new_event_w : std_logic;
   signal latch_event_flags_w : std_logic;
@@ -66,12 +65,12 @@ begin
   uart_parity_o <= '0';
   uart_rtscts_o <= '0';
 
-  gen_critical_plain : if not p_USE_UART_ENCODE_CRITICAL_TMR generate
-    attribute DONT_TOUCH of u_critical : label is "TRUE";
-    attribute syn_preserve of u_critical : label is true;
-    attribute KEEP_HIERARCHY of u_critical : label is "TRUE";
+  gen_ctrl_plain : if not p_USE_UART_ENCODE_CRITICAL_TMR generate
+    attribute DONT_TOUCH of u_ctrl : label is "TRUE";
+    attribute syn_preserve of u_ctrl : label is true;
+    attribute KEEP_HIERARCHY of u_ctrl : label is "TRUE";
   begin
-    u_critical: entity work.subordinate_uart_encode_critical
+    u_ctrl: entity work.subordinate_uart_encode_ctrl
       generic map(
         G_REPORT_PERIOD_PACKETS => G_REPORT_PERIOD_PACKETS
       )
@@ -79,16 +78,23 @@ begin
         ACLK => ACLK,
         ARESETn => ARESETn,
         tm_done_i => tm_done_i,
-        report_consume_i => period_report_consume_w,
+        new_event_i => new_event_w,
+        uart_tready_i => uart_tready_i,
+        uart_tdone_i => uart_tdone_i,
+        period_report_consume_o => period_report_consume_w,
+        latch_event_flags_o => latch_event_flags_w,
+        load_report_o => load_report_w,
+        select_event_flags_o => select_event_flags_w,
         tm_done_rise_o => tm_done_rise_w,
-        period_report_due_o => period_report_due_w
+        char_index_o => char_index_w,
+        uart_tstart_o => uart_tstart_o
       );
     OBS_SUB_UART_ENCODE_CRITICAL_TMR_ERROR_o <= '0';
   end generate;
 
-  gen_critical_tmr : if p_USE_UART_ENCODE_CRITICAL_TMR generate
+  gen_ctrl_tmr : if p_USE_UART_ENCODE_CRITICAL_TMR generate
   begin
-    u_critical_tmr: entity work.subordinate_uart_encode_critical_tmr
+    u_ctrl_tmr: entity work.subordinate_uart_encode_ctrl_tmr
       generic map(
         G_REPORT_PERIOD_PACKETS => G_REPORT_PERIOD_PACKETS
       )
@@ -96,30 +102,20 @@ begin
         ACLK => ACLK,
         ARESETn => ARESETn,
         tm_done_i => tm_done_i,
-        report_consume_i => period_report_consume_w,
+        new_event_i => new_event_w,
+        uart_tready_i => uart_tready_i,
+        uart_tdone_i => uart_tdone_i,
+        period_report_consume_o => period_report_consume_w,
+        latch_event_flags_o => latch_event_flags_w,
+        load_report_o => load_report_w,
+        select_event_flags_o => select_event_flags_w,
         tm_done_rise_o => tm_done_rise_w,
-        period_report_due_o => period_report_due_w,
+        char_index_o => char_index_w,
+        uart_tstart_o => uart_tstart_o,
         correct_enable_i => '1',
         error_o => OBS_SUB_UART_ENCODE_CRITICAL_TMR_ERROR_o
       );
   end generate;
-
-  u_control: entity work.subordinate_uart_encode_ctrl
-    port map(
-      ACLK => ACLK,
-      ARESETn => ARESETn,
-      tm_done_rise_i => tm_done_rise_w,
-      period_report_due_i => period_report_due_w,
-      new_event_i => new_event_w,
-      uart_tready_i => uart_tready_i,
-      uart_tdone_i => uart_tdone_i,
-      period_report_consume_o => period_report_consume_w,
-      latch_event_flags_o => latch_event_flags_w,
-      load_report_o => load_report_w,
-      select_event_flags_o => select_event_flags_w,
-      char_index_o => char_index_w,
-      uart_tstart_o => uart_tstart_o
-    );
 
   u_datapath: entity work.subordinate_uart_encode_datapath
     port map(
