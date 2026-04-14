@@ -100,6 +100,9 @@ entity subordinate_tg_tm_lb_system_top is
 end entity;
 
 architecture rtl of subordinate_tg_tm_lb_system_top is
+  signal tg_done_w : std_logic;
+  signal tm_done_w : std_logic;
+
   -- NoC request stream into subordinate NI.
   signal req_data : std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
   signal req_val  : std_logic;
@@ -145,7 +148,7 @@ architecture rtl of subordinate_tg_tm_lb_system_top is
   signal rresp  : std_logic_vector(c_AXI_RESP_WIDTH - 1 downto 0);
 
 begin
-  u_subordinate_noc_loopback: entity work.subordinate_noc_loopback
+  u_subordinate_noc_tg: entity work.subordinate_noc_traffic_gen_top
     port map(
       ACLK    => ACLK,
       ARESETn => ARESETn,
@@ -154,14 +157,28 @@ begin
       id_i => id_i,
       address_i => address_i,
       seed_i => seed_i,
-      done_o => done_o,
-      mismatch_o => mismatch_o,
+      done_o => tg_done_w,
+      l_out_data_o => req_data,
+      l_out_val_o  => req_val,
+      l_out_ack_i  => req_ack,
       OBS_SUB_TG_TMR_CTRL_CORRECT_ERROR_i => OBS_SUB_TG_TMR_CTRL_CORRECT_ERROR_i,
       OBS_SUB_TG_TMR_CTRL_ERROR_o         => OBS_SUB_TG_TMR_CTRL_ERROR_o,
       OBS_SUB_TG_HAM_LFSR_CORRECT_ERROR_i => OBS_SUB_TG_HAM_LFSR_CORRECT_ERROR_i,
       OBS_SUB_TG_HAM_LFSR_SINGLE_ERR_o    => OBS_SUB_TG_HAM_LFSR_SINGLE_ERR_o,
       OBS_SUB_TG_HAM_LFSR_DOUBLE_ERR_o    => OBS_SUB_TG_HAM_LFSR_DOUBLE_ERR_o,
-      OBS_SUB_TG_HAM_LFSR_ENC_DATA_o      => OBS_SUB_TG_HAM_LFSR_ENC_DATA_o,
+      OBS_SUB_TG_HAM_LFSR_ENC_DATA_o      => OBS_SUB_TG_HAM_LFSR_ENC_DATA_o
+    );
+
+  u_subordinate_noc_tm: entity work.subordinate_noc_traffic_mon_top
+    port map(
+      ACLK    => ACLK,
+      ARESETn => ARESETn,
+      start_i => start_i,
+      is_read_i => is_read_i,
+      seed_i => seed_i,
+      expected_id_i => id_i,
+      done_o => tm_done_w,
+      mismatch_o => mismatch_o,
       OBS_SUB_TM_TMR_CTRL_CORRECT_ERROR_i => OBS_SUB_TM_TMR_CTRL_CORRECT_ERROR_i,
       OBS_SUB_TM_TMR_CTRL_ERROR_o         => OBS_SUB_TM_TMR_CTRL_ERROR_o,
       OBS_SUB_TM_HAM_LFSR_CORRECT_ERROR_i => OBS_SUB_TM_HAM_LFSR_CORRECT_ERROR_i,
@@ -173,15 +190,13 @@ begin
       OBS_SUB_TM_HAM_COUNTER_DOUBLE_ERR_o    => OBS_SUB_TM_HAM_COUNTER_DOUBLE_ERR_o,
       OBS_SUB_TM_HAM_COUNTER_ENC_DATA_o      => OBS_SUB_TM_HAM_COUNTER_ENC_DATA_o,
       TM_TRANSACTION_COUNT_o                 => TM_TRANSACTION_COUNT_o,
-      OBS_SUB_NOC_LB_TMR_DONE_CTRL_CORRECT_ERROR_i => OBS_SUB_NOC_LB_TMR_DONE_CTRL_CORRECT_ERROR_i,
-      OBS_SUB_NOC_LB_TMR_DONE_CTRL_ERROR_o         => OBS_SUB_NOC_LB_TMR_DONE_CTRL_ERROR_o,
-      noc_req_data_o => req_data,
-      noc_req_val_o  => req_val,
-      noc_req_ack_i  => req_ack,
-      noc_resp_data_i => resp_data,
-      noc_resp_val_i  => resp_val,
-      noc_resp_ack_o  => resp_ack
+      l_in_data_i => resp_data,
+      l_in_val_i  => resp_val,
+      l_in_ack_o  => resp_ack
     );
+
+  done_o <= tg_done_w and tm_done_w;
+  OBS_SUB_NOC_LB_TMR_DONE_CTRL_ERROR_o <= '0';
 
   u_ni_subordinate_top: entity work.ni_subordinate_top
     port map(

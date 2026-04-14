@@ -86,8 +86,12 @@ begin
             end if;
 
           when C_ST_DONE =>
-            if start_i = '0' then
-              state_r <= C_ST_IDLE;
+            if start_i = '1' then
+              is_read_r <= is_read_i;
+              flit_idx_r <= (others => '0');
+              step_lfsr_r <= not is_read_i;
+              lfsr_seeded_r <= '0';
+              state_r <= C_ST_WAIT_ACK;
             end if;
 
           when others =>

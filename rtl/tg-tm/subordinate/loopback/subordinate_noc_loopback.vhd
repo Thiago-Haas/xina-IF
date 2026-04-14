@@ -120,15 +120,6 @@ begin
       TM_TRANSACTION_COUNT_o                 => TM_TRANSACTION_COUNT_o
     );
 
-  u_done_control: entity work.subordinate_noc_loopback_done_control_tmr
-    port map(
-      ACLK    => ACLK,
-      ARESETn => ARESETn,
-      start_i    => start_i,
-      gen_done_i => gen_done_w,
-      mon_done_i => mon_done_w,
-      done_o     => done_o,
-      correct_enable_i => OBS_SUB_NOC_LB_TMR_DONE_CTRL_CORRECT_ERROR_i,
-      error_o          => OBS_SUB_NOC_LB_TMR_DONE_CTRL_ERROR_o
-    );
+  done_o <= gen_done_w and mon_done_w;
+  OBS_SUB_NOC_LB_TMR_DONE_CTRL_ERROR_o <= '0';
 end architecture;
