@@ -21,6 +21,8 @@ entity selftest_uart_command_control_tmr is
 end entity;
 
 architecture rtl of selftest_uart_command_control_tmr is
+  constant C_VOTER_WIDTH : positive := 3;
+
   attribute DONT_TOUCH : string;
   attribute syn_preserve : boolean;
   attribute KEEP_HIERARCHY : string;
@@ -30,24 +32,11 @@ architecture rtl of selftest_uart_command_control_tmr is
   signal run_enable_w     : tmr_sl_t;
   signal reset_pulse_w    : tmr_sl_t;
   signal command_enable_w : tmr_sl_t;
-
-  signal corr_run_enable_w     : std_logic;
-  signal corr_reset_pulse_w    : std_logic;
-  signal corr_command_enable_w : std_logic;
-
-  signal err_run_enable_w     : std_logic;
-  signal err_reset_pulse_w    : std_logic;
-  signal err_command_enable_w : std_logic;
-
-  function maj3(a, b, c : std_logic) return std_logic is
-  begin
-    return (a and b) or (a and c) or (b and c);
-  end function;
-
-  function dis3(a, b, c : std_logic) return std_logic is
-  begin
-    return (a xor b) or (a xor c) or (b xor c);
-  end function;
+  signal voter_a_w        : std_logic_vector(C_VOTER_WIDTH - 1 downto 0);
+  signal voter_b_w        : std_logic_vector(C_VOTER_WIDTH - 1 downto 0);
+  signal voter_c_w        : std_logic_vector(C_VOTER_WIDTH - 1 downto 0);
+  signal corrected_w      : std_logic_vector(C_VOTER_WIDTH - 1 downto 0);
+  signal error_bits_w     : std_logic_vector(C_VOTER_WIDTH - 1 downto 0);
 begin
   gen_ctrl : for i in 0 to 2 generate
     attribute DONT_TOUCH of u_selftest_uart_command_control : label is "TRUE";
@@ -67,17 +56,25 @@ begin
       );
   end generate;
 
-  corr_run_enable_w     <= maj3(run_enable_w(2), run_enable_w(1), run_enable_w(0));
-  corr_reset_pulse_w    <= maj3(reset_pulse_w(2), reset_pulse_w(1), reset_pulse_w(0));
-  corr_command_enable_w <= maj3(command_enable_w(2), command_enable_w(1), command_enable_w(0));
+  voter_a_w <= command_enable_w(0) & reset_pulse_w(0) & run_enable_w(0);
+  voter_b_w <= command_enable_w(1) & reset_pulse_w(1) & run_enable_w(1);
+  voter_c_w <= command_enable_w(2) & reset_pulse_w(2) & run_enable_w(2);
 
-  err_run_enable_w     <= dis3(run_enable_w(2), run_enable_w(1), run_enable_w(0));
-  err_reset_pulse_w    <= dis3(reset_pulse_w(2), reset_pulse_w(1), reset_pulse_w(0));
-  err_command_enable_w <= dis3(command_enable_w(2), command_enable_w(1), command_enable_w(0));
+  u_voter: entity work.tmr_voter_block
+    generic map(
+      p_WIDTH => C_VOTER_WIDTH
+    )
+    port map(
+      A_i => voter_a_w,
+      B_i => voter_b_w,
+      C_i => voter_c_w,
+      correct_enable_i => correct_enable_i,
+      corrected_o => corrected_w,
+      error_bits_o => error_bits_w,
+      error_o => error_o
+    );
 
-  error_o <= err_run_enable_w or err_reset_pulse_w or err_command_enable_w;
-
-  run_enable_o     <= corr_run_enable_w when correct_enable_i = '1' else run_enable_w(0);
-  reset_pulse_o    <= corr_reset_pulse_w when correct_enable_i = '1' else reset_pulse_w(0);
-  command_enable_o <= corr_command_enable_w when correct_enable_i = '1' else command_enable_w(0);
+  run_enable_o     <= corrected_w(0);
+  reset_pulse_o    <= corrected_w(1);
+  command_enable_o <= corrected_w(2);
 end architecture;

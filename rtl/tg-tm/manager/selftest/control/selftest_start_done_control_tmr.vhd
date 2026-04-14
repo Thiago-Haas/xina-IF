@@ -26,34 +26,25 @@ entity selftest_start_done_control_tmr is
 end entity;
 
 architecture rtl of selftest_start_done_control_tmr is
+  constant C_VOTER_WIDTH : positive := 2;
+
   attribute DONT_TOUCH : string;
-    attribute syn_preserve : boolean;
+  attribute syn_preserve : boolean;
   attribute KEEP_HIERARCHY : string;
 
   type tmr_sl_t is array (2 downto 0) of std_logic;
 
   signal tg_start_w : tmr_sl_t;
   signal tm_start_w : tmr_sl_t;
-
-  signal corr_tg_start_w : std_logic;
-  signal corr_tm_start_w : std_logic;
-
-  signal err_tg_start_w : std_logic;
-  signal err_tm_start_w : std_logic;
-
-  function maj3(a, b, c : std_logic) return std_logic is
-  begin
-    return (a and b) or (a and c) or (b and c);
-  end function;
-
-  function dis3(a, b, c : std_logic) return std_logic is
-  begin
-    return (a xor b) or (a xor c) or (b xor c);
-  end function;
+  signal voter_a_w    : std_logic_vector(C_VOTER_WIDTH - 1 downto 0);
+  signal voter_b_w    : std_logic_vector(C_VOTER_WIDTH - 1 downto 0);
+  signal voter_c_w    : std_logic_vector(C_VOTER_WIDTH - 1 downto 0);
+  signal corrected_w  : std_logic_vector(C_VOTER_WIDTH - 1 downto 0);
+  signal error_bits_w : std_logic_vector(C_VOTER_WIDTH - 1 downto 0);
 begin
   gen_ctrl : for i in 0 to 2 generate
     attribute DONT_TOUCH of u_selftest_start_done_control : label is "TRUE";
-        attribute syn_preserve of u_selftest_start_done_control : label is true;
+    attribute syn_preserve of u_selftest_start_done_control : label is true;
     attribute KEEP_HIERARCHY of u_selftest_start_done_control : label is "TRUE";
   begin
     u_selftest_start_done_control: entity work.selftest_start_done_control
@@ -69,14 +60,24 @@ begin
       );
   end generate;
 
-  corr_tg_start_w <= maj3(tg_start_w(2), tg_start_w(1), tg_start_w(0));
-  corr_tm_start_w <= maj3(tm_start_w(2), tm_start_w(1), tm_start_w(0));
+  voter_a_w <= tm_start_w(0) & tg_start_w(0);
+  voter_b_w <= tm_start_w(1) & tg_start_w(1);
+  voter_c_w <= tm_start_w(2) & tg_start_w(2);
 
-  err_tg_start_w <= dis3(tg_start_w(2), tg_start_w(1), tg_start_w(0));
-  err_tm_start_w <= dis3(tm_start_w(2), tm_start_w(1), tm_start_w(0));
+  u_voter: entity work.tmr_voter_block
+    generic map(
+      p_WIDTH => C_VOTER_WIDTH
+    )
+    port map(
+      A_i => voter_a_w,
+      B_i => voter_b_w,
+      C_i => voter_c_w,
+      correct_enable_i => correct_enable_i,
+      corrected_o => corrected_w,
+      error_bits_o => error_bits_w,
+      error_o => error_o
+    );
 
-  error_o <= err_tg_start_w or err_tm_start_w;
-
-  tg_start_o <= corr_tg_start_w when correct_enable_i = '1' else tg_start_w(0);
-  tm_start_o <= corr_tm_start_w when correct_enable_i = '1' else tm_start_w(0);
+  tg_start_o <= corrected_w(0);
+  tm_start_o <= corrected_w(1);
 end architecture;

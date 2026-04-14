@@ -25,6 +25,8 @@ entity selftest_obs_uart_encode_critical_tmr is
 end entity;
 
 architecture rtl of selftest_obs_uart_encode_critical_tmr is
+  constant C_VOTER_WIDTH : positive := 2;
+
   attribute DONT_TOUCH : string;
   attribute syn_preserve : boolean;
   attribute KEEP_HIERARCHY : string;
@@ -33,22 +35,11 @@ architecture rtl of selftest_obs_uart_encode_critical_tmr is
 
   signal tm_done_rise_w      : tmr_sl_t;
   signal period_report_due_w : tmr_sl_t;
-
-  signal corr_tm_done_rise_w      : std_logic;
-  signal corr_period_report_due_w : std_logic;
-
-  signal err_tm_done_rise_w      : std_logic;
-  signal err_period_report_due_w : std_logic;
-
-  function maj3(a, b, c : std_logic) return std_logic is
-  begin
-    return (a and b) or (a and c) or (b and c);
-  end function;
-
-  function dis3(a, b, c : std_logic) return std_logic is
-  begin
-    return (a xor b) or (a xor c) or (b xor c);
-  end function;
+  signal voter_a_w           : std_logic_vector(C_VOTER_WIDTH - 1 downto 0);
+  signal voter_b_w           : std_logic_vector(C_VOTER_WIDTH - 1 downto 0);
+  signal voter_c_w           : std_logic_vector(C_VOTER_WIDTH - 1 downto 0);
+  signal corrected_w         : std_logic_vector(C_VOTER_WIDTH - 1 downto 0);
+  signal error_bits_w        : std_logic_vector(C_VOTER_WIDTH - 1 downto 0);
 begin
   gen_critical : for i in 0 to 2 generate
     attribute DONT_TOUCH of u_uart_encode_critical : label is "TRUE";
@@ -69,14 +60,24 @@ begin
       );
   end generate;
 
-  corr_tm_done_rise_w      <= maj3(tm_done_rise_w(2), tm_done_rise_w(1), tm_done_rise_w(0));
-  corr_period_report_due_w <= maj3(period_report_due_w(2), period_report_due_w(1), period_report_due_w(0));
+  voter_a_w <= period_report_due_w(0) & tm_done_rise_w(0);
+  voter_b_w <= period_report_due_w(1) & tm_done_rise_w(1);
+  voter_c_w <= period_report_due_w(2) & tm_done_rise_w(2);
 
-  err_tm_done_rise_w      <= dis3(tm_done_rise_w(2), tm_done_rise_w(1), tm_done_rise_w(0));
-  err_period_report_due_w <= dis3(period_report_due_w(2), period_report_due_w(1), period_report_due_w(0));
+  u_voter: entity work.tmr_voter_block
+    generic map(
+      p_WIDTH => C_VOTER_WIDTH
+    )
+    port map(
+      A_i => voter_a_w,
+      B_i => voter_b_w,
+      C_i => voter_c_w,
+      correct_enable_i => correct_enable_i,
+      corrected_o => corrected_w,
+      error_bits_o => error_bits_w,
+      error_o => error_o
+    );
 
-  error_o <= err_tm_done_rise_w or err_period_report_due_w;
-
-  tm_done_rise_o      <= corr_tm_done_rise_w when correct_enable_i = '1' else tm_done_rise_w(0);
-  period_report_due_o <= corr_period_report_due_w when correct_enable_i = '1' else period_report_due_w(0);
+  tm_done_rise_o      <= corrected_w(0);
+  period_report_due_o <= corrected_w(1);
 end architecture;

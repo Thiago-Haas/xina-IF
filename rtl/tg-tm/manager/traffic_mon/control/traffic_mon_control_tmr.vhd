@@ -39,44 +39,27 @@ end entity;
 
 architecture rtl of traffic_mon_control_tmr is
   attribute DONT_TOUCH : string;
-    attribute syn_preserve : boolean;
+  attribute syn_preserve : boolean;
   attribute KEEP_HIERARCHY : string;
 
-  type tmr_sl_t is array (2 downto 0) of std_logic;
+  constant C_VOTE_WIDTH : positive := 5;
 
+  type tmr_sl_t is array (2 downto 0) of std_logic;
+  type t_bundle_array is array (2 downto 0) of std_logic_vector(C_VOTE_WIDTH - 1 downto 0);
+
+  signal bundle_w            : t_bundle_array;
+  signal voted_w             : std_logic_vector(C_VOTE_WIDTH - 1 downto 0);
+  signal error_bits_w        : std_logic_vector(C_VOTE_WIDTH - 1 downto 0);
   signal done_w            : tmr_sl_t;
   signal arvalid_w         : tmr_sl_t;
   signal rready_w          : tmr_sl_t;
   signal rbeat_hs_comb_w   : tmr_sl_t;
   signal seed_pulse_w      : tmr_sl_t;
-
-  signal corr_done_w            : std_logic;
-  signal corr_arvalid_w         : std_logic;
-  signal corr_rready_w          : std_logic;
-  signal corr_rbeat_hs_comb_w   : std_logic;
-  signal corr_seed_pulse_w      : std_logic;
-
-  signal err_done_w            : std_logic;
-  signal err_arvalid_w         : std_logic;
-  signal err_rready_w          : std_logic;
-  signal err_rbeat_hs_comb_w   : std_logic;
-  signal err_seed_pulse_w      : std_logic;
-
-  function maj3(a, b, c : std_logic) return std_logic is
-  begin
-    return (a and b) or (a and c) or (b and c);
-  end function;
-
-  function dis3(a, b, c : std_logic) return std_logic is
-  begin
-    return (a xor b) or (a xor c) or (b xor c);
-  end function;
-
 begin
 
   gen_ctrl : for i in 0 to 2 generate
     attribute DONT_TOUCH of u_traffic_mon_control : label is "TRUE";
-        attribute syn_preserve of u_traffic_mon_control : label is true;
+    attribute syn_preserve of u_traffic_mon_control : label is true;
     attribute KEEP_HIERARCHY of u_traffic_mon_control : label is "TRUE";
   begin
     u_traffic_mon_control: entity work.traffic_mon_control
@@ -97,29 +80,28 @@ begin
         rbeat_hs_comb_o   => rbeat_hs_comb_w(i),
         seed_pulse_o      => seed_pulse_w(i)
       );
+
+    bundle_w(i) <= done_w(i) & arvalid_w(i) & rready_w(i) &
+                   rbeat_hs_comb_w(i) & seed_pulse_w(i);
   end generate;
 
-  -- majority vote
-  corr_done_w            <= maj3(done_w(2),            done_w(1),            done_w(0));
-  corr_arvalid_w         <= maj3(arvalid_w(2),         arvalid_w(1),         arvalid_w(0));
-  corr_rready_w          <= maj3(rready_w(2),          rready_w(1),          rready_w(0));
-  corr_rbeat_hs_comb_w   <= maj3(rbeat_hs_comb_w(2),   rbeat_hs_comb_w(1),   rbeat_hs_comb_w(0));
-  corr_seed_pulse_w      <= maj3(seed_pulse_w(2),      seed_pulse_w(1),      seed_pulse_w(0));
+  u_voter: entity work.tmr_voter_block
+    generic map(
+      p_WIDTH => C_VOTE_WIDTH
+    )
+    port map(
+      A_i => bundle_w(0),
+      B_i => bundle_w(1),
+      C_i => bundle_w(2),
+      correct_enable_i => correct_enable_i,
+      corrected_o => voted_w,
+      error_bits_o => error_bits_w,
+      error_o => error_o
+    );
 
-  -- disagreement detect
-  err_done_w            <= dis3(done_w(2),            done_w(1),            done_w(0));
-  err_arvalid_w         <= dis3(arvalid_w(2),         arvalid_w(1),         arvalid_w(0));
-  err_rready_w          <= dis3(rready_w(2),          rready_w(1),          rready_w(0));
-  err_rbeat_hs_comb_w   <= dis3(rbeat_hs_comb_w(2),   rbeat_hs_comb_w(1),   rbeat_hs_comb_w(0));
-  err_seed_pulse_w      <= dis3(seed_pulse_w(2),      seed_pulse_w(1),      seed_pulse_w(0));
-
-  error_o <= err_done_w or err_arvalid_w or err_rready_w or err_rbeat_hs_comb_w or err_seed_pulse_w;
-
-  -- output selection
-  done_o            <= corr_done_w            when correct_enable_i = '1' else done_w(0);
-  ARVALID           <= corr_arvalid_w         when correct_enable_i = '1' else arvalid_w(0);
-  RREADY            <= corr_rready_w          when correct_enable_i = '1' else rready_w(0);
-  rbeat_hs_comb_o   <= corr_rbeat_hs_comb_w   when correct_enable_i = '1' else rbeat_hs_comb_w(0);
-  seed_pulse_o      <= corr_seed_pulse_w      when correct_enable_i = '1' else seed_pulse_w(0);
-
+  done_o          <= voted_w(4);
+  ARVALID         <= voted_w(3);
+  RREADY          <= voted_w(2);
+  rbeat_hs_comb_o <= voted_w(1);
+  seed_pulse_o    <= voted_w(0);
 end architecture;

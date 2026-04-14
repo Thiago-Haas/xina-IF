@@ -53,86 +53,47 @@ entity selftest_uart_command_block is
 end entity;
 
 architecture rtl of selftest_uart_command_block is
-  attribute DONT_TOUCH : string;
-  attribute syn_preserve : boolean;
-  attribute KEEP_HIERARCHY : string;
-  signal command_enable_w : std_logic;
-  signal uart_command_ctrl_tmr_error_w : std_logic;
-  signal uart_command_ctrl_tmr_correct_enable_w : std_logic;
-  signal uart_command_ctrl_tmr_correct_enable_gate_w : std_logic;
+  constant C_CORRECTION_WIDTH : natural := 22;
+
+  signal correction_vector_w : std_logic_vector(C_CORRECTION_WIDTH - 1 downto 0);
 begin
-  -- Keep the UART command TMR shell protected independently from the
-  -- user-controlled OBS enable fanout. Otherwise a 'D' command disables the
-  -- very block that must later decode 'E' to re-enable protection.
-  uart_command_ctrl_tmr_correct_enable_gate_w <= '1';
+  u_command_generic: entity work.uart_obs_command_block_generic
+    generic map(
+      G_CORRECTION_WIDTH => C_CORRECTION_WIDTH,
+      p_USE_UART_COMMAND_CTRL_TMR => p_USE_UART_COMMAND_CTRL_TMR
+    )
+    port map(
+      ACLK => ACLK,
+      ARESETn => ARESETn,
+      uart_rdone_i => uart_rdone_i,
+      uart_rdata_i => uart_rdata_i,
+      uart_rerr_i => uart_rerr_i,
+      experiment_run_enable_o => experiment_run_enable_o,
+      experiment_reset_pulse_o => experiment_reset_pulse_o,
+      correction_vector_o => correction_vector_w,
+      uart_command_ctrl_tmr_error_o => OBS_UART_COMMAND_CTRL_TMR_ERROR_o
+    );
 
-  b_uart_command_control_plain : if not p_USE_UART_COMMAND_CTRL_TMR generate
-    attribute DONT_TOUCH of u_uart_command_control : label is "TRUE";
-    attribute syn_preserve of u_uart_command_control : label is true;
-    attribute KEEP_HIERARCHY of u_uart_command_control : label is "TRUE";
-  begin
-    u_uart_command_control: entity work.selftest_uart_command_control
-      port map(
-        ACLK             => ACLK,
-        ARESETn          => ARESETn,
-        uart_rdone_i     => uart_rdone_i,
-        uart_rdata_i     => uart_rdata_i,
-        uart_rerr_i      => uart_rerr_i,
-        run_enable_o     => experiment_run_enable_o,
-        reset_pulse_o    => experiment_reset_pulse_o,
-        command_enable_o => command_enable_w
-      );
-    uart_command_ctrl_tmr_error_w <= '0';
-    uart_command_ctrl_tmr_correct_enable_w <= '0';
-  end generate;
-
-  b_uart_command_control_tmr : if p_USE_UART_COMMAND_CTRL_TMR generate
-  begin
-    u_uart_command_control_tmr: entity work.selftest_uart_command_control_tmr
-      port map(
-        ACLK             => ACLK,
-        ARESETn          => ARESETn,
-        uart_rdone_i     => uart_rdone_i,
-        uart_rdata_i     => uart_rdata_i,
-        uart_rerr_i      => uart_rerr_i,
-        run_enable_o     => experiment_run_enable_o,
-        reset_pulse_o    => experiment_reset_pulse_o,
-        command_enable_o => command_enable_w,
-        correct_enable_i => uart_command_ctrl_tmr_correct_enable_gate_w,
-        error_o          => uart_command_ctrl_tmr_error_w
-      );
-  end generate;
-
-  OBS_UART_COMMAND_CTRL_TMR_ERROR_o <= uart_command_ctrl_tmr_error_w;
-
-  b_uart_command_datapath: block
-  begin
-    u_uart_command_datapath: entity work.selftest_uart_command_datapath
-      port map(
-        command_enable_i => command_enable_w,
-        OBS_TM_HAM_BUFFER_CORRECT_ERROR_o => OBS_TM_HAM_BUFFER_CORRECT_ERROR_o,
-        OBS_TM_TMR_CTRL_CORRECT_ERROR_o   => OBS_TM_TMR_CTRL_CORRECT_ERROR_o,
-        OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_o => OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_o,
-        OBS_LB_HAM_BUFFER_CORRECT_ERROR_o => OBS_LB_HAM_BUFFER_CORRECT_ERROR_o,
-        OBS_LB_TMR_CTRL_CORRECT_ERROR_o   => OBS_LB_TMR_CTRL_CORRECT_ERROR_o,
-        OBS_TG_HAM_BUFFER_CORRECT_ERROR_o => OBS_TG_HAM_BUFFER_CORRECT_ERROR_o,
-        OBS_TG_TMR_CTRL_CORRECT_ERROR_o   => OBS_TG_TMR_CTRL_CORRECT_ERROR_o,
-        OBS_FE_INJ_META_HDR_CORRECT_ERROR_o => OBS_FE_INJ_META_HDR_CORRECT_ERROR_o,
-        OBS_FE_INJ_ADDR_CORRECT_ERROR_o     => OBS_FE_INJ_ADDR_CORRECT_ERROR_o,
-        OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR_o => OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR_o,
-        OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_o => OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_o,
-        OBS_BE_INJ_HAM_INTEGRITY_CORRECT_ERROR_o => OBS_BE_INJ_HAM_INTEGRITY_CORRECT_ERROR_o,
-        OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR_o => OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR_o,
-        OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR_o => OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR_o,
-        OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR_o => OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR_o,
-        OBS_BE_RX_TMR_DEPKTZ_CTRL_CORRECT_ERROR_o => OBS_BE_RX_TMR_DEPKTZ_CTRL_CORRECT_ERROR_o,
-        OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_o => OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_o,
-        OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR_o => OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR_o,
-        OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR_o => OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR_o,
-        OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR_o => OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR_o,
-        OBS_START_DONE_CTRL_TMR_CORRECT_ERROR_o => OBS_START_DONE_CTRL_TMR_CORRECT_ERROR_o,
-        OBS_UART_COMMAND_CTRL_TMR_CORRECT_ERROR_o => uart_command_ctrl_tmr_correct_enable_w,
-        OBS_UART_ENCODE_CRITICAL_TMR_CORRECT_ERROR_o => OBS_UART_ENCODE_CRITICAL_TMR_CORRECT_ERROR_o
-      );
-  end block;
+  OBS_TM_HAM_BUFFER_CORRECT_ERROR_o <= correction_vector_w(21);
+  OBS_TM_TMR_CTRL_CORRECT_ERROR_o <= correction_vector_w(20);
+  OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_o <= correction_vector_w(19);
+  OBS_LB_HAM_BUFFER_CORRECT_ERROR_o <= correction_vector_w(18);
+  OBS_LB_TMR_CTRL_CORRECT_ERROR_o <= correction_vector_w(17);
+  OBS_TG_HAM_BUFFER_CORRECT_ERROR_o <= correction_vector_w(16);
+  OBS_TG_TMR_CTRL_CORRECT_ERROR_o <= correction_vector_w(15);
+  OBS_FE_INJ_META_HDR_CORRECT_ERROR_o <= correction_vector_w(14);
+  OBS_FE_INJ_ADDR_CORRECT_ERROR_o <= correction_vector_w(13);
+  OBS_BE_INJ_HAM_BUFFER_CORRECT_ERROR_o <= correction_vector_w(12);
+  OBS_BE_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_o <= correction_vector_w(11);
+  OBS_BE_INJ_HAM_INTEGRITY_CORRECT_ERROR_o <= correction_vector_w(10);
+  OBS_BE_INJ_TMR_FLOW_CTRL_CORRECT_ERROR_o <= correction_vector_w(9);
+  OBS_BE_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR_o <= correction_vector_w(8);
+  OBS_BE_RX_HAM_BUFFER_CORRECT_ERROR_o <= correction_vector_w(7);
+  OBS_BE_RX_TMR_DEPKTZ_CTRL_CORRECT_ERROR_o <= correction_vector_w(6);
+  OBS_BE_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_o <= correction_vector_w(5);
+  OBS_BE_RX_HAM_INTERFACE_HDR_CORRECT_ERROR_o <= correction_vector_w(4);
+  OBS_BE_RX_HAM_INTEGRITY_CORRECT_ERROR_o <= correction_vector_w(3);
+  OBS_BE_RX_TMR_FLOW_CTRL_CORRECT_ERROR_o <= correction_vector_w(2);
+  OBS_START_DONE_CTRL_TMR_CORRECT_ERROR_o <= correction_vector_w(1);
+  OBS_UART_ENCODE_CRITICAL_TMR_CORRECT_ERROR_o <= correction_vector_w(0);
 end architecture;
