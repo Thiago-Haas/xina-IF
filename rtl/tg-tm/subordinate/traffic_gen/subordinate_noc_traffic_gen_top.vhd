@@ -28,6 +28,7 @@ entity subordinate_noc_traffic_gen_top is
     id_i       : in  std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
     address_i  : in  std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
     seed_i     : in  std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+    done_pulse_o : out std_logic;
     done_o     : out std_logic;
 
     l_out_data_o : out std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
@@ -55,6 +56,7 @@ begin
         ARESETn => ARESETn,
         start_i => start_i,
         is_read_i => is_read_i,
+        done_pulse_o => done_pulse_o,
         done_o => done_o,
         l_out_ack_i => l_out_ack_i,
         l_out_val_o => l_out_val_o,
@@ -73,6 +75,7 @@ begin
         ARESETn => ARESETn,
         start_i => start_i,
         is_read_i => is_read_i,
+        done_pulse_o => done_pulse_o,
         done_o => done_o,
         l_out_ack_i => l_out_ack_i,
         l_out_val_o => l_out_val_o,

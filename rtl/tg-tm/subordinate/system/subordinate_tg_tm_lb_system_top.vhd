@@ -18,8 +18,9 @@ entity subordinate_tg_tm_lb_system_top is
     address_i : in std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
     seed_i    : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
-    done_o     : out std_logic;
-    mismatch_o : out std_logic;
+    done_o         : out std_logic;
+    tm_done_pulse_o : out std_logic;
+    mismatch_o     : out std_logic;
     corrupt_packet_o : out std_logic;
 
     OBS_SUB_TG_TMR_CTRL_CORRECT_ERROR_i : in  std_logic := '1';
@@ -100,6 +101,8 @@ entity subordinate_tg_tm_lb_system_top is
 end entity;
 
 architecture rtl of subordinate_tg_tm_lb_system_top is
+  signal tg_done_pulse_w : std_logic;
+  signal tm_done_pulse_w : std_logic;
   signal tg_done_w : std_logic;
   signal tm_done_w : std_logic;
 
@@ -157,6 +160,7 @@ begin
       id_i => id_i,
       address_i => address_i,
       seed_i => seed_i,
+      done_pulse_o => tg_done_pulse_w,
       done_o => tg_done_w,
       l_out_data_o => req_data,
       l_out_val_o  => req_val,
@@ -177,6 +181,7 @@ begin
       is_read_i => is_read_i,
       seed_i => seed_i,
       expected_id_i => id_i,
+      done_pulse_o => tm_done_pulse_w,
       done_o => tm_done_w,
       mismatch_o => mismatch_o,
       OBS_SUB_TM_TMR_CTRL_CORRECT_ERROR_i => OBS_SUB_TM_TMR_CTRL_CORRECT_ERROR_i,
@@ -196,6 +201,7 @@ begin
     );
 
   done_o <= tg_done_w and tm_done_w;
+  tm_done_pulse_o <= tm_done_pulse_w;
   OBS_SUB_NOC_LB_TMR_DONE_CTRL_ERROR_o <= '0';
 
   u_ni_subordinate_top: entity work.ni_subordinate_top

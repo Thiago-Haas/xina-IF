@@ -10,6 +10,7 @@ entity subordinate_noc_traffic_mon_control is
 
     start_i   : in  std_logic;
     is_read_i : in  std_logic;
+    done_pulse_o : out std_logic;
     done_o    : out std_logic;
 
     l_in_val_i : in  std_logic;
@@ -37,6 +38,7 @@ architecture rtl of subordinate_noc_traffic_mon_control is
   signal step_lfsr_r     : std_logic := '0';
   signal lfsr_seeded_r   : std_logic := '0';
   signal accept_flit_r   : std_logic := '0';
+  signal done_pulse_r    : std_logic := '0';
 
   signal last_idx_w : unsigned(2 downto 0);
 begin
@@ -44,6 +46,7 @@ begin
                 to_unsigned(4, last_idx_w'length);
 
   l_in_ack_o <= '1' when state_r = C_ST_ACK else '0';
+  done_pulse_o <= done_pulse_r;
   done_o <= '1' when state_r = C_ST_DONE else '0';
   load_expected_o <= load_expected_r;
   step_lfsr_o <= step_lfsr_r;
@@ -58,6 +61,7 @@ begin
       load_expected_r <= '0';
       step_lfsr_r <= '0';
       accept_flit_r <= '0';
+      done_pulse_r <= '0';
 
       if ARESETn = '0' then
         state_r <= C_ST_IDLE;
@@ -90,6 +94,7 @@ begin
           when C_ST_WAIT_DROP =>
             if l_in_val_i = '0' then
               if flit_idx_r = last_idx_w then
+                done_pulse_r <= '1';
                 state_r <= C_ST_DONE;
               else
                 flit_idx_r <= flit_idx_r + 1;

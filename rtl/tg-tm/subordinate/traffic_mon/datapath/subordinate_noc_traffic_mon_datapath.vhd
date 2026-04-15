@@ -52,10 +52,19 @@ architecture rtl of subordinate_noc_traffic_mon_datapath is
   signal protected_state_enc_w  : std_logic_vector(c_AXI_DATA_WIDTH + 1 + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH + 1, p_USE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
   signal flit_payload_w : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+  signal payload_valid_w : std_logic;
 begin
-  flit_payload_w <= l_in_data_i(c_AXI_DATA_WIDTH - 1 downto 0);
   lfsr_state_w <= protected_state_w(c_AXI_DATA_WIDTH - 1 downto 0);
   mismatch_w(0) <= protected_state_w(c_AXI_DATA_WIDTH);
+
+  u_packet_deformatter: entity work.subordinate_noc_packet_deformatter
+    port map(
+      is_read_i => is_read_i,
+      flit_idx_i => flit_idx_i,
+      flit_i => l_in_data_i,
+      payload_data_o => flit_payload_w,
+      payload_valid_o => payload_valid_w
+    );
 
   lfsr_input_w <= seed_i when lfsr_seeded_i = '0' else lfsr_state_w;
 
@@ -80,7 +89,7 @@ begin
     end if;
 
     if accept_flit_i = '1' then
-      if flit_idx_i = to_unsigned(3, flit_idx_i'length) and is_read_i = '1' then
+      if payload_valid_w = '1' then
         if (flit_payload_w /= lfsr_state_w) and (flit_payload_w /= lfsr_next_w) then
           mismatch_v := '1';
         end if;

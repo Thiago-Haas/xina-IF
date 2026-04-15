@@ -10,6 +10,7 @@ entity subordinate_noc_traffic_gen_control is
 
     start_i   : in  std_logic;
     is_read_i : in  std_logic;
+    done_pulse_o : out std_logic;
     done_o    : out std_logic;
 
     l_out_ack_i : in  std_logic;
@@ -32,6 +33,7 @@ architecture rtl of subordinate_noc_traffic_gen_control is
   signal is_read_r  : std_logic := '0';
   signal step_lfsr_r    : std_logic := '0';
   signal lfsr_seeded_r  : std_logic := '0';
+  signal done_pulse_r   : std_logic := '0';
 
   signal last_idx_w : unsigned(2 downto 0);
 begin
@@ -39,6 +41,7 @@ begin
                 to_unsigned(5, last_idx_w'length);
 
   l_out_val_o <= '1' when state_r = C_ST_WAIT_ACK else '0';
+  done_pulse_o <= done_pulse_r;
   done_o <= '1' when state_r = C_ST_DONE else '0';
   step_lfsr_o <= step_lfsr_r;
   lfsr_seeded_o <= lfsr_seeded_r;
@@ -48,6 +51,7 @@ begin
   begin
     if rising_edge(ACLK) then
       step_lfsr_r <= '0';
+      done_pulse_r <= '0';
 
       if ARESETn = '0' then
         state_r <= C_ST_IDLE;
@@ -78,6 +82,7 @@ begin
           when C_ST_DROP_VAL =>
             if l_out_ack_i = '0' then
               if flit_idx_r = last_idx_w then
+                done_pulse_r <= '1';
                 state_r <= C_ST_DONE;
               else
                 flit_idx_r <= flit_idx_r + 1;

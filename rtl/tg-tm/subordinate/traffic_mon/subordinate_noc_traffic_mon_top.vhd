@@ -25,6 +25,7 @@ entity subordinate_noc_traffic_mon_top is
     is_read_i  : in  std_logic;
     expected_id_i : in std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
     seed_i        : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+    done_pulse_o : out std_logic;
     done_o     : out std_logic;
     mismatch_o : out std_logic;
 
@@ -61,6 +62,7 @@ begin
         ARESETn => ARESETn,
         start_i => start_i,
         is_read_i => is_read_i,
+        done_pulse_o => done_pulse_o,
         done_o => done_o,
         l_in_val_i => l_in_val_i,
         l_in_ack_o => l_in_ack_o,
@@ -82,6 +84,7 @@ begin
         ARESETn => ARESETn,
         start_i => start_i,
         is_read_i => is_read_i,
+        done_pulse_o => done_pulse_o,
         done_o => done_o,
         l_in_val_i => l_in_val_i,
         l_in_ack_o => l_in_ack_o,
@@ -130,7 +133,7 @@ begin
     port map(
       ACLK    => ACLK,
       ARESETn => ARESETn,
-      increment_en_i => done_o,
+      increment_en_i => done_pulse_o,
       OBS_SUB_TM_HAM_COUNTER_CORRECT_ERROR_i => OBS_SUB_TM_HAM_COUNTER_CORRECT_ERROR_i,
       TM_TRANSACTION_COUNT_o => TM_TRANSACTION_COUNT_o,
       OBS_SUB_TM_HAM_COUNTER_SINGLE_ERR_o => OBS_SUB_TM_HAM_COUNTER_SINGLE_ERR_o,

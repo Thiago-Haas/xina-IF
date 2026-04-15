@@ -9,6 +9,7 @@ entity subordinate_noc_traffic_gen_control_tmr is
 
     start_i   : in  std_logic;
     is_read_i : in  std_logic;
+    done_pulse_o : out std_logic;
     done_o    : out std_logic;
 
     l_out_ack_i : in  std_logic;
@@ -28,10 +29,11 @@ architecture rtl of subordinate_noc_traffic_gen_control_tmr is
   attribute syn_preserve  : boolean;
   attribute KEEP_HIERARCHY: string;
 
-  constant C_VOTE_WIDTH : positive := 7;
+  constant C_VOTE_WIDTH : positive := 8;
 
   type t_bundle_array is array (0 to 2) of std_logic_vector(C_VOTE_WIDTH - 1 downto 0);
 
+  signal done_pulse_w   : std_logic_vector(0 to 2);
   signal done_w         : std_logic_vector(0 to 2);
   signal l_out_val_w    : std_logic_vector(0 to 2);
   signal step_lfsr_w    : std_logic_vector(0 to 2);
@@ -56,6 +58,7 @@ begin
 
         start_i   => start_i,
         is_read_i => is_read_i,
+        done_pulse_o => done_pulse_w(i),
         done_o    => done_w(i),
 
         l_out_ack_i => l_out_ack_i,
@@ -66,7 +69,7 @@ begin
         flit_idx_o     => flit_idx_w(i)
       );
 
-    bundle_w(i) <= done_w(i) & l_out_val_w(i) &
+    bundle_w(i) <= done_pulse_w(i) & done_w(i) & l_out_val_w(i) &
                    step_lfsr_w(i) & lfsr_seeded_w(i) &
                    std_logic_vector(flit_idx_w(i));
   end generate;
@@ -85,9 +88,10 @@ begin
       error_o      => error_o
     );
 
+  done_pulse_o  <= voted_w(7);
   done_o        <= voted_w(6);
   l_out_val_o   <= voted_w(5);
   step_lfsr_o   <= voted_w(4);
   lfsr_seeded_o <= voted_w(3);
-  flit_idx_o  <= unsigned(voted_w(2 downto 0));
+  flit_idx_o    <= unsigned(voted_w(2 downto 0));
 end architecture;

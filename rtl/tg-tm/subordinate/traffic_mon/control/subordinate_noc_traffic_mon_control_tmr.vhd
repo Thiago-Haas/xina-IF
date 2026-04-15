@@ -9,6 +9,7 @@ entity subordinate_noc_traffic_mon_control_tmr is
 
     start_i   : in  std_logic;
     is_read_i : in  std_logic;
+    done_pulse_o : out std_logic;
     done_o    : out std_logic;
 
     l_in_val_i : in  std_logic;
@@ -31,10 +32,11 @@ architecture rtl of subordinate_noc_traffic_mon_control_tmr is
   attribute syn_preserve  : boolean;
   attribute KEEP_HIERARCHY: string;
 
-  constant C_VOTE_WIDTH : positive := 10;
+  constant C_VOTE_WIDTH : positive := 11;
 
   type t_bundle_array is array (0 to 2) of std_logic_vector(C_VOTE_WIDTH - 1 downto 0);
 
+  signal done_pulse_w    : std_logic_vector(0 to 2);
   signal done_w          : std_logic_vector(0 to 2);
   signal l_in_ack_w      : std_logic_vector(0 to 2);
   signal load_expected_w : std_logic_vector(0 to 2);
@@ -62,6 +64,7 @@ begin
 
         start_i   => start_i,
         is_read_i => is_read_i,
+        done_pulse_o => done_pulse_w(i),
         done_o    => done_w(i),
 
         l_in_val_i => l_in_val_i,
@@ -75,7 +78,7 @@ begin
         is_read_o       => is_read_w(i)
       );
 
-    bundle_w(i) <= done_w(i) & l_in_ack_w(i) & load_expected_w(i) &
+    bundle_w(i) <= done_pulse_w(i) & done_w(i) & l_in_ack_w(i) & load_expected_w(i) &
                    step_lfsr_w(i) & lfsr_seeded_w(i) &
                    accept_flit_w(i) & std_logic_vector(flit_idx_w(i)) &
                    is_read_w(i);
@@ -95,6 +98,7 @@ begin
       error_o      => error_o
     );
 
+  done_pulse_o    <= voted_w(10);
   done_o          <= voted_w(9);
   l_in_ack_o      <= voted_w(8);
   load_expected_o <= voted_w(7);

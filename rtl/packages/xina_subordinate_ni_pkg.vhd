@@ -31,6 +31,8 @@ package xina_subordinate_ni_pkg is
   constant c_ENABLE_SUB_TM_LFSR_HAMMING_INJECT_ERROR  : boolean := false; -- Fault INJECTION
   constant c_ENABLE_SUB_TM_TXN_COUNTER_HAMMING : boolean := true;
   constant c_SUB_TM_TRANSACTION_COUNTER_WIDTH  : natural := 32;
+  -- Number of TM completed packets between periodic UART reports.
+  constant c_SUB_TM_UART_REPORT_PERIOD_PACKETS : positive := 400;
   -- UART FLAGS field width. Keep nibble-aligned like the manager OBS report.
   constant c_SUB_TM_UART_FLAGS_WIDTH           : natural := 52;
   constant c_ENABLE_SUB_OBS_START_GO_CTRL_TMR  : boolean := true;

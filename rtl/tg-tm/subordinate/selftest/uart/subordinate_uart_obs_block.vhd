@@ -8,7 +8,7 @@ use work.xina_subordinate_ni_pkg.all;
 -- fanout and a compact subordinate report encoder.
 entity subordinate_uart_obs_block is
   generic(
-    G_REPORT_PERIOD_PACKETS : positive := 100
+    G_REPORT_PERIOD_PACKETS : positive := c_SUB_TM_UART_REPORT_PERIOD_PACKETS
   );
   port(
     ACLK    : in  std_logic;

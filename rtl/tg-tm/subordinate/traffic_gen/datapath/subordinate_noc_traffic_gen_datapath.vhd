@@ -39,41 +39,13 @@ entity subordinate_noc_traffic_gen_datapath is
 end entity;
 
 architecture rtl of subordinate_noc_traffic_gen_datapath is
-  constant C_ZERO_12       : std_logic_vector(11 downto 0) := (others => '0');
-  constant C_RESERVED_8    : std_logic_vector(7 downto 0)  := (others => '0');
-  constant C_REQUEST_FLAGS : std_logic_vector(2 downto 0)  := (others => '0');
-
   signal lfsr_state_w  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
   signal lfsr_input_w  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
   signal lfsr_next_w   : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
   signal lfsr_single_err_w : std_logic;
   signal lfsr_double_err_w : std_logic;
   signal lfsr_enc_data_w   : std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
-
-  signal h_dest_w      : std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-  signal h_src_w       : std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-  signal h_interface_w : std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-  signal h_address_w   : std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-  signal payload_w     : std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-  signal trailer_w     : std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
-  signal checksum_w    : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
-  signal payload_checksum_w : unsigned(c_AXI_DATA_WIDTH - 1 downto 0);
 begin
-  h_dest_w      <= '1' & p_DEST_X & p_DEST_Y;
-  h_src_w       <= '0' & p_SRC_X & p_SRC_Y;
-  h_interface_w <= '0' & C_ZERO_12 & id_i & C_RESERVED_8 & "01" & C_REQUEST_FLAGS & is_read_i & '0';
-  h_address_w   <= '0' & address_i(c_AXI_ADDR_WIDTH - 1 downto c_AXI_DATA_WIDTH);
-  payload_w     <= '0' & lfsr_state_w;
-  payload_checksum_w <= unsigned(lfsr_state_w) when is_read_i = '0' else
-                        to_unsigned(0, c_AXI_DATA_WIDTH);
-
-  checksum_w <= std_logic_vector(unsigned(h_dest_w(c_AXI_DATA_WIDTH - 1 downto 0)) +
-                                 unsigned(h_src_w(c_AXI_DATA_WIDTH - 1 downto 0)) +
-                                 unsigned(h_interface_w(c_AXI_DATA_WIDTH - 1 downto 0)) +
-                                 unsigned(h_address_w(c_AXI_DATA_WIDTH - 1 downto 0)) +
-                                 payload_checksum_w);
-  trailer_w <= '1' & checksum_w;
-
   lfsr_input_w <= seed_i when lfsr_seeded_i = '0' else lfsr_state_w;
 
   u_lfsr: entity work.subordinate_noc_traffic_gen_lfsr
@@ -85,12 +57,21 @@ begin
       next_o => lfsr_next_w
     );
 
-  l_out_data_o <= h_dest_w      when flit_idx_i = to_unsigned(0, flit_idx_i'length) else
-                  h_src_w       when flit_idx_i = to_unsigned(1, flit_idx_i'length) else
-                  h_interface_w when flit_idx_i = to_unsigned(2, flit_idx_i'length) else
-                  h_address_w   when flit_idx_i = to_unsigned(3, flit_idx_i'length) else
-                  payload_w     when flit_idx_i = to_unsigned(4, flit_idx_i'length) and is_read_i = '0' else
-                  trailer_w;
+  u_packet_formatter: entity work.subordinate_noc_packet_formatter
+    generic map(
+      p_DEST_X => p_DEST_X,
+      p_DEST_Y => p_DEST_Y,
+      p_SRC_X  => p_SRC_X,
+      p_SRC_Y  => p_SRC_Y
+    )
+    port map(
+      is_read_i => is_read_i,
+      id_i => id_i,
+      address_i => address_i,
+      payload_i => lfsr_state_w,
+      flit_idx_i => flit_idx_i,
+      flit_o => l_out_data_o
+    );
 
   u_lfsr_state_hamming_register: entity work.hamming_register
     generic map(

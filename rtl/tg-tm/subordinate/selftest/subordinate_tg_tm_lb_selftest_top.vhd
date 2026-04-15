@@ -26,6 +26,7 @@ architecture rtl of subordinate_tg_tm_lb_selftest_top is
   signal start_w   : std_logic;
   signal is_read_w : std_logic;
   signal done_w    : std_logic;
+  signal tm_done_pulse_w : std_logic;
 
   signal mismatch_w       : std_logic;
   signal corrupt_packet_w : std_logic;
@@ -246,12 +247,12 @@ begin
 
   u_uart_obs: entity work.subordinate_uart_obs_block
     generic map(
-      G_REPORT_PERIOD_PACKETS => 100
+      G_REPORT_PERIOD_PACKETS => c_SUB_TM_UART_REPORT_PERIOD_PACKETS
     )
     port map(
       ACLK    => ACLK,
       ARESETn => ARESETn,
-      tm_done_i => done_w,
+      tm_done_i => tm_done_pulse_w,
       TM_TRANSACTION_COUNT_i => tm_transaction_count_w,
       mismatch_i => mismatch_w,
       corrupt_packet_i => corrupt_packet_w,
@@ -356,6 +357,7 @@ begin
       address_i => C_SELFTEST_ADDR,
       seed_i => C_SELFTEST_SEED,
       done_o => done_w,
+      tm_done_pulse_o => tm_done_pulse_w,
       mismatch_o => mismatch_w,
       corrupt_packet_o => corrupt_packet_w,
       OBS_SUB_TG_TMR_CTRL_CORRECT_ERROR_i => obs_tg_tmr_correct_w,

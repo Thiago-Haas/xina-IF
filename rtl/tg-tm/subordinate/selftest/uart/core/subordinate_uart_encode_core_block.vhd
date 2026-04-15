@@ -6,7 +6,7 @@ use work.xina_subordinate_ni_pkg.all;
 
 entity subordinate_uart_encode_core_block is
   generic(
-    G_REPORT_PERIOD_PACKETS : positive := 100;
+    G_REPORT_PERIOD_PACKETS : positive := c_SUB_TM_UART_REPORT_PERIOD_PACKETS;
     p_USE_UART_ENCODE_CRITICAL_TMR : boolean := c_ENABLE_SUB_OBS_UART_ENCODE_CRITICAL_TMR;
     p_USE_UART_TM_COUNT_HAMMING : boolean := c_ENABLE_SUB_OBS_UART_TM_COUNT_HAMMING;
     p_USE_UART_FLAGS_SEEN_HAMMING : boolean := c_ENABLE_SUB_OBS_UART_FLAGS_SEEN_HAMMING;
