@@ -11,7 +11,7 @@ use std.env.all;
 
 entity tb_subordinate_tg_tm_lb_selftest_top is
   generic (
-    G_ENABLE_OBS_AFTER_RESET : boolean := FALSE;
+    G_ENABLE_CORRECTION_AFTER_RESET : boolean := TRUE;
     G_STOP_SIM_ON_TARGET : boolean := TRUE;
     G_STOP_TIMEOUT_NS    : natural := 3699847;
     G_POST_STOP_GRACE_NS : natural := 100000
@@ -386,7 +386,7 @@ begin
     wait for 50 ns;
     ARESETn <= '1';
 
-    if G_ENABLE_OBS_AFTER_RESET then
+    if G_ENABLE_CORRECTION_AFTER_RESET then
       uart_send(x"45"); -- E
       wait for 20 us;
     else
