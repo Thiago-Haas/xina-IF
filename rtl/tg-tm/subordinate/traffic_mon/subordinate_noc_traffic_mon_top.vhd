@@ -23,7 +23,6 @@ entity subordinate_noc_traffic_mon_top is
 
     start_i    : in  std_logic;
     is_read_i  : in  std_logic;
-    expected_id_i : in std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
     seed_i        : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
     done_pulse_o : out std_logic;
     done_o     : out std_logic;
@@ -109,7 +108,6 @@ begin
       ACLK    => ACLK,
       ARESETn => ARESETn,
       is_read_i => is_read_w,
-      expected_id_i => expected_id_i,
       seed_i => seed_i,
       load_expected_i => load_expected_w,
       step_lfsr_i => step_lfsr_w,

@@ -17,7 +17,6 @@ entity subordinate_noc_traffic_mon_datapath is
     ARESETn : in  std_logic;
 
     is_read_i       : in std_logic;
-    expected_id_i   : in std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
     seed_i          : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
     load_expected_i : in std_logic;
@@ -40,6 +39,8 @@ architecture rtl of subordinate_noc_traffic_mon_datapath is
   signal mismatch_w         : std_logic_vector(0 downto 0);
   signal mismatch_next_w    : std_logic_vector(0 downto 0);
   signal mismatch_write_en_w: std_logic;
+  signal payload_mismatch_w : std_logic;
+  signal payload_check_w    : std_logic;
 
   signal lfsr_state_w  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
   signal lfsr_input_w  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
@@ -79,7 +80,21 @@ begin
 
   mismatch_o <= mismatch_w(0);
 
-  process(mismatch_w, load_expected_i, accept_flit_i, flit_idx_i, flit_payload_w, is_read_i, lfsr_state_w, lfsr_next_w)
+  payload_check_w <= accept_flit_i and payload_valid_w;
+
+  u_compare: entity work.subordinate_noc_traffic_mon_compare
+    generic map(
+      p_WIDTH => c_AXI_DATA_WIDTH
+    )
+    port map(
+      check_pulse_i   => payload_check_w,
+      expected_i      => lfsr_state_w,
+      expected_next_i => lfsr_next_w,
+      payload_i       => flit_payload_w,
+      mismatch_o      => payload_mismatch_w
+    );
+
+  process(mismatch_w, load_expected_i, payload_mismatch_w)
     variable mismatch_v : std_logic;
   begin
     mismatch_v := mismatch_w(0);
@@ -88,12 +103,8 @@ begin
       mismatch_v := '0';
     end if;
 
-    if accept_flit_i = '1' then
-      if payload_valid_w = '1' then
-        if (flit_payload_w /= lfsr_state_w) and (flit_payload_w /= lfsr_next_w) then
-          mismatch_v := '1';
-        end if;
-      end if;
+    if payload_mismatch_w = '1' then
+      mismatch_v := '1';
     end if;
 
     mismatch_next_w(0) <= mismatch_v;

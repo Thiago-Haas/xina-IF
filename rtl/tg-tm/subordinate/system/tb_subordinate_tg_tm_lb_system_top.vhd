@@ -22,7 +22,6 @@ architecture tb of tb_subordinate_tg_tm_lb_system_top is
 
   signal start   : std_logic := '0';
   signal is_read : std_logic := '0';
-  signal id      : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0) := (others => '0');
   signal address : std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0) := (others => '0');
   signal seed    : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := C_LFSR_SEED;
 
@@ -62,7 +61,6 @@ begin
       ARESETn => ARESETn,
       start_i => start,
       is_read_i => is_read,
-      id_i => id,
       address_i => address,
       seed_i => seed,
       done_o => done,
@@ -95,7 +93,6 @@ begin
     );
 
   stim: process
-    variable id_v   : unsigned(c_AXI_ID_WIDTH - 1 downto 0);
   begin
     ARESETn <= '0';
     start <= '0';
@@ -104,13 +101,10 @@ begin
     ARESETn <= '1';
     wait for 50 ns;
 
-    id_v := (others => '0');
-
     -- The subordinate loopback is a single-slot target, like the manager-side
     -- loopback. Each payload is written and immediately read back.
     for i in 0 to integer(C_NUM_ITERS - 1) loop
       address <= std_logic_vector(C_START_ADDR);
-      id <= std_logic_vector(id_v);
       is_read <= '0';
       start <= '1';
       wait until rising_edge(ACLK);
@@ -122,7 +116,6 @@ begin
       wait for 20 ns;
 
       address <= std_logic_vector(C_START_ADDR);
-      id <= std_logic_vector(id_v);
       is_read <= '1';
       start <= '1';
       wait until rising_edge(ACLK);
@@ -130,8 +123,6 @@ begin
       wait until done = '1';
       assert mismatch = '0' report "subordinate read response mismatch" severity failure;
       wait until rising_edge(ACLK);
-
-      id_v := id_v + 1;
       wait for 20 ns;
     end loop;
 

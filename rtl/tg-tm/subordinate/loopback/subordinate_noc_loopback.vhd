@@ -24,7 +24,6 @@ entity subordinate_noc_loopback is
 
     start_i   : in std_logic;
     is_read_i : in std_logic;
-    id_i      : in std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
     address_i : in std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
     seed_i    : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
@@ -79,7 +78,6 @@ begin
       ARESETn => ARESETn,
       start_i => start_i,
       is_read_i => is_read_i,
-      id_i => id_i,
       address_i => address_i,
       seed_i => seed_i,
       done_o => gen_done_w,
@@ -100,7 +98,6 @@ begin
       ARESETn => ARESETn,
       start_i => start_i,
       is_read_i => is_read_i,
-      expected_id_i => id_i,
       seed_i => seed_i,
       done_o => mon_done_w,
       mismatch_o => mismatch_o,

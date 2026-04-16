@@ -21,7 +21,6 @@ entity subordinate_noc_traffic_gen_datapath is
     ARESETn : in  std_logic;
 
     is_read_i : in std_logic;
-    id_i      : in std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
     address_i : in std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
     seed_i    : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
 
@@ -66,7 +65,6 @@ begin
     )
     port map(
       is_read_i => is_read_i,
-      id_i => id_i,
       address_i => address_i,
       payload_i => lfsr_state_w,
       flit_idx_i => flit_idx_i,

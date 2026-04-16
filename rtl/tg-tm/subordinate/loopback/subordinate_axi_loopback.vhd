@@ -127,12 +127,10 @@ begin
       aw_accept_i => aw_accept_w,
       w_accept_i => w_accept_w,
       ar_accept_i => ar_accept_w,
-      AWID => AWID,
       WDATA => WDATA,
       WLAST => WLAST,
       BID => BID,
       BRESP => BRESP,
-      ARID => ARID,
       RDATA => RDATA,
       RID => RID,
       RRESP => RRESP,
@@ -143,10 +141,10 @@ begin
       OBS_SUB_LB_HAM_RDATA_CORRECT_ERROR_i   => OBS_SUB_LB_HAM_RDATA_CORRECT_ERROR_i,
       OBS_SUB_LB_HAM_RDATA_SINGLE_ERR_o      => OBS_SUB_LB_HAM_RDATA_SINGLE_ERR_o,
       OBS_SUB_LB_HAM_RDATA_DOUBLE_ERR_o      => OBS_SUB_LB_HAM_RDATA_DOUBLE_ERR_o,
-      OBS_SUB_LB_HAM_RDATA_ENC_DATA_o        => OBS_SUB_LB_HAM_RDATA_ENC_DATA_o,
-      OBS_SUB_LB_HAM_ID_STATE_CORRECT_ERROR_i => OBS_SUB_LB_HAM_ID_STATE_CORRECT_ERROR_i,
-      OBS_SUB_LB_HAM_ID_STATE_SINGLE_ERR_o    => OBS_SUB_LB_HAM_ID_STATE_SINGLE_ERR_o,
-      OBS_SUB_LB_HAM_ID_STATE_DOUBLE_ERR_o    => OBS_SUB_LB_HAM_ID_STATE_DOUBLE_ERR_o,
-      OBS_SUB_LB_HAM_ID_STATE_ENC_DATA_o      => OBS_SUB_LB_HAM_ID_STATE_ENC_DATA_o
+      OBS_SUB_LB_HAM_RDATA_ENC_DATA_o        => OBS_SUB_LB_HAM_RDATA_ENC_DATA_o
     );
+
+  OBS_SUB_LB_HAM_ID_STATE_SINGLE_ERR_o <= '0';
+  OBS_SUB_LB_HAM_ID_STATE_DOUBLE_ERR_o <= '0';
+  OBS_SUB_LB_HAM_ID_STATE_ENC_DATA_o   <= (others => '0');
 end architecture;

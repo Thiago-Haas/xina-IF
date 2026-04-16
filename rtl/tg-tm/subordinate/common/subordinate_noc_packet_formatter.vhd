@@ -14,7 +14,6 @@ entity subordinate_noc_packet_formatter is
   );
   port(
     is_read_i : in  std_logic;
-    id_i      : in  std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
     address_i : in  std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0);
     payload_i : in  std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
     flit_idx_i : in unsigned(2 downto 0);
@@ -25,6 +24,7 @@ end entity;
 
 architecture rtl of subordinate_noc_packet_formatter is
   constant C_ZERO_12       : std_logic_vector(11 downto 0) := (others => '0');
+  constant C_ZERO_ID       : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0) := (others => '0');
   constant C_RESERVED_8    : std_logic_vector(7 downto 0)  := (others => '0');
   constant C_REQUEST_FLAGS : std_logic_vector(2 downto 0)  := (others => '0');
 
@@ -39,7 +39,7 @@ architecture rtl of subordinate_noc_packet_formatter is
 begin
   h_dest_w      <= '1' & p_DEST_X & p_DEST_Y;
   h_src_w       <= '0' & p_SRC_X & p_SRC_Y;
-  h_interface_w <= '0' & C_ZERO_12 & id_i & C_RESERVED_8 & "01" & C_REQUEST_FLAGS & is_read_i & '0';
+  h_interface_w <= '0' & C_ZERO_12 & C_ZERO_ID & C_RESERVED_8 & "01" & C_REQUEST_FLAGS & is_read_i & '0';
   h_address_w   <= '0' & address_i(c_AXI_ADDR_WIDTH - 1 downto c_AXI_DATA_WIDTH);
   payload_w     <= '0' & payload_i;
   payload_checksum_w <= unsigned(payload_i) when is_read_i = '0' else

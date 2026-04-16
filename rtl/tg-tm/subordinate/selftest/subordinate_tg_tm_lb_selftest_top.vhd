@@ -21,7 +21,6 @@ end entity;
 architecture rtl of subordinate_tg_tm_lb_selftest_top is
   constant C_SELFTEST_ADDR : std_logic_vector(c_AXI_ADDR_WIDTH - 1 downto 0) := x"00000100_00000000";
   constant C_SELFTEST_SEED : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0) := x"1ACEB00C";
-  constant C_SELFTEST_ID   : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0) := (others => '0');
 
   signal start_w   : std_logic;
   signal is_read_w : std_logic;
@@ -353,7 +352,6 @@ begin
       ARESETn => ARESETn,
       start_i => start_w,
       is_read_i => is_read_w,
-      id_i => C_SELFTEST_ID,
       address_i => C_SELFTEST_ADDR,
       seed_i => C_SELFTEST_SEED,
       done_o => done_w,
