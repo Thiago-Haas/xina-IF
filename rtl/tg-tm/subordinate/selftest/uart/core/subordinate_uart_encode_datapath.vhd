@@ -6,15 +6,17 @@ use work.xina_subordinate_ni_pkg.all;
 use work.hamming_pkg.all;
 
 -- Compact subordinate UART report datapath.
--- Line format: "SUB TM=<8 hex> FLAGS=<13 hex>\n"
+-- Line format: "SUB RX=<8 hex> OK=<8 hex> FLAGS=<14 hex>\n"
 entity subordinate_uart_encode_datapath is
   generic(
-    p_USE_UART_TM_COUNT_HAMMING : boolean := c_ENABLE_SUB_OBS_UART_TM_COUNT_HAMMING;
+    p_USE_UART_RX_COUNT_HAMMING : boolean := c_ENABLE_SUB_OBS_UART_RX_COUNT_HAMMING;
+    p_USE_UART_CORRECT_COUNT_HAMMING : boolean := c_ENABLE_SUB_OBS_UART_CORRECT_COUNT_HAMMING;
     p_USE_UART_FLAGS_SEEN_HAMMING : boolean := c_ENABLE_SUB_OBS_UART_FLAGS_SEEN_HAMMING;
     p_USE_UART_EVENT_FLAGS_HAMMING : boolean := c_ENABLE_SUB_OBS_UART_EVENT_FLAGS_HAMMING;
     p_USE_UART_REPORT_FLAGS_HAMMING : boolean := c_ENABLE_SUB_OBS_UART_REPORT_FLAGS_HAMMING;
     p_USE_UART_HAMMING_DOUBLE_DETECT : boolean := c_ENABLE_SUB_OBS_UART_HAMMING_DOUBLE_DETECT;
-    p_USE_UART_TM_COUNT_HAMMING_INJECT_ERROR : boolean := c_ENABLE_SUB_OBS_UART_TM_COUNT_HAMMING_INJECT_ERROR;
+    p_USE_UART_RX_COUNT_HAMMING_INJECT_ERROR : boolean := c_ENABLE_SUB_OBS_UART_RX_COUNT_HAMMING_INJECT_ERROR;
+    p_USE_UART_CORRECT_COUNT_HAMMING_INJECT_ERROR : boolean := c_ENABLE_SUB_OBS_UART_CORRECT_COUNT_HAMMING_INJECT_ERROR;
     p_USE_UART_FLAGS_SEEN_HAMMING_INJECT_ERROR : boolean := c_ENABLE_SUB_OBS_UART_FLAGS_SEEN_HAMMING_INJECT_ERROR;
     p_USE_UART_EVENT_FLAGS_HAMMING_INJECT_ERROR : boolean := c_ENABLE_SUB_OBS_UART_EVENT_FLAGS_HAMMING_INJECT_ERROR;
     p_USE_UART_REPORT_FLAGS_HAMMING_INJECT_ERROR : boolean := c_ENABLE_SUB_OBS_UART_REPORT_FLAGS_HAMMING_INJECT_ERROR
@@ -27,16 +29,20 @@ entity subordinate_uart_encode_datapath is
     latch_event_flags_i : in std_logic;
     load_report_i : in std_logic;
     select_event_flags_i : in std_logic;
-    tm_count_i : in std_logic_vector(c_SUB_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
+    received_count_i : in std_logic_vector(c_SUB_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
+    correct_count_i : in std_logic_vector(c_SUB_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
     flags_i    : in std_logic_vector(c_SUB_TM_UART_FLAGS_WIDTH - 1 downto 0);
-    OBS_SUB_UART_HAM_TM_COUNT_CORRECT_ERROR_i : in std_logic := '1';
+    OBS_SUB_UART_HAM_RX_COUNT_CORRECT_ERROR_i : in std_logic := '1';
+    OBS_SUB_UART_HAM_CORRECT_COUNT_CORRECT_ERROR_i : in std_logic := '1';
     OBS_SUB_UART_HAM_FLAGS_SEEN_CORRECT_ERROR_i : in std_logic := '1';
     OBS_SUB_UART_HAM_EVENT_FLAGS_CORRECT_ERROR_i : in std_logic := '1';
     OBS_SUB_UART_HAM_REPORT_FLAGS_CORRECT_ERROR_i : in std_logic := '1';
     char_index_i : in unsigned(5 downto 0);
     new_event_o : out std_logic;
-    OBS_SUB_UART_HAM_TM_COUNT_SINGLE_ERR_o : out std_logic := '0';
-    OBS_SUB_UART_HAM_TM_COUNT_DOUBLE_ERR_o : out std_logic := '0';
+    OBS_SUB_UART_HAM_RX_COUNT_SINGLE_ERR_o : out std_logic := '0';
+    OBS_SUB_UART_HAM_RX_COUNT_DOUBLE_ERR_o : out std_logic := '0';
+    OBS_SUB_UART_HAM_CORRECT_COUNT_SINGLE_ERR_o : out std_logic := '0';
+    OBS_SUB_UART_HAM_CORRECT_COUNT_DOUBLE_ERR_o : out std_logic := '0';
     OBS_SUB_UART_HAM_FLAGS_SEEN_SINGLE_ERR_o : out std_logic := '0';
     OBS_SUB_UART_HAM_FLAGS_SEEN_DOUBLE_ERR_o : out std_logic := '0';
     OBS_SUB_UART_HAM_EVENT_FLAGS_SINGLE_ERR_o : out std_logic := '0';
@@ -82,18 +88,23 @@ architecture rtl of subordinate_uart_encode_datapath is
     return data(lo_v + 3 downto lo_v);
   end function;
 
-  constant C_PREFIX : string := "SUB TM=";
+  constant C_PREFIX_RX : string := "SUB RX=";
+  constant C_PREFIX_OK : string := " OK=";
   constant C_MID    : string := " FLAGS=";
 
-  signal tm_count_r : std_logic_vector(c_SUB_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
+  signal received_count_r : std_logic_vector(c_SUB_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
+  signal correct_count_r : std_logic_vector(c_SUB_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
   signal event_flags_seen_r : std_logic_vector(c_SUB_TM_UART_FLAGS_WIDTH - 1 downto 0);
   signal event_flags_r : std_logic_vector(c_SUB_TM_UART_FLAGS_WIDTH - 1 downto 0);
   signal flags_r    : std_logic_vector(c_SUB_TM_UART_FLAGS_WIDTH - 1 downto 0);
   signal new_event_w : std_logic;
-  signal tm_count_we_w : std_logic;
-  signal tm_count_single_err_w : std_logic;
-  signal tm_count_double_err_w : std_logic;
-  signal tm_count_enc_w : std_logic_vector(c_SUB_TM_TRANSACTION_COUNTER_WIDTH + get_ecc_size(c_SUB_TM_TRANSACTION_COUNTER_WIDTH, p_USE_UART_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+  signal count_we_w : std_logic;
+  signal received_count_single_err_w : std_logic;
+  signal received_count_double_err_w : std_logic;
+  signal received_count_enc_w : std_logic_vector(c_SUB_TM_TRANSACTION_COUNTER_WIDTH + get_ecc_size(c_SUB_TM_TRANSACTION_COUNTER_WIDTH, p_USE_UART_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+  signal correct_count_single_err_w : std_logic;
+  signal correct_count_double_err_w : std_logic;
+  signal correct_count_enc_w : std_logic_vector(c_SUB_TM_TRANSACTION_COUNTER_WIDTH + get_ecc_size(c_SUB_TM_TRANSACTION_COUNTER_WIDTH, p_USE_UART_HAMMING_DOUBLE_DETECT) - 1 downto 0);
   signal event_flags_seen_single_err_w : std_logic;
   signal event_flags_seen_double_err_w : std_logic;
   signal event_flags_seen_enc_w : std_logic_vector(c_SUB_TM_UART_FLAGS_WIDTH + get_ecc_size(c_SUB_TM_UART_FLAGS_WIDTH, p_USE_UART_HAMMING_DOUBLE_DETECT) - 1 downto 0);
@@ -120,40 +131,62 @@ architecture rtl of subordinate_uart_encode_datapath is
 
   attribute DONT_TOUCH : string;
   attribute syn_preserve : boolean;
-  attribute DONT_TOUCH of tm_count_r : signal is "TRUE";
+  attribute DONT_TOUCH of received_count_r : signal is "TRUE";
+  attribute DONT_TOUCH of correct_count_r : signal is "TRUE";
   attribute DONT_TOUCH of event_flags_seen_r : signal is "TRUE";
   attribute DONT_TOUCH of event_flags_r : signal is "TRUE";
   attribute DONT_TOUCH of flags_r : signal is "TRUE";
-  attribute syn_preserve of tm_count_r : signal is true;
+  attribute syn_preserve of received_count_r : signal is true;
+  attribute syn_preserve of correct_count_r : signal is true;
   attribute syn_preserve of event_flags_seen_r : signal is true;
   attribute syn_preserve of event_flags_r : signal is true;
   attribute syn_preserve of flags_r : signal is true;
 begin
   new_event_w <= f_has_new_error_flags(flags_i, event_flags_seen_r);
   new_event_o <= new_event_w;
-  tm_count_we_w <= load_report_i;
+  count_we_w <= load_report_i;
   report_flags_data_w <= flags_i when select_event_flags_i = '0' else
                          flags_i when latch_event_flags_i = '1' else
                          event_flags_r;
 
-  u_tm_count_hamming_register: entity work.hamming_register
+  u_received_count_hamming_register: entity work.hamming_register
     generic map(
       DATA_WIDTH     => c_SUB_TM_TRANSACTION_COUNTER_WIDTH,
-      HAMMING_ENABLE => p_USE_UART_TM_COUNT_HAMMING,
+      HAMMING_ENABLE => p_USE_UART_RX_COUNT_HAMMING,
       DETECT_DOUBLE  => p_USE_UART_HAMMING_DOUBLE_DETECT,
       RESET_VALUE    => (c_SUB_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0 => '0'),
-      INJECT_ERROR   => p_USE_UART_TM_COUNT_HAMMING_INJECT_ERROR
+      INJECT_ERROR   => p_USE_UART_RX_COUNT_HAMMING_INJECT_ERROR
     )
     port map(
-      correct_en_i => OBS_SUB_UART_HAM_TM_COUNT_CORRECT_ERROR_i,
-      write_en_i   => tm_count_we_w,
-      data_i       => tm_count_i,
+      correct_en_i => OBS_SUB_UART_HAM_RX_COUNT_CORRECT_ERROR_i,
+      write_en_i   => count_we_w,
+      data_i       => received_count_i,
       rstn_i       => ARESETn,
       clk_i        => ACLK,
-      single_err_o => tm_count_single_err_w,
-      double_err_o => tm_count_double_err_w,
-      enc_data_o   => tm_count_enc_w,
-      data_o       => tm_count_r
+      single_err_o => received_count_single_err_w,
+      double_err_o => received_count_double_err_w,
+      enc_data_o   => received_count_enc_w,
+      data_o       => received_count_r
+    );
+
+  u_correct_count_hamming_register: entity work.hamming_register
+    generic map(
+      DATA_WIDTH     => c_SUB_TM_TRANSACTION_COUNTER_WIDTH,
+      HAMMING_ENABLE => p_USE_UART_CORRECT_COUNT_HAMMING,
+      DETECT_DOUBLE  => p_USE_UART_HAMMING_DOUBLE_DETECT,
+      RESET_VALUE    => (c_SUB_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0 => '0'),
+      INJECT_ERROR   => p_USE_UART_CORRECT_COUNT_HAMMING_INJECT_ERROR
+    )
+    port map(
+      correct_en_i => OBS_SUB_UART_HAM_CORRECT_COUNT_CORRECT_ERROR_i,
+      write_en_i   => count_we_w,
+      data_i       => correct_count_i,
+      rstn_i       => ARESETn,
+      clk_i        => ACLK,
+      single_err_o => correct_count_single_err_w,
+      double_err_o => correct_count_double_err_w,
+      enc_data_o   => correct_count_enc_w,
+      data_o       => correct_count_r
     );
 
   u_event_flags_seen_hamming_register: entity work.hamming_register
@@ -216,8 +249,10 @@ begin
       data_o       => flags_r
     );
 
-  OBS_SUB_UART_HAM_TM_COUNT_SINGLE_ERR_o <= tm_count_single_err_w;
-  OBS_SUB_UART_HAM_TM_COUNT_DOUBLE_ERR_o <= tm_count_double_err_w;
+  OBS_SUB_UART_HAM_RX_COUNT_SINGLE_ERR_o <= received_count_single_err_w;
+  OBS_SUB_UART_HAM_RX_COUNT_DOUBLE_ERR_o <= received_count_double_err_w;
+  OBS_SUB_UART_HAM_CORRECT_COUNT_SINGLE_ERR_o <= correct_count_single_err_w;
+  OBS_SUB_UART_HAM_CORRECT_COUNT_DOUBLE_ERR_o <= correct_count_double_err_w;
   OBS_SUB_UART_HAM_FLAGS_SEEN_SINGLE_ERR_o <= event_flags_seen_single_err_w;
   OBS_SUB_UART_HAM_FLAGS_SEEN_DOUBLE_ERR_o <= event_flags_seen_double_err_w;
   OBS_SUB_UART_HAM_EVENT_FLAGS_SINGLE_ERR_o <= event_flags_single_err_w;
@@ -225,20 +260,24 @@ begin
   OBS_SUB_UART_HAM_REPORT_FLAGS_SINGLE_ERR_o <= report_flags_single_err_w;
   OBS_SUB_UART_HAM_REPORT_FLAGS_DOUBLE_ERR_o <= report_flags_double_err_w;
 
-  process(tm_count_r, flags_r, char_index_i)
+  process(received_count_r, correct_count_r, flags_r, char_index_i)
     variable idx_v : natural;
   begin
     idx_v := to_integer(char_index_i);
     tx_data_o <= x"0A";
 
-    if idx_v < C_PREFIX'length then
-      tx_data_o <= f_char(C_PREFIX(idx_v + 1));
-    elsif idx_v < C_PREFIX'length + 8 then
-      tx_data_o <= f_hex(f_nibble(tm_count_r, idx_v - C_PREFIX'length));
-    elsif idx_v < C_PREFIX'length + 8 + C_MID'length then
-      tx_data_o <= f_char(C_MID(idx_v - C_PREFIX'length - 8 + 1));
-    elsif idx_v < C_PREFIX'length + 8 + C_MID'length + (c_SUB_TM_UART_FLAGS_WIDTH / 4) then
-      tx_data_o <= f_hex(f_nibble(flags_r, idx_v - C_PREFIX'length - 8 - C_MID'length));
+    if idx_v < C_PREFIX_RX'length then
+      tx_data_o <= f_char(C_PREFIX_RX(idx_v + 1));
+    elsif idx_v < C_PREFIX_RX'length + 8 then
+      tx_data_o <= f_hex(f_nibble(received_count_r, idx_v - C_PREFIX_RX'length));
+    elsif idx_v < C_PREFIX_RX'length + 8 + C_PREFIX_OK'length then
+      tx_data_o <= f_char(C_PREFIX_OK(idx_v - C_PREFIX_RX'length - 8 + 1));
+    elsif idx_v < C_PREFIX_RX'length + 8 + C_PREFIX_OK'length + 8 then
+      tx_data_o <= f_hex(f_nibble(correct_count_r, idx_v - C_PREFIX_RX'length - 8 - C_PREFIX_OK'length));
+    elsif idx_v < C_PREFIX_RX'length + 8 + C_PREFIX_OK'length + 8 + C_MID'length then
+      tx_data_o <= f_char(C_MID(idx_v - C_PREFIX_RX'length - 8 - C_PREFIX_OK'length - 8 + 1));
+    elsif idx_v < C_PREFIX_RX'length + 8 + C_PREFIX_OK'length + 8 + C_MID'length + (c_SUB_TM_UART_FLAGS_WIDTH / 4) then
+      tx_data_o <= f_hex(f_nibble(flags_r, idx_v - C_PREFIX_RX'length - 8 - C_PREFIX_OK'length - 8 - C_MID'length));
     end if;
   end process;
 end architecture;

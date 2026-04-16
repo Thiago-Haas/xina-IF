@@ -15,7 +15,8 @@ entity subordinate_uart_obs_block is
     ARESETn : in  std_logic;
 
     tm_done_i : in std_logic;
-    TM_TRANSACTION_COUNT_i : in std_logic_vector(c_SUB_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
+    TM_RECEIVED_COUNT_i : in std_logic_vector(c_SUB_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
+    TM_CORRECT_COUNT_i  : in std_logic_vector(c_SUB_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
 
     mismatch_i : in std_logic;
     corrupt_packet_i : in std_logic;
@@ -54,6 +55,8 @@ entity subordinate_uart_obs_block is
     OBS_SUB_LB_TMR_CTRL_ERROR_i : in std_logic;
     OBS_SUB_TM_HAM_COUNTER_DOUBLE_ERR_i : in std_logic;
     OBS_SUB_TM_HAM_COUNTER_SINGLE_ERR_i : in std_logic;
+    OBS_SUB_TM_HAM_CORRECT_COUNTER_DOUBLE_ERR_i : in std_logic;
+    OBS_SUB_TM_HAM_CORRECT_COUNTER_SINGLE_ERR_i : in std_logic;
     OBS_SUB_TM_HAM_LFSR_DOUBLE_ERR_i : in std_logic;
     OBS_SUB_TM_HAM_LFSR_SINGLE_ERR_i : in std_logic;
     OBS_SUB_TM_TMR_CTRL_ERROR_i : in std_logic;
@@ -63,6 +66,7 @@ entity subordinate_uart_obs_block is
     OBS_SUB_TM_TMR_CTRL_CORRECT_ERROR_o : out std_logic;
     OBS_SUB_TM_HAM_LFSR_CORRECT_ERROR_o : out std_logic;
     OBS_SUB_TM_HAM_COUNTER_CORRECT_ERROR_o : out std_logic;
+    OBS_SUB_TM_HAM_CORRECT_COUNTER_CORRECT_ERROR_o : out std_logic;
     OBS_SUB_LB_TMR_CTRL_CORRECT_ERROR_o : out std_logic;
     OBS_SUB_NOC_LB_TMR_DONE_CTRL_CORRECT_ERROR_o : out std_logic;
     OBS_SUB_LB_HAM_PAYLOAD_CORRECT_ERROR_o : out std_logic;
@@ -83,8 +87,10 @@ entity subordinate_uart_obs_block is
     OBS_SUB_RX_HAM_INTEGRITY_CORRECT_ERROR_o : out std_logic;
     OBS_SUB_RX_TMR_FLOW_CTRL_CORRECT_ERROR_o : out std_logic;
     OBS_SUB_RX_TMR_DEPKTZ_CTRL_CORRECT_ERROR_o : out std_logic;
-    OBS_SUB_UART_HAM_TM_COUNT_SINGLE_ERR_o : out std_logic;
-    OBS_SUB_UART_HAM_TM_COUNT_DOUBLE_ERR_o : out std_logic;
+    OBS_SUB_UART_HAM_RX_COUNT_SINGLE_ERR_o : out std_logic;
+    OBS_SUB_UART_HAM_RX_COUNT_DOUBLE_ERR_o : out std_logic;
+    OBS_SUB_UART_HAM_CORRECT_COUNT_SINGLE_ERR_o : out std_logic;
+    OBS_SUB_UART_HAM_CORRECT_COUNT_DOUBLE_ERR_o : out std_logic;
     OBS_SUB_UART_HAM_FLAGS_SEEN_SINGLE_ERR_o : out std_logic;
     OBS_SUB_UART_HAM_FLAGS_SEEN_DOUBLE_ERR_o : out std_logic;
     OBS_SUB_UART_HAM_EVENT_FLAGS_SINGLE_ERR_o : out std_logic;
@@ -115,7 +121,7 @@ entity subordinate_uart_obs_block is
 end entity;
 
 architecture rtl of subordinate_uart_obs_block is
-  constant C_CORRECTION_WIDTH : natural := 29;
+  constant C_CORRECTION_WIDTH : natural := 31;
   constant C_SUB_FLAGS_RESERVED_PAD : std_logic_vector(1 downto 0) := "00";
 
   signal flags_w : std_logic_vector(c_SUB_TM_UART_FLAGS_WIDTH - 1 downto 0);
@@ -133,8 +139,10 @@ begin
   flags_w <= C_SUB_FLAGS_RESERVED_PAD &
              OBS_SUB_UART_ENCODE_CRITICAL_TMR_ERROR_i &
              OBS_SUB_UART_COMMAND_CTRL_TMR_ERROR_o &
-             OBS_SUB_UART_HAM_TM_COUNT_DOUBLE_ERR_o &
-             OBS_SUB_UART_HAM_TM_COUNT_SINGLE_ERR_o &
+             OBS_SUB_UART_HAM_CORRECT_COUNT_DOUBLE_ERR_o &
+             OBS_SUB_UART_HAM_CORRECT_COUNT_SINGLE_ERR_o &
+             OBS_SUB_UART_HAM_RX_COUNT_DOUBLE_ERR_o &
+             OBS_SUB_UART_HAM_RX_COUNT_SINGLE_ERR_o &
              OBS_SUB_UART_HAM_FLAGS_SEEN_DOUBLE_ERR_o &
              OBS_SUB_UART_HAM_FLAGS_SEEN_SINGLE_ERR_o &
              OBS_SUB_UART_HAM_EVENT_FLAGS_DOUBLE_ERR_o &
@@ -174,6 +182,8 @@ begin
              OBS_SUB_LB_HAM_PAYLOAD_DOUBLE_ERR_i &
              OBS_SUB_LB_HAM_PAYLOAD_SINGLE_ERR_i &
              OBS_SUB_LB_TMR_CTRL_ERROR_i &
+             OBS_SUB_TM_HAM_CORRECT_COUNTER_DOUBLE_ERR_i &
+             OBS_SUB_TM_HAM_CORRECT_COUNTER_SINGLE_ERR_i &
              OBS_SUB_TM_HAM_COUNTER_DOUBLE_ERR_i &
              OBS_SUB_TM_HAM_COUNTER_SINGLE_ERR_i &
              OBS_SUB_TM_HAM_LFSR_DOUBLE_ERR_i &
@@ -195,7 +205,7 @@ begin
       uart_rdata_i => uart_rdata_i,
       uart_rerr_i => uart_rerr_i,
       done_i => tm_done_i,
-      start_go_correct_enable_i => correction_vector_w(18),
+      start_go_correct_enable_i => correction_vector_w(19),
       experiment_run_enable_o => experiment_run_enable_o,
       experiment_reset_pulse_o => experiment_reset_pulse_o,
       correction_vector_o => correction_vector_w,
@@ -207,31 +217,32 @@ begin
 
   OBS_SUB_START_GO_CTRL_TMR_ERROR_o <= obs_start_go_ctrl_error_w;
 
-  OBS_SUB_TG_TMR_CTRL_CORRECT_ERROR_o <= correction_vector_w(28);
-  OBS_SUB_TG_HAM_LFSR_CORRECT_ERROR_o <= correction_vector_w(27);
-  OBS_SUB_TM_TMR_CTRL_CORRECT_ERROR_o <= correction_vector_w(26);
-  OBS_SUB_TM_HAM_LFSR_CORRECT_ERROR_o <= correction_vector_w(25);
-  OBS_SUB_TM_HAM_COUNTER_CORRECT_ERROR_o <= correction_vector_w(24);
-  OBS_SUB_LB_TMR_CTRL_CORRECT_ERROR_o <= correction_vector_w(23);
-  OBS_SUB_NOC_LB_TMR_DONE_CTRL_CORRECT_ERROR_o <= correction_vector_w(22);
-  OBS_SUB_LB_HAM_PAYLOAD_CORRECT_ERROR_o <= correction_vector_w(21);
-  OBS_SUB_LB_HAM_RDATA_CORRECT_ERROR_o <= correction_vector_w(20);
-  OBS_SUB_LB_HAM_ID_STATE_CORRECT_ERROR_o <= correction_vector_w(19);
-  OBS_SUB_START_GO_CTRL_TMR_CORRECT_ERROR_o <= correction_vector_w(18);
-  OBS_SUB_FE_INJ_TMR_STATUS_CORRECT_ERROR_o <= correction_vector_w(17);
-  OBS_SUB_INJ_HAM_BUFFER_CORRECT_ERROR_o <= correction_vector_w(16);
-  OBS_SUB_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_o <= correction_vector_w(15);
-  OBS_SUB_INJ_HAM_INTEGRITY_CORRECT_ERROR_o <= correction_vector_w(14);
-  OBS_SUB_INJ_TMR_FLOW_CTRL_CORRECT_ERROR_o <= correction_vector_w(13);
-  OBS_SUB_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR_o <= correction_vector_w(12);
-  OBS_SUB_RX_HAM_BUFFER_CORRECT_ERROR_o <= correction_vector_w(11);
-  OBS_SUB_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_o <= correction_vector_w(10);
-  OBS_SUB_RX_HAM_H_SRC_CORRECT_ERROR_o <= correction_vector_w(9);
-  OBS_SUB_RX_HAM_H_INTERFACE_CORRECT_ERROR_o <= correction_vector_w(8);
-  OBS_SUB_RX_HAM_H_ADDRESS_CORRECT_ERROR_o <= correction_vector_w(7);
-  OBS_SUB_RX_HAM_INTEGRITY_CORRECT_ERROR_o <= correction_vector_w(6);
-  OBS_SUB_RX_TMR_FLOW_CTRL_CORRECT_ERROR_o <= correction_vector_w(5);
-  OBS_SUB_RX_TMR_DEPKTZ_CTRL_CORRECT_ERROR_o <= correction_vector_w(4);
+  OBS_SUB_TG_TMR_CTRL_CORRECT_ERROR_o <= correction_vector_w(30);
+  OBS_SUB_TG_HAM_LFSR_CORRECT_ERROR_o <= correction_vector_w(29);
+  OBS_SUB_TM_TMR_CTRL_CORRECT_ERROR_o <= correction_vector_w(28);
+  OBS_SUB_TM_HAM_LFSR_CORRECT_ERROR_o <= correction_vector_w(27);
+  OBS_SUB_TM_HAM_COUNTER_CORRECT_ERROR_o <= correction_vector_w(26);
+  OBS_SUB_TM_HAM_CORRECT_COUNTER_CORRECT_ERROR_o <= correction_vector_w(25);
+  OBS_SUB_LB_TMR_CTRL_CORRECT_ERROR_o <= correction_vector_w(24);
+  OBS_SUB_NOC_LB_TMR_DONE_CTRL_CORRECT_ERROR_o <= correction_vector_w(23);
+  OBS_SUB_LB_HAM_PAYLOAD_CORRECT_ERROR_o <= correction_vector_w(22);
+  OBS_SUB_LB_HAM_RDATA_CORRECT_ERROR_o <= correction_vector_w(21);
+  OBS_SUB_LB_HAM_ID_STATE_CORRECT_ERROR_o <= correction_vector_w(20);
+  OBS_SUB_START_GO_CTRL_TMR_CORRECT_ERROR_o <= correction_vector_w(19);
+  OBS_SUB_FE_INJ_TMR_STATUS_CORRECT_ERROR_o <= correction_vector_w(18);
+  OBS_SUB_INJ_HAM_BUFFER_CORRECT_ERROR_o <= correction_vector_w(17);
+  OBS_SUB_INJ_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_o <= correction_vector_w(16);
+  OBS_SUB_INJ_HAM_INTEGRITY_CORRECT_ERROR_o <= correction_vector_w(15);
+  OBS_SUB_INJ_TMR_FLOW_CTRL_CORRECT_ERROR_o <= correction_vector_w(14);
+  OBS_SUB_INJ_TMR_PKTZ_CTRL_CORRECT_ERROR_o <= correction_vector_w(13);
+  OBS_SUB_RX_HAM_BUFFER_CORRECT_ERROR_o <= correction_vector_w(12);
+  OBS_SUB_RX_TMR_HAM_BUFFER_CTRL_CORRECT_ERROR_o <= correction_vector_w(11);
+  OBS_SUB_RX_HAM_H_SRC_CORRECT_ERROR_o <= correction_vector_w(10);
+  OBS_SUB_RX_HAM_H_INTERFACE_CORRECT_ERROR_o <= correction_vector_w(9);
+  OBS_SUB_RX_HAM_H_ADDRESS_CORRECT_ERROR_o <= correction_vector_w(8);
+  OBS_SUB_RX_HAM_INTEGRITY_CORRECT_ERROR_o <= correction_vector_w(7);
+  OBS_SUB_RX_TMR_FLOW_CTRL_CORRECT_ERROR_o <= correction_vector_w(6);
+  OBS_SUB_RX_TMR_DEPKTZ_CTRL_CORRECT_ERROR_o <= correction_vector_w(5);
 
   u_encode: entity work.subordinate_uart_encode_core_block
     generic map(
@@ -241,9 +252,11 @@ begin
       ACLK => ACLK,
       ARESETn => ARESETn,
       tm_done_i => tm_done_i,
-      TM_TRANSACTION_COUNT_i => TM_TRANSACTION_COUNT_i,
+      TM_RECEIVED_COUNT_i => TM_RECEIVED_COUNT_i,
+      TM_CORRECT_COUNT_i => TM_CORRECT_COUNT_i,
       flags_i => flags_w,
-      OBS_SUB_UART_HAM_TM_COUNT_CORRECT_ERROR_i => correction_vector_w(3),
+      OBS_SUB_UART_HAM_RX_COUNT_CORRECT_ERROR_i => correction_vector_w(4),
+      OBS_SUB_UART_HAM_CORRECT_COUNT_CORRECT_ERROR_i => correction_vector_w(3),
       OBS_SUB_UART_HAM_FLAGS_SEEN_CORRECT_ERROR_i => correction_vector_w(2),
       OBS_SUB_UART_HAM_EVENT_FLAGS_CORRECT_ERROR_i => correction_vector_w(1),
       OBS_SUB_UART_HAM_REPORT_FLAGS_CORRECT_ERROR_i => correction_vector_w(0),
@@ -254,8 +267,10 @@ begin
       uart_tdone_i => uart_tdone_i,
       uart_tstart_o => uart_tstart_o,
       uart_tdata_o => uart_tdata_o,
-      OBS_SUB_UART_HAM_TM_COUNT_SINGLE_ERR_o => OBS_SUB_UART_HAM_TM_COUNT_SINGLE_ERR_o,
-      OBS_SUB_UART_HAM_TM_COUNT_DOUBLE_ERR_o => OBS_SUB_UART_HAM_TM_COUNT_DOUBLE_ERR_o,
+      OBS_SUB_UART_HAM_RX_COUNT_SINGLE_ERR_o => OBS_SUB_UART_HAM_RX_COUNT_SINGLE_ERR_o,
+      OBS_SUB_UART_HAM_RX_COUNT_DOUBLE_ERR_o => OBS_SUB_UART_HAM_RX_COUNT_DOUBLE_ERR_o,
+      OBS_SUB_UART_HAM_CORRECT_COUNT_SINGLE_ERR_o => OBS_SUB_UART_HAM_CORRECT_COUNT_SINGLE_ERR_o,
+      OBS_SUB_UART_HAM_CORRECT_COUNT_DOUBLE_ERR_o => OBS_SUB_UART_HAM_CORRECT_COUNT_DOUBLE_ERR_o,
       OBS_SUB_UART_HAM_FLAGS_SEEN_SINGLE_ERR_o => OBS_SUB_UART_HAM_FLAGS_SEEN_SINGLE_ERR_o,
       OBS_SUB_UART_HAM_FLAGS_SEEN_DOUBLE_ERR_o => OBS_SUB_UART_HAM_FLAGS_SEEN_DOUBLE_ERR_o,
       OBS_SUB_UART_HAM_EVENT_FLAGS_SINGLE_ERR_o => OBS_SUB_UART_HAM_EVENT_FLAGS_SINGLE_ERR_o,

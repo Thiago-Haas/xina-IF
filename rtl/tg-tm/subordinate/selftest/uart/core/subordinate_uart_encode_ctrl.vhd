@@ -40,7 +40,7 @@ architecture rtl of subordinate_uart_encode_ctrl is
     return width_v;
   end function;
 
-  constant C_LINE_LEN : natural := 7 + 8 + 7 + (c_SUB_TM_UART_FLAGS_WIDTH / 4) + 1;
+  constant C_LINE_LEN : natural := 7 + 8 + 4 + 8 + 7 + (c_SUB_TM_UART_FLAGS_WIDTH / 4) + 1;
   constant C_REPORT_COUNTER_WIDTH : natural := f_counter_width(G_REPORT_PERIOD_PACKETS);
   constant C_ST_IDLE : std_logic_vector(1 downto 0) := "00";
   constant C_ST_SEND : std_logic_vector(1 downto 0) := "01";

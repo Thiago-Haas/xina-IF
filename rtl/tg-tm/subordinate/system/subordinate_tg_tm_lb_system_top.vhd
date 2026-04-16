@@ -39,6 +39,11 @@ entity subordinate_tg_tm_lb_system_top is
     OBS_SUB_TM_HAM_COUNTER_DOUBLE_ERR_o    : out std_logic := '0';
     OBS_SUB_TM_HAM_COUNTER_ENC_DATA_o      : out std_logic_vector(c_SUB_TM_TRANSACTION_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(c_SUB_TM_TRANSACTION_COUNTER_WIDTH, c_ENABLE_SUB_TM_LFSR_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
     TM_TRANSACTION_COUNT_o                 : out std_logic_vector(c_SUB_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
+    OBS_SUB_TM_HAM_CORRECT_COUNTER_CORRECT_ERROR_i : in  std_logic := '1';
+    OBS_SUB_TM_HAM_CORRECT_COUNTER_SINGLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_TM_HAM_CORRECT_COUNTER_DOUBLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_TM_HAM_CORRECT_COUNTER_ENC_DATA_o      : out std_logic_vector(c_SUB_TM_TRANSACTION_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(c_SUB_TM_TRANSACTION_COUNTER_WIDTH, c_ENABLE_SUB_TM_LFSR_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
+    TM_CORRECT_TRANSACTION_COUNT_o                 : out std_logic_vector(c_SUB_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
     OBS_SUB_NOC_LB_TMR_DONE_CTRL_CORRECT_ERROR_i : in  std_logic := '1';
     OBS_SUB_NOC_LB_TMR_DONE_CTRL_ERROR_o         : out std_logic := '0';
     OBS_SUB_LB_TMR_CTRL_CORRECT_ERROR_i : in  std_logic := '1';
@@ -192,6 +197,11 @@ begin
       OBS_SUB_TM_HAM_COUNTER_DOUBLE_ERR_o    => OBS_SUB_TM_HAM_COUNTER_DOUBLE_ERR_o,
       OBS_SUB_TM_HAM_COUNTER_ENC_DATA_o      => OBS_SUB_TM_HAM_COUNTER_ENC_DATA_o,
       TM_TRANSACTION_COUNT_o                 => TM_TRANSACTION_COUNT_o,
+      OBS_SUB_TM_HAM_CORRECT_COUNTER_CORRECT_ERROR_i => OBS_SUB_TM_HAM_CORRECT_COUNTER_CORRECT_ERROR_i,
+      OBS_SUB_TM_HAM_CORRECT_COUNTER_SINGLE_ERR_o    => OBS_SUB_TM_HAM_CORRECT_COUNTER_SINGLE_ERR_o,
+      OBS_SUB_TM_HAM_CORRECT_COUNTER_DOUBLE_ERR_o    => OBS_SUB_TM_HAM_CORRECT_COUNTER_DOUBLE_ERR_o,
+      OBS_SUB_TM_HAM_CORRECT_COUNTER_ENC_DATA_o      => OBS_SUB_TM_HAM_CORRECT_COUNTER_ENC_DATA_o,
+      TM_CORRECT_TRANSACTION_COUNT_o                 => TM_CORRECT_TRANSACTION_COUNT_o,
       l_in_data_i => resp_data,
       l_in_val_i  => resp_val,
       l_in_ack_o  => resp_ack
