@@ -14,7 +14,7 @@ use work.xina_manager_ni_pkg.all;
 -- Wiring:
 --   NI request  (ni_manager_top.l_in_*)  -> loopback.lin_*
 --   NI response (ni_manager_top.l_out_*) <- loopback.lout_*
-entity tg_tm_lb_system_top is
+entity manager_tg_tm_lb_system_top is
   generic (
     p_MEM_ADDR_BITS : natural := 10;
 
@@ -29,8 +29,9 @@ entity tg_tm_lb_system_top is
     p_USE_TM_HAMMING               : boolean := c_ENABLE_TM_HAMMING_PROTECTION;
     p_USE_TM_HAMMING_DOUBLE_DETECT : boolean := c_ENABLE_TM_HAMMING_DOUBLE_DETECT;
     p_USE_TM_HAMMING_INJECT_ERROR  : boolean := c_ENABLE_TM_HAMMING_INJECT_ERROR;
-    p_USE_TM_TXN_COUNTER_HAMMING   : boolean := c_ENABLE_TM_TXN_COUNTER_HAMMING;
-    p_TM_TXN_COUNTER_WIDTH         : natural := c_TM_TRANSACTION_COUNTER_WIDTH;
+    p_USE_TM_RECEIVED_COUNTER_HAMMING : boolean := c_ENABLE_TM_RECEIVED_COUNTER_HAMMING;
+    p_USE_TM_CORRECT_COUNTER_HAMMING  : boolean := c_ENABLE_TM_CORRECT_COUNTER_HAMMING;
+    p_TM_COUNTER_WIDTH                : natural := c_TM_COUNTER_WIDTH;
 
     -- LB ECC/TMR enables (follows NI p_USE_* scheme)
     p_USE_LB_CTRL_TMR              : boolean := c_ENABLE_LB_CTRL_TMR;
@@ -59,15 +60,20 @@ entity tg_tm_lb_system_top is
     tm_expected_value_o : out std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
     OBS_TM_HAM_BUFFER_CORRECT_ERROR_i : in  std_logic := '1';
     OBS_TM_TMR_CTRL_CORRECT_ERROR_i   : in  std_logic := '1';
-    OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_i : in std_logic := '1';
+    OBS_TM_HAM_RECEIVED_COUNTER_CORRECT_ERROR_i : in std_logic := '1';
+    OBS_TM_HAM_CORRECT_COUNTER_CORRECT_ERROR_i  : in std_logic := '1';
     OBS_TM_TMR_CTRL_ERROR_o           : out std_logic;
     OBS_TM_HAM_BUFFER_SINGLE_ERR_o    : out std_logic;
     OBS_TM_HAM_BUFFER_DOUBLE_ERR_o    : out std_logic;
     OBS_TM_HAM_BUFFER_ENC_DATA_o      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
-    OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR_o : out std_logic;
-    OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR_o : out std_logic;
-    OBS_TM_HAM_TXN_COUNTER_ENC_DATA_o   : out std_logic_vector(p_TM_TXN_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(p_TM_TXN_COUNTER_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
-    TM_TRANSACTION_COUNT_o              : out std_logic_vector(p_TM_TXN_COUNTER_WIDTH - 1 downto 0);
+    OBS_TM_HAM_RECEIVED_COUNTER_SINGLE_ERR_o : out std_logic;
+    OBS_TM_HAM_RECEIVED_COUNTER_DOUBLE_ERR_o : out std_logic;
+    OBS_TM_HAM_RECEIVED_COUNTER_ENC_DATA_o   : out std_logic_vector(p_TM_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(p_TM_COUNTER_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+    OBS_TM_HAM_CORRECT_COUNTER_SINGLE_ERR_o  : out std_logic;
+    OBS_TM_HAM_CORRECT_COUNTER_DOUBLE_ERR_o  : out std_logic;
+    OBS_TM_HAM_CORRECT_COUNTER_ENC_DATA_o    : out std_logic_vector(p_TM_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(p_TM_COUNTER_WIDTH, p_USE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+    TM_RECEIVED_COUNT_o                      : out std_logic_vector(p_TM_COUNTER_WIDTH - 1 downto 0);
+    TM_CORRECT_COUNT_o                       : out std_logic_vector(p_TM_COUNTER_WIDTH - 1 downto 0);
 
     -- LB observability
     OBS_LB_HAM_BUFFER_CORRECT_ERROR_i : in  std_logic := '1';
@@ -134,7 +140,7 @@ entity tg_tm_lb_system_top is
   );
 end entity;
 
-architecture rtl of tg_tm_lb_system_top is
+architecture rtl of manager_tg_tm_lb_system_top is
 
   -- AXI write (TG)
   signal awid    : std_logic_vector(c_AXI_ID_WIDTH - 1 downto 0);
@@ -238,8 +244,9 @@ begin
       p_USE_TM_HAMMING               => p_USE_TM_HAMMING,
       p_USE_TM_HAMMING_DOUBLE_DETECT => p_USE_TM_HAMMING_DOUBLE_DETECT,
       p_USE_TM_HAMMING_INJECT_ERROR  => p_USE_TM_HAMMING_INJECT_ERROR,
-      p_USE_TM_TXN_COUNTER_HAMMING   => p_USE_TM_TXN_COUNTER_HAMMING,
-      p_TM_TXN_COUNTER_WIDTH         => p_TM_TXN_COUNTER_WIDTH
+      p_USE_TM_RECEIVED_COUNTER_HAMMING => p_USE_TM_RECEIVED_COUNTER_HAMMING,
+      p_USE_TM_CORRECT_COUNTER_HAMMING  => p_USE_TM_CORRECT_COUNTER_HAMMING,
+      p_TM_COUNTER_WIDTH                => p_TM_COUNTER_WIDTH
     )
     port map(
       ACLK    => ACLK,
@@ -270,15 +277,20 @@ begin
 
       OBS_TM_HAM_BUFFER_CORRECT_ERROR_i => OBS_TM_HAM_BUFFER_CORRECT_ERROR_i,
       OBS_TM_TMR_CTRL_CORRECT_ERROR_i   => OBS_TM_TMR_CTRL_CORRECT_ERROR_i,
-      OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_i => OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_i,
+      OBS_TM_HAM_RECEIVED_COUNTER_CORRECT_ERROR_i => OBS_TM_HAM_RECEIVED_COUNTER_CORRECT_ERROR_i,
+      OBS_TM_HAM_CORRECT_COUNTER_CORRECT_ERROR_i  => OBS_TM_HAM_CORRECT_COUNTER_CORRECT_ERROR_i,
       OBS_TM_TMR_CTRL_ERROR_o           => OBS_TM_TMR_CTRL_ERROR_o,
       OBS_TM_HAM_BUFFER_SINGLE_ERR_o    => OBS_TM_HAM_BUFFER_SINGLE_ERR_o,
       OBS_TM_HAM_BUFFER_DOUBLE_ERR_o    => OBS_TM_HAM_BUFFER_DOUBLE_ERR_o,
       OBS_TM_HAM_BUFFER_ENC_DATA_o      => OBS_TM_HAM_BUFFER_ENC_DATA_o,
-      OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR_o => OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR_o,
-      OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR_o => OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR_o,
-      OBS_TM_HAM_TXN_COUNTER_ENC_DATA_o   => OBS_TM_HAM_TXN_COUNTER_ENC_DATA_o,
-      TM_TRANSACTION_COUNT_o              => TM_TRANSACTION_COUNT_o
+      OBS_TM_HAM_RECEIVED_COUNTER_SINGLE_ERR_o => OBS_TM_HAM_RECEIVED_COUNTER_SINGLE_ERR_o,
+      OBS_TM_HAM_RECEIVED_COUNTER_DOUBLE_ERR_o => OBS_TM_HAM_RECEIVED_COUNTER_DOUBLE_ERR_o,
+      OBS_TM_HAM_RECEIVED_COUNTER_ENC_DATA_o   => OBS_TM_HAM_RECEIVED_COUNTER_ENC_DATA_o,
+      OBS_TM_HAM_CORRECT_COUNTER_SINGLE_ERR_o  => OBS_TM_HAM_CORRECT_COUNTER_SINGLE_ERR_o,
+      OBS_TM_HAM_CORRECT_COUNTER_DOUBLE_ERR_o  => OBS_TM_HAM_CORRECT_COUNTER_DOUBLE_ERR_o,
+      OBS_TM_HAM_CORRECT_COUNTER_ENC_DATA_o    => OBS_TM_HAM_CORRECT_COUNTER_ENC_DATA_o,
+      TM_RECEIVED_COUNT_o                      => TM_RECEIVED_COUNT_o,
+      TM_CORRECT_COUNT_o                       => TM_CORRECT_COUNT_o
     );
 
   -- Single NI manager

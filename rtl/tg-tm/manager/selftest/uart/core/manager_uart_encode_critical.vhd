@@ -7,7 +7,7 @@ use work.xina_manager_ni_pkg.all;
 
 -- Critical timing/state block for UART periodic reporting.
 -- Keeps only the registers that decide when a report is triggered.
-entity selftest_obs_uart_encode_critical is
+entity manager_uart_encode_critical is
   generic (
     G_REPORT_PERIOD_PACKETS : positive := c_TM_UART_REPORT_PERIOD_PACKETS
   );
@@ -22,7 +22,7 @@ entity selftest_obs_uart_encode_critical is
   );
 end entity;
 
-architecture rtl of selftest_obs_uart_encode_critical is
+architecture rtl of manager_uart_encode_critical is
   signal tm_done_d_r        : std_logic := '0';
   function f_counter_width(max_value : positive) return natural is
     variable width_v : natural := 1;

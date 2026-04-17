@@ -1,8 +1,8 @@
 library IEEE;
 use IEEE.std_logic_1164.all;
 
--- TMR wrapper for selftest_uart_command_control.
-entity selftest_uart_command_control_tmr is
+-- TMR wrapper for manager_uart_command_control.
+entity manager_uart_command_control_tmr is
   port (
     ACLK    : in  std_logic;
     ARESETn : in  std_logic;
@@ -20,7 +20,7 @@ entity selftest_uart_command_control_tmr is
   );
 end entity;
 
-architecture rtl of selftest_uart_command_control_tmr is
+architecture rtl of manager_uart_command_control_tmr is
   constant C_VOTER_WIDTH : positive := 3;
 
   attribute DONT_TOUCH : string;
@@ -39,11 +39,11 @@ architecture rtl of selftest_uart_command_control_tmr is
   signal error_bits_w     : std_logic_vector(C_VOTER_WIDTH - 1 downto 0);
 begin
   gen_ctrl : for i in 0 to 2 generate
-    attribute DONT_TOUCH of u_selftest_uart_command_control : label is "TRUE";
-    attribute syn_preserve of u_selftest_uart_command_control : label is true;
-    attribute KEEP_HIERARCHY of u_selftest_uart_command_control : label is "TRUE";
+    attribute DONT_TOUCH of u_manager_uart_command_control : label is "TRUE";
+    attribute syn_preserve of u_manager_uart_command_control : label is true;
+    attribute KEEP_HIERARCHY of u_manager_uart_command_control : label is "TRUE";
   begin
-    u_selftest_uart_command_control: entity work.selftest_uart_command_control
+    u_manager_uart_command_control: entity work.manager_uart_command_control
       port map(
         ACLK             => ACLK,
         ARESETn          => ARESETn,

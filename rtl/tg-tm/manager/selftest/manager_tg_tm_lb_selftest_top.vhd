@@ -7,9 +7,9 @@ use work.xina_manager_ni_pkg.all;
 
 -- Closed-box self-test top:
 --   Inputs: ACLK, ARESETn
---   Internally instantiates TG+TM+NI+loopback (tg_tm_lb_system_top),
+--   Internally instantiates TG+TM+NI+loopback (manager_tg_tm_lb_system_top),
 --   start/done control, constant seed/address generation, and UART observability.
-entity tg_tm_lb_selftest_top is
+entity manager_tg_tm_lb_selftest_top is
   port (
     ACLK    : in std_logic;
     ARESETn : in std_logic;
@@ -20,7 +20,7 @@ entity tg_tm_lb_selftest_top is
   );
 end entity;
 
-architecture rtl of tg_tm_lb_selftest_top is
+architecture rtl of manager_tg_tm_lb_selftest_top is
   attribute DONT_TOUCH : string;
   attribute syn_preserve : boolean;
   attribute KEEP_HIERARCHY : string;
@@ -45,7 +45,8 @@ architecture rtl of tg_tm_lb_selftest_top is
   -- OBS enable wires (obs block -> DUT)
   signal OBS_TM_HAM_BUFFER_CORRECT_ERROR_w : std_logic;
   signal OBS_TM_TMR_CTRL_CORRECT_ERROR_w   : std_logic;
-  signal OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_w : std_logic;
+  signal OBS_TM_HAM_RECEIVED_COUNTER_CORRECT_ERROR_w : std_logic;
+  signal OBS_TM_HAM_CORRECT_COUNTER_CORRECT_ERROR_w  : std_logic;
 
   signal OBS_LB_HAM_BUFFER_CORRECT_ERROR_w : std_logic;
   signal OBS_LB_TMR_CTRL_CORRECT_ERROR_w   : std_logic;
@@ -74,9 +75,12 @@ architecture rtl of tg_tm_lb_selftest_top is
   signal OBS_TM_HAM_BUFFER_SINGLE_ERR_w : std_logic;
   signal OBS_TM_HAM_BUFFER_DOUBLE_ERR_w : std_logic;
   signal OBS_TM_HAM_BUFFER_ENC_DATA_w : std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
-  signal OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR_w : std_logic;
-  signal OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR_w : std_logic;
-  signal OBS_TM_HAM_TXN_COUNTER_ENC_DATA_w : std_logic_vector(c_TM_TRANSACTION_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(c_TM_TRANSACTION_COUNTER_WIDTH, c_ENABLE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+  signal OBS_TM_HAM_RECEIVED_COUNTER_SINGLE_ERR_w : std_logic;
+  signal OBS_TM_HAM_RECEIVED_COUNTER_DOUBLE_ERR_w : std_logic;
+  signal OBS_TM_HAM_RECEIVED_COUNTER_ENC_DATA_w : std_logic_vector(c_TM_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(c_TM_COUNTER_WIDTH, c_ENABLE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+  signal OBS_TM_HAM_CORRECT_COUNTER_SINGLE_ERR_w : std_logic;
+  signal OBS_TM_HAM_CORRECT_COUNTER_DOUBLE_ERR_w : std_logic;
+  signal OBS_TM_HAM_CORRECT_COUNTER_ENC_DATA_w : std_logic_vector(c_TM_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(c_TM_COUNTER_WIDTH, c_ENABLE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
   signal OBS_LB_TMR_CTRL_ERROR_w : std_logic;
   signal OBS_LB_HAM_BUFFER_SINGLE_ERR_w : std_logic;
@@ -121,7 +125,8 @@ architecture rtl of tg_tm_lb_selftest_top is
 
   -- DUT outputs consumed by observation block
   signal tm_expected_value_w : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
-  signal tm_transaction_count_w : std_logic_vector(c_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
+  signal tm_received_count_w : std_logic_vector(c_TM_COUNTER_WIDTH - 1 downto 0);
+  signal tm_correct_count_w  : std_logic_vector(c_TM_COUNTER_WIDTH - 1 downto 0);
   signal ni_corrupt_packet_w : std_logic;
 
   -- UART local wires (UART is at top level)
@@ -165,7 +170,7 @@ begin
     attribute syn_preserve of u_start_done_control : label is true;
     attribute KEEP_HIERARCHY of u_start_done_control : label is "TRUE";
   begin
-    u_start_done_control: entity work.selftest_start_done_control
+    u_manager_start_done_control: entity work.manager_start_done_control
       port map (
         ACLK    => ACLK,
         ARESETn => ARESETn,
@@ -180,7 +185,7 @@ begin
   end generate;
 
   gen_start_done_ctrl_tmr : if c_ENABLE_OBS_START_DONE_CTRL_TMR generate
-    u_start_done_control_tmr: entity work.selftest_start_done_control_tmr
+    u_manager_start_done_control_tmr: entity work.manager_start_done_control_tmr
       port map (
         ACLK    => ACLK,
         ARESETn => ARESETn,
@@ -195,7 +200,7 @@ begin
       );
   end generate;
 
-  u_selftest_seed_addr_constants: entity work.selftest_seed_addr_constants
+  u_manager_seed_addr_constants: entity work.manager_seed_addr_constants
     port map (
       tg_addr_o => tg_addr_w,
       tg_seed_o => tg_seed_w,
@@ -203,7 +208,7 @@ begin
       tm_seed_o => tm_seed_w
     );
 
-  u_selftest_obs_uart_encode_block: entity work.selftest_obs_uart_encode_block
+  u_manager_uart_obs_block: entity work.manager_uart_obs_block
     port map (
       ACLK    => ACLK,
       ARESETn => ARESETn,
@@ -221,13 +226,15 @@ begin
 
       tm_done_i  => tm_done_w,
       tm_comparison_mismatch_i => tm_comparison_mismatch_w,
-      TM_TRANSACTION_COUNT_i => tm_transaction_count_w,
+      TM_RECEIVED_COUNT_i    => tm_received_count_w,
+      TM_CORRECT_COUNT_i     => tm_correct_count_w,
       TM_EXPECTED_VALUE_i    => tm_expected_value_w,
       NI_CORRUPT_PACKET_i    => ni_corrupt_packet_w,
 
       OBS_TM_HAM_BUFFER_CORRECT_ERROR_o => OBS_TM_HAM_BUFFER_CORRECT_ERROR_w,
       OBS_TM_TMR_CTRL_CORRECT_ERROR_o   => OBS_TM_TMR_CTRL_CORRECT_ERROR_w,
-      OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_o => OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_w,
+      OBS_TM_HAM_RECEIVED_COUNTER_CORRECT_ERROR_o => OBS_TM_HAM_RECEIVED_COUNTER_CORRECT_ERROR_w,
+      OBS_TM_HAM_CORRECT_COUNTER_CORRECT_ERROR_o  => OBS_TM_HAM_CORRECT_COUNTER_CORRECT_ERROR_w,
 
       OBS_LB_HAM_BUFFER_CORRECT_ERROR_o => OBS_LB_HAM_BUFFER_CORRECT_ERROR_w,
       OBS_LB_TMR_CTRL_CORRECT_ERROR_o   => OBS_LB_TMR_CTRL_CORRECT_ERROR_w,
@@ -255,9 +262,12 @@ begin
       OBS_TM_HAM_BUFFER_SINGLE_ERR_i => OBS_TM_HAM_BUFFER_SINGLE_ERR_w,
       OBS_TM_HAM_BUFFER_DOUBLE_ERR_i => OBS_TM_HAM_BUFFER_DOUBLE_ERR_w,
       OBS_TM_HAM_BUFFER_ENC_DATA_i => OBS_TM_HAM_BUFFER_ENC_DATA_w,
-      OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR_i => OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR_w,
-      OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR_i => OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR_w,
-      OBS_TM_HAM_TXN_COUNTER_ENC_DATA_i => OBS_TM_HAM_TXN_COUNTER_ENC_DATA_w,
+      OBS_TM_HAM_RECEIVED_COUNTER_SINGLE_ERR_i => OBS_TM_HAM_RECEIVED_COUNTER_SINGLE_ERR_w,
+      OBS_TM_HAM_RECEIVED_COUNTER_DOUBLE_ERR_i => OBS_TM_HAM_RECEIVED_COUNTER_DOUBLE_ERR_w,
+      OBS_TM_HAM_RECEIVED_COUNTER_ENC_DATA_i   => OBS_TM_HAM_RECEIVED_COUNTER_ENC_DATA_w,
+      OBS_TM_HAM_CORRECT_COUNTER_SINGLE_ERR_i  => OBS_TM_HAM_CORRECT_COUNTER_SINGLE_ERR_w,
+      OBS_TM_HAM_CORRECT_COUNTER_DOUBLE_ERR_i  => OBS_TM_HAM_CORRECT_COUNTER_DOUBLE_ERR_w,
+      OBS_TM_HAM_CORRECT_COUNTER_ENC_DATA_i    => OBS_TM_HAM_CORRECT_COUNTER_ENC_DATA_w,
 
       OBS_LB_TMR_CTRL_ERROR_i => OBS_LB_TMR_CTRL_ERROR_w,
       OBS_LB_HAM_BUFFER_SINGLE_ERR_i => OBS_LB_HAM_BUFFER_SINGLE_ERR_w,
@@ -305,7 +315,7 @@ begin
       experiment_reset_pulse_o => experiment_reset_pulse_w
     );
 
-  u_tg_tm_lb_system_top: entity work.tg_tm_lb_system_top
+  u_manager_tg_tm_lb_system_top: entity work.manager_tg_tm_lb_system_top
     port map (
       ACLK    => ACLK,
       ARESETn => ARESETn,
@@ -324,15 +334,20 @@ begin
       tm_expected_value_o => tm_expected_value_w,
       OBS_TM_HAM_BUFFER_CORRECT_ERROR_i => OBS_TM_HAM_BUFFER_CORRECT_ERROR_w,
       OBS_TM_TMR_CTRL_CORRECT_ERROR_i   => OBS_TM_TMR_CTRL_CORRECT_ERROR_w,
-      OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_i => OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_w,
+      OBS_TM_HAM_RECEIVED_COUNTER_CORRECT_ERROR_i => OBS_TM_HAM_RECEIVED_COUNTER_CORRECT_ERROR_w,
+      OBS_TM_HAM_CORRECT_COUNTER_CORRECT_ERROR_i  => OBS_TM_HAM_CORRECT_COUNTER_CORRECT_ERROR_w,
       OBS_TM_TMR_CTRL_ERROR_o           => OBS_TM_TMR_CTRL_ERROR_w,
       OBS_TM_HAM_BUFFER_SINGLE_ERR_o    => OBS_TM_HAM_BUFFER_SINGLE_ERR_w,
       OBS_TM_HAM_BUFFER_DOUBLE_ERR_o    => OBS_TM_HAM_BUFFER_DOUBLE_ERR_w,
       OBS_TM_HAM_BUFFER_ENC_DATA_o      => OBS_TM_HAM_BUFFER_ENC_DATA_w,
-      OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR_o => OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR_w,
-      OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR_o => OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR_w,
-      OBS_TM_HAM_TXN_COUNTER_ENC_DATA_o   => OBS_TM_HAM_TXN_COUNTER_ENC_DATA_w,
-      TM_TRANSACTION_COUNT_o              => tm_transaction_count_w,
+      OBS_TM_HAM_RECEIVED_COUNTER_SINGLE_ERR_o => OBS_TM_HAM_RECEIVED_COUNTER_SINGLE_ERR_w,
+      OBS_TM_HAM_RECEIVED_COUNTER_DOUBLE_ERR_o => OBS_TM_HAM_RECEIVED_COUNTER_DOUBLE_ERR_w,
+      OBS_TM_HAM_RECEIVED_COUNTER_ENC_DATA_o   => OBS_TM_HAM_RECEIVED_COUNTER_ENC_DATA_w,
+      OBS_TM_HAM_CORRECT_COUNTER_SINGLE_ERR_o  => OBS_TM_HAM_CORRECT_COUNTER_SINGLE_ERR_w,
+      OBS_TM_HAM_CORRECT_COUNTER_DOUBLE_ERR_o  => OBS_TM_HAM_CORRECT_COUNTER_DOUBLE_ERR_w,
+      OBS_TM_HAM_CORRECT_COUNTER_ENC_DATA_o    => OBS_TM_HAM_CORRECT_COUNTER_ENC_DATA_w,
+      TM_RECEIVED_COUNT_o                      => tm_received_count_w,
+      TM_CORRECT_COUNT_o                       => tm_correct_count_w,
 
       OBS_LB_HAM_BUFFER_CORRECT_ERROR_i => OBS_LB_HAM_BUFFER_CORRECT_ERROR_w,
       OBS_LB_TMR_CTRL_CORRECT_ERROR_i   => OBS_LB_TMR_CTRL_CORRECT_ERROR_w,

@@ -4,8 +4,8 @@ use IEEE.std_logic_1164.all;
 use work.xina_noc_pkg.all;
 use work.xina_manager_ni_pkg.all;
 
--- TMR wrapper for selftest_obs_uart_encode_critical.
-entity selftest_obs_uart_encode_critical_tmr is
+-- TMR wrapper for manager_uart_encode_critical.
+entity manager_uart_encode_critical_tmr is
   generic (
     G_REPORT_PERIOD_PACKETS : positive := c_TM_UART_REPORT_PERIOD_PACKETS
   );
@@ -24,7 +24,7 @@ entity selftest_obs_uart_encode_critical_tmr is
   );
 end entity;
 
-architecture rtl of selftest_obs_uart_encode_critical_tmr is
+architecture rtl of manager_uart_encode_critical_tmr is
   constant C_VOTER_WIDTH : positive := 2;
 
   attribute DONT_TOUCH : string;
@@ -46,7 +46,7 @@ begin
     attribute syn_preserve of u_uart_encode_critical : label is true;
     attribute KEEP_HIERARCHY of u_uart_encode_critical : label is "TRUE";
   begin
-    u_uart_encode_critical : entity work.selftest_obs_uart_encode_critical
+    u_manager_uart_encode_critical : entity work.manager_uart_encode_critical
       generic map(
         G_REPORT_PERIOD_PACKETS => G_REPORT_PERIOD_PACKETS
       )

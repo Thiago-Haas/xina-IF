@@ -8,7 +8,7 @@ use work.xina_manager_ni_pkg.all;
 -- UART manager for closed-box self-test:
 -- * encodes fault/status vector as labeled ASCII text + LF
 -- * decodes UART RX commands to control experiment and OBS enables
-entity selftest_obs_uart_encode_block is
+entity manager_uart_obs_block is
   generic (
     G_REPORT_PERIOD_PACKETS : positive := c_TM_UART_REPORT_PERIOD_PACKETS
   );
@@ -20,7 +20,8 @@ entity selftest_obs_uart_encode_block is
 
     -- Observability inputs used for UART report
     tm_comparison_mismatch_i : in  std_logic;
-    TM_TRANSACTION_COUNT_i   : in std_logic_vector(c_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
+    TM_RECEIVED_COUNT_i      : in std_logic_vector(c_TM_COUNTER_WIDTH - 1 downto 0);
+    TM_CORRECT_COUNT_i       : in std_logic_vector(c_TM_COUNTER_WIDTH - 1 downto 0);
     TM_EXPECTED_VALUE_i      : in std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
     NI_CORRUPT_PACKET_i      : in std_logic;
 
@@ -28,9 +29,12 @@ entity selftest_obs_uart_encode_block is
     OBS_TM_HAM_BUFFER_SINGLE_ERR_i : in std_logic;
     OBS_TM_HAM_BUFFER_DOUBLE_ERR_i : in std_logic;
     OBS_TM_HAM_BUFFER_ENC_DATA_i : in std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
-    OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR_i : in std_logic;
-    OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR_i : in std_logic;
-    OBS_TM_HAM_TXN_COUNTER_ENC_DATA_i : in std_logic_vector(c_TM_TRANSACTION_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(c_TM_TRANSACTION_COUNTER_WIDTH, c_ENABLE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+    OBS_TM_HAM_RECEIVED_COUNTER_SINGLE_ERR_i : in std_logic;
+    OBS_TM_HAM_RECEIVED_COUNTER_DOUBLE_ERR_i : in std_logic;
+    OBS_TM_HAM_RECEIVED_COUNTER_ENC_DATA_i : in std_logic_vector(c_TM_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(c_TM_COUNTER_WIDTH, c_ENABLE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+    OBS_TM_HAM_CORRECT_COUNTER_SINGLE_ERR_i : in std_logic;
+    OBS_TM_HAM_CORRECT_COUNTER_DOUBLE_ERR_i : in std_logic;
+    OBS_TM_HAM_CORRECT_COUNTER_ENC_DATA_i : in std_logic_vector(c_TM_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(c_TM_COUNTER_WIDTH, c_ENABLE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
     OBS_LB_TMR_CTRL_ERROR_i : in std_logic;
     OBS_LB_HAM_BUFFER_SINGLE_ERR_i : in std_logic;
@@ -77,7 +81,8 @@ entity selftest_obs_uart_encode_block is
     -- OBS enables (to DUT), controlled from UART commands
     OBS_TM_HAM_BUFFER_CORRECT_ERROR_o : out std_logic;
     OBS_TM_TMR_CTRL_CORRECT_ERROR_o   : out std_logic;
-    OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_o : out std_logic;
+    OBS_TM_HAM_RECEIVED_COUNTER_CORRECT_ERROR_o : out std_logic;
+    OBS_TM_HAM_CORRECT_COUNTER_CORRECT_ERROR_o  : out std_logic;
 
     OBS_LB_HAM_BUFFER_CORRECT_ERROR_o : out std_logic;
     OBS_LB_TMR_CTRL_CORRECT_ERROR_o   : out std_logic;
@@ -125,7 +130,7 @@ entity selftest_obs_uart_encode_block is
   );
 end entity;
 
-architecture rtl of selftest_obs_uart_encode_block is
+architecture rtl of manager_uart_obs_block is
   signal uart_command_ctrl_tmr_error_w : std_logic;
   signal uart_encode_critical_tmr_correct_error_w : std_logic;
 begin
@@ -133,7 +138,7 @@ begin
 
   b_obs_enable_block: block
   begin
-    u_obs_enable_block: entity work.selftest_uart_command_block
+    u_manager_uart_command_block: entity work.manager_uart_command_block
       port map(
         ACLK    => ACLK,
         ARESETn => ARESETn,
@@ -144,7 +149,8 @@ begin
         experiment_reset_pulse_o => experiment_reset_pulse_o,
         OBS_TM_HAM_BUFFER_CORRECT_ERROR_o => OBS_TM_HAM_BUFFER_CORRECT_ERROR_o,
         OBS_TM_TMR_CTRL_CORRECT_ERROR_o   => OBS_TM_TMR_CTRL_CORRECT_ERROR_o,
-        OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_o => OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_o,
+        OBS_TM_HAM_RECEIVED_COUNTER_CORRECT_ERROR_o => OBS_TM_HAM_RECEIVED_COUNTER_CORRECT_ERROR_o,
+        OBS_TM_HAM_CORRECT_COUNTER_CORRECT_ERROR_o  => OBS_TM_HAM_CORRECT_COUNTER_CORRECT_ERROR_o,
         OBS_LB_HAM_BUFFER_CORRECT_ERROR_o => OBS_LB_HAM_BUFFER_CORRECT_ERROR_o,
         OBS_LB_TMR_CTRL_CORRECT_ERROR_o   => OBS_LB_TMR_CTRL_CORRECT_ERROR_o,
         OBS_TG_HAM_BUFFER_CORRECT_ERROR_o => OBS_TG_HAM_BUFFER_CORRECT_ERROR_o,
@@ -170,7 +176,7 @@ begin
 
   b_uart_encode_core: block
   begin
-    u_uart_encode_core: entity work.selftest_obs_uart_encode_core_block
+    u_manager_uart_encode_core: entity work.manager_uart_encode_core_block
       generic map(
         G_REPORT_PERIOD_PACKETS => G_REPORT_PERIOD_PACKETS
       )
@@ -179,16 +185,20 @@ begin
         ARESETn => ARESETn,
         tm_done_i => tm_done_i,
         tm_comparison_mismatch_i => tm_comparison_mismatch_i,
-        TM_TRANSACTION_COUNT_i => TM_TRANSACTION_COUNT_i,
+        TM_RECEIVED_COUNT_i => TM_RECEIVED_COUNT_i,
+        TM_CORRECT_COUNT_i  => TM_CORRECT_COUNT_i,
         TM_EXPECTED_VALUE_i    => TM_EXPECTED_VALUE_i,
         NI_CORRUPT_PACKET_i    => NI_CORRUPT_PACKET_i,
         OBS_TM_TMR_CTRL_ERROR_i => OBS_TM_TMR_CTRL_ERROR_i,
         OBS_TM_HAM_BUFFER_SINGLE_ERR_i => OBS_TM_HAM_BUFFER_SINGLE_ERR_i,
         OBS_TM_HAM_BUFFER_DOUBLE_ERR_i => OBS_TM_HAM_BUFFER_DOUBLE_ERR_i,
         OBS_TM_HAM_BUFFER_ENC_DATA_i => OBS_TM_HAM_BUFFER_ENC_DATA_i,
-        OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR_i => OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR_i,
-        OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR_i => OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR_i,
-        OBS_TM_HAM_TXN_COUNTER_ENC_DATA_i => OBS_TM_HAM_TXN_COUNTER_ENC_DATA_i,
+        OBS_TM_HAM_RECEIVED_COUNTER_SINGLE_ERR_i => OBS_TM_HAM_RECEIVED_COUNTER_SINGLE_ERR_i,
+        OBS_TM_HAM_RECEIVED_COUNTER_DOUBLE_ERR_i => OBS_TM_HAM_RECEIVED_COUNTER_DOUBLE_ERR_i,
+        OBS_TM_HAM_RECEIVED_COUNTER_ENC_DATA_i   => OBS_TM_HAM_RECEIVED_COUNTER_ENC_DATA_i,
+        OBS_TM_HAM_CORRECT_COUNTER_SINGLE_ERR_i  => OBS_TM_HAM_CORRECT_COUNTER_SINGLE_ERR_i,
+        OBS_TM_HAM_CORRECT_COUNTER_DOUBLE_ERR_i  => OBS_TM_HAM_CORRECT_COUNTER_DOUBLE_ERR_i,
+        OBS_TM_HAM_CORRECT_COUNTER_ENC_DATA_i    => OBS_TM_HAM_CORRECT_COUNTER_ENC_DATA_i,
         OBS_LB_TMR_CTRL_ERROR_i => OBS_LB_TMR_CTRL_ERROR_i,
         OBS_LB_HAM_BUFFER_SINGLE_ERR_i => OBS_LB_HAM_BUFFER_SINGLE_ERR_i,
         OBS_LB_HAM_BUFFER_DOUBLE_ERR_i => OBS_LB_HAM_BUFFER_DOUBLE_ERR_i,

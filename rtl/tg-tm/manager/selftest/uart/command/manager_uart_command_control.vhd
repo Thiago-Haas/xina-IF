@@ -11,7 +11,7 @@ use IEEE.std_logic_1164.all;
 -- R -> one-cycle reset pulse
 -- E -> command enable=1
 -- D -> command enable=0
-entity selftest_uart_command_control is
+entity manager_uart_command_control is
   port (
     ACLK    : in  std_logic;
     ARESETn : in  std_logic;
@@ -26,7 +26,7 @@ entity selftest_uart_command_control is
   );
 end entity;
 
-architecture rtl of selftest_uart_command_control is
+architecture rtl of manager_uart_command_control is
   signal run_enable_r  : std_logic := '1';
   signal reset_pulse_r : std_logic := '0';
   signal command_enable_r  : std_logic := '1';

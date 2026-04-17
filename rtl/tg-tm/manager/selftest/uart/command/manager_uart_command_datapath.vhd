@@ -2,13 +2,14 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 
 -- Datapath fanout for UART-driven correct-error enables.
-entity selftest_uart_command_datapath is
+entity manager_uart_command_datapath is
   port (
     command_enable_i : in std_logic;
 
     OBS_TM_HAM_BUFFER_CORRECT_ERROR_o : out std_logic;
     OBS_TM_TMR_CTRL_CORRECT_ERROR_o   : out std_logic;
-    OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_o : out std_logic;
+    OBS_TM_HAM_RECEIVED_COUNTER_CORRECT_ERROR_o : out std_logic;
+    OBS_TM_HAM_CORRECT_COUNTER_CORRECT_ERROR_o  : out std_logic;
 
     OBS_LB_HAM_BUFFER_CORRECT_ERROR_o : out std_logic;
     OBS_LB_TMR_CTRL_CORRECT_ERROR_o   : out std_logic;
@@ -37,11 +38,12 @@ entity selftest_uart_command_datapath is
   );
 end entity;
 
-architecture rtl of selftest_uart_command_datapath is
+architecture rtl of manager_uart_command_datapath is
 begin
   OBS_TM_HAM_BUFFER_CORRECT_ERROR_o <= command_enable_i;
   OBS_TM_TMR_CTRL_CORRECT_ERROR_o <= command_enable_i;
-  OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_o <= command_enable_i;
+  OBS_TM_HAM_RECEIVED_COUNTER_CORRECT_ERROR_o <= command_enable_i;
+  OBS_TM_HAM_CORRECT_COUNTER_CORRECT_ERROR_o <= command_enable_i;
 
   OBS_LB_HAM_BUFFER_CORRECT_ERROR_o <= command_enable_i;
   OBS_LB_TMR_CTRL_CORRECT_ERROR_o <= command_enable_i;

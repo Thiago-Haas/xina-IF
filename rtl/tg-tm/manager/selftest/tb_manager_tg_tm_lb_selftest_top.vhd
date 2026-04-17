@@ -10,7 +10,7 @@ library std;
 -- Minimal testbench: drives only clock + reset into a closed-box DUT.
 -- The DUT runs self-test internally; inspect waves for internal signals.
 
-entity tb_tg_tm_lb_selftest_top is
+entity tb_manager_tg_tm_lb_selftest_top is
   generic (
     G_ENABLE_OBS_AFTER_RESET : boolean := FALSE;
     G_STOP_SIM_ON_TARGET : boolean := TRUE;
@@ -19,19 +19,19 @@ entity tb_tg_tm_lb_selftest_top is
   );
 end entity;
 
-architecture tb of tb_tg_tm_lb_selftest_top is
+architecture tb of tb_manager_tg_tm_lb_selftest_top is
 
   constant c_CLK_PERIOD : time := 10 ns;
   --constant C_TM_PAYLOAD_STOP_COUNT : natural := 262144; -- 1 MiB / 4 B
   constant C_TM_PAYLOAD_STOP_COUNT : natural := 2560; -- 10 KiB / 4 B
   constant C_TM_PAYLOAD_BYTES      : natural := c_AXI_DATA_WIDTH / 8;
   constant C_TM_STOP_TOTAL_BYTES   : natural := C_TM_PAYLOAD_STOP_COUNT * C_TM_PAYLOAD_BYTES;
-  constant C_TM_HEX_DIGITS      : natural := (c_TM_TRANSACTION_COUNTER_WIDTH + 3) / 4;
+  constant C_COUNT_HEX_DIGITS   : natural := (c_TM_COUNTER_WIDTH + 3) / 4;
   constant C_FLAGS_HEX_DIGITS   : natural := c_TM_UART_FLAGS_WIDTH / 4;
-  constant C_LABEL_TM_LEN       : natural := 3; -- "TM="
+  constant C_PREFIX_RX_LEN      : natural := 7; -- "MGR RX="
+  constant C_PREFIX_OK_LEN      : natural := 4; -- " OK="
   constant C_LABEL_FLAGS_LEN    : natural := 7; -- " FLAGS="
-  constant C_TM_ONLY_LINE_LEN   : natural := C_LABEL_TM_LEN + C_TM_HEX_DIGITS;
-  constant C_TM_FLAGS_LINE_LEN  : natural := C_LABEL_TM_LEN + C_TM_HEX_DIGITS + C_LABEL_FLAGS_LEN + C_FLAGS_HEX_DIGITS;
+  constant C_TM_FLAGS_LINE_LEN  : natural := C_PREFIX_RX_LEN + C_COUNT_HEX_DIGITS + C_PREFIX_OK_LEN + C_COUNT_HEX_DIGITS + C_LABEL_FLAGS_LEN + C_FLAGS_HEX_DIGITS;
 
   signal ACLK    : std_logic := '0';
   signal ARESETn : std_logic := '0';
@@ -56,8 +56,10 @@ architecture tb of tb_tg_tm_lb_selftest_top is
 
   signal rx_count : integer := 0;
   signal tx_toggle_count : integer := 0;
-  signal tm_decoded_count : std_logic_vector(31 downto 0) := (others => '0');
-  signal tm_decoded_count_int : integer := 0;
+  signal tm_received_count : std_logic_vector(31 downto 0) := (others => '0');
+  signal tm_received_count_int : integer := 0;
+  signal tm_correct_count : std_logic_vector(31 downto 0) := (others => '0');
+  signal tm_correct_count_int : integer := 0;
   signal clk_cycle_count : std_logic_vector(31 downto 0) := (others => '0');
   signal last_uart_capture_time_ns : integer := 0;
   signal stop_target_time_ns : integer := 0;
@@ -166,8 +168,10 @@ architecture tb of tb_tg_tm_lb_selftest_top is
 
   -- Xilinx attributes to prevent optimization of TMR
   attribute DONT_TOUCH : string;
-  attribute DONT_TOUCH of tm_decoded_count : signal is "TRUE";
-  attribute DONT_TOUCH of tm_decoded_count_int : signal is "TRUE";
+  attribute DONT_TOUCH of tm_received_count : signal is "TRUE";
+  attribute DONT_TOUCH of tm_received_count_int : signal is "TRUE";
+  attribute DONT_TOUCH of tm_correct_count : signal is "TRUE";
+  attribute DONT_TOUCH of tm_correct_count_int : signal is "TRUE";
   attribute DONT_TOUCH of clk_cycle_count : signal is "TRUE";
   attribute DONT_TOUCH of last_uart_capture_time_ns : signal is "TRUE";
   attribute DONT_TOUCH of stop_target_time_ns : signal is "TRUE";
@@ -176,8 +180,10 @@ architecture tb of tb_tg_tm_lb_selftest_top is
   attribute DONT_TOUCH of host_rdone_d : signal is "TRUE";
   -- Synplify attributes to prevent optimization of TMR
   attribute syn_preserve : boolean;
-  attribute syn_preserve of tm_decoded_count : signal is true;
-  attribute syn_preserve of tm_decoded_count_int : signal is true;
+  attribute syn_preserve of tm_received_count : signal is true;
+  attribute syn_preserve of tm_received_count_int : signal is true;
+  attribute syn_preserve of tm_correct_count : signal is true;
+  attribute syn_preserve of tm_correct_count_int : signal is true;
   attribute syn_preserve of clk_cycle_count : signal is true;
   attribute syn_preserve of last_uart_capture_time_ns : signal is true;
   attribute syn_preserve of stop_target_time_ns : signal is true;
@@ -193,7 +199,7 @@ begin
   uart_rx_i <= host_uart_tx;
 
   -- DUT
-  u_tg_tm_lb_selftest_top: entity work.tg_tm_lb_selftest_top
+  u_manager_tg_tm_lb_selftest_top: entity work.manager_tg_tm_lb_selftest_top
     port map (
       ACLK    => ACLK,
       ARESETn => ARESETn,
@@ -230,7 +236,8 @@ begin
     variable v_line : string(1 to 256);
     variable v_len  : integer range 0 to 256 := 0;
     variable v_byte : integer;
-    variable v_tm_dec : integer;
+    variable v_rx_dec : integer;
+    variable v_ok_dec : integer;
     variable v_flags_bin : string(1 to C_FLAGS_HEX_DIGITS * 4);
     variable v_line_start_cycle : integer := 0;
     variable v_line_start_time  : time := 0 ns;
@@ -239,8 +246,10 @@ begin
     if rising_edge(ACLK) then
       if ARESETn = '0' then
         rx_count <= 0;
-        tm_decoded_count <= (others => '0');
-        tm_decoded_count_int <= 0;
+        tm_received_count <= (others => '0');
+        tm_received_count_int <= 0;
+        tm_correct_count <= (others => '0');
+        tm_correct_count_int <= 0;
         clk_cycle_count <= (others => '0');
         last_uart_capture_time_ns <= 0;
         host_rdone_d <= '0';
@@ -271,30 +280,27 @@ begin
               deallocate(v_msg);
 
               -- Decode base line format from DUT:
-              -- TM=<N hex> FLAGS=<7 hex>, where N follows c_TM_TRANSACTION_COUNTER_WIDTH.
+              -- MGR RX=<N hex> OK=<N hex> FLAGS=<M hex>
               if (v_len = C_TM_FLAGS_LINE_LEN) and
-                 (v_line(1 to 3) = "TM=") and
-                 (v_line(4 + C_TM_HEX_DIGITS to 3 + C_TM_HEX_DIGITS + C_LABEL_FLAGS_LEN) = " FLAGS=") and
-                 f_is_hex_string(v_line(4 to 3 + C_TM_HEX_DIGITS)) and
-                 f_is_hex_string(v_line(4 + C_TM_HEX_DIGITS + C_LABEL_FLAGS_LEN to C_TM_FLAGS_LINE_LEN)) then
-                v_tm_dec := f_hex_to_integer(v_line(4 to 3 + C_TM_HEX_DIGITS));
-                tm_decoded_count <= std_logic_vector(to_unsigned(v_tm_dec, tm_decoded_count'length));
-                tm_decoded_count_int <= v_tm_dec;
-                v_flags_bin := f_hex_to_bin_string(v_line(4 + C_TM_HEX_DIGITS + C_LABEL_FLAGS_LEN to C_TM_FLAGS_LINE_LEN));
-                write(v_msg, string'("UART_DECODE TM_DEC="));
-                write(v_msg, integer'image(v_tm_dec));
+                 (v_line(1 to C_PREFIX_RX_LEN) = "MGR RX=") and
+                 (v_line(C_PREFIX_RX_LEN + C_COUNT_HEX_DIGITS + 1 to C_PREFIX_RX_LEN + C_COUNT_HEX_DIGITS + C_PREFIX_OK_LEN) = " OK=") and
+                 (v_line(C_PREFIX_RX_LEN + C_COUNT_HEX_DIGITS + C_PREFIX_OK_LEN + C_COUNT_HEX_DIGITS + 1 to C_PREFIX_RX_LEN + C_COUNT_HEX_DIGITS + C_PREFIX_OK_LEN + C_COUNT_HEX_DIGITS + C_LABEL_FLAGS_LEN) = " FLAGS=") and
+                 f_is_hex_string(v_line(C_PREFIX_RX_LEN + 1 to C_PREFIX_RX_LEN + C_COUNT_HEX_DIGITS)) and
+                 f_is_hex_string(v_line(C_PREFIX_RX_LEN + C_COUNT_HEX_DIGITS + C_PREFIX_OK_LEN + 1 to C_PREFIX_RX_LEN + C_COUNT_HEX_DIGITS + C_PREFIX_OK_LEN + C_COUNT_HEX_DIGITS)) and
+                 f_is_hex_string(v_line(C_PREFIX_RX_LEN + C_COUNT_HEX_DIGITS + C_PREFIX_OK_LEN + C_COUNT_HEX_DIGITS + C_LABEL_FLAGS_LEN + 1 to C_TM_FLAGS_LINE_LEN)) then
+                v_rx_dec := f_hex_to_integer(v_line(C_PREFIX_RX_LEN + 1 to C_PREFIX_RX_LEN + C_COUNT_HEX_DIGITS));
+                v_ok_dec := f_hex_to_integer(v_line(C_PREFIX_RX_LEN + C_COUNT_HEX_DIGITS + C_PREFIX_OK_LEN + 1 to C_PREFIX_RX_LEN + C_COUNT_HEX_DIGITS + C_PREFIX_OK_LEN + C_COUNT_HEX_DIGITS));
+                tm_received_count <= std_logic_vector(to_unsigned(v_rx_dec, tm_received_count'length));
+                tm_received_count_int <= v_rx_dec;
+                tm_correct_count <= std_logic_vector(to_unsigned(v_ok_dec, tm_correct_count'length));
+                tm_correct_count_int <= v_ok_dec;
+                v_flags_bin := f_hex_to_bin_string(v_line(C_PREFIX_RX_LEN + C_COUNT_HEX_DIGITS + C_PREFIX_OK_LEN + C_COUNT_HEX_DIGITS + C_LABEL_FLAGS_LEN + 1 to C_TM_FLAGS_LINE_LEN));
+                write(v_msg, string'("UART_DECODE RX_DEC="));
+                write(v_msg, integer'image(v_rx_dec));
+                write(v_msg, string'(" OK_DEC="));
+                write(v_msg, integer'image(v_ok_dec));
                 write(v_msg, string'(" FLAGS_BIN="));
                 write(v_msg, v_flags_bin);
-                p_tb_log(v_msg.all);
-                deallocate(v_msg);
-              elsif (v_len = C_TM_ONLY_LINE_LEN) and
-                    (v_line(1 to 3) = "TM=") and
-                    f_is_hex_string(v_line(4 to 3 + C_TM_HEX_DIGITS)) then
-                v_tm_dec := f_hex_to_integer(v_line(4 to 3 + C_TM_HEX_DIGITS));
-                tm_decoded_count <= std_logic_vector(to_unsigned(v_tm_dec, tm_decoded_count'length));
-                tm_decoded_count_int <= v_tm_dec;
-                write(v_msg, string'("UART_DECODE TM_DEC="));
-                write(v_msg, integer'image(v_tm_dec));
                 p_tb_log(v_msg.all);
                 deallocate(v_msg);
               end if;
@@ -364,7 +370,7 @@ begin
         stop_target_time_ns <= 0;
       elsif stop_complete = '0' then
         if stop_issued = '0' then
-          if unsigned(tm_decoded_count) >= to_unsigned(C_TM_PAYLOAD_STOP_COUNT, tm_decoded_count'length) then
+          if unsigned(tm_received_count) >= to_unsigned(C_TM_PAYLOAD_STOP_COUNT, tm_received_count'length) then
             stop_issued <= '1';
             stop_target_time_ns <= v_now_ns;
             p_tb_log("stop condition reached: TM payload count=" &
@@ -374,7 +380,8 @@ begin
             deadline_hit <= '1';
             stop_complete <= '1';
             p_tb_log("timing deadline reached before TM payload target: TM payload count=" &
-                     integer'image(tm_decoded_count_int) &
+                     integer'image(tm_received_count_int) &
+                     " correct count=" & integer'image(tm_correct_count_int) &
                      " deadline_ns=" & integer'image(G_STOP_TIMEOUT_NS) & ".");
             if G_STOP_SIM_ON_TARGET then
               std.env.stop;
@@ -390,7 +397,8 @@ begin
             deadline_hit <= '1';
             stop_complete <= '1';
             p_tb_log("timing deadline reached during post-stop UART drain: TM payload count=" &
-                     integer'image(tm_decoded_count_int) &
+                     integer'image(tm_received_count_int) &
+                     " correct count=" & integer'image(tm_correct_count_int) &
                      " deadline_ns=" & integer'image(G_STOP_TIMEOUT_NS) & ".");
             if G_STOP_SIM_ON_TARGET then
               std.env.stop;
@@ -398,7 +406,8 @@ begin
           elsif v_now_ns >= v_drain_reference_ns + integer(G_POST_STOP_GRACE_NS) then
             stop_complete <= '1';
             p_tb_log("post-stop UART drain complete: final TM payload count=" &
-                     integer'image(tm_decoded_count_int) &
+                     integer'image(tm_received_count_int) &
+                     " correct count=" & integer'image(tm_correct_count_int) &
                      " grace_ns=" & integer'image(G_POST_STOP_GRACE_NS) & ".");
             if G_STOP_SIM_ON_TARGET then
               std.env.stop;

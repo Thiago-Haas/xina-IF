@@ -45,12 +45,15 @@ package xina_manager_ni_pkg is
   constant c_ENABLE_TM_HAMMING_PROTECTION    : boolean := true;
   constant c_ENABLE_TM_HAMMING_DOUBLE_DETECT : boolean := true;
   constant c_ENABLE_TM_HAMMING_INJECT_ERROR  : boolean := false; -- Fault INJECTION
-  constant c_ENABLE_TM_TXN_COUNTER_HAMMING   : boolean := true;
-  constant c_TM_TRANSACTION_COUNTER_WIDTH    : natural := 32;
+  constant c_ENABLE_TM_RECEIVED_COUNTER_HAMMING : boolean := true;
+  constant c_ENABLE_TM_CORRECT_COUNTER_HAMMING  : boolean := true;
+  constant c_TM_COUNTER_WIDTH                   : natural := 32;
+  constant c_ENABLE_TM_TXN_COUNTER_HAMMING      : boolean := c_ENABLE_TM_RECEIVED_COUNTER_HAMMING;
+  constant c_TM_TRANSACTION_COUNTER_WIDTH       : natural := c_TM_COUNTER_WIDTH;
   -- Number of TM completed packets between periodic UART reports.
   constant c_TM_UART_REPORT_PERIOD_PACKETS   : positive := 100;
   -- UART FLAGS field width. Keep nibble-aligned so TM hex formatting stays aligned.
-  constant c_TM_UART_FLAGS_WIDTH             : natural := 40;
+  constant c_TM_UART_FLAGS_WIDTH             : natural := 44;
 
   -- Loopback.
   constant c_ENABLE_LB_CTRL_TMR              : boolean := true;
@@ -65,4 +68,3 @@ package xina_manager_ni_pkg is
   constant c_ENABLE_OBS_UART_COMMAND_CTRL_TMR    : boolean := true;
   constant c_ENABLE_OBS_UART_ENCODE_CRITICAL_TMR : boolean := true;
 end package;
-

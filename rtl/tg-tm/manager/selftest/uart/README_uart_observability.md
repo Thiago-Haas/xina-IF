@@ -1,6 +1,6 @@
 # Closed-Box UART Observability Protocol
 
-This document describes how observability messages are encoded by hardware in the `tg_tm_lb_selftest_*` closed-box flow.
+This document describes how observability messages are encoded by hardware in the `manager_tg_tm_lb_selftest_*` closed-box flow.
 
 ## 1) Message Types (same encoding path)
 
@@ -23,20 +23,20 @@ Hex digits used for `TM`:
 
 ### Periodic line
 ```text
-TM=<TM_HEX>\n
+MGR RX=<RX_HEX> OK=<OK_HEX>\n
 ```
 Example (32-bit):
 ```text
-TM=00002710
+MGR RX=00002710 OK=00002710
 ```
 
 ### Event base line
 ```text
-TM=<TM_HEX> FLAGS=<10_HEX>\n
+MGR RX=<RX_HEX> OK=<OK_HEX> FLAGS=<10_HEX>\n
 ```
 Example:
 ```text
-TM=000000fe FLAGS=0001010000
+MGR RX=000000FE OK=000000FD FLAGS=0001010000
 ```
 
 ### Optional event encoded-data line (only if a Hamming source is selected)
@@ -49,17 +49,15 @@ ENC SRC=<1_HEX> DATA=<20_HEX>\n
 Base internal frame in UART encode control:
 
 ```text
-bit [103:0] fault_data
+bit [135:0] fault_data
 
- [103 ...................... 72][71 ................. 40][39 ............ 0]
- +----------------------------+-------------------------+------------------+
- | reserved (zeros)           | TM transaction count    | FLAGS[39:0]      |
- +----------------------------+-------------------------+------------------+
+ [135 ................. 104][103 .................... 72][71 ................. 40][39 ............ 0]
+ +-------------------------+----------------------------+-------------------------+------------------+
+ | TM correct count        | TM received count          | reserved / alignment    | FLAGS[39:0]      |
+ +-------------------------+----------------------------+-------------------------+------------------+
 ```
 
-`TM` is placed in `fault_data(C_BASE_TM_MSB downto C_BASE_TM_LSB)`, where:
-- `C_BASE_TM_LSB = c_TM_UART_FLAGS_WIDTH` (currently `40`)
-- `C_BASE_TM_MSB = C_BASE_TM_LSB + c_TM_TRANSACTION_COUNTER_WIDTH - 1`
+`RX` and `OK` are each placed above the flags field, using the manager TM counter width.
 
 ## 4) FLAGS Bit Map (37 used bits in a 40-bit vector)
 
@@ -113,7 +111,8 @@ When an event matches one of these sources, one extra line may be emitted:
 | SRC hex | Encoded data source |
 |---|---|
 | `1` | TM buffer Hamming `ENC_DATA` |
-| `2` | TM transaction-counter Hamming `ENC_DATA` |
+| `2` | TM received-counter Hamming `ENC_DATA` |
+| `C` | TM correct-counter Hamming `ENC_DATA` |
 | `3` | LB buffer Hamming `ENC_DATA` |
 | `4` | TG buffer Hamming `ENC_DATA` |
 | `5` | FE INJ meta/header Hamming `ENC_DATA` |
@@ -129,9 +128,10 @@ When an event matches one of these sources, one extra line may be emitted:
 Recommended parser strategy:
 - Decode bytes to text by lines (split on LF).
 - Parse labels, not fixed positions:
-  - `TM=...`
+  - `RX=...`
+  - `OK=...`
   - optional `FLAGS=...`
   - optional `ENC SRC=... DATA=...`
-- Treat `TM` length as variable (`TM_HEX_DIGITS`), driven by hardware parameter.
+- Treat `RX` / `OK` lengths as variable, driven by the hardware counter width.
 
 This keeps the same console decoder working across 24-bit, 32-bit, or other TM counter widths.

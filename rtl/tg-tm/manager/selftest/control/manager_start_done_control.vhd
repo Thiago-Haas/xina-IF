@@ -3,7 +3,7 @@ use IEEE.std_logic_1164.all;
 
 -- Control slice for closed-box self-test observation block.
 -- Generates TG/TM one-cycle start pulses.
-entity selftest_start_done_control is
+entity manager_start_done_control is
   port (
     ACLK    : in  std_logic;
     ARESETn : in  std_logic;
@@ -18,7 +18,7 @@ entity selftest_start_done_control is
   );
 end entity;
 
-architecture rtl of selftest_start_done_control is
+architecture rtl of manager_start_done_control is
   constant C_STATE_TG_PULSE : std_logic_vector(1 downto 0) := "00";
   constant C_STATE_WAIT_TG  : std_logic_vector(1 downto 0) := "01";
   constant C_STATE_TM_PULSE : std_logic_vector(1 downto 0) := "10";

@@ -6,7 +6,7 @@ use work.xina_manager_ni_pkg.all;
 -- Hierarchical UART command block:
 -- * control: UART command decode and run/reset registers
 -- * datapath: correct-error enable fanout toward the DUT
-entity selftest_uart_command_block is
+entity manager_uart_command_block is
   generic (
     p_USE_UART_COMMAND_CTRL_TMR : boolean := c_ENABLE_OBS_UART_COMMAND_CTRL_TMR
   );
@@ -23,7 +23,8 @@ entity selftest_uart_command_block is
 
     OBS_TM_HAM_BUFFER_CORRECT_ERROR_o : out std_logic;
     OBS_TM_TMR_CTRL_CORRECT_ERROR_o   : out std_logic;
-    OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_o : out std_logic;
+    OBS_TM_HAM_RECEIVED_COUNTER_CORRECT_ERROR_o : out std_logic;
+    OBS_TM_HAM_CORRECT_COUNTER_CORRECT_ERROR_o  : out std_logic;
 
     OBS_LB_HAM_BUFFER_CORRECT_ERROR_o : out std_logic;
     OBS_LB_TMR_CTRL_CORRECT_ERROR_o   : out std_logic;
@@ -52,8 +53,8 @@ entity selftest_uart_command_block is
   );
 end entity;
 
-architecture rtl of selftest_uart_command_block is
-  constant C_CORRECTION_WIDTH : natural := 22;
+architecture rtl of manager_uart_command_block is
+  constant C_CORRECTION_WIDTH : natural := 23;
 
   signal correction_vector_w : std_logic_vector(C_CORRECTION_WIDTH - 1 downto 0);
 begin
@@ -74,9 +75,10 @@ begin
       uart_command_ctrl_tmr_error_o => OBS_UART_COMMAND_CTRL_TMR_ERROR_o
     );
 
-  OBS_TM_HAM_BUFFER_CORRECT_ERROR_o <= correction_vector_w(21);
-  OBS_TM_TMR_CTRL_CORRECT_ERROR_o <= correction_vector_w(20);
-  OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_o <= correction_vector_w(19);
+  OBS_TM_HAM_BUFFER_CORRECT_ERROR_o <= correction_vector_w(22);
+  OBS_TM_TMR_CTRL_CORRECT_ERROR_o <= correction_vector_w(21);
+  OBS_TM_HAM_RECEIVED_COUNTER_CORRECT_ERROR_o <= correction_vector_w(20);
+  OBS_TM_HAM_CORRECT_COUNTER_CORRECT_ERROR_o <= correction_vector_w(19);
   OBS_LB_HAM_BUFFER_CORRECT_ERROR_o <= correction_vector_w(18);
   OBS_LB_TMR_CTRL_CORRECT_ERROR_o <= correction_vector_w(17);
   OBS_TG_HAM_BUFFER_CORRECT_ERROR_o <= correction_vector_w(16);

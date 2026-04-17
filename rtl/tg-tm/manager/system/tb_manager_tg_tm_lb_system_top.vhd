@@ -8,7 +8,7 @@ use std.env.all;
 use work.xina_noc_pkg.all;
 use work.xina_manager_ni_pkg.all;
 
-entity tb_tg_tm_lb_system_top is
+entity tb_manager_tg_tm_lb_system_top is
   port(
     -- TG correction enables
     obs_tg_ham_buffer_correct_error_i : in std_logic := '1';
@@ -17,7 +17,8 @@ entity tb_tg_tm_lb_system_top is
     -- TM correction enables
     obs_tm_ham_buffer_correct_error_i : in std_logic := '1';
     obs_tm_tmr_ctrl_correct_error_i   : in std_logic := '1';
-    obs_tm_ham_txn_counter_correct_error_i : in std_logic := '1';
+    obs_tm_ham_received_counter_correct_error_i : in std_logic := '1';
+    obs_tm_ham_correct_counter_correct_error_i  : in std_logic := '1';
 
     -- Loopback correction enables
     obs_lb_ham_buffer_correct_error_i : in std_logic := '1';
@@ -40,7 +41,7 @@ entity tb_tg_tm_lb_system_top is
   );
 end entity;
 
-architecture tb of tb_tg_tm_lb_system_top is
+architecture tb of tb_manager_tg_tm_lb_system_top is
 
   constant c_CLK_PERIOD : time := 10 ns;
 
@@ -84,10 +85,14 @@ architecture tb of tb_tg_tm_lb_system_top is
   signal tm_ham_single_err : std_logic;
   signal tm_ham_double_err : std_logic;
   signal tm_ham_buffer_enc_data       : std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, c_ENABLE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
-  signal tm_ham_txn_counter_single_err : std_logic;
-  signal tm_ham_txn_counter_double_err : std_logic;
-  signal tm_ham_txn_counter_enc_data   : std_logic_vector(c_TM_TRANSACTION_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(c_TM_TRANSACTION_COUNTER_WIDTH, c_ENABLE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
-  signal tm_transaction_count          : std_logic_vector(c_TM_TRANSACTION_COUNTER_WIDTH - 1 downto 0);
+  signal tm_ham_received_counter_single_err : std_logic;
+  signal tm_ham_received_counter_double_err : std_logic;
+  signal tm_ham_received_counter_enc_data   : std_logic_vector(c_TM_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(c_TM_COUNTER_WIDTH, c_ENABLE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+  signal tm_ham_correct_counter_single_err  : std_logic;
+  signal tm_ham_correct_counter_double_err  : std_logic;
+  signal tm_ham_correct_counter_enc_data    : std_logic_vector(c_TM_COUNTER_WIDTH + work.hamming_pkg.get_ecc_size(c_TM_COUNTER_WIDTH, c_ENABLE_TM_HAMMING_DOUBLE_DETECT) - 1 downto 0);
+  signal tm_received_count                  : std_logic_vector(c_TM_COUNTER_WIDTH - 1 downto 0);
+  signal tm_correct_count                   : std_logic_vector(c_TM_COUNTER_WIDTH - 1 downto 0);
 
   -- LB observation + correction enables (NEW, wired at TB top like TG)
   signal lb_ctrl_tmr_err   : std_logic;
@@ -226,15 +231,20 @@ begin
       -- observation
       OBS_TM_HAM_BUFFER_CORRECT_ERROR_i => obs_tm_ham_buffer_correct_error_i,
       OBS_TM_TMR_CTRL_CORRECT_ERROR_i   => obs_tm_tmr_ctrl_correct_error_i,
-      OBS_TM_HAM_TXN_COUNTER_CORRECT_ERROR_i => obs_tm_ham_txn_counter_correct_error_i,
+      OBS_TM_HAM_RECEIVED_COUNTER_CORRECT_ERROR_i => obs_tm_ham_received_counter_correct_error_i,
+      OBS_TM_HAM_CORRECT_COUNTER_CORRECT_ERROR_i  => obs_tm_ham_correct_counter_correct_error_i,
       OBS_TM_TMR_CTRL_ERROR_o           => tm_ctrl_tmr_err,
       OBS_TM_HAM_BUFFER_SINGLE_ERR_o    => tm_ham_single_err,
       OBS_TM_HAM_BUFFER_DOUBLE_ERR_o    => tm_ham_double_err,
       OBS_TM_HAM_BUFFER_ENC_DATA_o      => tm_ham_buffer_enc_data,
-      OBS_TM_HAM_TXN_COUNTER_SINGLE_ERR_o => tm_ham_txn_counter_single_err,
-      OBS_TM_HAM_TXN_COUNTER_DOUBLE_ERR_o => tm_ham_txn_counter_double_err,
-      OBS_TM_HAM_TXN_COUNTER_ENC_DATA_o   => tm_ham_txn_counter_enc_data,
-      TM_TRANSACTION_COUNT_o              => tm_transaction_count
+      OBS_TM_HAM_RECEIVED_COUNTER_SINGLE_ERR_o => tm_ham_received_counter_single_err,
+      OBS_TM_HAM_RECEIVED_COUNTER_DOUBLE_ERR_o => tm_ham_received_counter_double_err,
+      OBS_TM_HAM_RECEIVED_COUNTER_ENC_DATA_o   => tm_ham_received_counter_enc_data,
+      OBS_TM_HAM_CORRECT_COUNTER_SINGLE_ERR_o  => tm_ham_correct_counter_single_err,
+      OBS_TM_HAM_CORRECT_COUNTER_DOUBLE_ERR_o  => tm_ham_correct_counter_double_err,
+      OBS_TM_HAM_CORRECT_COUNTER_ENC_DATA_o    => tm_ham_correct_counter_enc_data,
+      TM_RECEIVED_COUNT_o                      => tm_received_count,
+      TM_CORRECT_COUNT_o                       => tm_correct_count
     );
 
   -- NI manager

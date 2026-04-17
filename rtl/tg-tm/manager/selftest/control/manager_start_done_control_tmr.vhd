@@ -1,13 +1,13 @@
 library IEEE;
 use IEEE.std_logic_1164.all;
 
--- TMR wrapper for selftest_start_done_control.
+-- TMR wrapper for manager_start_done_control.
 -- Same style used by other control TMR blocks in TG/TM/LB:
 -- * 3 replicas
 -- * majority vote on outputs
 -- * disagreement flag (error_o)
 -- * optional correction bypass via correct_enable_i
-entity selftest_start_done_control_tmr is
+entity manager_start_done_control_tmr is
   port (
     ACLK    : in  std_logic;
     ARESETn : in  std_logic;
@@ -25,7 +25,7 @@ entity selftest_start_done_control_tmr is
   );
 end entity;
 
-architecture rtl of selftest_start_done_control_tmr is
+architecture rtl of manager_start_done_control_tmr is
   constant C_VOTER_WIDTH : positive := 2;
 
   attribute DONT_TOUCH : string;
@@ -43,11 +43,11 @@ architecture rtl of selftest_start_done_control_tmr is
   signal error_bits_w : std_logic_vector(C_VOTER_WIDTH - 1 downto 0);
 begin
   gen_ctrl : for i in 0 to 2 generate
-    attribute DONT_TOUCH of u_selftest_start_done_control : label is "TRUE";
-    attribute syn_preserve of u_selftest_start_done_control : label is true;
-    attribute KEEP_HIERARCHY of u_selftest_start_done_control : label is "TRUE";
+    attribute DONT_TOUCH of u_manager_start_done_control : label is "TRUE";
+    attribute syn_preserve of u_manager_start_done_control : label is true;
+    attribute KEEP_HIERARCHY of u_manager_start_done_control : label is "TRUE";
   begin
-    u_selftest_start_done_control: entity work.selftest_start_done_control
+    u_manager_start_done_control: entity work.manager_start_done_control
       port map(
         ACLK    => ACLK,
         ARESETn => ARESETn,
