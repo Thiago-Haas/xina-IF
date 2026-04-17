@@ -39,6 +39,10 @@ entity subordinate_noc_traffic_mon_top is
     OBS_SUB_TM_HAM_LFSR_SINGLE_ERR_o    : out std_logic := '0';
     OBS_SUB_TM_HAM_LFSR_DOUBLE_ERR_o    : out std_logic := '0';
     OBS_SUB_TM_HAM_LFSR_ENC_DATA_o      : out std_logic_vector(c_AXI_DATA_WIDTH + 1 + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH + 1, p_USE_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
+    OBS_SUB_TM_HAM_PAYLOAD_CORRECT_ERROR_i : in  std_logic := '1';
+    OBS_SUB_TM_HAM_PAYLOAD_SINGLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_TM_HAM_PAYLOAD_DOUBLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_TM_HAM_PAYLOAD_ENC_DATA_o      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
     OBS_SUB_TM_HAM_COUNTER_CORRECT_ERROR_i : in  std_logic := '1';
     OBS_SUB_TM_HAM_COUNTER_SINGLE_ERR_o    : out std_logic := '0';
     OBS_SUB_TM_HAM_COUNTER_DOUBLE_ERR_o    : out std_logic := '0';
@@ -57,6 +61,7 @@ architecture rtl of subordinate_noc_traffic_mon_top is
   signal step_lfsr_w     : std_logic;
   signal lfsr_seeded_w   : std_logic;
   signal accept_flit_w   : std_logic;
+  signal sample_payload_w : std_logic;
   signal flit_idx_w      : unsigned(2 downto 0);
   signal is_read_w       : std_logic;
   signal mismatch_w      : std_logic;
@@ -77,6 +82,7 @@ begin
         step_lfsr_o => step_lfsr_w,
         lfsr_seeded_o => lfsr_seeded_w,
         accept_flit_o => accept_flit_w,
+        sample_payload_o => sample_payload_w,
         flit_idx_o => flit_idx_w,
         is_read_o => is_read_w
       );
@@ -99,6 +105,7 @@ begin
         step_lfsr_o => step_lfsr_w,
         lfsr_seeded_o => lfsr_seeded_w,
         accept_flit_o => accept_flit_w,
+        sample_payload_o => sample_payload_w,
         flit_idx_o => flit_idx_w,
         is_read_o => is_read_w,
         correct_enable_i => OBS_SUB_TM_TMR_CTRL_CORRECT_ERROR_i,
@@ -123,13 +130,18 @@ begin
       step_lfsr_i => step_lfsr_w,
       lfsr_seeded_i => lfsr_seeded_w,
       accept_flit_i => accept_flit_w,
+      sample_payload_i => sample_payload_w,
       flit_idx_i => flit_idx_w,
       l_in_data_i => l_in_data_i,
       mismatch_o => mismatch_w,
       OBS_SUB_TM_HAM_LFSR_CORRECT_ERROR_i => OBS_SUB_TM_HAM_LFSR_CORRECT_ERROR_i,
       OBS_SUB_TM_HAM_LFSR_SINGLE_ERR_o    => OBS_SUB_TM_HAM_LFSR_SINGLE_ERR_o,
       OBS_SUB_TM_HAM_LFSR_DOUBLE_ERR_o    => OBS_SUB_TM_HAM_LFSR_DOUBLE_ERR_o,
-      OBS_SUB_TM_HAM_LFSR_ENC_DATA_o      => OBS_SUB_TM_HAM_LFSR_ENC_DATA_o
+      OBS_SUB_TM_HAM_LFSR_ENC_DATA_o      => OBS_SUB_TM_HAM_LFSR_ENC_DATA_o,
+      OBS_SUB_TM_HAM_PAYLOAD_CORRECT_ERROR_i => OBS_SUB_TM_HAM_PAYLOAD_CORRECT_ERROR_i,
+      OBS_SUB_TM_HAM_PAYLOAD_SINGLE_ERR_o    => OBS_SUB_TM_HAM_PAYLOAD_SINGLE_ERR_o,
+      OBS_SUB_TM_HAM_PAYLOAD_DOUBLE_ERR_o    => OBS_SUB_TM_HAM_PAYLOAD_DOUBLE_ERR_o,
+      OBS_SUB_TM_HAM_PAYLOAD_ENC_DATA_o      => OBS_SUB_TM_HAM_PAYLOAD_ENC_DATA_o
     );
 
   mismatch_o <= mismatch_w;

@@ -29,6 +29,8 @@ package xina_subordinate_ni_pkg is
   constant c_ENABLE_SUB_TM_LFSR_HAMMING : boolean := true;
   constant c_ENABLE_SUB_TM_LFSR_HAMMING_DOUBLE_DETECT : boolean := true;
   constant c_ENABLE_SUB_TM_LFSR_HAMMING_INJECT_ERROR  : boolean := false; -- Fault INJECTION
+  constant c_ENABLE_SUB_TM_PAYLOAD_HAMMING : boolean := true;
+  constant c_ENABLE_SUB_TM_PAYLOAD_HAMMING_INJECT_ERROR : boolean := false; -- Fault INJECTION
   constant c_ENABLE_SUB_TM_TXN_COUNTER_HAMMING : boolean := true;
   constant c_ENABLE_SUB_TM_CORRECT_COUNTER_HAMMING : boolean := true;
   constant c_SUB_TM_TRANSACTION_COUNTER_WIDTH  : natural := 32;

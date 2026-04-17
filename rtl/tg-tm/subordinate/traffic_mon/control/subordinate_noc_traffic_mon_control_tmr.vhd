@@ -19,6 +19,7 @@ entity subordinate_noc_traffic_mon_control_tmr is
     step_lfsr_o     : out std_logic;
     lfsr_seeded_o   : out std_logic;
     accept_flit_o   : out std_logic;
+    sample_payload_o : out std_logic;
     flit_idx_o      : out unsigned(2 downto 0);
     is_read_o       : out std_logic;
 
@@ -32,7 +33,7 @@ architecture rtl of subordinate_noc_traffic_mon_control_tmr is
   attribute syn_preserve  : boolean;
   attribute KEEP_HIERARCHY: string;
 
-  constant C_VOTE_WIDTH : positive := 11;
+  constant C_VOTE_WIDTH : positive := 12;
 
   type t_bundle_array is array (0 to 2) of std_logic_vector(C_VOTE_WIDTH - 1 downto 0);
 
@@ -43,6 +44,7 @@ architecture rtl of subordinate_noc_traffic_mon_control_tmr is
   signal step_lfsr_w     : std_logic_vector(0 to 2);
   signal lfsr_seeded_w   : std_logic_vector(0 to 2);
   signal accept_flit_w   : std_logic_vector(0 to 2);
+  signal sample_payload_w : std_logic_vector(0 to 2);
   type t_u3_array is array (0 to 2) of unsigned(2 downto 0);
 
   signal flit_idx_w      : t_u3_array;
@@ -74,13 +76,14 @@ begin
         step_lfsr_o     => step_lfsr_w(i),
         lfsr_seeded_o   => lfsr_seeded_w(i),
         accept_flit_o   => accept_flit_w(i),
+        sample_payload_o => sample_payload_w(i),
         flit_idx_o      => flit_idx_w(i),
         is_read_o       => is_read_w(i)
       );
 
     bundle_w(i) <= done_pulse_w(i) & done_w(i) & l_in_ack_w(i) & load_expected_w(i) &
                    step_lfsr_w(i) & lfsr_seeded_w(i) &
-                   accept_flit_w(i) & std_logic_vector(flit_idx_w(i)) &
+                   accept_flit_w(i) & sample_payload_w(i) & std_logic_vector(flit_idx_w(i)) &
                    is_read_w(i);
   end generate;
 
@@ -98,13 +101,14 @@ begin
       error_o      => error_o
     );
 
-  done_pulse_o    <= voted_w(10);
-  done_o          <= voted_w(9);
-  l_in_ack_o      <= voted_w(8);
-  load_expected_o <= voted_w(7);
-  step_lfsr_o     <= voted_w(6);
-  lfsr_seeded_o   <= voted_w(5);
-  accept_flit_o   <= voted_w(4);
+  done_pulse_o    <= voted_w(11);
+  done_o          <= voted_w(10);
+  l_in_ack_o      <= voted_w(9);
+  load_expected_o <= voted_w(8);
+  step_lfsr_o     <= voted_w(7);
+  lfsr_seeded_o   <= voted_w(6);
+  accept_flit_o   <= voted_w(5);
+  sample_payload_o <= voted_w(4);
   flit_idx_o      <= unsigned(voted_w(3 downto 1));
   is_read_o       <= voted_w(0);
 end architecture;

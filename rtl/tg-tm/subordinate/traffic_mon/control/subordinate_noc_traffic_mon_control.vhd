@@ -20,6 +20,7 @@ entity subordinate_noc_traffic_mon_control is
     step_lfsr_o     : out std_logic;
     lfsr_seeded_o   : out std_logic;
     accept_flit_o   : out std_logic;
+    sample_payload_o : out std_logic;
     flit_idx_o      : out unsigned(2 downto 0);
     is_read_o       : out std_logic
   );
@@ -38,6 +39,7 @@ architecture rtl of subordinate_noc_traffic_mon_control is
   signal step_lfsr_r     : std_logic := '0';
   signal lfsr_seeded_r   : std_logic := '0';
   signal accept_flit_r   : std_logic := '0';
+  signal sample_payload_r : std_logic := '0';
   signal done_pulse_r    : std_logic := '0';
 
   signal last_idx_w : unsigned(2 downto 0);
@@ -52,6 +54,7 @@ begin
   step_lfsr_o <= step_lfsr_r;
   lfsr_seeded_o <= lfsr_seeded_r;
   accept_flit_o <= accept_flit_r;
+  sample_payload_o <= sample_payload_r;
   flit_idx_o <= flit_idx_r;
   is_read_o <= is_read_r;
 
@@ -61,6 +64,7 @@ begin
       load_expected_r <= '0';
       step_lfsr_r <= '0';
       accept_flit_r <= '0';
+      sample_payload_r <= '0';
       done_pulse_r <= '0';
 
       if ARESETn = '0' then
@@ -88,6 +92,9 @@ begin
           when C_ST_ACK =>
             if l_in_val_i = '1' then
               accept_flit_r <= '1';
+              if (is_read_r = '1' and flit_idx_r = to_unsigned(3, flit_idx_r'length)) then
+                sample_payload_r <= '1';
+              end if;
               state_r <= C_ST_WAIT_DROP;
             end if;
 

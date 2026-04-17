@@ -10,7 +10,9 @@ entity subordinate_noc_traffic_mon_datapath is
   generic(
     p_USE_HAMMING               : boolean := c_ENABLE_SUB_TM_LFSR_HAMMING;
     p_USE_HAMMING_DOUBLE_DETECT : boolean := c_ENABLE_SUB_TM_LFSR_HAMMING_DOUBLE_DETECT;
-    p_USE_HAMMING_INJECT_ERROR  : boolean := c_ENABLE_SUB_TM_LFSR_HAMMING_INJECT_ERROR
+    p_USE_HAMMING_INJECT_ERROR  : boolean := c_ENABLE_SUB_TM_LFSR_HAMMING_INJECT_ERROR;
+    p_USE_PAYLOAD_HAMMING       : boolean := c_ENABLE_SUB_TM_PAYLOAD_HAMMING;
+    p_USE_PAYLOAD_HAMMING_INJECT_ERROR : boolean := c_ENABLE_SUB_TM_PAYLOAD_HAMMING_INJECT_ERROR
   );
   port(
     ACLK    : in  std_logic;
@@ -23,6 +25,7 @@ entity subordinate_noc_traffic_mon_datapath is
     step_lfsr_i     : in std_logic;
     lfsr_seeded_i   : in std_logic;
     accept_flit_i   : in std_logic;
+    sample_payload_i : in std_logic;
     flit_idx_i      : in unsigned(2 downto 0);
 
     l_in_data_i : in std_logic_vector(c_FLIT_WIDTH - 1 downto 0);
@@ -31,7 +34,11 @@ entity subordinate_noc_traffic_mon_datapath is
     OBS_SUB_TM_HAM_LFSR_CORRECT_ERROR_i : in  std_logic := '1';
     OBS_SUB_TM_HAM_LFSR_SINGLE_ERR_o    : out std_logic := '0';
     OBS_SUB_TM_HAM_LFSR_DOUBLE_ERR_o    : out std_logic := '0';
-    OBS_SUB_TM_HAM_LFSR_ENC_DATA_o      : out std_logic_vector(c_AXI_DATA_WIDTH + 1 + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH + 1, p_USE_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0')
+    OBS_SUB_TM_HAM_LFSR_ENC_DATA_o      : out std_logic_vector(c_AXI_DATA_WIDTH + 1 + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH + 1, p_USE_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0');
+    OBS_SUB_TM_HAM_PAYLOAD_CORRECT_ERROR_i : in std_logic := '1';
+    OBS_SUB_TM_HAM_PAYLOAD_SINGLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_TM_HAM_PAYLOAD_DOUBLE_ERR_o    : out std_logic := '0';
+    OBS_SUB_TM_HAM_PAYLOAD_ENC_DATA_o      : out std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_HAMMING_DOUBLE_DETECT) - 1 downto 0) := (others => '0')
   );
 end entity;
 
@@ -40,7 +47,8 @@ architecture rtl of subordinate_noc_traffic_mon_datapath is
   signal mismatch_next_w    : std_logic_vector(0 downto 0);
   signal mismatch_write_en_w: std_logic;
   signal payload_mismatch_w : std_logic;
-  signal payload_check_w    : std_logic;
+  signal payload_compare_w  : std_logic;
+  signal payload_compare_r  : std_logic := '0';
 
   signal lfsr_state_w  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
   signal lfsr_input_w  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
@@ -52,8 +60,12 @@ architecture rtl of subordinate_noc_traffic_mon_datapath is
   signal protected_state_we_w   : std_logic;
   signal protected_state_enc_w  : std_logic_vector(c_AXI_DATA_WIDTH + 1 + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH + 1, p_USE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 
-  signal flit_payload_w : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
-  signal payload_valid_w : std_logic;
+  signal flit_payload_w    : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+  signal payload_valid_w   : std_logic;
+  signal payload_sample_w  : std_logic_vector(c_AXI_DATA_WIDTH - 1 downto 0);
+  signal payload_sample_single_err_w : std_logic;
+  signal payload_sample_double_err_w : std_logic;
+  signal payload_sample_enc_w : std_logic_vector(c_AXI_DATA_WIDTH + work.hamming_pkg.get_ecc_size(c_AXI_DATA_WIDTH, p_USE_HAMMING_DOUBLE_DETECT) - 1 downto 0);
 begin
   lfsr_state_w <= protected_state_w(c_AXI_DATA_WIDTH - 1 downto 0);
   mismatch_w(0) <= protected_state_w(c_AXI_DATA_WIDTH);
@@ -80,21 +92,34 @@ begin
 
   mismatch_o <= mismatch_w(0);
 
-  payload_check_w <= accept_flit_i and payload_valid_w;
+  -- Compare one cycle after sampling so the protected payload register has
+  -- already captured the current flit payload.
+  payload_compare_w <= payload_compare_r;
+
+  process(ACLK)
+  begin
+    if rising_edge(ACLK) then
+      if ARESETn = '0' then
+        payload_compare_r <= '0';
+      else
+        payload_compare_r <= sample_payload_i and payload_valid_w;
+      end if;
+    end if;
+  end process;
 
   u_compare: entity work.subordinate_noc_traffic_mon_compare
     generic map(
       p_WIDTH => c_AXI_DATA_WIDTH
     )
     port map(
-      check_pulse_i   => payload_check_w,
+      check_pulse_i   => payload_compare_w,
       expected_i      => lfsr_state_w,
       expected_next_i => lfsr_next_w,
-      payload_i       => flit_payload_w,
+      payload_i       => payload_sample_w,
       mismatch_o      => payload_mismatch_w
     );
 
-  process(mismatch_w, load_expected_i, payload_mismatch_w)
+  process(mismatch_w, load_expected_i, payload_compare_w, payload_mismatch_w)
     variable mismatch_v : std_logic;
   begin
     mismatch_v := mismatch_w(0);
@@ -103,14 +128,14 @@ begin
       mismatch_v := '0';
     end if;
 
-    if payload_mismatch_w = '1' then
+    if payload_compare_w = '1' and payload_mismatch_w = '1' then
       mismatch_v := '1';
     end if;
 
     mismatch_next_w(0) <= mismatch_v;
   end process;
 
-  mismatch_write_en_w <= load_expected_i or accept_flit_i;
+  mismatch_write_en_w <= load_expected_i or payload_compare_w;
 
   protected_state_we_w <= step_lfsr_i or mismatch_write_en_w;
   protected_state_next_w <= mismatch_next_w(0) & lfsr_next_w when step_lfsr_i = '1' else
@@ -136,7 +161,30 @@ begin
       data_o       => protected_state_w
     );
 
+  u_payload_sample_hamming_register: entity work.hamming_register
+    generic map(
+      DATA_WIDTH     => c_AXI_DATA_WIDTH,
+      HAMMING_ENABLE => p_USE_PAYLOAD_HAMMING,
+      DETECT_DOUBLE  => p_USE_HAMMING_DOUBLE_DETECT,
+      RESET_VALUE    => (c_AXI_DATA_WIDTH - 1 downto 0 => '0'),
+      INJECT_ERROR   => p_USE_PAYLOAD_HAMMING_INJECT_ERROR
+    )
+    port map(
+      correct_en_i => OBS_SUB_TM_HAM_PAYLOAD_CORRECT_ERROR_i,
+      write_en_i   => sample_payload_i and payload_valid_w,
+      data_i       => flit_payload_w,
+      rstn_i       => ARESETn,
+      clk_i        => ACLK,
+      single_err_o => payload_sample_single_err_w,
+      double_err_o => payload_sample_double_err_w,
+      enc_data_o   => payload_sample_enc_w,
+      data_o       => payload_sample_w
+    );
+
   OBS_SUB_TM_HAM_LFSR_SINGLE_ERR_o <= lfsr_single_err_w;
   OBS_SUB_TM_HAM_LFSR_DOUBLE_ERR_o <= lfsr_double_err_w;
   OBS_SUB_TM_HAM_LFSR_ENC_DATA_o   <= protected_state_enc_w;
+  OBS_SUB_TM_HAM_PAYLOAD_SINGLE_ERR_o <= payload_sample_single_err_w;
+  OBS_SUB_TM_HAM_PAYLOAD_DOUBLE_ERR_o <= payload_sample_double_err_w;
+  OBS_SUB_TM_HAM_PAYLOAD_ENC_DATA_o   <= payload_sample_enc_w;
 end architecture;

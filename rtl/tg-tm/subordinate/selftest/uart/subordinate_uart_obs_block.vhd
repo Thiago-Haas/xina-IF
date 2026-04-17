@@ -57,6 +57,8 @@ entity subordinate_uart_obs_block is
     OBS_SUB_TM_HAM_COUNTER_SINGLE_ERR_i : in std_logic;
     OBS_SUB_TM_HAM_CORRECT_COUNTER_DOUBLE_ERR_i : in std_logic;
     OBS_SUB_TM_HAM_CORRECT_COUNTER_SINGLE_ERR_i : in std_logic;
+    OBS_SUB_TM_HAM_PAYLOAD_DOUBLE_ERR_i : in std_logic;
+    OBS_SUB_TM_HAM_PAYLOAD_SINGLE_ERR_i : in std_logic;
     OBS_SUB_TM_HAM_LFSR_DOUBLE_ERR_i : in std_logic;
     OBS_SUB_TM_HAM_LFSR_SINGLE_ERR_i : in std_logic;
     OBS_SUB_TM_TMR_CTRL_ERROR_i : in std_logic;
@@ -122,8 +124,6 @@ end entity;
 
 architecture rtl of subordinate_uart_obs_block is
   constant C_CORRECTION_WIDTH : natural := 31;
-  constant C_SUB_FLAGS_RESERVED_PAD : std_logic_vector(1 downto 0) := "00";
-
   signal flags_w : std_logic_vector(c_SUB_TM_UART_FLAGS_WIDTH - 1 downto 0);
   signal correction_vector_w : std_logic_vector(C_CORRECTION_WIDTH - 1 downto 0);
   signal obs_start_go_ctrl_error_w : std_logic;
@@ -135,9 +135,7 @@ architecture rtl of subordinate_uart_obs_block is
 begin
   uart_rready_o <= '1';
 
-  -- Upper FLAGS bits are reserved so the UART report remains nibble-aligned.
-  flags_w <= C_SUB_FLAGS_RESERVED_PAD &
-             OBS_SUB_UART_ENCODE_CRITICAL_TMR_ERROR_i &
+  flags_w <= OBS_SUB_UART_ENCODE_CRITICAL_TMR_ERROR_i &
              OBS_SUB_UART_COMMAND_CTRL_TMR_ERROR_o &
              OBS_SUB_UART_HAM_CORRECT_COUNT_DOUBLE_ERR_o &
              OBS_SUB_UART_HAM_CORRECT_COUNT_SINGLE_ERR_o &
@@ -184,6 +182,8 @@ begin
              OBS_SUB_LB_TMR_CTRL_ERROR_i &
              OBS_SUB_TM_HAM_CORRECT_COUNTER_DOUBLE_ERR_i &
              OBS_SUB_TM_HAM_CORRECT_COUNTER_SINGLE_ERR_i &
+             OBS_SUB_TM_HAM_PAYLOAD_DOUBLE_ERR_i &
+             OBS_SUB_TM_HAM_PAYLOAD_SINGLE_ERR_i &
              OBS_SUB_TM_HAM_COUNTER_DOUBLE_ERR_i &
              OBS_SUB_TM_HAM_COUNTER_SINGLE_ERR_i &
              OBS_SUB_TM_HAM_LFSR_DOUBLE_ERR_i &

@@ -87,6 +87,8 @@ architecture rtl of subordinate_tg_tm_lb_selftest_top is
   signal obs_tm_tmr_error_w     : std_logic;
   signal obs_tm_state_single_w  : std_logic;
   signal obs_tm_state_double_w  : std_logic;
+  signal obs_tm_payload_single_w : std_logic;
+  signal obs_tm_payload_double_w : std_logic;
   signal obs_tm_counter_single_w : std_logic;
   signal obs_tm_counter_double_w : std_logic;
   signal obs_tm_correct_counter_single_w : std_logic;
@@ -148,6 +150,8 @@ architecture rtl of subordinate_tg_tm_lb_selftest_top is
   attribute DONT_TOUCH of obs_tm_tmr_error_w : signal is "TRUE";
   attribute DONT_TOUCH of obs_tm_state_single_w : signal is "TRUE";
   attribute DONT_TOUCH of obs_tm_state_double_w : signal is "TRUE";
+  attribute DONT_TOUCH of obs_tm_payload_single_w : signal is "TRUE";
+  attribute DONT_TOUCH of obs_tm_payload_double_w : signal is "TRUE";
   attribute DONT_TOUCH of obs_tm_counter_single_w : signal is "TRUE";
   attribute DONT_TOUCH of obs_tm_counter_double_w : signal is "TRUE";
   attribute DONT_TOUCH of obs_tm_correct_counter_correct_w : signal is "TRUE";
@@ -204,6 +208,8 @@ architecture rtl of subordinate_tg_tm_lb_selftest_top is
   attribute syn_preserve of obs_tm_tmr_error_w : signal is true;
   attribute syn_preserve of obs_tm_state_single_w : signal is true;
   attribute syn_preserve of obs_tm_state_double_w : signal is true;
+  attribute syn_preserve of obs_tm_payload_single_w : signal is true;
+  attribute syn_preserve of obs_tm_payload_double_w : signal is true;
   attribute syn_preserve of obs_tm_counter_single_w : signal is true;
   attribute syn_preserve of obs_tm_counter_double_w : signal is true;
   attribute syn_preserve of obs_tm_correct_counter_correct_w : signal is true;
@@ -311,6 +317,8 @@ begin
       OBS_SUB_TM_HAM_COUNTER_SINGLE_ERR_i => obs_tm_counter_single_w,
       OBS_SUB_TM_HAM_CORRECT_COUNTER_DOUBLE_ERR_i => obs_tm_correct_counter_double_w,
       OBS_SUB_TM_HAM_CORRECT_COUNTER_SINGLE_ERR_i => obs_tm_correct_counter_single_w,
+      OBS_SUB_TM_HAM_PAYLOAD_DOUBLE_ERR_i => obs_tm_payload_double_w,
+      OBS_SUB_TM_HAM_PAYLOAD_SINGLE_ERR_i => obs_tm_payload_single_w,
       OBS_SUB_TM_HAM_LFSR_DOUBLE_ERR_i => obs_tm_state_double_w,
       OBS_SUB_TM_HAM_LFSR_SINGLE_ERR_i => obs_tm_state_single_w,
       OBS_SUB_TM_TMR_CTRL_ERROR_i => obs_tm_tmr_error_w,
@@ -394,6 +402,10 @@ begin
       OBS_SUB_TM_HAM_LFSR_SINGLE_ERR_o => obs_tm_state_single_w,
       OBS_SUB_TM_HAM_LFSR_DOUBLE_ERR_o => obs_tm_state_double_w,
       OBS_SUB_TM_HAM_LFSR_ENC_DATA_o => open,
+      OBS_SUB_TM_HAM_PAYLOAD_CORRECT_ERROR_i => obs_tm_ham_correct_w,
+      OBS_SUB_TM_HAM_PAYLOAD_SINGLE_ERR_o => obs_tm_payload_single_w,
+      OBS_SUB_TM_HAM_PAYLOAD_DOUBLE_ERR_o => obs_tm_payload_double_w,
+      OBS_SUB_TM_HAM_PAYLOAD_ENC_DATA_o => open,
       OBS_SUB_TM_HAM_COUNTER_CORRECT_ERROR_i => obs_tm_counter_correct_w,
       OBS_SUB_TM_HAM_COUNTER_SINGLE_ERR_o => obs_tm_counter_single_w,
       OBS_SUB_TM_HAM_COUNTER_DOUBLE_ERR_o => obs_tm_counter_double_w,
